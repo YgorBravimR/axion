@@ -219,7 +219,7 @@ const MonteCarloV2Content = ({
 			tradingDaysPerMonth: parseInt(form.tradingDaysPerMonth, 10) || 22,
 			tradingDaysPerWeek: parseInt(form.tradingDaysPerWeek, 10) || 5,
 		})
-	}, [form, selectedProfile])
+	}, [form, selectedProfile, effectiveRR])
 
 	const handleRunSimulation = useCallback(async () => {
 		if (!simProfile) {
@@ -268,6 +268,7 @@ const MonteCarloV2Content = ({
 		hideLoading,
 		tOverlay,
 		tMC,
+		setSnapshot,
 	])
 
 	const handleRunAgain = useCallback(() => {

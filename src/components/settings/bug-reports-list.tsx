@@ -148,7 +148,7 @@ const BugReportsList = () => {
 		} finally {
 			setIsLoading(false)
 		}
-	}, [filter, showToast])
+	}, [filter, showToast, t])
 
 	useEffect(() => {
 		void fetchReports()
@@ -171,7 +171,7 @@ const BugReportsList = () => {
 				setIsDetailLoading(false)
 			}
 		},
-		[showToast]
+		[showToast, t]
 	)
 
 	const handleAction = useCallback(
@@ -210,7 +210,7 @@ const BugReportsList = () => {
 				setIsActionPending(false)
 			}
 		},
-		[selectedReport, rejectReason, adminNotes, showToast, fetchReports]
+		[selectedReport, rejectReason, adminNotes, showToast, fetchReports, t]
 	)
 
 	return (

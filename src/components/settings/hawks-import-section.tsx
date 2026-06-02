@@ -272,7 +272,7 @@ const RenkoCandleCard = () => {
 				showToast("error", result.message ?? t("errorFallback"))
 			}
 		})
-	}, [validation, showToast, t])
+	}, [validation, showToast, t, csvText])
 
 	const handleReset = useCallback(() => {
 		setPhase("idle")

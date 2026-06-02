@@ -265,7 +265,6 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 			handleEdit,
 			handleToggleActive,
 			handleDelete,
-			handleConfirmDelete,
 		]
 	)
 
@@ -284,7 +283,7 @@ const AssetList = ({ assets, assetTypes }: AssetListProps) => {
 							className="w-full pl-9 sm:w-64"
 						/>
 					</div>
-					<div className="gap-s-200 scrollbar-none flex overflow-x-auto">
+					<div className="gap-s-200 flex scrollbar-none overflow-x-auto">
 						<Badge
 							id="badge-asset-filter-all"
 							variant={filterType === null ? "default" : "outline"}

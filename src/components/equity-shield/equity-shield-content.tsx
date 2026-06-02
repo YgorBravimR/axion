@@ -111,8 +111,7 @@ const EquityShieldContent = ({ tradeYears }: EquityShieldContentProps) => {
 	// Fetch initial preview on mount
 	useEffect(() => {
 		void fetchPreview(dateFrom, dateTo)
-		// dateFrom/dateTo are stable initial values — this only runs on mount
-	}, [])
+	}, [dateFrom, dateTo, fetchPreview])
 
 	const handleRun = useCallback(async () => {
 		setIsLoading(true)

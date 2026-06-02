@@ -94,7 +94,7 @@ const UserCatalogEntrySection = memo(
 					: ""
 			)
 			setError(null)
-		}, [config?.catalog, recipe.presetId])
+		}, [config, recipe.presetId])
 
 		if (!config) {
 			return null

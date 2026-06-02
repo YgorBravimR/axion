@@ -155,7 +155,7 @@ const ColorPicker = ({
 		setLocalColor(rgba)
 		setHexInput(value)
 		setRgbInput(rgbaToRgbString(rgba))
-	}, [value])
+	}, [value, localColor])
 
 	// Debounced parent notification — prevents render storms during drag
 	const notifyParent = useCallback(

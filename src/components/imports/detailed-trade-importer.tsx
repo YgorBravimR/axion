@@ -180,7 +180,7 @@ export const DetailedTradeImporter = ({
 		} finally {
 			setLoading(false)
 		}
-	}, [accountId, importId, brokerName, preview, router, showToast, t])
+	}, [accountId, importId, brokerName, router, showToast, t])
 
 	// Step 1: Select Broker & Upload
 	if (step === "select") {

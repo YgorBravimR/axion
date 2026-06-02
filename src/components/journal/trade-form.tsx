@@ -270,7 +270,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 		const effectiveNow = useMemo(
 			() => (defaultDate ? new Date(defaultDate) : new Date()),
 
-			[]
+			[defaultDate]
 		)
 		const endOfDay = useMemo(
 			() => getEndOfDayLocal(effectiveNow),
@@ -389,7 +389,8 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 		const positionSize = watch("positionSize")
 		const stopLoss = watch("stopLoss")
 		const takeProfit = watch("takeProfit")
-		const selectedTagIds = watch("tagIds") || []
+		const tagIds = watch("tagIds")
+		const selectedTagIds = useMemo(() => tagIds || [], [tagIds])
 		const setupRank = watch("setupRank")
 		const followedPlan = watch("followedPlan")
 		const currentRating = watch("rating")

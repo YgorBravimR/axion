@@ -98,7 +98,7 @@ const DailyBiasForm = ({
 			}
 			showToast("error", result.message || tActions("biasConfirmFailed"))
 		})
-	}, [bias, notes, router, screens, showToast, tActions, tradingDay])
+	}, [bias, notes, router, screens, showToast, tActions, tradingDay, onSuccess])
 
 	const biasOptions = [
 		{ value: "long" as const, label: t("biasLong") },

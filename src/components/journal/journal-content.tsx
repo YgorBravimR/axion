@@ -109,12 +109,16 @@ const JournalContent = () => {
 		: "week"
 
 	// Read custom date range from URL (only relevant when period=custom)
-	const customFrom =
-		period === "custom" ? (parseDateParam(urlParams.get("from")) ?? null) : null
-	const customTo =
-		period === "custom" ? (parseDateParam(urlParams.get("to")) ?? null) : null
-	const customDateRange =
-		customFrom && customTo ? { from: customFrom, to: customTo } : undefined
+	const customDateRange = useMemo(() => {
+		if (period !== "custom") {
+			return undefined
+		}
+		const customFrom = parseDateParam(urlParams.get("from"))
+		const customTo = parseDateParam(urlParams.get("to"))
+		return customFrom && customTo
+			? { from: customFrom, to: customTo }
+			: undefined
+	}, [period, urlParams])
 
 	const [tradesByDay, setTradesByDay] = useState<TradesByDay[]>([])
 	const [isLoading, setIsLoading] = useState(true)
@@ -169,10 +173,10 @@ const JournalContent = () => {
 			Object.entries(filters).filter(([, v]) => v !== undefined)
 		) as Record<string, string | string[]>
 	}, [
-		outcomesParam.join(","),
-		directionsParam.join(","),
-		assetsParam.join(","),
-		ratingParam.join(","),
+		outcomesParam,
+		directionsParam,
+		assetsParam,
+		ratingParam,
 		followedPlanParam,
 		hourFromParam,
 		hourToParam,
@@ -365,7 +369,7 @@ const JournalContent = () => {
 			setIsDeleting(false)
 			setDeletingTradeId(null)
 		},
-		[showToast, tTrade, deleteTrade]
+		[showToast, tTrade]
 	)
 
 	// Calculate period summary

@@ -107,6 +107,7 @@ const useCandleChart = ({
 			chart.remove()
 			chartRef.current = null
 			candleSeriesRef.current = null
+
 			indicatorSeriesRef.current.clear()
 		}
 	}, [containerRef])

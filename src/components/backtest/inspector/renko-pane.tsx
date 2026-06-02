@@ -337,7 +337,7 @@ const RenkoPane = ({
 		]
 		markers.sort((m1, m2) => (m1.time as number) - (m2.time as number))
 		markersPluginRef.current.setMarkers(markers)
-	}, [trade, theme, markerColorMode])
+	}, [trade, theme, markerColorMode, series])
 
 	// Optional histogram sub-pane (e.g., MACD). Mounted at paneIndex 1 so it
 	// shares the time axis with the price pane above. Per-point `color` on each

@@ -418,7 +418,7 @@ const LiveTradingStatusPanel = ({
 			Icon: Minus,
 			className: "text-txt-300",
 		}
-	}, [dataStatus?.shouldIncreaseSize, dataStatus?.shouldDecreaseSize, t])
+	}, [dataStatus, t])
 
 	const gainModeLabel = useMemo(() => {
 		const status = dataStatus
