@@ -3997,7 +3997,10 @@
 		"title": "Equity Shield",
 		"subtitle": "Aproveite os drawdowns para proteger seu combine. Aplique gestão de curva de equity baseada em disciplina ao seu histórico de trades.",
 		"errors": {
-			"unexpected": "Ocorreu um erro inesperado. Tente novamente."
+			"unexpected": "Ocorreu um erro inesperado. Tente novamente.",
+			"noTradesInRange": "Nenhum trade encerrado encontrado neste intervalo.",
+			"runFailed": "Falha ao executar análise do Equity Shield.",
+			"previewFailed": "Falha ao carregar pré-visualização de trades."
 		},
 		"params": {
 			"title": "Parâmetros",
@@ -4088,6 +4091,11 @@
 			"drawdownLimitHint": "Drawdown pior caso ({pct}%) aplicado ao seu saldo",
 			"age": "há {minutes} min",
 			"ageNow": "agora mesmo"
+		}
+	},
+	"candleQuery": {
+		"errors": {
+			"fetchFailed": "Falha ao buscar candles."
 		}
 	},
 	"commandMenu": {
@@ -4197,10 +4205,13 @@
 			"invalidFormat": "Formato CSV inválido",
 			"parseFailed": "Falha ao analisar CSV",
 			"previewExpired": "Pré-visualização de importação não encontrada ou expirada",
-			"accountMismatch": "Conta não corresponde"
+			"accountMismatch": "Conta não corresponde",
+			"accountNotFound": "Conta não encontrada.",
+			"noValidTrades": "Nenhum trade válido para importar."
 		},
 		"success": {
-			"imported": "{count} operações importadas com sucesso de {broker}"
+			"imported": "{count} operações importadas com sucesso de {broker}",
+			"csvImported": "{count, plural, =1 {1 trade importado} other {# trades importados}} com sucesso."
 		}
 	},
 	"notaImport": {

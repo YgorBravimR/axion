@@ -1,5 +1,6 @@
 "use server"
 
+import { getTranslations } from "next-intl/server"
 import type {
 	CandleQueryParams,
 	CandleRow,
@@ -31,6 +32,7 @@ export const getCandlesForRange = async (
 		indicatorGroups: IndicatorGroupWithKeys[]
 	}
 }> => {
+	const t = await getTranslations("candleQuery.errors")
 	try {
 		// Without this gate, a stale session lets middleware catch the action and
 		// return an HTML /login redirect — which the client's Server Action
@@ -97,8 +99,7 @@ export const getCandlesForRange = async (
 	} catch (error) {
 		return {
 			status: "error",
-			message:
-				error instanceof Error ? error.message : "Failed to fetch candles",
+			message: error instanceof Error ? error.message : t("fetchFailed"),
 		}
 	}
 }

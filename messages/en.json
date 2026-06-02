@@ -3997,7 +3997,10 @@
 		"title": "Equity Shield",
 		"subtitle": "Leverage drawdowns to protect your combine. Apply discipline-based equity curve management to your trade history.",
 		"errors": {
-			"unexpected": "An unexpected error occurred. Please try again."
+			"unexpected": "An unexpected error occurred. Please try again.",
+			"noTradesInRange": "No closed trades found in this date range.",
+			"runFailed": "Failed to run Equity Shield analysis.",
+			"previewFailed": "Failed to load trade preview."
 		},
 		"params": {
 			"title": "Parameters",
@@ -4088,6 +4091,11 @@
 			"drawdownLimitHint": "Worst-case drawdown ({pct}%) applied to your balance",
 			"age": "{minutes} min ago",
 			"ageNow": "just now"
+		}
+	},
+	"candleQuery": {
+		"errors": {
+			"fetchFailed": "Failed to fetch candles."
 		}
 	},
 	"commandMenu": {
@@ -4197,10 +4205,13 @@
 			"invalidFormat": "Invalid CSV format",
 			"parseFailed": "Failed to parse CSV",
 			"previewExpired": "Import preview not found or expired",
-			"accountMismatch": "Account mismatch"
+			"accountMismatch": "Account mismatch",
+			"accountNotFound": "Account not found.",
+			"noValidTrades": "No valid trades to import."
 		},
 		"success": {
-			"imported": "Successfully imported {count} trades from {broker}"
+			"imported": "Successfully imported {count} trades from {broker}",
+			"csvImported": "Successfully imported {count, plural, =1 {1 trade} other {# trades}}."
 		}
 	},
 	"notaImport": {
