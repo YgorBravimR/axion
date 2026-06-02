@@ -13,6 +13,13 @@ export default [
 	js.configs.recommended,
 	...tseslint.configs.recommended,
 	{
+		// Tier-1 (fast) doesn't load type-checked rules, so disable directives
+		// referencing strict-only rules (no-unsafe-*, etc.) appear "unused" here.
+		// Tier-2 (strict) still reports unused disables — that's where they'd be
+		// caught if the underlying issue is ever fixed and the disable forgotten.
+		linterOptions: {
+			reportUnusedDisableDirectives: "off",
+		},
 		languageOptions: {
 			ecmaVersion: "latest",
 			sourceType: "module",
