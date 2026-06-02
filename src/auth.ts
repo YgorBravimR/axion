@@ -49,8 +49,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 			}
 
 			// Handle account switching via update
-			if (trigger === "update" && session?.accountId) {
-				token.accountId = session.accountId
+			if (
+				trigger === "update" &&
+				session &&
+				typeof session === "object" &&
+				"accountId" in session
+			) {
+				const accountId = (session as { accountId?: unknown }).accountId
+				if (typeof accountId === "string") {
+					token.accountId = accountId
+				}
 			}
 
 			// Refresh role from DB on every JWT pass so role changes (promotions,

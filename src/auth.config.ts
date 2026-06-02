@@ -78,8 +78,16 @@ export const authConfig: NextAuthConfig = {
 				token.accountId = user.accountId
 				token.role = user.role ?? "trader"
 			}
-			if (trigger === "update" && session?.accountId) {
-				token.accountId = session.accountId
+			if (
+				trigger === "update" &&
+				session &&
+				typeof session === "object" &&
+				"accountId" in session
+			) {
+				const accountId = (session as { accountId?: unknown }).accountId
+				if (typeof accountId === "string") {
+					token.accountId = accountId
+				}
 			}
 			return token
 		},

@@ -3,7 +3,7 @@
  * Renders React-PDF templates to Buffer for streaming as HTTP response.
  */
 
-import { renderToBuffer } from "@react-pdf/renderer"
+import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer"
 import { createElement } from "react"
 import { WeeklyReportPdf, MonthlyReportPdf } from "./report-template"
 import type { WeeklyReportLabels, MonthlyReportLabels } from "./report-template"
@@ -37,11 +37,9 @@ const generateWeeklyReportPdf = async (
 		labels: input.labels,
 	})
 
-	// renderToBuffer expects ReactElement<DocumentProps> but our wrapper component
-	// returns <Document> internally — the cast is safe
-
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- @react-pdf/renderer renderToBuffer expects DocumentProps but createElement returns ReactElement<unknown>; cast is safe
-	const buffer = await renderToBuffer(element as any)
+	const buffer = await renderToBuffer(
+		element as React.ReactElement<DocumentProps>
+	)
 	return new Uint8Array(buffer)
 }
 
@@ -57,8 +55,9 @@ const generateMonthlyReportPdf = async (
 		labels: input.labels,
 	})
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- @react-pdf/renderer renderToBuffer expects DocumentProps but createElement returns ReactElement<unknown>; cast is safe
-	const buffer = await renderToBuffer(element as any)
+	const buffer = await renderToBuffer(
+		element as React.ReactElement<DocumentProps>
+	)
 	return new Uint8Array(buffer)
 }
 

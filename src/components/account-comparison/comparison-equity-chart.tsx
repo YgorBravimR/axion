@@ -177,7 +177,11 @@ const ComparisonEquityChart = ({ accounts }: ComparisonEquityChartProps) => {
 					/>
 					<XAxis
 						dataKey="date"
-						tickFormatter={(dateStr) => formatDate(dateStr, locale)}
+						tickFormatter={(dateStr) =>
+							typeof dateStr === "string"
+								? formatDate(dateStr, locale)
+								: String(dateStr)
+						}
 						stroke="var(--color-txt-300)"
 						tick={{ fill: "var(--color-txt-300)", fontSize: 11 }}
 						tickLine={false}

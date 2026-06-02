@@ -85,7 +85,7 @@ const callGoogleVisionREST = async (imageBase64: string): Promise<string> => {
 		throw new Error(`Google Vision API error: ${response.status}`)
 	}
 
-	const rawData = await response.json()
+	const rawData = (await response.json()) as unknown
 	const data = GoogleVisionResponseSchema.parse(rawData)
 
 	// Try to get structured text from fullTextAnnotation (preserves layout)

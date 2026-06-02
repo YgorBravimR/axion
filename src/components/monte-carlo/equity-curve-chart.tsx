@@ -149,7 +149,9 @@ export const EquityCurveChart = ({ trades }: EquityCurveChartProps) => {
 						fontSize={11}
 						tickLine={false}
 						axisLine={false}
-						tickFormatter={(value) => formatR(value)}
+						tickFormatter={(value) =>
+							typeof value === "number" ? formatR(value) : String(value)
+						}
 						domain={[minValue - padding, maxValue + padding]}
 						width={yAxisWidth}
 						tick={AXIS_TICK}

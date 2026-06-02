@@ -313,7 +313,9 @@ export const getTodayCompletions = async (
 					completions.find((c) => c.checklistId === checklist.id) || null
 
 				const completedItemIds: string[] = completion
-					? JSON.parse(completion.completedItems)
+					? ((
+							JSON.parse(completion.completedItems) as unknown[] | undefined
+						)?.filter((x): x is string => typeof x === "string") ?? [])
 					: []
 
 				return {
@@ -381,7 +383,10 @@ export const toggleChecklistItem = async (
 		if (existing) {
 			// Update existing completion
 
-			const currentItems: string[] = JSON.parse(existing.completedItems)
+			const currentItems: string[] =
+				(JSON.parse(existing.completedItems) as unknown[] | undefined)?.filter(
+					(x): x is string => typeof x === "string"
+				) ?? []
 			let newItems: string[]
 
 			if (validated.completed) {
@@ -400,7 +405,7 @@ export const toggleChecklistItem = async (
 			})
 
 			const allItems: ChecklistItem[] = checklist
-				? JSON.parse(checklist.items)
+				? ((JSON.parse(checklist.items) as ChecklistItem[] | undefined) ?? [])
 				: []
 			const allCompleted = allItems.every((item) => newItems.includes(item.id))
 

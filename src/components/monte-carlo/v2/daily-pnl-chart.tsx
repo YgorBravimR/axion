@@ -133,7 +133,11 @@ const DailyPnlChart = ({ days, monthsToTrade = 1 }: DailyPnlChartProps) => {
 						fontSize={11}
 						tickLine={false}
 						axisLine={false}
-						tickFormatter={(value) => formatCompactCurrency(value, "BRL")}
+						tickFormatter={(value) =>
+							typeof value === "number"
+								? formatCompactCurrency(value, "BRL")
+								: String(value)
+						}
 						domain={[minPnl - padding, maxPnl + padding]}
 						width={yAxisWidth}
 						tick={AXIS_TICK}

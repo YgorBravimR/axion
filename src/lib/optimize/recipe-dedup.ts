@@ -15,10 +15,15 @@
 
 import type { StrategyRecipe } from "@/types/backtest"
 
-const canonicalize = (recipe: StrategyRecipe): string =>
-	JSON.stringify(recipe, (key, value) =>
-		key === "displayName" ? undefined : value
-	)
+const canonicalize = (recipe: StrategyRecipe): string => {
+	const result = JSON.stringify(recipe, (key, value: unknown) => {
+		if (key === "displayName") {
+			return undefined
+		}
+		return value
+	})
+	return result ?? ""
+}
 
 interface DedupedRecipes {
 	unique: StrategyRecipe[]

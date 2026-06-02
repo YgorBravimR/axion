@@ -110,7 +110,11 @@ export const V2DistributionHistogram = ({
 						fontSize={10}
 						tickLine={false}
 						axisLine={false}
-						tickFormatter={(value) => formatCompactCurrency(value, currency)}
+						tickFormatter={(value) =>
+							typeof value === "number"
+								? formatCompactCurrency(value, currency)
+								: String(value)
+						}
 						interval="preserveStartEnd"
 					/>
 					<YAxis

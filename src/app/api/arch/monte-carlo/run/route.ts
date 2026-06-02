@@ -3,7 +3,6 @@ import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 import { z } from "zod"
 import { simulationParamsV2Schema } from "@/lib/validations/monte-carlo"
-import type { SimulationParamsV2 } from "@/types/monte-carlo"
 import { runMonteCarloV2 } from "@/lib/monte-carlo-v2"
 
 const POST = async (request: NextRequest) => {
@@ -13,7 +12,7 @@ const POST = async (request: NextRequest) => {
 	}
 
 	try {
-		const body: SimulationParamsV2 = await request.json()
+		const body = (await request.json()) as unknown
 		const validated = simulationParamsV2Schema.parse(body)
 		const result = runMonteCarloV2(validated)
 

@@ -57,7 +57,7 @@ const uploadFiles = async ({
 		})
 
 		// eslint-disable-next-line no-await-in-loop -- sequential uploads intentional; response.json() returns unknown, immediately validated by Zod schema
-		const rawResult = await response.json()
+		const rawResult = (await response.json()) as unknown
 		const result = UploadResponseSchema.parse(rawResult)
 
 		if (result.status === "success" && "data" in result) {

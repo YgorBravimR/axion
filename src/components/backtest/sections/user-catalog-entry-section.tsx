@@ -34,7 +34,7 @@ const parseCatalog = (raw: string): UserEntry[] | string => {
 		return "Expected an array of entries"
 	}
 	for (let i = 0; i < parsed.length; i++) {
-		const row = parsed[i]
+		const row = (parsed as unknown[])[i]
 		if (typeof row !== "object" || row === null) {
 			return `Entry ${i + 1}: not an object`
 		}
