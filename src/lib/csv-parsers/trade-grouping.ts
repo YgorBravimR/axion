@@ -45,7 +45,7 @@ const parseExecutionTime = (execution: RawExecution): Date => {
 	const [hour, minute, second] = timeParts.map(Number)
 
 	// Create date in BRT timezone (UTC-3)
-	const dateString = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:${String(second || 0).padStart(2, "0")}-03:00`
+	const dateString = `${year ?? 0}-${String(month ?? 0).padStart(2, "0")}-${String(day ?? 0).padStart(2, "0")}T${String(hour ?? 0).padStart(2, "0")}:${String(minute ?? 0).padStart(2, "0")}:${String(second || 0).padStart(2, "0")}-03:00`
 	return new Date(dateString)
 }
 
@@ -55,7 +55,10 @@ const parseExecutionTime = (execution: RawExecution): Date => {
 const createGroupedExecutions = (
 	executions: RawExecution[]
 ): GroupedExecutions => {
-	const totalQuantity = executions.reduce((sum, ex) => sum + ex.quantity, 0)
+	const totalQuantity = executions.reduce(
+		(sum, ex) => sum + (ex.quantity ?? 0),
+		0
+	)
 	const totalCommission = executions.reduce((sum, ex) => sum + ex.commission, 0)
 
 	const times = executions.map(parseExecutionTime)

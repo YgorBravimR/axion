@@ -20,7 +20,9 @@ export interface ParseStatementOptions {
  * Parse broker statement CSV and return raw executions
  * Delegates to broker-specific parser
  */
-export const parseStatementCSV = (options: ParseStatementOptions): RawExecution[] => {
+export const parseStatementCSV = (
+	options: ParseStatementOptions
+): RawExecution[] => {
 	const { brokerName, csvContent, delimiter } = options
 
 	switch (brokerName) {
@@ -31,7 +33,7 @@ export const parseStatementCSV = (options: ParseStatementOptions): RawExecution[
 		case "GENIAL":
 			return parseGenialCSV(csvContent, { delimiter })
 		default:
-			throw new Error(`Unknown broker: ${brokerName}`)
+			throw new Error(`Unknown broker: ${JSON.stringify(brokerName)}`)
 	}
 }
 
@@ -51,7 +53,10 @@ export const validateStatementCSV = (
 			case "GENIAL":
 				return validateGenialCSV(csvContent)
 			default:
-				return { valid: false, error: `Unknown broker: ${brokerName}` }
+				return {
+					valid: false,
+					error: `Unknown broker: ${JSON.stringify(brokerName)}`,
+				}
 		}
 	} catch (error) {
 		return {
@@ -62,7 +67,16 @@ export const validateStatementCSV = (
 }
 
 // Re-export functions and types
-export { groupExecutionsIntoTrades, createImportPreview, calculateRMetrics } from "./trade-grouping"
+export {
+	groupExecutionsIntoTrades,
+	createImportPreview,
+	calculateRMetrics,
+} from "./trade-grouping"
 
 // Re-export types
-export type { RawExecution, GroupedTrade, ImportPreview, ImportResult } from "./types"
+export type {
+	RawExecution,
+	GroupedTrade,
+	ImportPreview,
+	ImportResult,
+} from "./types"

@@ -181,7 +181,7 @@ export const parseTimeString = (value: string): string | null => {
 	}
 
 	const [, hours, minutes, seconds] = match
-	return `${hours!.padStart(2, "0")}:${minutes}:${seconds}`
+	return `${(hours ?? "").padStart(2, "0")}:${minutes ?? ""}:${seconds ?? ""}`
 }
 
 /**
@@ -230,7 +230,7 @@ export const normalizeB3Asset = (
 			),
 			isFutures: true,
 			expirationMonth: monthName,
-			expirationYear: `20${year}`,
+			expirationYear: `20${year ?? ""}`,
 		}
 	}
 
@@ -556,7 +556,8 @@ const extractAssetFromLine = (
 	const futuresMatch = line.match(PATTERNS.futures)
 	if (futuresMatch) {
 		const [, prefix, monthCode, year] = futuresMatch
-		const reconstructedCode = `${prefix}${monthCode}${year}`.toUpperCase()
+		const reconstructedCode =
+			`${prefix ?? ""}${monthCode ?? ""}${year ?? ""}`.toUpperCase()
 		const assetInfo = normalizeB3Asset(reconstructedCode)
 		return {
 			asset: assetInfo.normalizedSymbol,
@@ -858,7 +859,7 @@ const collectVerticalData = (
 		const assetMatch = line.match(B3_ASSET_REGEX)
 		if (assetMatch) {
 			const reconstructed =
-				`${assetMatch[1]}${assetMatch[2] ?? ""}${assetMatch[3] ?? ""}`.toUpperCase()
+				`${assetMatch[1] ?? ""}${assetMatch[2] ?? ""}${assetMatch[3] ?? ""}`.toUpperCase()
 			assets.push({ line: i, value: reconstructed })
 			prevNumberLine = null
 			continue

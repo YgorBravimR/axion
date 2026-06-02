@@ -293,7 +293,7 @@ export const commitCandleImport = async (
 			// ON CONFLICT DO UPDATE when the same conflict key appears twice in one INSERT batch.
 			const deduped = new Map<string, (typeof rawChunk)[number]>()
 			for (const candle of rawChunk) {
-				const key = `${candle.timestamp.toISOString()}::${candle.candleIndex}`
+				const key = `${candle.timestamp.toISOString()}::${candle.candleIndex ?? 0}`
 				deduped.set(key, candle)
 			}
 			const chunk = Array.from(deduped.values())

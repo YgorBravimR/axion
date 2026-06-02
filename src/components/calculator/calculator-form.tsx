@@ -227,7 +227,7 @@ const CalculatorForm = memo(
 						{t("targetPrice")}
 						{isTargetFromStrategy && (
 							<PrefilledBadge
-								label={`${strategies.find((s) => s.id === selectedStrategyId)?.finalR}R`}
+								label={`${strategies.find((s) => s.id === selectedStrategyId)?.finalR ?? ""}R`}
 							/>
 						)}
 					</label>

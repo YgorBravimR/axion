@@ -121,7 +121,7 @@ export const fetchEconomicCalendar = async (): Promise<EconomicEvent[]> => {
 		})
 		.map(
 			(event, index): EconomicEvent => ({
-				id: `cal-${todayUTC}-${index}`,
+				id: `cal-${todayUTC ?? ""}-${index}`,
 				time: event.date,
 				country: mapCountryCode(event.country),
 				event: event.title,

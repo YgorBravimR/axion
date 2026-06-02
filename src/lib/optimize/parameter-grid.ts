@@ -269,7 +269,7 @@ const generateRecipeGrid = (
 			)
 			if (option) {
 				variant = option.applyOption(variant)
-				enumDescs.push(`${enumRanges[i]!.label}=${combo[i]}`)
+				enumDescs.push(`${enumRanges[i]!.label}=${combo[i] ?? ""}`)
 			}
 		}
 
@@ -300,7 +300,7 @@ const generateRecipeGrid = (
 				const numDescs: string[] = []
 				for (let j = 0; j < applicable.length; j++) {
 					setNestedValue(r, applicable[j]!.path, numValues[j]!)
-					numDescs.push(`${applicable[j]!.label}=${numValues[j]}`)
+					numDescs.push(`${applicable[j]!.label}=${numValues[j] ?? 0}`)
 				}
 				r.displayName = `${baseRecipe.displayName} (${[...enumDescs, ...numDescs].join(", ")})`
 				recipes.push(r)
