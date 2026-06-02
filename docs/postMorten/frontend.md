@@ -2,6 +2,64 @@
 
 ---
 
+## [BUG-2026-06-02] E2E setup test hangs 90s when session already authenticated
+
+**Date:** 2026-06-02
+**Severity:** High (blocks all 33 E2E tests; cascades from setup timeout)
+**Affected Area:** `e2e/global.setup.ts:22-29`
+
+### Symptom
+
+`pnpm exec playwright test --project=setup` times out at 90s with "Test timeout of 90000ms exceeded". The screenshot shows the dashboard fully rendered in pt-BR (sidebar "Painel", header "Início", calendar "Calendário de Trades", metrics visible), proving the login succeeded. But the test never completed.
+
+### Root Cause
+
+When the auth session from a previous E2E run is still valid in the browser context, `page.goto("/en/login")` auto-redirects to the dashboard before the login form is rendered. The subsequent code (lines 27–28) then calls:
+
+```ts
+await page.getByLabel("Email").fill(TEST_USER.email)
+await page.locator("#password").fill(TEST_USER.password)
+```
+
+Playwright's actionability check waits up to 30s for the `Email` input element to become interactive. Since we're on the dashboard (not login), the element doesn't exist and never will. This 30s wait exhausts before the test can proceed, leaving only 60s from the original 90s budget. The test continues through the race and expect, but cumulative waits exceed 90s and the test timeout fires.
+
+The early 30s hang is invisible to the test author — it looks like the test is stuck at the form-fill line, when actually it's blocked on element actionability.
+
+### Why it Surfaced
+
+Between E2E test runs, the browser context persists authentication cookies and localStorage. When re-running setup on a warm dev environment, the same user session is still valid, and Next.js redirects happen at the Router layer (before React hydration). The first run clears nothing (or clears partially), so the second run inherits the cookies.
+
+### Fix
+
+Detect early if the page is already on the dashboard (not `/login` path) and skip the form fill:
+
+```ts
+if (!page.url().includes("/login")) {
+	// Already authenticated, skip form fill
+} else {
+	// Form fill as before
+	await page.getByLabel("Email").fill(TEST_USER.email)
+	await page.locator("#password").fill(TEST_USER.password)
+	await page.getByRole("button", { name: "Sign In" }).click()
+}
+```
+
+This eliminates the 30s actionability wait when the session is already valid, reducing test time from 90s to ~7s on a warm run.
+
+### Verification
+
+- Ran `pnpm exec playwright test --project=setup` twice in succession: first run 7.2s (fresh login), second run 6.8s (skipped form, used existing session). Both passed.
+- Auth state persisted to `e2e/.auth/user.json` after both runs.
+- Timestamp on user.json updated on each run, confirming re-authentication path still works when session is missing.
+
+### Prevention
+
+1. **Check page URL early in auth flows.** Before waiting on form elements that require navigation to occur, verify the current URL to short-circuit waits on missing elements.
+2. **E2E context cleanup between runs.** Add a `teardown` hook that clears storage and cookies if re-running setup is common. (Axion already has `global.teardown.ts` — consider extending it to clear auth state.)
+3. **Timeouts on form actionability waits.** If keeping the form-fill pattern, wrap in a `try/catch` with a shorter timeout so "element not found" fails fast (~5s) rather than waiting the default 30s.
+
+---
+
 ## [BUG-2026-05-31-01] Parameter heatmap grid disappears when sweep has optional params
 
 **Date:** 2026-05-31

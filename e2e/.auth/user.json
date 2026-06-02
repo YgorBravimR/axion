@@ -2,7 +2,7 @@
 	"cookies": [
 		{
 			"name": "authjs.csrf-token",
-			"value": "a405ceadd151a81d0c60642eef9ef58a3c7756c7fc65bcde46b576ac1a2d9d3d%7C0928ab8f6fa4be6bffd2a36cd05f9cea2b4ef46cf1e324edb6bad63e10eccdc6",
+			"value": "345882a4daf36f4f6ade64bd2fc5e24016e75ba7db81a34759ec0167d5dec93c%7C31ce3d32ba00af0d3969c916daf6205ec1ced875bd871be49ab8ccbadadc86c8",
 			"domain": "localhost",
 			"path": "/",
 			"expires": -1,
@@ -12,7 +12,7 @@
 		},
 		{
 			"name": "authjs.callback-url",
-			"value": "http%3A%2F%2Flocalhost%3A3011%2Fen%2Flogin",
+			"value": "http%3A%2F%2Flocalhost%3A3011%2F",
 			"domain": "localhost",
 			"path": "/",
 			"expires": -1,
@@ -22,24 +22,24 @@
 		},
 		{
 			"name": "authjs.session-token",
-			"value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoiWDA3N3ZTak9nd1RucUh3WGlsVHhzMzhrVlZWM21BV0MwU0FZMWVPYTFlTk1RWm14dThXZ0k0RnNiZDRld0tVSnpjTTZaNm1iLWk1MEtRcTFVSUhxc2cifQ..XS_J35ZxI16rhotu9NrpIQ.F6yy2wvpszoN-qq6ltW4Bm6tgDWSQSlde-IkLVOkQFwlWCmqaoHkTaFZ0UNho0B61YO4DO-3dPZntKgtvKXSagENumlG_AwoTui62pAuh55F0UBrJzoIHRW8-nIK0IGBdeqkMC3LqjY7Z8EsHeQCBOnYXp2avPy7VQzNFjddf49rg3w6qdCJOJJu9DP8tRaf7gPCoc-Nco7kbvFySJbQzJsonHi3a6bwyp0ff5MizphCWnZIcVfSM4UT9AW4E0YZzTyo2MPRBdUISfNLp_JvfD4hGHfUechrI1_Rbpb6Cv7UzksQcFSD-CbtbXh_J3z4pvLcTQoA8wHTDAruTNvCGVNXAIeIlzlSrhxifvnRANeqpPjsvYLTr03PglkQH96fdceylOTjMxcA0zF2jWDXfQ.bFCocn2DOJwdKnBOp_z9PsrtrD7eUw5bEuioqq048I8",
+			"value": "eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwia2lkIjoiWDA3N3ZTak9nd1RucUh3WGlsVHhzMzhrVlZWM21BV0MwU0FZMWVPYTFlTk1RWm14dThXZ0k0RnNiZDRld0tVSnpjTTZaNm1iLWk1MEtRcTFVSUhxc2cifQ..i7SOjWRaz0wTajodhpQpQw.TZ-_15Fh6_tBItzaAq6Crjv_L8SYebbtZxRa0ju3DbyPX6mp1sikVLr4BJU_ziiTE8VYxa26bcze4-oklR-T4uS0Z1L2qmFGeMDFOH3376vt5j6ZZoqwqKESNFOZ2Sdiwkn07XDv420H7t-5YgsojJIwnlD-1rIKvSjBLVHM90OWpSPvLxW7-GmCWMetjHcBorEIlxnKcSLF4iN5BwKgvsyEaRyIWdmElAJB1pC8n0YwhUu9C0psLF-D2FOGhL8Sy6KHHjZYhK_TNA1A5zxZ_fK-iZWw6NLp1AezPGEVEK6QYhzF1Atd0pwKZCBm6ME-VubdBZarNOMSfVAjBcCXdSqJP2dWAUP22rtFcd6yhkBA0O027OMfEVxdKVPsUU5JS0ZE9bVn7ziGoY7tfpKvnA.1p6RMcjmpoS_S52KqLEDm9ygqzRPxloASSc1TrN0QRo",
 			"domain": "localhost",
 			"path": "/",
-			"expires": 1780076281.110927,
+			"expires": 1781005001.216307,
 			"httpOnly": true,
+			"secure": false,
+			"sameSite": "Lax"
+		},
+		{
+			"name": "NEXT_LOCALE",
+			"value": "pt-BR",
+			"domain": "localhost",
+			"path": "/",
+			"expires": -1,
+			"httpOnly": false,
 			"secure": false,
 			"sameSite": "Lax"
 		}
 	],
-	"origins": [
-		{
-			"origin": "http://localhost:3011",
-			"localStorage": [
-				{
-					"name": "theme",
-					"value": "dark"
-				}
-			]
-		}
-	]
+	"origins": []
 }
