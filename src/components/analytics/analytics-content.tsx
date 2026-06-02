@@ -253,7 +253,8 @@ const AnalyticsContent = ({
 		// applyDashboard is stable (useCallback with no deps).
 		// tagStats is intentionally excluded: we only want stale fallback in the rare cache-miss path,
 		// not re-fetch every time tagStats changes as a side-effect of a fetch.
-	}, [filterKey, applyDashboard])
+		// lastFetchedKey is state from same hook, tracked implicitly via filterKey comparison.
+	}, [filterKey, filters, groupBy, lastFetchedKey, tagStats, applyDashboard])
 
 	return (
 		<div className="space-y-l-800">

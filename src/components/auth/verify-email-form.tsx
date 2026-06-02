@@ -42,9 +42,6 @@ const VerifyEmailForm = () => {
 	// period (keyed on cooldownEpoch) and uses a functional state update so it doesn't
 	// restart every second as resendCooldown decrements.
 	useEffect(() => {
-		if (resendCooldown <= 0) {
-			return
-		}
 		const timer = setInterval(() => {
 			setResendCooldown((prev) => {
 				if (prev <= 1) {

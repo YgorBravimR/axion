@@ -285,7 +285,7 @@ const FilterPanel = ({
 	const currentFiltersMemo = useMemo(
 		() => serializeFilters(),
 
-		[filters, groupBy, expectancyMode, activePresetKey]
+		[serializeFilters]
 	)
 
 	// Count active advanced filters (excludes date since that's in the main bar)

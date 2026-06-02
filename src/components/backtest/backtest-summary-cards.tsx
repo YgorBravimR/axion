@@ -104,7 +104,7 @@ const BacktestSummaryCards = memo(
 					tone: "neutral",
 				},
 			],
-			[summary, t]
+			[summary, t, currency]
 		)
 
 		const secondaryMetrics = useMemo(

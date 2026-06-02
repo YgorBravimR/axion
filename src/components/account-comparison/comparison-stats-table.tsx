@@ -153,7 +153,7 @@ const ComparisonStatsTable = ({
 				mode: "always",
 			},
 		],
-		[t, expectancyMode]
+		[t]
 	)
 
 	const visibleMetrics = useMemo(

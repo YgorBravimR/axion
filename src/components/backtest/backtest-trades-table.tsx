@@ -268,7 +268,7 @@ const BacktestTradesTable = ({
 					]
 				: []),
 		],
-		[t, tReasons, tResults, tCommon, onTradeView, hasQuality]
+		[t, tReasons, tCommon, onTradeView, hasQuality, currency]
 	)
 
 	return (

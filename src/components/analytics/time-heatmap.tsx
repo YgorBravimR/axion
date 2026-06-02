@@ -40,14 +40,20 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 
 	const isRMode = expectancyMode === "edge"
 
-	const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-	const dayLabels = [
-		tDays("mon"),
-		tDays("tue"),
-		tDays("wed"),
-		tDays("thu"),
-		tDays("fri"),
-	]
+	const days = useMemo(
+		() => ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+		[]
+	)
+	const dayLabels = useMemo(
+		() => [
+			tDays("mon"),
+			tDays("tue"),
+			tDays("wed"),
+			tDays("thu"),
+			tDays("fri"),
+		],
+		[tDays]
+	)
 
 	// Get translated short day name from English day name
 	const getTranslatedDayShort = (dayName: string): string => {
