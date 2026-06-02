@@ -103,7 +103,7 @@ interface AggressionDualModeRule extends DualModeRule {
 // Active set: 4 HTF MAs + vwap_d_5m + ajuste_d1.
 // Deferred (probe was anti-predictive — re-probe with more data):
 //   vwap_m_5m, vwap_s_5m
-// See docs/hawks-indicator-inventory.md for reasoning.
+// See docs/hawks-strategy/indicator-inventory.md for reasoning.
 const ACTIVE_SR_LEVEL_KEYS = [
 	"mme27_60m",
 	"mme55_60m",

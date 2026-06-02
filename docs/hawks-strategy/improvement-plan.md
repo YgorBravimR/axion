@@ -59,7 +59,7 @@ ground truth that everything else depends on.
       auction prints, pre-open) or whether the user's chart skips them.
       Decide the canonical brick set and reload.
 - [ ] Re-run `scripts/check-row-spacing.ts` and confirm `row N (0-indexed) ==
-    user's box N+1 (1-indexed)` for at least three days.
+  user's box N+1 (1-indexed)` for at least three days.
 
 **Files / scripts.**
 
@@ -90,7 +90,7 @@ matches the ProfitChart indicator's painted pivots exactly.
       and the corresponding price extreme (high for TOPO, low for FUNDO).
       Compare to the indicator markers visible in the user's CSV.
 - [ ] Classification logic: confirm that `pivot[N].value > pivot[N-1].value
-    ⇒ TOPO`, else `FUNDO`. The user's CSV column should agree.
+  ⇒ TOPO`, else `FUNDO`. The user's CSV column should agree.
 - [ ] Document the indicator's 2-brick-confirmation rule in
       [`docs/gotchas.md`](gotchas.md) so future agents don't fight it.
 
