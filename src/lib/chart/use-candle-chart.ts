@@ -102,13 +102,14 @@ const useCandleChart = ({
 
 		chartRef.current = chart
 		candleSeriesRef.current = candleSeries
+		const indicatorSeriesMap = indicatorSeriesRef.current
 
 		return () => {
 			chart.remove()
 			chartRef.current = null
 			candleSeriesRef.current = null
 
-			indicatorSeriesRef.current.clear()
+			indicatorSeriesMap.clear()
 		}
 	}, [containerRef])
 

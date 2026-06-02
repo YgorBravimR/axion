@@ -250,7 +250,6 @@ const FilterPanel = ({
 	const tTrade = useTranslations("trade")
 	const {
 		filters,
-		groupBy,
 		expectancyMode,
 		activePresetKey,
 		setDatePreset,

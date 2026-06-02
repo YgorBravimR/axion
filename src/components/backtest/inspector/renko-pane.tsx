@@ -148,9 +148,9 @@ const RenkoPane = ({
 		})
 		chartRef.current = chart
 		candleSeriesRef.current = candleSeries
+		const indicatorSeriesMap = indicatorSeriesRef.current
 
 		return () => {
-			const indicatorSeriesMap = indicatorSeriesRef.current
 			chart.remove()
 			chartRef.current = null
 			candleSeriesRef.current = null
