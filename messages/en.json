@@ -5091,10 +5091,7 @@
 		"bulkSelectionCount": "{count, plural, one {# run selected} other {# runs selected}}",
 		"bulkClearSelection": "Clear selection",
 		"bulkDeleteSelected": "{count, plural, one {Delete selected (#)} other {Delete selected (#)}}",
-		"bulkDeleteConfirmTitle": "{count, plural, one {Delete selected run?} other {Delete selected runs?}}",
-		"bulkDeleteConfirmDescription": "{count, plural, one {Remove # selected run and its trade history from this browser. This cannot be undone — re-run the sweep to regenerate the data.} other {Remove # selected runs and their trade history from this browser. This cannot be undone — re-run the sweeps to regenerate the data.}}",
-		"bulkDeleteConfirmCancel": "{count, plural, one {Keep run} other {Keep runs}}",
-		"bulkDeleteConfirmAction": "{count, plural, one {Delete selected} other {Delete selected}}",
+		"bulkRunsDeletedToast": "{count, plural, one {1 run deleted} other {# runs deleted}}",
 		"selectRow": "Select run",
 		"selectAllRows": "Select all runs",
 		"postRefineHint": {

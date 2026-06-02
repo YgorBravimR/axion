@@ -230,7 +230,6 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	const [selectedRunIds, setSelectedRunIds] = useState<Set<string>>(
 		() => new Set()
 	)
-	const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
 	const [robustFilterEnabled, setRobustFilterEnabled] = useState(false)
 	// Funnel state — set when the user clicks "Breed selected" on the Pareto scatter.
 	// `null` = ad-hoc sweep (no journey). Cleared on sweep completion.
@@ -796,14 +795,42 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		setSelectedRunIds(new Set())
 	}, [])
 
-	const handleConfirmBulkDelete = useCallback(() => {
-		setRuns((prev) => prev.filter((r) => !selectedRunIds.has(r.id)))
-		if (expandedRunId !== null && selectedRunIds.has(expandedRunId)) {
+	// Bulk delete: capture each removed run + its original index, delete
+	// immediately, and surface an undo toast. Restoration order is ascending
+	// by index — when each splice runs, all earlier-indexed restorations are
+	// already back in place, so the captured indices line up exactly.
+	const handleBulkDelete = useCallback(() => {
+		if (selectedRunIds.size === 0) {
+			return
+		}
+		const removed: Array<{ run: OptimizationRun; index: number }> = []
+		for (const [index, run] of runs.entries()) {
+			if (selectedRunIds.has(run.id)) {
+				removed.push({ run, index })
+			}
+		}
+		if (removed.length === 0) {
+			return
+		}
+		const selectedSnapshot = selectedRunIds
+		setRuns((prev) => prev.filter((r) => !selectedSnapshot.has(r.id)))
+		if (expandedRunId !== null && selectedSnapshot.has(expandedRunId)) {
 			setExpandedRunId(null)
 		}
 		setSelectedRunIds(new Set())
-		setBulkDeleteDialogOpen(false)
-	}, [selectedRunIds, expandedRunId])
+		showToast("info", t("bulkRunsDeletedToast", { count: removed.length }), {
+			label: t("undo"),
+			onClick: () => {
+				setRuns((prev) => {
+					const next = [...prev]
+					for (const { run, index } of removed) {
+						next.splice(index, 0, run)
+					}
+					return next
+				})
+			},
+		})
+	}, [runs, selectedRunIds, expandedRunId, showToast, t])
 
 	const handleToggleExpand = useCallback((runId: string) => {
 		setExpandedRunId((prev) => (prev === runId ? null : runId))
@@ -1628,7 +1655,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 														id="bulk-delete-trigger"
 														variant="ghost"
 														size="sm"
-														onClick={() => setBulkDeleteDialogOpen(true)}
+														onClick={handleBulkDelete}
 														className="text-fb-error gap-s-200"
 													>
 														<Trash2
@@ -1731,36 +1758,6 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					)}
 				</div>
 			</div>
-
-			<AlertDialog
-				open={bulkDeleteDialogOpen}
-				onOpenChange={setBulkDeleteDialogOpen}
-			>
-				<AlertDialogContent size="sm">
-					<AlertDialogHeader>
-						<AlertDialogTitle>
-							{t("bulkDeleteConfirmTitle", { count: selectedRunIds.size })}
-						</AlertDialogTitle>
-						<AlertDialogDescription>
-							{t("bulkDeleteConfirmDescription", {
-								count: selectedRunIds.size,
-							})}
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel id="cancel-bulk-delete">
-							{t("bulkDeleteConfirmCancel", { count: selectedRunIds.size })}
-						</AlertDialogCancel>
-						<AlertDialogAction
-							id="confirm-bulk-delete"
-							onClick={handleConfirmBulkDelete}
-							variant="destructive"
-						>
-							{t("bulkDeleteConfirmAction", { count: selectedRunIds.size })}
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
 
 			<FreezeHeroModal
 				open={freezeRunId !== null}

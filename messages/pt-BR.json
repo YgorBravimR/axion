@@ -5091,10 +5091,7 @@
 		"bulkSelectionCount": "{count, plural, one {# execução selecionada} other {# execuções selecionadas}}",
 		"bulkClearSelection": "Limpar seleção",
 		"bulkDeleteSelected": "{count, plural, one {Apagar selecionada (#)} other {Apagar selecionadas (#)}}",
-		"bulkDeleteConfirmTitle": "{count, plural, one {Apagar execução selecionada?} other {Apagar execuções selecionadas?}}",
-		"bulkDeleteConfirmDescription": "{count, plural, one {Remove # execução selecionada e o histórico de trades deste navegador. A ação não pode ser desfeita — rode a varredura novamente para gerar os dados.} other {Remove # execuções selecionadas e o histórico de trades deste navegador. A ação não pode ser desfeita — rode as varreduras novamente para gerar os dados.}}",
-		"bulkDeleteConfirmCancel": "{count, plural, one {Manter execução} other {Manter execuções}}",
-		"bulkDeleteConfirmAction": "{count, plural, one {Apagar selecionada} other {Apagar selecionadas}}",
+		"bulkRunsDeletedToast": "{count, plural, one {1 execução apagada} other {# execuções apagadas}}",
 		"selectRow": "Selecionar execução",
 		"selectAllRows": "Selecionar todas as execuções",
 		"postRefineHint": {
