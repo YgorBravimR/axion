@@ -729,6 +729,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		t,
 		refineState,
 		runs,
+		formatNumber,
 	])
 
 	const handleCancelSweep = useCallback(() => {

@@ -11,6 +11,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import type { BacktestTrade } from "@/types/backtest"
 import { TIER_TONE } from "./backtest-tier-breakdown"
 import { BacktestQualityDrawer } from "./backtest-quality-drawer"
+import { useFormatting } from "@/hooks/use-formatting"
 
 interface BacktestTradesTableProps {
 	trades: BacktestTrade[]
@@ -24,6 +25,7 @@ const BacktestTradesTable = ({
 	onTradeView,
 }: BacktestTradesTableProps) => {
 	const t = useTranslations("backtest.table")
+	const { formatNumber } = useFormatting()
 	const tReasons = useTranslations("backtest.exitReasons")
 	const tResults = useTranslations("backtest.results")
 	const tCommon = useTranslations("common")
@@ -155,7 +157,7 @@ const BacktestTradesTable = ({
 				header: () => <span className="flex justify-end">{t("entry")}</span>,
 				cell: ({ row }) => (
 					<span className="text-txt-100 flex justify-end font-mono">
-						{row.original.entryPrice.toLocaleString()}
+						{formatNumber(row.original.entryPrice)}
 					</span>
 				),
 			},
@@ -164,7 +166,7 @@ const BacktestTradesTable = ({
 				header: () => <span className="flex justify-end">{t("exit")}</span>,
 				cell: ({ row }) => (
 					<span className="text-txt-100 flex justify-end font-mono">
-						{row.original.exitPrice.toLocaleString()}
+						{formatNumber(row.original.exitPrice)}
 					</span>
 				),
 			},
@@ -268,7 +270,7 @@ const BacktestTradesTable = ({
 					]
 				: []),
 		],
-		[t, tReasons, tCommon, onTradeView, hasQuality, currency]
+		[t, tReasons, tCommon, onTradeView, hasQuality, currency, formatNumber]
 	)
 
 	return (

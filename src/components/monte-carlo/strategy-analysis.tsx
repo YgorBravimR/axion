@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils"
 import { formatR } from "@/lib/formatting"
 import { generateAnalysisInsights } from "@/lib/monte-carlo"
 import type { MonteCarloResult } from "@/types/monte-carlo"
+import { useFormatting } from "@/hooks/use-formatting"
 
 interface StrategyAnalysisProps {
 	result: MonteCarloResult
@@ -121,6 +122,7 @@ const getWinRateLabelKey = (winRate: number): string => {
 
 export const StrategyAnalysis = memo(({ result }: StrategyAnalysisProps) => {
 	const t = useTranslations("monteCarlo.analysis")
+	const { formatNumber } = useFormatting()
 	const { statistics: stats, params } = result
 	const insights = useMemo(() => generateAnalysisInsights(result), [result])
 
@@ -146,7 +148,7 @@ export const StrategyAnalysis = memo(({ result }: StrategyAnalysisProps) => {
 				<Section icon={BarChart3} title={t("monteCarlo")}>
 					<p className="text-small text-txt-300">
 						{t("basedOnSimulations", {
-							count: params.simulationCount.toLocaleString(),
+							count: formatNumber(params.simulationCount),
 						})}
 					</p>
 					<ul className="space-y-s-100 text-small text-txt-200">

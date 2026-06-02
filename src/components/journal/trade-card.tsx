@@ -9,6 +9,7 @@ import {
 	TrendingUp,
 } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { useFormatting } from "@/hooks/use-formatting"
 import { cn } from "@/lib/utils"
 import { formatDateTime } from "@/lib/dates"
 import { formatCurrency } from "@/lib/calculations"
@@ -25,6 +26,7 @@ interface TradeCardProps {
 
 export const TradeCard = memo(({ trade, className }: TradeCardProps) => {
 	const t = useTranslations("trade")
+	const { formatNumber } = useFormatting()
 
 	// pnl is stored in cents, convert to dollars for display
 	const pnl = fromCents(trade.pnl)
@@ -186,7 +188,7 @@ export const TradeCard = memo(({ trade, className }: TradeCardProps) => {
 					<div>
 						<span className="text-tiny text-txt-300">{t("size")}</span>
 						<p className="text-small text-txt-100">
-							{Number(trade.positionSize).toLocaleString()}
+							{formatNumber(Number(trade.positionSize))}
 						</p>
 					</div>
 				</div>

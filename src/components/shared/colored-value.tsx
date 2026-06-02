@@ -70,7 +70,7 @@ const ColoredValueInner = ({
 				return `${sign}${absValue.toFixed(2)}R`
 			case "number":
 			default:
-				return `${sign}${absValue.toLocaleString()}`
+				return `${sign}${absValue.toLocaleString("pt-BR")}`
 		}
 	}
 

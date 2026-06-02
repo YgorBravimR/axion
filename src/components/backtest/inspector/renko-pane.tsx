@@ -23,6 +23,7 @@ import type {
 import { getChartThemeColors } from "@/lib/chart/theme-colors"
 import type { BrickChartSeries } from "@/lib/renko/bricks-to-chart"
 import type { ProjectedDrawings } from "@/components/dev/hawks-drawings"
+import { useFormatting } from "@/hooks/use-formatting"
 
 interface IndicatorOverlay {
 	readonly key: string
@@ -93,6 +94,7 @@ const RenkoPane = ({
 	className,
 }: RenkoPaneProps) => {
 	const containerRef = useRef<HTMLDivElement>(null)
+	const { formatNumber } = useFormatting()
 	const chartRef = useRef<IChartApi | null>(null)
 	const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null)
 	const indicatorSeriesRef = useRef<Map<string, ISeriesApi<"Line">>>(new Map())
@@ -322,7 +324,7 @@ const RenkoPane = ({
 				position: isLong ? "belowBar" : "aboveBar",
 				color: entryColor,
 				shape: isLong ? "arrowUp" : "arrowDown",
-				text: `entry ${trade.entryPrice.toLocaleString()}`,
+				text: `entry ${formatNumber(trade.entryPrice)}`,
 			},
 			{
 				time: trade.exitBrickIdx as UTCTimestamp,
@@ -332,12 +334,12 @@ const RenkoPane = ({
 				// LONG exit (above bar): arrowDown points into the bar from above.
 				// SHORT exit (below bar): arrowUp points into the bar from below.
 				shape: isLong ? "arrowDown" : "arrowUp",
-				text: `exit ${trade.exitPrice.toLocaleString()}`,
+				text: `exit ${formatNumber(trade.exitPrice)}`,
 			},
 		]
 		markers.sort((m1, m2) => (m1.time as number) - (m2.time as number))
 		markersPluginRef.current.setMarkers(markers)
-	}, [trade, theme, markerColorMode, series])
+	}, [trade, theme, markerColorMode, series, formatNumber])
 
 	// Optional histogram sub-pane (e.g., MACD). Mounted at paneIndex 1 so it
 	// shares the time axis with the price pane above. Per-point `color` on each
