@@ -77,6 +77,7 @@
 		"winRateAbbr": "TA",
 		"clearFile": "Limpar arquivo",
 		"dismiss": "Dispensar",
+		"stackedCount": "{count, plural, one {1 notificação} other {# notificações}}",
 		"actionCannotBeUndone": "Esta ação não pode ser desfeita.",
 		"sortBy": "Ordenar por {column}",
 		"breadcrumb": "Navegação",
