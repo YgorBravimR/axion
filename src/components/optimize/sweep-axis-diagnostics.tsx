@@ -205,66 +205,63 @@ const SweepAxisDiagnostics = ({
 					)
 				})}
 			</ul>
-			{breakdown &&
-				breakdown.raw > 0 &&
-				breakdown.valid < breakdown.raw &&
-				formatNumber(
-					<div className="border-warning/40 bg-warning/5 space-y-s-200 mt-s-200 p-s-200 rounded-md border">
-						<div className="text-tiny text-warning font-medium">
-							{t("dropsHeader", {
-								dropped: breakdown.raw - breakdown.valid,
-								raw: formatNumber(breakdown.raw),
-							})}
-						</div>
-						<ul className="space-y-s-200 text-tiny">
-							{Array.from(breakdown.droppedByReason.entries()).map(
-								([reason, count]) => {
-									const fixable = hasRemediation(reason)
-									return (
-										<li key={reason} className="space-y-s-100">
-											<div className="gap-s-200 flex items-baseline justify-between">
-												<span className="text-txt-200 truncate">
-													{tInvariant(reason)}
-												</span>
-												<span className="text-warning shrink-0 font-medium tabular-nums">
-													−{formatNumber(count)}
-												</span>
-											</div>
-											{fixable && onSelectionsChange && (
-												<Button
-													id={`fix-${reason}`}
-													type="button"
-													size="sm"
-													variant="outline"
-													onClick={() => handleFix(reason)}
-													className="gap-s-100 w-full"
-												>
-													<Wrench className="h-3 w-3" aria-hidden="true" />
-													{t("fixReasonCta", {
-														reason: tInvariant(reason),
-													})}
-												</Button>
-											)}
-										</li>
-									)
-								}
-							)}
-						</ul>
-						{onSelectionsChange && fixableReasons.length >= 2 && (
-							<Button
-								id="fix-all-validators"
-								type="button"
-								size="sm"
-								variant="default"
-								onClick={handleFixAll}
-								className="gap-s-100 mt-s-100 w-full"
-							>
-								<Sparkles className="h-3 w-3" aria-hidden="true" />
-								{t("fixAllCta", { count: fixableReasons.length })}
-							</Button>
-						)}
+			{breakdown && breakdown.raw > 0 && breakdown.valid < breakdown.raw && (
+				<div className="border-warning/40 bg-warning/5 space-y-s-200 mt-s-200 p-s-200 rounded-md border">
+					<div className="text-tiny text-warning font-medium">
+						{t("dropsHeader", {
+							dropped: breakdown.raw - breakdown.valid,
+							raw: formatNumber(breakdown.raw),
+						})}
 					</div>
-				)}
+					<ul className="space-y-s-200 text-tiny">
+						{Array.from(breakdown.droppedByReason.entries()).map(
+							([reason, count]) => {
+								const fixable = hasRemediation(reason)
+								return (
+									<li key={reason} className="space-y-s-100">
+										<div className="gap-s-200 flex items-baseline justify-between">
+											<span className="text-txt-200 truncate">
+												{tInvariant(reason)}
+											</span>
+											<span className="text-warning shrink-0 font-medium tabular-nums">
+												−{formatNumber(count)}
+											</span>
+										</div>
+										{fixable && onSelectionsChange && (
+											<Button
+												id={`fix-${reason}`}
+												type="button"
+												size="sm"
+												variant="outline"
+												onClick={() => handleFix(reason)}
+												className="gap-s-100 w-full"
+											>
+												<Wrench className="h-3 w-3" aria-hidden="true" />
+												{t("fixReasonCta", {
+													reason: tInvariant(reason),
+												})}
+											</Button>
+										)}
+									</li>
+								)
+							}
+						)}
+					</ul>
+					{onSelectionsChange && fixableReasons.length >= 2 && (
+						<Button
+							id="fix-all-validators"
+							type="button"
+							size="sm"
+							variant="default"
+							onClick={handleFixAll}
+							className="gap-s-100 mt-s-100 w-full"
+						>
+							<Sparkles className="h-3 w-3" aria-hidden="true" />
+							{t("fixAllCta", { count: fixableReasons.length })}
+						</Button>
+					)}
+				</div>
+			)}
 			{onSelectionsChange &&
 				lockedGroups.map((group) => {
 					const ownerLeaf = leafByPath.get(group.ownerPath)
