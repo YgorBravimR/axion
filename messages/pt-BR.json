@@ -5107,6 +5107,7 @@
 		"exportCsvTitle": "Baixar métricas resumidas por execução em CSV (amigável ao Excel)",
 		"noRuns": "Nenhuma execução ainda",
 		"sweepOverLimit": "Combinações demais (máx {max})",
+		"recipesDeduped": "Pulou {dropped} de {total} receitas duplicadas",
 		"sweepComplete": "{total} execuções concluídas em {seconds}s",
 		"sweepError": "Erro na varredura: {message}",
 		"sweepCancelled": "Varredura cancelada após {count} execuções",

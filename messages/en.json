@@ -5107,6 +5107,7 @@
 		"exportCsvTitle": "Download summary metrics per run as CSV (Excel-friendly)",
 		"noRuns": "No runs yet",
 		"sweepOverLimit": "Too many combinations (max {max})",
+		"recipesDeduped": "Skipped {dropped} of {total} duplicate recipes",
 		"sweepComplete": "{total} runs completed in {seconds}s",
 		"sweepError": "Sweep error: {message}",
 		"sweepCancelled": "Sweep cancelled after {count} runs",

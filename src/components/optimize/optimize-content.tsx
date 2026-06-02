@@ -94,6 +94,7 @@ import {
 } from "@/lib/optimize/grid-conditional"
 import { deriveInitialSelections } from "@/lib/optimize/recipe-to-selections"
 import { recipeFromCombo } from "@/lib/optimize/recipe-from-combo"
+import { dedupeRecipes } from "@/lib/optimize/recipe-dedup"
 import { buildKParentNeighborhood } from "@/lib/optimize/refine-neighborhood"
 import { mintJourneyId, backfillJourneyId } from "@/lib/optimize/journey"
 import { useHeroPresets } from "@/lib/optimize/use-hero-presets"
@@ -604,7 +605,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			}
 		}
 
-		const recipes = useInlineGrid
+		const rawRecipes = useInlineGrid
 			? generateConditionalGrid(
 					inlineSweepBundle!.leaves,
 					leafSelections!,
@@ -612,6 +613,18 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					inlineSweepBundle!.validators
 				).map((combo) => recipeFromCombo(recipe, combo))
 			: generateRecipeGrid(recipe, activeRanges)
+
+		// Drop structurally identical recipes before dispatch — K-parent
+		// refine neighborhoods routinely emit 100+ duplicates from degenerate
+		// axes, which the engine would otherwise re-run for no new signal.
+		const { unique: recipes, droppedCount } = dedupeRecipes(rawRecipes)
+		if (droppedCount > 0) {
+			showToast(
+				"info",
+				t("recipesDeduped", { dropped: droppedCount, total: rawRecipes.length })
+			)
+		}
+
 		setIsSweeping(true)
 		setSweepProgress({ current: 0, total: recipes.length })
 
