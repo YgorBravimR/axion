@@ -2257,6 +2257,15 @@
 			"strategyLive": "Strategy has trades attached — create a new version to change its conditions",
 			"invalidInput": "Invalid input"
 		},
+		"conditionErrors": {
+			"validationFailed": "Validation failed.",
+			"duplicateName": "A condition with this name already exists.",
+			"createFailed": "Failed to create condition.",
+			"notFound": "Condition not found.",
+			"updateFailed": "Failed to update condition.",
+			"fetchFailed": "Failed to retrieve conditions.",
+			"deleteFailed": "Failed to delete condition."
+		},
 		"yourStrategies": "Your Strategies",
 		"newStrategy": "New Strategy",
 		"addStrategy": "Add Strategy",
@@ -4142,6 +4151,11 @@
 		"redirecting": "Redirecting to dashboard..."
 	},
 	"imports": {
+		"ocr": {
+			"bulkSuccess": "Successfully imported {count, plural, =1 {1 trade} other {# trades}}.",
+			"bulkPartial": "Imported {success, plural, =1 {1 trade} other {# trades}}, {failed, plural, =1 {1 failed} other {# failed}}.",
+			"bulkError": "Failed to import trades from OCR data."
+		},
 		"title": "Import Broker Statement",
 		"description": "Upload a trade statement from your broker to import with exact execution prices and quantities",
 		"broker": "Broker",

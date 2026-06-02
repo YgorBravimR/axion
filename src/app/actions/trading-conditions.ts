@@ -1,5 +1,6 @@
 "use server"
 
+import { getTranslations } from "next-intl/server"
 import { invalidatePlaybookData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
 import { tradingConditions } from "@/db/schema"
@@ -21,6 +22,7 @@ import {
 export const createCondition = async (
 	input: CreateConditionInput
 ): Promise<ActionResponse<TradingCondition>> => {
+	const t = await getTranslations("playbook.conditionErrors")
 	try {
 		const { userId } = await requireAuth()
 		const validated = createConditionSchema.parse(input)
@@ -46,7 +48,7 @@ export const createCondition = async (
 		if (error instanceof z.ZodError) {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: t("validationFailed"),
 				errors: [{ code: "VALIDATION_ERROR", detail: error.message }],
 			}
 		}
@@ -54,7 +56,7 @@ export const createCondition = async (
 		if (error instanceof Error && error.message.includes("unique")) {
 			return {
 				status: "error",
-				message: "A condition with this name already exists",
+				message: t("duplicateName"),
 				errors: [
 					{
 						code: "DUPLICATE_CONDITION",
@@ -66,7 +68,7 @@ export const createCondition = async (
 
 		return {
 			status: "error",
-			message: "Failed to create condition",
+			message: t("createFailed"),
 			errors: [
 				{
 					code: "CREATE_FAILED",
@@ -84,6 +86,7 @@ export const updateCondition = async (
 	id: string,
 	input: Partial<CreateConditionInput>
 ): Promise<ActionResponse<TradingCondition>> => {
+	const t = await getTranslations("playbook.conditionErrors")
 	try {
 		const { userId } = await requireAuth()
 
@@ -97,7 +100,7 @@ export const updateCondition = async (
 		if (!existing) {
 			return {
 				status: "error",
-				message: "Condition not found",
+				message: t("notFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Condition does not exist" }],
 			}
 		}
@@ -128,7 +131,7 @@ export const updateCondition = async (
 		if (error instanceof Error && error.message.includes("unique")) {
 			return {
 				status: "error",
-				message: "A condition with this name already exists",
+				message: t("duplicateName"),
 				errors: [
 					{
 						code: "DUPLICATE_CONDITION",
@@ -140,7 +143,7 @@ export const updateCondition = async (
 
 		return {
 			status: "error",
-			message: "Failed to update condition",
+			message: t("updateFailed"),
 			errors: [
 				{
 					code: "UPDATE_FAILED",
@@ -157,6 +160,7 @@ export const updateCondition = async (
 export const getConditions = async (
 	category?: ConditionCategory
 ): Promise<ActionResponse<TradingCondition[]>> => {
+	const t = await getTranslations("playbook.conditionErrors")
 	try {
 		const { userId } = await requireAuth()
 
@@ -184,7 +188,7 @@ export const getConditions = async (
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to retrieve conditions",
+			message: t("fetchFailed"),
 			errors: [
 				{
 					code: "FETCH_FAILED",
@@ -205,6 +209,7 @@ export const getConditions = async (
 export const deleteCondition = async (
 	id: string
 ): Promise<ActionResponse<void>> => {
+	const t = await getTranslations("playbook.conditionErrors")
 	try {
 		const { userId } = await requireAuth()
 
@@ -218,7 +223,7 @@ export const deleteCondition = async (
 		if (!existing) {
 			return {
 				status: "error",
-				message: "Condition not found",
+				message: t("notFound"),
 				errors: [{ code: "NOT_FOUND", detail: "Condition does not exist" }],
 			}
 		}
@@ -239,7 +244,7 @@ export const deleteCondition = async (
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to delete condition",
+			message: t("deleteFailed"),
 			errors: [
 				{
 					code: "DELETE_FAILED",

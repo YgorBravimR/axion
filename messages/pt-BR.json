@@ -2257,6 +2257,15 @@
 			"strategyLive": "Estratégia possui trades vinculados — crie uma nova versão para alterar as condições",
 			"invalidInput": "Entrada inválida"
 		},
+		"conditionErrors": {
+			"validationFailed": "Falha na validação.",
+			"duplicateName": "Já existe uma condição com este nome.",
+			"createFailed": "Falha ao criar condição.",
+			"notFound": "Condição não encontrada.",
+			"updateFailed": "Falha ao atualizar condição.",
+			"fetchFailed": "Falha ao buscar condições.",
+			"deleteFailed": "Falha ao excluir condição."
+		},
 		"yourStrategies": "Suas Estratégias",
 		"newStrategy": "Nova Estratégia",
 		"addStrategy": "Adicionar Estratégia",
@@ -4142,6 +4151,11 @@
 		"redirecting": "Redirecionando para o dashboard..."
 	},
 	"imports": {
+		"ocr": {
+			"bulkSuccess": "Importado com sucesso: {count, plural, =1 {1 trade} other {# trades}}.",
+			"bulkPartial": "Importados {success, plural, =1 {1 trade} other {# trades}}, {failed, plural, =1 {1 falhou} other {# falharam}}.",
+			"bulkError": "Falha ao importar trades dos dados de OCR."
+		},
 		"title": "Importar Extrato da Corretora",
 		"description": "Envie um extrato de operações da sua corretora para importar com preços e quantidades exatas",
 		"broker": "Corretora",
