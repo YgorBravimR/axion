@@ -72,7 +72,9 @@
 			"pickColor": "Pick a color",
 			"toggleFormat": "Toggle between HEX and RGB input",
 			"hexValue": "Hex color value",
-			"rgbValue": "RGB color value"
+			"rgbValue": "RGB color value",
+			"modeHex": "HEX",
+			"modeRgb": "RGB"
 		},
 		"winRateAbbr": "WR",
 		"clearFile": "Clear file",
@@ -1686,6 +1688,8 @@
 		},
 		"nota": {
 			"title": "Nota de Corretagem",
+			"creditIndicator": "C",
+			"debitIndicator": "D",
 			"description": "Import fills from your brokerage note (SINACOR PDF) to enrich existing trades with individual execution data.",
 			"dropHere": "Drop your Nota de Corretagem PDF here",
 			"orClick": "or click to browse",
@@ -5721,6 +5725,8 @@
 		"monthlyDarf": {
 			"cardTitle": "Monthly DARF",
 			"inCourseLabel": "In Progress",
+			"darfLabel": "DARF",
+			"previewLabel": "Preview",
 			"propAccountNote": "N/A — Prop Account. IR is the broker/desk's responsibility.",
 			"tableAriaLabel": "DARF Breakdown",
 			"rows": {

@@ -72,7 +72,9 @@
 			"pickColor": "Escolher uma cor",
 			"toggleFormat": "Alternar entre entrada HEX e RGB",
 			"hexValue": "Valor da cor em Hex",
-			"rgbValue": "Valor da cor em RGB"
+			"rgbValue": "Valor da cor em RGB",
+			"modeHex": "HEX",
+			"modeRgb": "RGB"
 		},
 		"winRateAbbr": "TA",
 		"clearFile": "Limpar arquivo",
@@ -1686,6 +1688,8 @@
 		},
 		"nota": {
 			"title": "Nota de Corretagem",
+			"creditIndicator": "C",
+			"debitIndicator": "D",
 			"description": "Importe as execuções da sua nota de corretagem (PDF SINACOR) para enriquecer trades existentes com dados individuais de execução.",
 			"dropHere": "Arraste o PDF da Nota de Corretagem aqui",
 			"orClick": "ou clique para selecionar",
@@ -5721,6 +5725,8 @@
 		"monthlyDarf": {
 			"cardTitle": "DARF do Mês",
 			"inCourseLabel": "Em curso",
+			"darfLabel": "DARF",
+			"previewLabel": "Prévia",
 			"propAccountNote": "N/A — Conta Prop. O IR é responsabilidade da corretora/mesa.",
 			"tableAriaLabel": "Detalhamento DARF",
 			"rows": {

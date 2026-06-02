@@ -574,7 +574,9 @@ export const NotaImport = () => {
 										{parseResult.netTotal.toLocaleString(locale, {
 											minimumFractionDigits: 2,
 										})}{" "}
-										{parseResult.netTotalDebitCredit === "C" ? "C" : "D"}
+										{parseResult.netTotalDebitCredit === "C"
+											? t("creditIndicator")
+											: t("debitIndicator")}
 									</span>
 								</div>
 							</div>

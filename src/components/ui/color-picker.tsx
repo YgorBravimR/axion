@@ -283,7 +283,7 @@ const ColorPicker = ({
 						className="border-bg-300 px-s-200 py-s-100 text-tiny text-txt-200 hover:bg-bg-300 shrink-0 rounded-sm border font-mono transition-colors"
 						aria-label={t("toggleFormat")}
 					>
-						{inputMode === "hex" ? "HEX" : "RGB"}
+						{inputMode === "hex" ? t("modeHex") : t("modeRgb")}
 					</button>
 					{inputMode === "hex" ? (
 						<Input

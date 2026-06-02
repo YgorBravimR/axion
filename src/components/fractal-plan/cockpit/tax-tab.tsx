@@ -145,7 +145,7 @@ const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 									})}
 								</span>
 								<span className="text-small text-txt-200 font-mono tabular-nums">
-									{isFinal ? "DARF" : "Prévia"}:{" "}
+									{isFinal ? t("darfLabel") : t("previewLabel")}:{" "}
 									{(row.darfDueCents / 100).toLocaleString("pt-BR", {
 										style: "currency",
 										currency: "BRL",
