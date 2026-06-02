@@ -235,6 +235,20 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Date logged**: 2026-05-15.
 - **Source**: `src/components/ui/segmented-toggle.tsx` — Command Center sweep follow-up.
 
+### `no-unnecessary-condition` is OFF by design — don't re-enable
+
+- **What**: `@typescript-eslint/no-unnecessary-condition` is set to `"off"` in `eslint.config.strict.mjs` (line ~49). At first glance it looks like a useful rule (catches dead checks) but in this codebase it's high-noise-low-signal — an exhaustive sample of 292 flagged sites in 2026-06 found nearly all were legitimate defensive patterns: optional chains against external data shapes, `??` fallbacks for partial-fetch results, discriminated-union exhaustive checks, and numeric `0`-falsy business-logic guards (prices, lots, counts where `0` is meaningful but TS narrows to `number`).
+- **What to do**: Don't re-enable the rule. If you write a guard the rule WOULD have flagged, that's fine — the type system can't see runtime contract violations, partial-data states, or business-zero values. If you spot a truly-dead check in a code review, just remove it; you don't need the linter to find it. The `no-unsafe-*` family stays on because those are security-adjacent.
+- **Date logged**: 2026-06-02.
+- **Source**: feat/optimize-phase-1-trust-foundations lint cleanup pass — three agent sweeps confirmed the rule's signal-to-noise inversion in this codebase.
+
+### Tier-1 lint config doesn't load every plugin Tier-2 does — disable-comments are tier-asymmetric
+
+- **What**: `eslint.config.mjs` (Tier-1, fast, pre-commit) loads `@typescript-eslint`, `react-hooks`, `drizzle`, `axion`, etc. — but NOT `@eslint-react/eslint-plugin` (which Tier-2 strict adds) and NOT any of the type-checked rules (which require `projectService` and slow Tier-1 to a crawl). Two consequences: (1) a `// eslint-disable-next-line @eslint-react/no-array-index-key -- WHY` comment passes Tier-2 but Tier-1 errors with "Definition for rule `@eslint-react/no-array-index-key` was not found". (2) A `// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- WHY` comment is valid in Tier-2 but the directive looks "unused" in Tier-1, which would fire `reportUnusedDisableDirectives`.
+- **What to do**: For plugins-not-in-Tier-1 rules (anything `@eslint-react/*`), don't use disable-comments — refactor the code instead (e.g. precompute a slot-id array `Array.from(N, (_, i) => \`prefix-${i}\`)`keyed on`cell.id`, so the rule never fires). For Tier-1-known plugins (`@typescript-eslint/_`, `react-hooks/_`), disable-comments work, AND `eslint.config.mjs`now has`linterOptions.reportUnusedDisableDirectives: "off"` so Tier-1 doesn't false-positive on strict-only rule references.
+- **Date logged**: 2026-06-02.
+- **Source**: feat/optimize-phase-1-trust-foundations parallel agent pass — Agent 1 wrote disable comments using the strict-tier rule namespace, pre-commit blocked the commit with 4 unknown-rule errors.
+
 ### `pnpm exec tsc --noEmit` catches things `next dev` + `pnpm lint:strict` silently allow
 
 - **What**: Next dev mode strips types with SWC (no type-check), and `pnpm lint:strict` uses ESLint with type-aware rules but does **not** run a full `tsc` pass. The husky pre-push hook _does_ run `pnpm exec tsc --noEmit`. Net effect: a branch can look green in dev + look green in `lint:strict` and still fail pre-push. Hit during the manifesto-filing push on 2026-05-20 — ten TS errors had been on `feat/hawks-mode-v0` for ~3 commits (wrong Drizzle column name `currency` instead of `defaultCurrency`, missing lucide-react icon imports, missing component props) because no one ran `tsc --noEmit` between landing and pushing.
