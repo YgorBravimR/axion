@@ -5619,6 +5619,15 @@
 		}
 	},
 	"tax": {
+		"errors": {
+			"accountNotFound": "Account not found.",
+			"taxDisabled": "Tax estimates are disabled for this account.",
+			"ledgerNotFound": "Could not compute ledger row.",
+			"invalidInput": "Invalid input.",
+			"invalidMonthFormat": "Invalid month format.",
+			"monthInProgress": "Month still in progress — DARF can only be marked after the last day of the month.",
+			"ledgerRowNotFoundForMonth": "Ledger row not found for month."
+		},
 		"annualSummary": {
 			"title": "Annual Summary {year}",
 			"tableAriaLabel": "Tax summary {year}",

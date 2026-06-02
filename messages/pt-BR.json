@@ -5619,6 +5619,15 @@
 		}
 	},
 	"tax": {
+		"errors": {
+			"accountNotFound": "Conta não encontrada.",
+			"taxDisabled": "Estimativas de impostos estão desativadas para esta conta.",
+			"ledgerNotFound": "Não foi possível calcular a linha do ledger.",
+			"invalidInput": "Entrada inválida.",
+			"invalidMonthFormat": "Formato de mês inválido.",
+			"monthInProgress": "Mês ainda em curso — DARF só pode ser marcada após o último dia do mês.",
+			"ledgerRowNotFoundForMonth": "Linha do ledger não encontrada para este mês."
+		},
 		"annualSummary": {
 			"title": "Resumo Anual {year}",
 			"tableAriaLabel": "Resumo fiscal {year}",
