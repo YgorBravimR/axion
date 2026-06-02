@@ -201,11 +201,7 @@ const StopProtectionSection = memo(
 								<Input
 									id="stop-pct"
 									type="number"
-									value={
-										stopConfig.initial.type === "pct_range"
-											? stopConfig.initial.pct
-											: 30
-									}
+									value={stopConfig.initial.pct}
 									onChange={(e) =>
 										handleInitialStopValue(parseInt(e.target.value) || 30)
 									}
@@ -220,11 +216,7 @@ const StopProtectionSection = memo(
 								<Input
 									id="stop-points"
 									type="number"
-									value={
-										stopConfig.initial.type === "fixed_points"
-											? stopConfig.initial.points
-											: 200
-									}
+									value={stopConfig.initial.points}
 									onChange={(e) =>
 										handleInitialStopValue(parseInt(e.target.value) || 200)
 									}
@@ -239,11 +231,7 @@ const StopProtectionSection = memo(
 								<Input
 									id="stop-buffer"
 									type="number"
-									value={
-										stopConfig.initial.type === "full_range"
-											? stopConfig.initial.ticksBuffer
-											: 2
-									}
+									value={stopConfig.initial.ticksBuffer}
 									onChange={(e) =>
 										handleInitialStopValue(parseInt(e.target.value) || 2)
 									}

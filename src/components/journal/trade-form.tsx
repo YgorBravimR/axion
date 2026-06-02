@@ -289,7 +289,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 				return match?.symbol
 			}
 			return undefined
-		}, [initialSharedState?.asset, defaultAssetId, assets])
+		}, [initialSharedState, defaultAssetId, assets])
 
 		const defaultValues: Partial<TradeFormInput> = trade
 			? buildTradeFormValues(trade)
@@ -415,7 +415,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 			return () => {
 				cancelled = true
 			}
-		}, [trade?.id, setValue])
+		}, [trade, setValue])
 
 		// Real-time SL/TP cross-field validation indicators
 		const stopLossWarning = useMemo(() => {

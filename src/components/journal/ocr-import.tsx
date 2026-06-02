@@ -132,7 +132,7 @@ export const OcrImport = () => {
 		return () => {
 			isMounted = false
 		}
-	}, [])
+	}, [setVisionAvailable])
 
 	// ==========================================
 	// Handlers
@@ -205,7 +205,7 @@ export const OcrImport = () => {
 						direction: trade.summary.direction ?? ("long" as const),
 						executions: trade.executions.map((ex, idx) => ({
 							...ex,
-							id: `${trade.id}-ex-${idx}`,
+							id: `${trade.id}-ex-${idx}-${ex.quantity}-${ex.price}-${ex.time}`,
 						})),
 						isExpanded: true,
 					}))
@@ -226,7 +226,7 @@ export const OcrImport = () => {
 			}
 			reader.readAsDataURL(file)
 		},
-		[showToast, visionAvailable, showLoading, hideLoading, tOverlay]
+		[showToast, visionAvailable, showLoading, hideLoading, tOverlay, t]
 	)
 
 	const handleDrop = useCallback(
@@ -664,8 +664,8 @@ export const OcrImport = () => {
 								</span>
 							</div>
 							<ul className="mt-s-300 space-y-s-200 text-small text-txt-200">
-								{parseResult.errors.map((error, i) => (
-									<li key={i}>
+								{parseResult.errors.map((error) => (
+									<li key={`${error.line}-${error.message}`}>
 										{t("errorLine", {
 											line: error.line,
 											message: error.message,
@@ -686,8 +686,8 @@ export const OcrImport = () => {
 								</span>
 							</div>
 							<ul className="mt-s-300 space-y-s-200 text-small text-txt-200">
-								{parseResult.warnings.slice(0, 5).map((warning, i) => (
-									<li key={i}>
+								{parseResult.warnings.slice(0, 5).map((warning) => (
+									<li key={`${warning.line}-${warning.message}`}>
 										{t("warningLine", {
 											line: warning.line,
 											message: warning.message,

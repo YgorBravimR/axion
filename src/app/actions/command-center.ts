@@ -101,7 +101,7 @@ export const createChecklist = async (
 				accountId,
 				name: validated.name,
 				items: JSON.stringify(validated.items),
-				isActive: validated.isActive ?? true,
+				isActive: validated.isActive,
 			})
 			.returning()
 
@@ -311,6 +311,7 @@ export const getTodayCompletions = async (
 			(checklist) => {
 				const completion =
 					completions.find((c) => c.checklistId === checklist.id) || null
+
 				const completedItemIds: string[] = completion
 					? JSON.parse(completion.completedItems)
 					: []
@@ -379,6 +380,7 @@ export const toggleChecklistItem = async (
 
 		if (existing) {
 			// Update existing completion
+
 			const currentItems: string[] = JSON.parse(existing.completedItems)
 			let newItems: string[]
 
@@ -396,6 +398,7 @@ export const toggleChecklistItem = async (
 			const checklist = await db.query.dailyChecklists.findFirst({
 				where: eq(dailyChecklists.id, validated.checklistId),
 			})
+
 			const allItems: ChecklistItem[] = checklist
 				? JSON.parse(checklist.items)
 				: []
@@ -597,7 +600,7 @@ export const upsertAssetSettings = async (
 					maxDailyTrades: validated.maxDailyTrades || null,
 					maxPositionSize: validated.maxPositionSize || null,
 					notes: validated.notes || null,
-					isActive: validated.isActive ?? true,
+					isActive: validated.isActive,
 					updatedAt: new Date(),
 				})
 				.where(eq(accountAssetSettings.id, existing.id))
@@ -621,7 +624,7 @@ export const upsertAssetSettings = async (
 					maxDailyTrades: validated.maxDailyTrades || null,
 					maxPositionSize: validated.maxPositionSize || null,
 					notes: validated.notes || null,
-					isActive: validated.isActive ?? true,
+					isActive: validated.isActive,
 				})
 				.returning()
 

@@ -70,9 +70,9 @@ describe("Trade form Hawks payload preservation", () => {
 
 		// Verify the trade has the hawks metadata
 		expect(mockTrade.hawksMetadata).toBeDefined()
-		expect(mockTrade.hawksMetadata?.tripleScreenConfirmed).toBe(true)
-		expect(mockTrade.hawksMetadata?.vwapRespected).toBe(true)
-		expect(mockTrade.hawksMetadata?.ajusteRespected).toBe(true)
+		expect(mockTrade.hawksMetadata!.tripleScreenConfirmed).toBe(true)
+		expect(mockTrade.hawksMetadata!.vwapRespected).toBe(true)
+		expect(mockTrade.hawksMetadata!.ajusteRespected).toBe(true)
 
 		// The form should include these values even if hawksModeActive is false
 		expect(expectedHawks.tripleScreenConfirmed).toBe(true)
@@ -170,7 +170,7 @@ describe("Trade form Hawks payload preservation", () => {
 		// Before fix: hawks would be omitted
 		// After fix: hawks is preserved
 		expect(tradeWithHawks.hawksMetadata).toBeDefined()
-		expect(tradeWithHawks.hawksMetadata?.tripleScreenConfirmed).toBe(true)
+		expect(tradeWithHawks.hawksMetadata!.tripleScreenConfirmed).toBe(true)
 
 		// The form should submit with hawks intact
 		const formDataToSubmit = {
@@ -184,11 +184,11 @@ describe("Trade form Hawks payload preservation", () => {
 			followedPlan: tradeWithHawks.followedPlan,
 			setupRank: tradeWithHawks.setupRank,
 			hawks: {
-				scenarioId: tradeWithHawks.hawksMetadata?.scenarioId,
+				scenarioId: tradeWithHawks.hawksMetadata!.scenarioId,
 				tripleScreenConfirmed:
-					tradeWithHawks.hawksMetadata?.tripleScreenConfirmed,
-				vwapRespected: tradeWithHawks.hawksMetadata?.vwapRespected,
-				ajusteRespected: tradeWithHawks.hawksMetadata?.ajusteRespected,
+					tradeWithHawks.hawksMetadata!.tripleScreenConfirmed,
+				vwapRespected: tradeWithHawks.hawksMetadata!.vwapRespected,
+				ajusteRespected: tradeWithHawks.hawksMetadata!.ajusteRespected,
 			},
 		}
 

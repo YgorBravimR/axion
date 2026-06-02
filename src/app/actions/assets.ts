@@ -25,7 +25,7 @@ import { getTranslations } from "next-intl/server"
  */
 const requireSession = async (): Promise<string> => {
 	const session = await auth()
-	if (!session?.user?.id) {
+	if (!session) {
 		throw new Error("Unauthorized")
 	}
 	return session.user.id
@@ -235,7 +235,9 @@ export const createAsset = async (
 			tickSize: validated.data.tickSize.toString(),
 			tickValue: toCents(validated.data.tickValue),
 			currency: validated.data.currency,
-			multiplier: validated.data.multiplier?.toString() ?? "1",
+			multiplier: validated.data.multiplier
+				? validated.data.multiplier.toString()
+				: "1",
 			isActive: validated.data.isActive,
 		})
 		.returning()

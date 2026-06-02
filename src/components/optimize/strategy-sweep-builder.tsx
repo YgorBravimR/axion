@@ -504,7 +504,7 @@ const StrategySweepBuilder = ({
 								id={`section-panel-${section.id}`}
 								className="border-bg-300 p-m-400 space-y-m-400 border-t"
 							>
-								{showBundleHint && bundle && lockingBundleValue && (
+								{showBundleHint && (
 									<div className="border-bg-400 bg-bg-300 p-s-300 text-tiny text-txt-200 rounded-md border">
 										{tBuilder("bundleLockHint", {
 											bundle:

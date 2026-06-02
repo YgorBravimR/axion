@@ -213,9 +213,9 @@ export const DayOfWeekChart = memo(
 						/>
 						<ChartTooltip content={<CustomTooltip />} />
 						<Bar dataKey={metricKey} radius={[4, 4, 0, 0]} maxBarSize={80}>
-							{tradingDays.map((entry, index) => (
+							{tradingDays.map((entry) => (
 								<Cell
-									key={`cell-${index}`}
+									key={`cell-${entry.dayOfWeek}`}
 									fill={
 										entry[metricKey] >= 0
 											? "var(--color-trade-buy)"

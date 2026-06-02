@@ -65,7 +65,7 @@ describe("Trade creation paths with conditions integration", () => {
 
 		it("should not call insert when conditionsMet is empty array", () => {
 			const conditionsMet: Array<{ conditionId: string; met: boolean }> = []
-			const shouldInsert = conditionsMet?.length
+			const shouldInsert = conditionsMet.length
 
 			expect(shouldInsert).toBeFalsy()
 		})
@@ -108,7 +108,7 @@ describe("Trade creation paths with conditions integration", () => {
 		it("should not call insert when input.conditionsMet is empty array", () => {
 			const inputConditionsMet: Array<{ conditionId: string; met: boolean }> =
 				[]
-			const shouldInsert = inputConditionsMet?.length
+			const shouldInsert = inputConditionsMet.length
 
 			expect(shouldInsert).toBeFalsy()
 		})

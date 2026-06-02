@@ -61,9 +61,9 @@ export const getHawksCoachingInsights = async (
 			followedPlan: row.followedPlan,
 			commission: row.commission,
 			fees: row.fees,
-			tripleScreenConfirmed: row.hawksMetadata?.tripleScreenConfirmed ?? false,
-			biasAtEntry: row.hawksMetadata?.biasAtEntry ?? "neutral",
-			dailyTradeOrdinal: row.hawksMetadata?.dailyTradeOrdinal ?? 0,
+			tripleScreenConfirmed: row.hawksMetadata.tripleScreenConfirmed,
+			biasAtEntry: row.hawksMetadata.biasAtEntry,
+			dailyTradeOrdinal: row.hawksMetadata.dailyTradeOrdinal,
 			stopEvents: row.stopAuditEvents.map((e) => ({
 				methodViolation: e.methodViolation,
 				directionVsPosition: e.directionVsPosition,

@@ -414,7 +414,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 							<SelectContent>
 								{ALL_PRESETS.map((preset, i) => (
 									<SelectItem
-										key={`${preset.entry.type}-${i}`}
+										key={`${preset.entry.type}-${preset.displayName}`}
 										value={String(i)}
 									>
 										{preset.displayName}

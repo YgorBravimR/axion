@@ -272,9 +272,11 @@ export const createExecution = async (
 				quantity: validated.quantity.toString(),
 				orderType: validated.orderType,
 				notes: validated.notes,
-				commission: validated.commission?.toString() ?? null,
-				fees: validated.fees?.toString() ?? null,
-				slippage: validated.slippage?.toString() ?? null,
+				commission: validated.commission
+					? validated.commission.toString()
+					: null,
+				fees: validated.fees ? validated.fees.toString() : null,
+				slippage: validated.slippage ? validated.slippage.toString() : null,
 				executionValue: executionValue.toString(),
 			})
 			.returning()
@@ -332,7 +334,7 @@ export const updateExecution = async (
 			with: { trade: true },
 		})
 
-		if (!rawExisting || rawExisting.trade?.accountId !== accountId) {
+		if (!rawExisting || rawExisting.trade.accountId !== accountId) {
 			return {
 				status: "error",
 				message: t("actions.executionNotFound"),
@@ -345,7 +347,8 @@ export const updateExecution = async (
 
 		// Validate exit quantity if the result would be an exit execution
 		const resultType = validated.executionType ?? existing.executionType
-		const resultQuantity = validated.quantity ?? Number(existing.quantity)
+		const resultQuantity =
+			validated.quantity ?? (existing.quantity ? Number(existing.quantity) : 0)
 
 		if (resultType === "exit") {
 			const rawAllExecutions = await db.query.tradeExecutions.findMany({
@@ -379,8 +382,10 @@ export const updateExecution = async (
 		}
 
 		// Calculate new execution value if price or quantity changed
-		const price = validated.price ?? Number(existing.price)
-		const quantity = validated.quantity ?? Number(existing.quantity)
+		const price =
+			validated.price ?? (existing.price ? Number(existing.price) : 0)
+		const quantity =
+			validated.quantity ?? (existing.quantity ? Number(existing.quantity) : 0)
 		const executionValue = calculateExecutionValue(price, quantity)
 
 		// Build update data (convert numeric fields to text for DB storage)
@@ -408,13 +413,13 @@ export const updateExecution = async (
 			updateData.notes = validated.notes
 		}
 		if (validated.commission !== undefined) {
-			updateData.commission = validated.commission?.toString() ?? null
+			updateData.commission = validated.commission.toString()
 		}
 		if (validated.fees !== undefined) {
-			updateData.fees = validated.fees?.toString() ?? null
+			updateData.fees = validated.fees.toString()
 		}
 		if (validated.slippage !== undefined) {
-			updateData.slippage = validated.slippage?.toString() ?? null
+			updateData.slippage = validated.slippage.toString()
 		}
 
 		const [execution] = await db
@@ -464,7 +469,7 @@ export const deleteExecution = async (
 			with: { trade: true },
 		})
 
-		if (!existing || existing.trade?.accountId !== accountId) {
+		if (!existing || existing.trade.accountId !== accountId) {
 			return {
 				status: "error",
 				message: t("actions.executionNotFound"),
@@ -647,8 +652,8 @@ export const convertToScaledMode = async (
 		const createdExecutions: TradeExecution[] = []
 
 		// Create entry execution from existing trade data
-		const entryPrice = Number(trade.entryPrice)
-		const positionSize = Number(trade.positionSize)
+		const entryPrice = trade.entryPrice ? Number(trade.entryPrice) : 0
+		const positionSize = trade.positionSize ? Number(trade.positionSize) : 0
 
 		const entryValue = calculateExecutionValue(entryPrice, positionSize)
 
@@ -681,7 +686,7 @@ export const convertToScaledMode = async (
 
 		// Create exit execution if trade has exit data
 		if (trade.exitPrice && trade.exitDate) {
-			const exitPrice = Number(trade.exitPrice)
+			const exitPrice = trade.exitPrice ? Number(trade.exitPrice) : 0
 			const exitValue = calculateExecutionValue(exitPrice, positionSize)
 
 			const exitInsertValues = {

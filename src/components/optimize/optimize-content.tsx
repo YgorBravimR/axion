@@ -74,7 +74,6 @@ import { SweepConfigPanel } from "./sweep-config-panel"
 import { SweptPathsProvider } from "./swept-paths-context"
 import { HawksSweepBuilder } from "./hawks-sweep-builder"
 import { OrbSweepBuilder } from "./orb-sweep-builder"
-import { OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED } from "@/lib/optimize/feature-flags"
 import {
 	HAWKS_LEAVES,
 	HAWKS_VALIDATORS,
@@ -197,10 +196,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		validators: LeafGroupValidator[]
 		strategyKey: "hawks" | "orb"
 	} | null>(() => {
-		if (
-			OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED &&
-			recipe.entry.type === "hawks_triple_screen"
-		) {
+		if (recipe.entry.type === "hawks_triple_screen") {
 			return {
 				leaves: HAWKS_LEAVES,
 				validators: HAWKS_VALIDATORS,
@@ -719,6 +715,8 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		walkForwardConfig,
 		showToast,
 		t,
+		refineState,
+		runs,
 	])
 
 	const handleCancelSweep = useCallback(() => {
@@ -1025,10 +1023,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 											currentEngine &&
 											currentEngine !== heroPreset.engineVersion
 										return (
-											<SelectItem
-												key={`${preset.entry.type}-${i}`}
-												value={String(i)}
-											>
+											<SelectItem key={`${preset.presetId}`} value={String(i)}>
 												<span className="gap-s-200 flex items-center">
 													<span>{preset.displayName}</span>
 													{heroPreset && (
@@ -1039,7 +1034,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 															className="text-tiny text-warning border-warning rounded-sm border px-1"
 															title={t("freezeHero.staleTooltip", {
 																frozen: heroPreset.engineVersion,
-																current: currentEngine ?? "unknown",
+																current: currentEngine,
 															})}
 														>
 															{t("freezeHero.staleChip")}
@@ -1429,17 +1424,15 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 									})}
 								</span>
 							</div>
-							{isInlineSweepMode &&
-								inlineSweepBundle &&
-								leafSelections !== null && (
-									<SweepAxisDiagnostics
-										leaves={inlineSweepBundle.leaves}
-										selections={leafSelections}
-										breakdown={cardinalityBreakdown ?? undefined}
-										validators={inlineSweepBundle.validators}
-										onSelectionsChange={setLeafSelections}
-									/>
-								)}
+							{isInlineSweepMode && leafSelections !== null && (
+								<SweepAxisDiagnostics
+									leaves={inlineSweepBundle.leaves}
+									selections={leafSelections}
+									breakdown={cardinalityBreakdown ?? undefined}
+									validators={inlineSweepBundle.validators}
+									onSelectionsChange={setLeafSelections}
+								/>
+							)}
 						</div>
 					</div>
 				</div>

@@ -84,9 +84,9 @@ const BacktestQualityDrawer = memo(
 									<p className="text-small text-txt-300">{t("noRules")}</p>
 								) : (
 									<ul className="space-y-s-200">
-										{quality.contributions.map((c, i) => (
+										{quality.contributions.map((c) => (
 											<li
-												key={`${c.key}-${i}`}
+												key={c.key}
 												className="border-bg-300 bg-bg-100 p-s-300 gap-s-300 flex items-center justify-between rounded-sm border"
 											>
 												<div className="min-w-0">

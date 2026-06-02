@@ -139,21 +139,22 @@ const RenkoPane = ({
 			crosshair: { mode: CrosshairMode.Normal },
 		})
 		const candleSeries = chart.addSeries(CandlestickSeries, {
-			upColor: theme.tradeBuy ?? "rgb(60, 180, 110)",
-			downColor: theme.tradeSell ?? "rgb(220, 90, 80)",
-			borderUpColor: theme.tradeBuy ?? "rgb(60, 180, 110)",
-			borderDownColor: theme.tradeSell ?? "rgb(220, 90, 80)",
-			wickUpColor: theme.tradeBuy ?? "rgb(60, 180, 110)",
-			wickDownColor: theme.tradeSell ?? "rgb(220, 90, 80)",
+			upColor: theme.tradeBuy,
+			downColor: theme.tradeSell,
+			borderUpColor: theme.tradeBuy,
+			borderDownColor: theme.tradeSell,
+			wickUpColor: theme.tradeBuy,
+			wickDownColor: theme.tradeSell,
 		})
 		chartRef.current = chart
 		candleSeriesRef.current = candleSeries
 
 		return () => {
+			const indicatorSeriesMap = indicatorSeriesRef.current
 			chart.remove()
 			chartRef.current = null
 			candleSeriesRef.current = null
-			indicatorSeriesRef.current.clear()
+			indicatorSeriesMap.clear()
 			entryLineRef.current = null
 			exitLineRef.current = null
 			markersPluginRef.current = null
@@ -232,14 +233,14 @@ const RenkoPane = ({
 			return
 		}
 
-		const winColor = theme.tradeBuy ?? "rgb(60, 180, 110)"
-		const lossColor = theme.tradeSell ?? "rgb(220, 90, 80)"
+		const winColor = theme.tradeBuy
+		const lossColor = theme.tradeSell
 
 		// Entry line color follows the entry-marker palette so they read as
 		// a pair. In "trade" mode that's tradeBuy/tradeSell by direction; in
 		// "action" mode it's actionBuy/actionSell.
-		const actionBuyColor = theme.actionBuy ?? "rgb(91, 184, 214)"
-		const actionSellColor = theme.actionSell ?? "rgb(251, 146, 60)"
+		const actionBuyColor = theme.actionBuy
+		const actionSellColor = theme.actionSell
 		const entryLineColor =
 			markerColorMode === "action"
 				? trade.direction === "long"
@@ -304,8 +305,8 @@ const RenkoPane = ({
 			) as ISeriesMarkersPluginApi<UTCTimestamp>
 		}
 		const isLong = trade.direction === "long"
-		const actionBuy = theme.actionBuy ?? "rgb(91, 184, 214)"
-		const actionSell = theme.actionSell ?? "rgb(251, 146, 60)"
+		const actionBuy = theme.actionBuy
+		const actionSell = theme.actionSell
 		const entryColor =
 			markerColorMode === "action"
 				? isLong
@@ -461,7 +462,7 @@ const RenkoPane = ({
 			return
 		}
 		const handler = (param: MouseEventParams) => {
-			if (param.time === undefined || param.time === null) {
+			if (param.time === undefined) {
 				return
 			}
 			if (!param.point) {
@@ -494,7 +495,7 @@ const RenkoPane = ({
 			return
 		}
 		const handler = (param: MouseEventParams) => {
-			if (param.time === undefined || param.time === null) {
+			if (param.time === undefined) {
 				onCrosshairMove(null)
 				return
 			}

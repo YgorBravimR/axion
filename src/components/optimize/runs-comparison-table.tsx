@@ -119,8 +119,8 @@ const RunsComparisonTable = ({
 								return (
 									<Checkbox
 										id={`select-${run.id}`}
-										checked={selectedRunIds?.has(run.id) ?? false}
-										onCheckedChange={() => onToggleSelect?.(run.id)}
+										checked={selectedRunIds.has(run.id)}
+										onCheckedChange={() => onToggleSelect(run.id)}
 										aria-label={t("selectRow")}
 									/>
 								)

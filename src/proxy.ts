@@ -52,13 +52,13 @@ export const proxy = auth((req) => {
 	}
 
 	// If authenticated but no account selected, redirect to login
-	if (req.auth && !req.auth.user?.accountId && !isPublicPath(pathname)) {
+	if (req.auth?.user && !req.auth.user.accountId && !isPublicPath(pathname)) {
 		return NextResponse.redirect(new URL("/login", req.url))
 	}
 
 	// Role-based route blocking — redirect to dashboard if user lacks access
-	if (req.auth && !isPublicPath(pathname)) {
-		const role = req.auth.user?.role ?? "trader"
+	if (req.auth?.user && !isPublicPath(pathname)) {
+		const role = req.auth.user.role ?? "trader"
 		if (!canAccessFeature(role, pathWithoutLocale)) {
 			return NextResponse.redirect(new URL("/", req.url))
 		}

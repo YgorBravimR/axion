@@ -86,25 +86,34 @@ export const DetailedTradeImporter = ({
 				}),
 			})
 
-			const data = await response.json()
+			const data = (await response.json()) as {
+				retryAfter?: number
+				error?: string
+				preview?: { importId: string }
+			}
 
 			if (!response.ok) {
 				if (response.status === 429) {
 					setError(
 						t("errors.cooldownActive", {
-							time: new Date(data.retryAfter * 1000).toLocaleString(),
+							time: new Date(
+								((data.retryAfter as number | undefined) ?? 0) * 1000
+							).toLocaleString(),
 						})
 					)
 				} else {
-					setError(data.error || t("errors.failedToParse"))
+					setError(
+						(data.error as string | undefined) || t("errors.failedToParse")
+					)
 				}
 				setStep("error")
 				return
 			}
 
 			// Show preview
-			setPreview(data.preview)
-			setImportId(data.preview.importId)
+			const preview = data.preview as ImportPreview
+			setPreview(preview)
+			setImportId(preview.importId)
 			setStep("preview")
 		} catch (err) {
 			const message =
@@ -136,10 +145,15 @@ export const DetailedTradeImporter = ({
 				body: JSON.stringify({ importId, accountId }),
 			})
 
-			const data = await response.json()
+			const data = (await response.json()) as {
+				error?: string
+				importedTradesCount?: number
+			}
 
 			if (!response.ok) {
-				setError(data.error || t("errors.failedToImport"))
+				setError(
+					(data.error as string | undefined) || t("errors.failedToImport")
+				)
 				setStep("error")
 				return
 			}
@@ -148,7 +162,7 @@ export const DetailedTradeImporter = ({
 			showToast(
 				"success",
 				t("tradesImported", {
-					count: data.importedTradesCount,
+					count: (data.importedTradesCount as number | undefined) ?? 0,
 					broker: brokerName,
 				})
 			)

@@ -29,13 +29,21 @@ const paretoRetain = (runs: OptimizationRun[]): OptimizationRun[] => {
 		const pnl = run.summary.totalPnlCents ?? 0
 		const sharpe = run.summary.sharpeRatio ?? 0
 
-		if (!bestByPf || pf > (bestByPf.summary.profitFactor ?? 0)) {
+		const bestPf = bestByPf ? (bestByPf.summary.profitFactor ?? 0) : -Infinity
+		const bestPnl = bestByPnl
+			? (bestByPnl.summary.totalPnlCents ?? 0)
+			: -Infinity
+		const bestSharpe = bestBySharpe
+			? (bestBySharpe.summary.sharpeRatio ?? 0)
+			: -Infinity
+
+		if (pf > bestPf) {
 			bestByPf = run
 		}
-		if (!bestByPnl || pnl > (bestByPnl.summary.totalPnlCents ?? 0)) {
+		if (pnl > bestPnl) {
 			bestByPnl = run
 		}
-		if (!bestBySharpe || sharpe > (bestBySharpe.summary.sharpeRatio ?? 0)) {
+		if (sharpe > bestSharpe) {
 			bestBySharpe = run
 		}
 	}
@@ -52,12 +60,17 @@ const paretoRetain = (runs: OptimizationRun[]): OptimizationRun[] => {
 			}
 
 			// other dominates candidate if it's >= on all axes and > on at least one.
+
 			const candPf = candidate.summary.profitFactor ?? 0
+
 			const candPnl = candidate.summary.totalPnlCents ?? 0
+
 			const candSharpe = candidate.summary.sharpeRatio ?? 0
 
 			const otherPf = other.summary.profitFactor ?? 0
+
 			const otherPnl = other.summary.totalPnlCents ?? 0
+
 			const otherSharpe = other.summary.sharpeRatio ?? 0
 
 			const pfOk = otherPf >= candPf

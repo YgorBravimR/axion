@@ -44,6 +44,7 @@ describe("recipeFromCombo — plain paths", () => {
 		const combo: Combination = { "target.levels.0.value": 3.5 }
 		const recipe = recipeFromCombo(hawksV0, combo)
 		expect(recipe.target.type).toBe("fixed_levels")
+
 		if (recipe.target.type === "fixed_levels") {
 			expect(recipe.target.levels[0]?.value).toBe(3.5)
 		}

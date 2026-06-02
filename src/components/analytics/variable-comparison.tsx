@@ -346,14 +346,16 @@ export const VariableComparison = ({
 							tick={AXIS_TICK}
 							tickLine={false}
 							axisLine={false}
-							tickFormatter={(value) => formatMetricValue(value, metric)}
+							tickFormatter={(value: number) =>
+								formatMetricValue(value, metric)
+							}
 							width={yAxisWidth}
 						/>
 						<ChartTooltip content={<CustomTooltip metric={metric} />} />
 						<Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={80}>
-							{chartData.map((entry, index) => (
+							{chartData.map((entry) => (
 								<Cell
-									key={`cell-${index}`}
+									key={`cell-${entry.group}`}
 									fill={getBarColor(entry.value, metric)}
 								/>
 							))}

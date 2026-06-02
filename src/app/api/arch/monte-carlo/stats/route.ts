@@ -16,7 +16,7 @@ const POST = async (request: NextRequest) => {
 	const { auth } = authResult
 
 	try {
-		const body = await request.json()
+		const body = (await request.json()) as Record<string, unknown>
 		const validated = dataSourceSchema.parse(body)
 
 		let tradesList: Array<{

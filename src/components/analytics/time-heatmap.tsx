@@ -163,7 +163,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 			bestDay: sortedDays[0],
 			worstDay: sortedDays[sortedDays.length - 1],
 		}
-	}, [data, isRMode])
+	}, [data, isRMode, days, dayLabels])
 
 	const getMetricValue = (cell: TimeHeatmapCell): number =>
 		isRMode ? cell.avgR : cell.totalPnl
