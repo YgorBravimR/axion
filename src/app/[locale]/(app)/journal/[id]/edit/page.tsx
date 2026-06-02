@@ -35,17 +35,15 @@ const EditTradePage = async ({ params }: EditTradePageProps) => {
 	return (
 		<div className="flex h-full flex-col">
 			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto">
-				<div className="mx-auto max-w-5xl">
-					<Panel padding="lg">
-						<TradeForm
-							trade={trade}
-							strategies={strategies}
-							tags={tags}
-							assets={assets}
-							timeframes={timeframes}
-						/>
-					</Panel>
-				</div>
+				<Panel padding="lg">
+					<TradeForm
+						trade={trade}
+						strategies={strategies}
+						tags={tags}
+						assets={assets}
+						timeframes={timeframes}
+					/>
+				</Panel>
 			</div>
 		</div>
 	)

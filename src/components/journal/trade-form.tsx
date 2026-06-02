@@ -701,7 +701,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 			<Form {...form}>
 				<form
 					onSubmit={handleSubmit(onSubmit)}
-					className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600"
+					className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-5xl"
 				>
 					<Tabs defaultValue="basic" className="w-full">
 						<TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">

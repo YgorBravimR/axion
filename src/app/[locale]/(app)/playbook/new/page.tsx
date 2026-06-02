@@ -126,277 +126,268 @@ const NewStrategyPage = () => {
 	return (
 		<div className="flex h-full flex-col">
 			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-y-auto">
-				<div className="mx-auto max-w-3xl">
-					<form
-						onSubmit={handleSubmit}
-						className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600"
-					>
-						{/* Basic Info Section */}
-						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
-							<h2 className="text-small sm:text-body text-txt-100 mb-s-300 sm:mb-m-400 font-semibold">
-								{t("basicInfo")}
-							</h2>
+				<form
+					onSubmit={handleSubmit}
+					className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600"
+				>
+					{/* Basic Info Section */}
+					<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+						<h2 className="text-small sm:text-body text-txt-100 mb-s-300 sm:mb-m-400 font-semibold">
+							{t("basicInfo")}
+						</h2>
 
-							<div className="space-y-m-400">
-								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-3">
-									<div>
-										<Label
-											id="label-code"
-											htmlFor="code"
-											required
-											filled={!!code.trim()}
-										>
-											{t("codeLabel")}
-										</Label>
-										<Input
-											ref={codeInputRef}
-											id="code"
-											name="code"
-											placeholder={t("codePlaceholder")}
-											required
-											maxLength={10}
-											minLength={3}
-											className="mt-s-200 uppercase"
-											aria-invalid={fieldErrors.code ? "true" : undefined}
-											value={code}
-											onChange={(e) => {
-												setCode(e.target.value)
-												if (fieldErrors.code) {
-													setFieldErrors({})
-												}
-											}}
-										/>
-										<p className="text-tiny text-txt-300 mt-s-100">
-											{t("codeHint")}
-										</p>
-									</div>
-									<div className="sm:col-span-2">
-										<Label
-											id="label-strategy-name"
-											htmlFor="name"
-											required
-											filled={!!name.trim()}
-										>
-											{t("strategyNameLabel")}
-										</Label>
-										<Input
-											id="name"
-											name="name"
-											placeholder={t("strategyNamePlaceholder")}
-											required
-											className="mt-s-200"
-											value={name}
-											onChange={(e) => setName(e.target.value)}
-										/>
-									</div>
-								</div>
-
+						<div className="space-y-m-400">
+							<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-3">
 								<div>
-									<Label id="label-description" htmlFor="description">
-										{t("descriptionLabel")}
+									<Label
+										id="label-code"
+										htmlFor="code"
+										required
+										filled={!!code.trim()}
+									>
+										{t("codeLabel")}
 									</Label>
-									<Textarea
-										id="description"
-										name="description"
-										placeholder={t("descriptionPlaceholder")}
-										rows={3}
-										className="mt-s-200"
-									/>
-								</div>
-
-								<div role="group" aria-labelledby="label-screenshot">
-									<Label id="label-screenshot">{t("referenceImage")}</Label>
-									<p className="text-tiny text-txt-300 mt-s-100 mb-s-200">
-										{t("referenceImageHint")}
-									</p>
-									<ImageUpload
-										pendingImages={pendingScreenshot ? [pendingScreenshot] : []}
-										onFileAdd={setPendingScreenshot}
-										onPendingRemove={() => setPendingScreenshot(null)}
-										maxImages={1}
-									/>
-								</div>
-							</div>
-						</div>
-
-						{/* Rules & Criteria Section */}
-						<div
-							id="strategy-rules-criteria"
-							className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
-						>
-							<h2 className="text-small sm:text-body text-txt-100 mb-s-300 sm:mb-m-400 font-semibold">
-								{t("rulesCriteria")}
-							</h2>
-
-							<div className="space-y-m-400">
-								<div>
-									<Label id="label-entry-criteria" htmlFor="entryCriteria">
-										{t("entryCriteriaLabel")}
-									</Label>
-									<Textarea
-										id="entryCriteria"
-										name="entryCriteria"
-										placeholder={t("entryCriteriaPlaceholder")}
-										rows={5}
-										className="mt-s-200"
+									<Input
+										ref={codeInputRef}
+										id="code"
+										name="code"
+										placeholder={t("codePlaceholder")}
+										required
+										maxLength={10}
+										minLength={3}
+										className="mt-s-200 uppercase"
+										aria-invalid={fieldErrors.code ? "true" : undefined}
+										value={code}
+										onChange={(e) => {
+											setCode(e.target.value)
+											if (fieldErrors.code) {
+												setFieldErrors({})
+											}
+										}}
 									/>
 									<p className="text-tiny text-txt-300 mt-s-100">
-										{t("entryCriteriaHint")}
+										{t("codeHint")}
 									</p>
 								</div>
-
-								<div>
-									<Label id="label-exit-criteria" htmlFor="exitCriteria">
-										{t("exitCriteriaLabel")}
+								<div className="sm:col-span-2">
+									<Label
+										id="label-strategy-name"
+										htmlFor="name"
+										required
+										filled={!!name.trim()}
+									>
+										{t("strategyNameLabel")}
 									</Label>
-									<Textarea
-										id="exitCriteria"
-										name="exitCriteria"
-										placeholder={t("exitCriteriaPlaceholder")}
-										rows={5}
+									<Input
+										id="name"
+										name="name"
+										placeholder={t("strategyNamePlaceholder")}
+										required
 										className="mt-s-200"
-									/>
-									<p className="text-tiny text-txt-300 mt-s-100">
-										{t("exitCriteriaHint")}
-									</p>
-								</div>
-
-								<div>
-									<Label id="label-notes" htmlFor="notes">
-										{t("additionalNotes")}
-									</Label>
-									<Textarea
-										id="notes"
-										name="notes"
-										placeholder={t("notesPlaceholder")}
-										rows={3}
-										className="mt-s-200"
+										value={name}
+										onChange={(e) => setName(e.target.value)}
 									/>
 								</div>
 							</div>
-						</div>
 
-						{/* Risk Settings Section */}
-						<div
-							id="strategy-risk-settings"
-							className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
-						>
-							<h2 className="text-small sm:text-body text-txt-100 mb-s-300 sm:mb-m-400 font-semibold">
-								{t("riskSettings")}
-							</h2>
-
-							<div className="space-y-m-400">
-								<div>
-									<Label id="label-risk-rules" htmlFor="riskRules">
-										{t("riskManagementRules")}
-									</Label>
-									<Textarea
-										id="riskRules"
-										name="riskRules"
-										placeholder={t("riskRulesPlaceholder")}
-										rows={5}
-										className="mt-s-200"
-									/>
-								</div>
-
-								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
-									<div>
-										<Label id="label-target-r-multiple" htmlFor="finalR">
-											{t("finalR")}
-										</Label>
-										<Input
-											id="finalR"
-											name="finalR"
-											type="number"
-											step="0.1"
-											min="0.1"
-											placeholder={t("targetRPlaceholder")}
-											className="mt-s-200"
-										/>
-										<p className="text-tiny text-txt-300 mt-s-100">
-											{t("targetRHint")}
-										</p>
-									</div>
-
-									<div>
-										<Label id="label-max-risk-percent" htmlFor="maxRiskPercent">
-											{t("maxRiskPerTrade")}
-										</Label>
-										<Input
-											id="maxRiskPercent"
-											name="maxRiskPercent"
-											type="number"
-											step="0.1"
-											min="0.1"
-											max="100"
-											placeholder={t("maxRiskPlaceholder")}
-											className="mt-s-200"
-										/>
-										<p className="text-tiny text-txt-300 mt-s-100">
-											{t("maxRiskHint")}
-										</p>
-									</div>
-								</div>
-							</div>
-						</div>
-
-						{/* Conditions Section */}
-						{isPremium && (
-							<div
-								id="strategy-conditions"
-								className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
-							>
-								<div className="gap-s-200 flex items-center">
-									<Filter className="text-txt-200 h-5 w-5" aria-hidden="true" />
-									<h2 className="text-small sm:text-body text-txt-100 font-semibold">
-										{t("tradingConditions")}
-									</h2>
-								</div>
-								<p className="text-tiny text-txt-300 mt-s-200 mb-m-400">
-									{t("tradingConditionsHint")}
-								</p>
-								<ConditionPicker value={conditions} onChange={setConditions} />
-							</div>
-						)}
-
-						{/* Scenarios hint */}
-						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
-							<div className="gap-s-200 flex items-center">
-								<ImageIcon
-									className="text-txt-200 h-5 w-5"
-									aria-hidden="true"
+							<div>
+								<Label id="label-description" htmlFor="description">
+									{t("descriptionLabel")}
+								</Label>
+								<Textarea
+									id="description"
+									name="description"
+									placeholder={t("descriptionPlaceholder")}
+									rows={3}
+									className="mt-s-200"
 								/>
+							</div>
+
+							<div role="group" aria-labelledby="label-screenshot">
+								<Label id="label-screenshot">{t("referenceImage")}</Label>
+								<p className="text-tiny text-txt-300 mt-s-100 mb-s-200">
+									{t("referenceImageHint")}
+								</p>
+								<ImageUpload
+									pendingImages={pendingScreenshot ? [pendingScreenshot] : []}
+									onFileAdd={setPendingScreenshot}
+									onPendingRemove={() => setPendingScreenshot(null)}
+									maxImages={1}
+								/>
+							</div>
+						</div>
+					</div>
+
+					{/* Rules & Criteria Section */}
+					<div
+						id="strategy-rules-criteria"
+						className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+					>
+						<h2 className="text-small sm:text-body text-txt-100 mb-s-300 sm:mb-m-400 font-semibold">
+							{t("rulesCriteria")}
+						</h2>
+
+						<div className="space-y-m-400">
+							<div>
+								<Label id="label-entry-criteria" htmlFor="entryCriteria">
+									{t("entryCriteriaLabel")}
+								</Label>
+								<Textarea
+									id="entryCriteria"
+									name="entryCriteria"
+									placeholder={t("entryCriteriaPlaceholder")}
+									rows={5}
+									className="mt-s-200"
+								/>
+								<p className="text-tiny text-txt-300 mt-s-100">
+									{t("entryCriteriaHint")}
+								</p>
+							</div>
+
+							<div>
+								<Label id="label-exit-criteria" htmlFor="exitCriteria">
+									{t("exitCriteriaLabel")}
+								</Label>
+								<Textarea
+									id="exitCriteria"
+									name="exitCriteria"
+									placeholder={t("exitCriteriaPlaceholder")}
+									rows={5}
+									className="mt-s-200"
+								/>
+								<p className="text-tiny text-txt-300 mt-s-100">
+									{t("exitCriteriaHint")}
+								</p>
+							</div>
+
+							<div>
+								<Label id="label-notes" htmlFor="notes">
+									{t("additionalNotes")}
+								</Label>
+								<Textarea
+									id="notes"
+									name="notes"
+									placeholder={t("notesPlaceholder")}
+									rows={3}
+									className="mt-s-200"
+								/>
+							</div>
+						</div>
+					</div>
+
+					{/* Risk Settings Section */}
+					<div
+						id="strategy-risk-settings"
+						className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+					>
+						<h2 className="text-small sm:text-body text-txt-100 mb-s-300 sm:mb-m-400 font-semibold">
+							{t("riskSettings")}
+						</h2>
+
+						<div className="space-y-m-400">
+							<div>
+								<Label id="label-risk-rules" htmlFor="riskRules">
+									{t("riskManagementRules")}
+								</Label>
+								<Textarea
+									id="riskRules"
+									name="riskRules"
+									placeholder={t("riskRulesPlaceholder")}
+									rows={5}
+									className="mt-s-200"
+								/>
+							</div>
+
+							<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
+								<div>
+									<Label id="label-target-r-multiple" htmlFor="finalR">
+										{t("finalR")}
+									</Label>
+									<Input
+										id="finalR"
+										name="finalR"
+										type="number"
+										step="0.1"
+										min="0.1"
+										placeholder={t("targetRPlaceholder")}
+										className="mt-s-200"
+									/>
+									<p className="text-tiny text-txt-300 mt-s-100">
+										{t("targetRHint")}
+									</p>
+								</div>
+
+								<div>
+									<Label id="label-max-risk-percent" htmlFor="maxRiskPercent">
+										{t("maxRiskPerTrade")}
+									</Label>
+									<Input
+										id="maxRiskPercent"
+										name="maxRiskPercent"
+										type="number"
+										step="0.1"
+										min="0.1"
+										max="100"
+										placeholder={t("maxRiskPlaceholder")}
+										className="mt-s-200"
+									/>
+									<p className="text-tiny text-txt-300 mt-s-100">
+										{t("maxRiskHint")}
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					{/* Conditions Section */}
+					{isPremium && (
+						<div
+							id="strategy-conditions"
+							className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
+						>
+							<div className="gap-s-200 flex items-center">
+								<Filter className="text-txt-200 h-5 w-5" aria-hidden="true" />
 								<h2 className="text-small sm:text-body text-txt-100 font-semibold">
-									{tScenarios("title")}
+									{t("tradingConditions")}
 								</h2>
 							</div>
-							<p className="text-small text-txt-300 mt-m-400">
-								{t("scenariosSaveFirst")}
+							<p className="text-tiny text-txt-300 mt-s-200 mb-m-400">
+								{t("tradingConditionsHint")}
 							</p>
+							<ConditionPicker value={conditions} onChange={setConditions} />
 						</div>
+					)}
 
-						{/* Actions */}
-						<div className="gap-s-300 flex justify-end">
-							<Link href="/playbook">
-								<Button
-									id="playbook-new-cancel"
-									type="button"
-									variant="outline"
-									disabled={isPending}
-								>
-									{tCommon("cancel")}
-								</Button>
-							</Link>
+					{/* Scenarios hint */}
+					<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border">
+						<div className="gap-s-200 flex items-center">
+							<ImageIcon className="text-txt-200 h-5 w-5" aria-hidden="true" />
+							<h2 className="text-small sm:text-body text-txt-100 font-semibold">
+								{tScenarios("title")}
+							</h2>
+						</div>
+						<p className="text-small text-txt-300 mt-m-400">
+							{t("scenariosSaveFirst")}
+						</p>
+					</div>
+
+					{/* Actions */}
+					<div className="gap-s-300 flex justify-end">
+						<Link href="/playbook">
 							<Button
-								id="playbook-new-create"
-								type="submit"
+								id="playbook-new-cancel"
+								type="button"
+								variant="outline"
 								disabled={isPending}
 							>
-								{isPending ? t("creating") : t("createStrategy")}
+								{tCommon("cancel")}
 							</Button>
-						</div>
-					</form>
-				</div>
+						</Link>
+						<Button id="playbook-new-create" type="submit" disabled={isPending}>
+							{isPending ? t("creating") : t("createStrategy")}
+						</Button>
+					</div>
+				</form>
 			</div>
 		</div>
 	)

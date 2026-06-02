@@ -152,7 +152,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 			<div className="flex h-full flex-col">
 				<TradeDetailGuide />
 				<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto">
-					<div className="space-y-l-800 mx-auto max-w-4xl">
+					<div className="space-y-l-800">
 						{/* ========== ANCHOR ROW: P&L + R + Outcome ========== */}
 						<Card
 							id="trade-detail-header"
