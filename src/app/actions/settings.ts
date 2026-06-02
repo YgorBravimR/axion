@@ -378,7 +378,8 @@ export const getAccountLifecycle = async (): Promise<{
 	})
 
 	if (!account) {
-		return { status: "error", message: "Account not found" }
+		const t = await getTranslations("settings.errors")
+		return { status: "error", message: t("accountNotFound") }
 	}
 
 	return {
@@ -401,6 +402,7 @@ export const updateAccountLifecycle = async (params: {
 	withdrawalTargetPercent: number | null
 }): Promise<{ status: "success" | "error"; message?: string }> => {
 	const { accountId } = await requireAuth()
+	const t = await getTranslations("settings.errors")
 
 	const {
 		accountStartMonth,
@@ -413,7 +415,7 @@ export const updateAccountLifecycle = async (params: {
 		accountStartMonth !== null &&
 		(accountStartMonth < 1 || accountStartMonth > 12)
 	) {
-		return { status: "error", message: "Start month must be between 1 and 12" }
+		return { status: "error", message: t("startMonthRange") }
 	}
 	const currentYear = new Date().getFullYear()
 	if (
@@ -422,13 +424,13 @@ export const updateAccountLifecycle = async (params: {
 	) {
 		return {
 			status: "error",
-			message: `Start year must be between 2000 and ${currentYear}`,
+			message: t("startYearRange", { year: currentYear }),
 		}
 	}
 	if (startingBalanceCents !== null && startingBalanceCents <= 0) {
 		return {
 			status: "error",
-			message: "Opening balance must be greater than zero",
+			message: t("openingBalancePositive"),
 		}
 	}
 	if (
@@ -437,7 +439,7 @@ export const updateAccountLifecycle = async (params: {
 	) {
 		return {
 			status: "error",
-			message: "Withdrawal target must be between 0 and 100",
+			message: t("withdrawalTargetRange"),
 		}
 	}
 

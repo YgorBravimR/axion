@@ -2699,6 +2699,15 @@
 			"depositLabel": "Depósito",
 			"withdrawalLabel": "Retirada"
 		},
+		"capitalEventErrors": {
+			"invalidEventType": "Invalid event type",
+			"amountMustBePositive": "Amount must be a positive integer (cents)",
+			"invalidEventDate": "Invalid event date",
+			"eventDateInFuture": "Event date cannot be in the future",
+			"failedToInsert": "Failed to insert capital event",
+			"notFoundOrAccessDenied": "Event not found or access denied",
+			"accountNotFound": "Account not found"
+		},
 		"weeklyMeta": {
 			"beforeAccountStart": "Before account start",
 			"noYearlyPlan": "No yearly plan found — target lines unavailable. Create a yearly plan to see Meta Bruto and Meta Líquido targets.",
@@ -3186,7 +3195,11 @@
 			"invalidTheme": "Invalid theme value",
 			"invalidBrand": "Invalid brand value",
 			"cannotChangeOwnRole": "Cannot change your own role",
-			"assetNotFound": "Asset not found"
+			"assetNotFound": "Asset not found",
+			"startMonthRange": "Start month must be between 1 and 12",
+			"startYearRange": "Start year must be between 2000 and {year}",
+			"openingBalancePositive": "Opening balance must be greater than zero",
+			"withdrawalTargetRange": "Withdrawal target must be between 0 and 100"
 		},
 		"trading": {
 			"propFirms": {
