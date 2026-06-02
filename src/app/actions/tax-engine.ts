@@ -46,9 +46,8 @@ const recomputeFromMonth = async (params: {
 	accountId: string
 	year: number
 	month: number
-	userId: string
 }): Promise<number> => {
-	const { accountId, userId } = params
+	const { accountId } = params
 	// timestamptz: ledger.month stored as UTC first-of-month. Iterate integer
 	// year/month so we never feed local-TZ Dates into eq() matchers, and we
 	// avoid date-fns addMonths DST drift around UTC-anchored instants.
@@ -87,7 +86,6 @@ const recomputeFromMonth = async (params: {
 			year,
 			month,
 			carryoverInCents: carryoverIn,
-			userId,
 		})
 
 		carryoverIn = result.carryoverOutCents
@@ -156,7 +154,7 @@ export const getMonthlyDarf = async (params: {
 		.then((rows) => rows[0])
 
 	if (!existing || existing.isDirty) {
-		await recomputeFromMonth({ accountId, year, month, userId })
+		await recomputeFromMonth({ accountId, year, month })
 	}
 
 	const row = await db
@@ -309,7 +307,6 @@ export const recomputeLedger = async (params: {
 		accountId,
 		year: startYear,
 		month: startMonth,
-		userId,
 	})
 
 	return {

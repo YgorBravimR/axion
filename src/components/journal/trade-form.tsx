@@ -335,7 +335,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 			// schema uses discriminated unions or transform — cast required until
 			// @hookform/resolvers ships updated types for zod v4.
 
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any -- zodResolver return type doesn't satisfy react-hook-form resolver constraint with Zod 4 discriminated unions; cast required until @hookform/resolvers ships updated types
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment -- zodResolver return type doesn't satisfy react-hook-form resolver constraint with Zod 4 discriminated unions; cast required until @hookform/resolvers ships updated types
 			resolver: zodResolver(createTradeSchema) as any,
 			defaultValues,
 		})
