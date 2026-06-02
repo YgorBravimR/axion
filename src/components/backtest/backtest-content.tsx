@@ -35,12 +35,31 @@ import {
 import { listBundledCatalogs } from "@/app/actions/user-catalog-bundles"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import dynamic from "next/dynamic"
 import { BacktestSummaryCards } from "./backtest-summary-cards"
 import { BacktestTierBreakdown } from "./backtest-tier-breakdown"
-import { BacktestEquityChart } from "./backtest-equity-chart"
+const BacktestEquityChart = dynamic(
+	() =>
+		import("./backtest-equity-chart").then((m) => ({
+			default: m.BacktestEquityChart,
+		})),
+	{ ssr: false }
+)
 import { BacktestTradesTable } from "./backtest-trades-table"
-import { HawksTripleScreenInspector } from "./inspector/triple-screen-inspector"
-import { BacktestOverviewChart } from "./inspector/backtest-overview-chart"
+const HawksTripleScreenInspector = dynamic(
+	() =>
+		import("./inspector/triple-screen-inspector").then((m) => ({
+			default: m.HawksTripleScreenInspector,
+		})),
+	{ ssr: false }
+)
+const BacktestOverviewChart = dynamic(
+	() =>
+		import("./inspector/backtest-overview-chart").then((m) => ({
+			default: m.BacktestOverviewChart,
+		})),
+	{ ssr: false }
+)
 import { BacktestHawksResultsPanel } from "./backtest-hawks-results-panel"
 import type { DataSourceInfo } from "@/types/candle"
 import type {
@@ -48,6 +67,7 @@ import type {
 	BacktestTrade,
 	StrategyRecipe,
 } from "@/types/backtest"
+import { useFormatting } from "@/hooks/use-formatting"
 
 const ALL_PRESETS = [...orbPresets, ...hawksPresets]
 
@@ -57,6 +77,7 @@ interface BacktestContentProps {
 
 const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 	const t = useTranslations("backtest")
+	const { formatNumber } = useFormatting()
 	const { showToast } = useToast()
 	const { showLoading, hideLoading } = useLoadingOverlay()
 	const [isPending, startTransition] = useTransition()
@@ -477,7 +498,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 										>
 											{source.assetSymbol} — {source.timeframeCode}
 											{source.rowCount
-												? ` (${source.rowCount.toLocaleString()})`
+												? ` (${formatNumber(source.rowCount)})`
 												: ""}
 										</SelectItem>
 									))}

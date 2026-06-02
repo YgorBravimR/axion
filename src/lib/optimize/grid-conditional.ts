@@ -141,6 +141,9 @@ const generateConditionalGrid = (
 			} satisfies LeafSelection)
 
 		for (const combo of combinations) {
+			let nextValue: PrimitiveValue | null = null
+			const shouldExpand = false
+
 			// 1. Owner lock takes precedence over everything else.
 			if (leaf.managedBy) {
 				const ownerValue = combo[leaf.managedBy]
@@ -152,24 +155,30 @@ const generateConditionalGrid = (
 						leaf.path
 					)
 					if (locked !== null) {
-						nextCombinations.push({ ...combo, [leaf.path]: locked })
-						continue
+						nextValue = locked
 					}
-					// Owner did not lock (e.g. qualityBundle = "custom") — fall
-					// through to normal selection handling below.
+					// Owner did not lock (e.g. qualityBundle = "custom") — fall through
 				}
 			}
 
 			// 2. Inactive (condition not satisfied) — skip without writing.
-			if (!conditionSatisfied(combo, leaf)) {
+			if (nextValue === null && !conditionSatisfied(combo, leaf)) {
 				nextCombinations.push(combo)
 				continue
 			}
 
 			// 3. Normal expansion — write fix value or multiply by sweep set.
-			const values = iterateSelectionValues(selection)
-			for (const v of values) {
-				nextCombinations.push({ ...combo, [leaf.path]: v })
+			if (nextValue !== null) {
+				const next = { ...combo }
+				next[leaf.path] = nextValue
+				nextCombinations.push(next)
+			} else {
+				const values = iterateSelectionValues(selection)
+				for (const v of values) {
+					const next = { ...combo }
+					next[leaf.path] = v
+					nextCombinations.push(next)
+				}
 			}
 		}
 
@@ -185,13 +194,9 @@ const generateConditionalGrid = (
 }
 
 /**
- * Count combinations without materializing them. Useful for the live
- * cardinality preview in the Sweep Summary panel.
- *
- * Note: this currently DOES materialize internally — counting "correctly"
- * with conditionals + owner locks essentially requires walking the tree.
- * If profiling shows this is hot, we can rewrite to a per-combo size
- * accumulator. For now correctness > speed.
+ * Count combinations without materializing them. Pure cardinality recursion
+ * that walks the leaf tree and multiplies per-branch sizes. Never allocates
+ * combo objects — fires on every keystroke in optimize UI.
  */
 const countConditionalGrid = (
 	leaves: SweepableLeaf[],
@@ -199,12 +204,64 @@ const countConditionalGrid = (
 	fallbackFixedValues: Map<string, PrimitiveValue>,
 	validators: LeafGroupValidator[] = []
 ): number => {
-	return generateConditionalGrid(
-		leaves,
-		selections,
-		fallbackFixedValues,
-		validators
-	).length
+	// Start recursion with empty combo
+	const countFromLeafIndex = (
+		leafIdx: number,
+		partialCombo: Combination
+	): number => {
+		if (leafIdx >= leaves.length) {
+			// Base case: check if partial combo passes all validators
+			if (validators.length === 0) {
+				return 1
+			}
+			return findFirstViolatedValidator(partialCombo, validators) === null
+				? 1
+				: 0
+		}
+
+		const leaf = leaves[leafIdx]!
+		let cardinality = 0
+
+		const selection =
+			selections.get(leaf.path) ??
+			({
+				kind: "fixed",
+				value: fallbackFixedValues.get(leaf.path) ?? "",
+			} satisfies LeafSelection)
+
+		// 1. Owner lock takes precedence
+		if (leaf.managedBy) {
+			const ownerValue = partialCombo[leaf.managedBy]
+			if (ownerValue !== undefined) {
+				const locked = resolveLockValue(
+					leaves,
+					leaf.managedBy,
+					ownerValue,
+					leaf.path
+				)
+				if (locked !== null) {
+					const nextCombo = { ...partialCombo, [leaf.path]: locked }
+					return countFromLeafIndex(leafIdx + 1, nextCombo)
+				}
+			}
+		}
+
+		// 2. Inactive (condition not satisfied) — skip without writing
+		if (!conditionSatisfied(partialCombo, leaf)) {
+			return countFromLeafIndex(leafIdx + 1, partialCombo)
+		}
+
+		// 3. Normal expansion — multiply by selection cardinality
+		const values = iterateSelectionValues(selection)
+		for (const v of values) {
+			const nextCombo = { ...partialCombo, [leaf.path]: v }
+			cardinality += countFromLeafIndex(leafIdx + 1, nextCombo)
+		}
+
+		return cardinality
+	}
+
+	return countFromLeafIndex(0, {})
 }
 
 /**

@@ -15,14 +15,33 @@
 
 import type { StrategyRecipe } from "@/types/backtest"
 
-const canonicalize = (recipe: StrategyRecipe): string => {
+const canonicalize = (
+	recipe: StrategyRecipe & { __canonical?: string }
+): string => {
+	// Return cached canonical form if available (recipes are immutable in practice)
+	if (recipe.__canonical !== undefined) {
+		return recipe.__canonical
+	}
+
 	const result = JSON.stringify(recipe, (key, value: unknown) => {
-		if (key === "displayName") {
+		if (key === "displayName" || key === "__canonical") {
 			return undefined
 		}
 		return value
 	})
-	return result ?? ""
+	const canonical = result ?? ""
+
+	// Cache the canonical form on the recipe object
+	if (Object.isExtensible(recipe)) {
+		Object.defineProperty(recipe, "__canonical", {
+			value: canonical,
+			writable: false,
+			enumerable: false,
+			configurable: false,
+		})
+	}
+
+	return canonical
 }
 
 interface DedupedRecipes {

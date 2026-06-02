@@ -52,6 +52,7 @@
 		"@react-pdf/renderer": "4.5.1",
 		"@sentry/nextjs": "10.53.1",
 		"@tanstack/react-table": "8.21.3",
+		"@tanstack/react-virtual": "^3.13.26",
 		"bcryptjs": "3.0.3",
 		"class-variance-authority": "0.7.1",
 		"clsx": "2.1.1",

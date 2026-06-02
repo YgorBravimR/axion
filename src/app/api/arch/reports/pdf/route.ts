@@ -58,13 +58,18 @@ const GET = async (request: NextRequest): Promise<NextResponse> => {
 		// Resolve locale from next-intl context (falls back to pt-BR via routing config)
 		const locale = await getLocale()
 
-		// Fetch fee data (shared between both report types)
-		const feeResult = await getCommissionFeeImpact()
-		const feeData =
-			feeResult.status === "success" ? (feeResult.data ?? null) : null
+		// Kick off fee fetch eagerly so it runs in parallel with the type-specific report.
+		// Branch before awaiting so TS can narrow the report type inside each branch.
+		const feePromise = getCommissionFeeImpact()
 
 		if (type === "weekly") {
-			const result = await getWeeklyReport(offset)
+			const [feeResult, result] = await Promise.all([
+				feePromise,
+				getWeeklyReport(offset),
+			])
+
+			const feeData =
+				feeResult.status === "success" ? (feeResult.data ?? null) : null
 
 			if (result.status !== "success" || !result.data) {
 				return NextResponse.json(
@@ -117,7 +122,13 @@ const GET = async (request: NextRequest): Promise<NextResponse> => {
 		}
 
 		// Monthly
-		const result = await getMonthlyReport(offset)
+		const [feeResult, result] = await Promise.all([
+			feePromise,
+			getMonthlyReport(offset),
+		])
+
+		const feeData =
+			feeResult.status === "success" ? (feeResult.data ?? null) : null
 
 		if (result.status !== "success" || !result.data) {
 			return NextResponse.json(

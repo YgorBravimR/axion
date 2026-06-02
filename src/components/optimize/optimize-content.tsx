@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react"
+import dynamic from "next/dynamic"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import {
@@ -68,7 +69,13 @@ import { StopProtectionSection } from "@/components/backtest/sections/stop-prote
 import { TargetsExitSection } from "@/components/backtest/sections/targets-exit-section"
 import { SizingExecutionSection } from "@/components/backtest/sections/sizing-execution-section"
 import { RunsComparisonTable } from "./runs-comparison-table"
-import { EquityOverlayChart } from "./equity-overlay-chart"
+const EquityOverlayChart = dynamic(
+	() =>
+		import("./equity-overlay-chart").then((m) => ({
+			default: m.EquityOverlayChart,
+		})),
+	{ ssr: false }
+)
 import { RunDetailPanel } from "./run-detail-panel"
 import { SweepConfigPanel } from "./sweep-config-panel"
 import { SweptPathsProvider } from "./swept-paths-context"
@@ -101,7 +108,10 @@ import { FreezeHeroModal } from "./freeze-hero-modal"
 import { LoserPatternInspector } from "./loser-pattern-inspector"
 import { SweepProgressBar } from "./sweep-progress-bar"
 import { ParameterHeatmap } from "./parameter-heatmap"
-import { ParetoScatter } from "./pareto-scatter"
+const ParetoScatter = dynamic(
+	() => import("./pareto-scatter").then((m) => ({ default: m.ParetoScatter })),
+	{ ssr: false }
+)
 import { WizardStepper } from "./wizard-stepper"
 import { SummaryCards } from "./summary-cards"
 import { SweepAxisDiagnostics } from "./sweep-axis-diagnostics"
@@ -118,6 +128,7 @@ import type {
 import type { ParameterRange } from "@/lib/optimize/parameter-grid"
 import type { SweepHandle } from "@/lib/optimize/sweep-runner"
 import type { WizardStepDef } from "./wizard-stepper"
+import { useFormatting } from "@/hooks/use-formatting"
 
 const ALL_PRESETS = [...orbPresets, ...hawksPresets]
 
@@ -147,6 +158,7 @@ type WizardStep = "setup" | "parameters" | "results"
 
 const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	const t = useTranslations("optimize")
+	const { formatNumber } = useFormatting()
 	const tBacktest = useTranslations("backtest")
 	const { showToast } = useToast()
 	const { showLoading, hideLoading } = useLoadingOverlay()
@@ -550,7 +562,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			showToast(
 				"success",
 				t("candlesLoaded", {
-					count: response.data.candles.length.toLocaleString(),
+					count: formatNumber(response.data.candles.length),
 				})
 			)
 		} else {
@@ -587,7 +599,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		if (totalCombos > MAX_COMBINATIONS) {
 			showToast(
 				"error",
-				t("sweepOverLimit", { max: MAX_COMBINATIONS.toLocaleString() })
+				t("sweepOverLimit", { max: formatNumber(MAX_COMBINATIONS) })
 			)
 			return
 		}
@@ -1105,7 +1117,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 											>
 												{source.assetSymbol} — {source.timeframeCode}
 												{source.rowCount
-													? ` (${source.rowCount.toLocaleString()})`
+													? ` (${formatNumber(source.rowCount)})`
 													: ""}
 											</SelectItem>
 										))}
@@ -1174,7 +1186,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 						>
 							<Database className="h-4 w-4" aria-hidden="true" />
 							{hasData
-								? t("candlesLoaded", { count: candleCount.toLocaleString() })
+								? t("candlesLoaded", { count: formatNumber(candleCount) })
 								: t("loadData")}
 						</Button>
 					</div>
@@ -1420,7 +1432,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 									className={`font-semibold tabular-nums ${totalCombinations > MAX_COMBINATIONS ? "text-fb-error" : "text-txt-100"}`}
 								>
 									{t("summary.combinations", {
-										count: totalCombinations.toLocaleString(),
+										count: formatNumber(totalCombinations),
 									})}
 								</span>
 							</div>

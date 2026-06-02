@@ -17,7 +17,7 @@ import {
 	type MACDState,
 	createWMA,
 	updateWMA,
-	computeWMAFromSlice,
+	getWMAWithOffset,
 	type WMAState,
 	createHighLowTracker,
 	updateHighLowTracker,
@@ -128,14 +128,8 @@ const processDezkCandle = (
 	updated = { ...updated, colorHistory }
 
 	// Get WMA values (already updated by updateIndicators above)
-	const wmaFastVal =
-		updated.wmaFast.buffer.length >= updated.wmaFast.period
-			? computeWMAFromSlice(updated.wmaFast.buffer)
-			: candle.close
-	const wmaSlowVal =
-		updated.wmaSlow.buffer.length >= updated.wmaSlow.period
-			? computeWMAFromSlice(updated.wmaSlow.buffer)
-			: candle.close
+	const wmaFastVal = getWMAWithOffset(updated.wmaFast, 0) ?? candle.close
+	const wmaSlowVal = getWMAWithOffset(updated.wmaSlow, 0) ?? candle.close
 
 	// ── Zero-cross tracking (v3: histogram must cross zero before a valid turn) ──
 

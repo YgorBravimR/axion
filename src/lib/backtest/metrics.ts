@@ -34,7 +34,7 @@ const computeMetrics = (
 		}
 	}
 
-	// Single-pass accumulation of all metrics
+	// Single-pass accumulation of all metrics + Welford's online variance
 	let winsCount = 0
 	let lossesCount = 0
 	let breakevenCount = 0
@@ -52,12 +52,22 @@ const computeMetrics = (
 	let currentWinStreak = 0
 	let currentLossStreak = 0
 	const uniqueDays = new Set<string>()
+	// Welford's algorithm: track mean + M2 (sum of squared diffs from mean)
+	let rMean = 0
+	let rM2 = 0
+	let rCount = 0
 
 	for (const trade of trades) {
 		const pnl = trade.netPnlCents
 		totalPnlCents += pnl
 		rSum += trade.rMultiple
 		uniqueDays.add(trade.dayKey)
+
+		// Welford update for Sharpe (R-multiple variance)
+		rCount++
+		const oldMean = rMean
+		rMean += (trade.rMultiple - oldMean) / rCount
+		rM2 += (trade.rMultiple - oldMean) * (trade.rMultiple - rMean)
 
 		if (pnl > 0) {
 			winsCount++
@@ -94,13 +104,10 @@ const computeMetrics = (
 		lossesCount > 0 ? Math.round(-grossLosses / lossesCount) : 0
 	const avgRMultiple = rSum / trades.length
 
-	// Sharpe ratio — second pass needed for std dev (variance requires mean first)
-	let varianceSum = 0
-	for (const trade of trades) {
-		varianceSum += (trade.rMultiple - avgRMultiple) ** 2
-	}
-	const stdR = Math.sqrt(varianceSum / trades.length)
-	const sharpeRatio = stdR > 0 ? avgRMultiple / stdR : 0
+	// Sharpe ratio — variance computed via Welford's algorithm in single pass above
+	const variance = rM2 / Math.max(rCount, 1)
+	const stdR = Math.sqrt(variance)
+	const sharpeRatio = stdR > 0 ? rMean / stdR : 0
 
 	// True R-expectancy = winRate * avgWinR - lossRate * |avgLossR|
 	// avgLossRMultiple is already negative, so summation gives correct result

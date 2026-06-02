@@ -278,3 +278,49 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Source**: `docs/scans/2026-05-29-layout-drift-from-core.md` — still-armed #5.
 - **What + Why**: The scan moved width constraints from 5 page routes to their feature components. Several other pages still have `mx-auto max-w-*` at the page level: `journal/[id]/page.tsx:155`, `journal/new/page.tsx:57`, `journal/[id]/edit/page.tsx:37`, `playbook/[id]/page.tsx:152`, `playbook/new/page.tsx:129`, `plan/layout.tsx:15`, `edit-strategy-form.tsx:199`, `command-center-content.tsx:145`. The scan deliberately did not touch them because their respective Wave 1/4/5 sweep logs documented the page-level wrapper as canonical at the time. Worth a pass to either propagate the new rule, or formally exempt these pages with a docs note.
 - **Date filed**: 2026-05-29.
+
+---
+
+## Performance (from 2026-06-02 perf scan #2 — backtest/optimize/PDF)
+
+### LIB-14 — Offload `@react-pdf/renderer` `renderToBuffer` to a worker thread
+
+- **Priority**: P2
+- **Effort**: M
+- **Source**: `docs/scans/2026-06-02-backtest-optimize-perf.md` — LIB-14 (critical, deferred).
+- **What + Why**: `src/lib/pdf/generate-report-pdf.ts:28-62` calls `renderToBuffer` synchronously. Each PDF render blocks the Node event loop ~300-500ms for a multi-page report. With 2+ concurrent users, the second request queues behind the first. Real fix requires Node `worker_threads`: ship the React tree + data to a worker, render there, return the buffer. Significant infra (worker spawn, message serialization, error propagation) — out of scope for a /scan pass.
+- **Fix shape**:
+  1. New `src/lib/pdf/render-worker.ts` — receives `{templateName, props}`, calls `renderToBuffer`, returns buffer.
+  2. New helper `renderInWorker(template, props)` that pools workers.
+  3. Update `generate-report-pdf.ts` callers to use the helper.
+  4. Add worker pool size config (`PDF_RENDER_CONCURRENCY` env var) defaulting to `os.cpus().length / 2`.
+- **Done when**: PDF render no longer blocks the event loop; concurrent users don't queue.
+- **Date filed**: 2026-06-02.
+
+### OPT-003 — Row virtualization for `runs-comparison-table.tsx`
+
+- **Priority**: P3
+- **Effort**: M
+- **Source**: `docs/scans/2026-06-02-backtest-optimize-perf.md` — OPT-003 (medium, deferred).
+- **What + Why**: For 1000+ sweep runs, pagination at 20 rows/page produces 50+ pages of UX friction. Virtualization keeps DOM small and enables seamless scroll. `@tanstack/react-virtual@^3.13.26` is **already installed** (added during scan #2 prep) but not yet integrated — the table uses the generic `@/components/ui/data-table` wrapper, and integrating virtualization there would touch all 13+ other `DataTable` callers.
+- **Fix shape**:
+  1. Add a `virtual?: boolean` prop to `DataTable` that switches the body to `useVirtualizer`.
+  2. Existing pagination behavior preserved when `virtual` is false (default).
+  3. Pass `virtual` from `runs-comparison-table.tsx`.
+- **Done when**: 5K-run sweep table scrolls at 60fps without pagination; other DataTable callers unaffected.
+- **Date filed**: 2026-06-02.
+
+### OPT-004 — Canvas-based heatmap for large parameter grids
+
+- **Priority**: P3
+- **Effort**: L
+- **Source**: `docs/scans/2026-06-02-backtest-optimize-perf.md` — OPT-004 (medium, deferred).
+- **What + Why**: `parameter-heatmap.tsx:457` renders a 50×50 grid as 2500 DOM nodes. Canvas would render 100× faster and use a fraction of the memory. The blocker is interactivity: current cells have hover tooltips, click handlers, accessibility hooks. Canvas-equivalent of these is achievable but a significant feature-quality change (hit-testing, tooltip portal, focus management) — needs design review, not just a perf pass.
+- **Fix shape**:
+  1. Audit interactivity surface — list every cell interaction.
+  2. Decide which interactions stay (hover tooltip likely yes, full click-context-menu maybe no).
+  3. Render cells to canvas; reuse a single overlay div for tooltip on hover.
+  4. Implement keyboard navigation via grid coords (not focusable DOM).
+  5. DOM fallback for <500 cells.
+- **Done when**: heatmaps with 1000+ cells render in <16ms; existing interactivity preserved or explicitly migrated.
+- **Date filed**: 2026-06-02.
