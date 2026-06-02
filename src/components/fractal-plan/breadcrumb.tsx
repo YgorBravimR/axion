@@ -28,7 +28,7 @@ const PlanBreadcrumb = ({ segments }: PlanBreadcrumbProps) => {
 				{segments.map((segment, index) => {
 					const isLast = index === segments.length - 1
 					return (
-						<div key={`${segment.label}-${index}`} className="contents">
+						<div key={segment.label} className="contents">
 							<BreadcrumbItem>
 								{segment.href && !isLast ? (
 									<BreadcrumbLink asChild>

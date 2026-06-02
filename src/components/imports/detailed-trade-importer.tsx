@@ -335,9 +335,9 @@ export const DetailedTradeImporter = ({
 					<h4 className="text-small text-txt-100 font-medium">{t("trades")}</h4>
 					<ScrollArea className="max-h-96">
 						<div className="space-y-2">
-							{preview.trades.map((trade, idx) => (
+							{preview.trades.map((trade) => (
 								<div
-									key={`${trade.asset}-${trade.direction}-${trade.entryPrice}-${idx}`}
+									key={`${trade.asset}-${trade.direction}-${trade.entryPrice}`}
 									className="p-s-300 border-bg-300 bg-bg-200 rounded-sm border"
 								>
 									<div className="mb-s-200 flex items-start justify-between">

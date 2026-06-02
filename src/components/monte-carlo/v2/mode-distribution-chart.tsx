@@ -110,9 +110,9 @@ const ModeDistributionChart = ({ statistics }: ModeDistributionChartProps) => {
 								outerRadius={70}
 								paddingAngle={2}
 							>
-								{data.map((entry, index) => (
+								{data.map((entry) => (
 									<Cell
-										key={`cell-${index}`}
+										key={entry.name}
 										fill={entry.color}
 										fillOpacity={0.75}
 										stroke="var(--color-bg-200)"

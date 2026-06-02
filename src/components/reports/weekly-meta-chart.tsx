@@ -151,9 +151,9 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
 						radius={[2, 2, 0, 0]}
 						maxBarSize={24}
 					>
-						{chartData.map((entry, index) => (
+						{chartData.map((entry) => (
 							<Cell
-								key={`cell-${index}`}
+								key={`week-${entry.name}`}
 								fill={
 									entry.disabled
 										? "var(--color-bg-300)"

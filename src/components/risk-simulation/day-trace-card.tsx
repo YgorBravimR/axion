@@ -140,7 +140,7 @@ const DayTraceCard = ({ day }: DayTraceCardProps) => {
 			<div>
 				{day.trades.map((trade, idx) => (
 					<TradeFlowItem
-						key={`${trade.tradeId}-${idx}`}
+						key={trade.tradeId}
 						trade={trade}
 						isLast={idx === day.trades.length - 1}
 					/>

@@ -75,14 +75,16 @@ const RowData = ({
 				>
 					{row.monthName.slice(0, 3)}
 				</TableHead>
-				{Array.from({ length: 13 }).map((_, i) => (
-					<TableCell
-						key={i}
-						className="text-txt-300 text-tiny px-s-300 py-s-200 text-right font-mono"
-					>
-						—
-					</TableCell>
-				))}
+				{Array.from({ length: 13 }, (_, i) => `placeholder-${String(i)}`).map(
+					(slotId) => (
+						<TableCell
+							key={slotId}
+							className="text-txt-300 text-tiny px-s-300 py-s-200 text-right font-mono"
+						>
+							—
+						</TableCell>
+					)
+				)}
 			</TableRow>
 		)
 	}

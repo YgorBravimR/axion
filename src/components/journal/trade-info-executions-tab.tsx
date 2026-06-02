@@ -20,7 +20,10 @@ interface TradeInfoExecutionsTabProps {
 	executions: TradeChartData["executions"]
 }
 
-const TradeInfoExecutionsTab = ({ trade, executions }: TradeInfoExecutionsTabProps) => {
+const TradeInfoExecutionsTab = ({
+	trade,
+	executions,
+}: TradeInfoExecutionsTabProps) => {
 	const tTrade = useTranslations("trade")
 	const tCommon = useTranslations("common")
 
@@ -30,7 +33,7 @@ const TradeInfoExecutionsTab = ({ trade, executions }: TradeInfoExecutionsTabPro
 		return (
 			<div className="space-y-s-200">
 				{/* Header row */}
-				<div className="text-tiny text-txt-300 grid grid-cols-4 gap-s-200 font-medium">
+				<div className="text-tiny text-txt-300 gap-s-200 grid grid-cols-4 font-medium">
 					<span>{tCommon("type")}</span>
 					<span>{tCommon("price")}</span>
 					<span>{tCommon("qty")}</span>
@@ -39,21 +42,21 @@ const TradeInfoExecutionsTab = ({ trade, executions }: TradeInfoExecutionsTabPro
 				<Separator id="panel-separator-exec-header" />
 
 				{executions.map((exec, index) => {
-					const isBuy = isLong
-						? exec.type === "entry"
-						: exec.type === "exit"
-					const timeStr = executionTimeFormatter.format(new Date(exec.timestamp))
+					const isBuy = isLong ? exec.type === "entry" : exec.type === "exit"
+					const timeStr = executionTimeFormatter.format(
+						new Date(exec.timestamp)
+					)
 
 					return (
 						<div
-							key={`exec-${exec.type}-${exec.price}-${exec.quantity}-${index}`}
-							className="text-small grid grid-cols-4 gap-s-200 py-s-100"
+							key={`exec-${exec.type}-${exec.price}-${exec.quantity}-${exec.timestamp}`}
+							className="text-small gap-s-200 py-s-100 grid grid-cols-4"
 						>
 							<Badge
 								id={`panel-exec-badge-${index}`}
 								variant="outline"
 								className={cn(
-									"w-fit text-tiny",
+									"text-tiny w-fit",
 									isBuy
 										? "border-action-buy/30 text-action-buy"
 										: "border-action-sell/30 text-action-sell"
@@ -76,17 +79,17 @@ const TradeInfoExecutionsTab = ({ trade, executions }: TradeInfoExecutionsTabPro
 	return (
 		<div className="space-y-s-200">
 			{/* Simple entry/exit for non-scaled trades */}
-			<div className="text-tiny text-txt-300 grid grid-cols-3 gap-s-200 font-medium">
+			<div className="text-tiny text-txt-300 gap-s-200 grid grid-cols-3 font-medium">
 				<span>{tCommon("type")}</span>
 				<span>{tCommon("price")}</span>
 				<span>{tCommon("qty")}</span>
 			</div>
 			<Separator id="panel-separator-simple-exec-header" />
-			<div className="text-small grid grid-cols-3 gap-s-200 py-s-100">
+			<div className="text-small gap-s-200 py-s-100 grid grid-cols-3">
 				<Badge
 					id="panel-simple-entry-badge"
 					variant="outline"
-					className="border-action-buy/30 text-action-buy w-fit text-tiny"
+					className="border-action-buy/30 text-action-buy text-tiny w-fit"
 				>
 					{tTrade("entry")}
 				</Badge>
@@ -96,11 +99,11 @@ const TradeInfoExecutionsTab = ({ trade, executions }: TradeInfoExecutionsTabPro
 				<span className="text-txt-100">x{trade.positionSize}</span>
 			</div>
 			{trade.exitPrice !== null && (
-				<div className="text-small grid grid-cols-3 gap-s-200 py-s-100">
+				<div className="text-small gap-s-200 py-s-100 grid grid-cols-3">
 					<Badge
 						id="panel-simple-exit-badge"
 						variant="outline"
-						className="border-action-sell/30 text-action-sell w-fit text-tiny"
+						className="border-action-sell/30 text-action-sell text-tiny w-fit"
 					>
 						{tTrade("exit")}
 					</Badge>

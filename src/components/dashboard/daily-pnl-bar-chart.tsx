@@ -153,9 +153,9 @@ export const DailyPnLBarChart = ({
 						// @see Recharts Bar onClick types `data` as `any`; narrow to DailyPnL
 						onClick={(data) => handleBarClick(data as unknown as DailyPnL)}
 					>
-						{sortedData.map((entry, index) => (
+						{sortedData.map((entry) => (
 							<Cell
-								key={`cell-${index}`}
+								key={entry.date}
 								fill={
 									entry.pnl >= 0
 										? "var(--color-trade-buy)"
