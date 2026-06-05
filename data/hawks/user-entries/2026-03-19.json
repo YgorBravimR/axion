@@ -4,34 +4,55 @@
 		"brickIndex": 10,
 		"direction": "short",
 		"label": "T1",
-		"expectedResult": "BE"
+		"expectedResult": "BE",
+		"closePrice": 179680
 	},
 	{
 		"date": "2026-03-19",
 		"brickIndex": 22,
 		"direction": "short",
 		"label": "T2",
-		"expectedResult": "GA"
+		"expectedResult": "GA",
+		"closePrice": 179680
+	},
+	{
+		"date": "2026-03-19",
+		"brickIndex": 41,
+		"direction": "short",
+		"label": "T3",
+		"expectedResult": "BE",
+		"closePrice": 177920
 	},
 	{
 		"date": "2026-03-19",
 		"brickIndex": 45,
 		"direction": "short",
-		"label": "T3",
-		"expectedResult": "BE"
+		"label": "T4",
+		"expectedResult": "BE",
+		"closePrice": 178240
+	},
+	{
+		"date": "2026-03-19",
+		"brickIndex": 153,
+		"direction": "long",
+		"label": "T5",
+		"expectedResult": "ST",
+		"closePrice": 182880
 	},
 	{
 		"date": "2026-03-19",
 		"brickIndex": 158,
 		"direction": "long",
-		"label": "T4",
-		"expectedResult": "ST"
+		"label": "T6",
+		"expectedResult": "ST",
+		"closePrice": 182400
 	},
 	{
 		"date": "2026-03-19",
 		"brickIndex": 162,
 		"direction": "long",
-		"label": "T5",
-		"expectedResult": "BE"
+		"label": "T7",
+		"expectedResult": "BE",
+		"closePrice": 182400
 	}
 ]

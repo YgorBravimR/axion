@@ -1,0 +1,10 @@
+[
+	{
+		"date": "2026-05-28",
+		"brickIndex": 72,
+		"direction": "short",
+		"label": "T1",
+		"expectedResult": "GA",
+		"closePrice": 176500
+	}
+]

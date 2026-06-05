@@ -1,10 +1,10 @@
 [
 	{
-		"date": "2026-03-30",
-		"brickIndex": 70,
+		"date": "2026-03-26",
+		"brickIndex": 67,
 		"direction": "long",
 		"label": "T1",
 		"expectedResult": "BE",
-		"closePrice": 184960
+		"closePrice": 185790
 	}
 ]

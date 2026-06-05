@@ -222,6 +222,11 @@ interface UserEntry {
 	direction: Direction
 	label?: string // "T1", "T2", etc.
 	notes?: string
+	// Verification metadata — not consumed by the engine, used by probes
+	// (scripts/verify-csv-brick-closes.ts) to cross-check that the stored
+	// brick at this (date, brickIndex) matches the user's observed value.
+	expectedResult?: "BE" | "GA" | "ST" // CSV outcome code: BE=breakeven, GA=gain, ST=stop
+	closePrice?: number // raw points (e.g., 182100) — FECHAMENTO BOX from CSV
 }
 
 interface UserCatalogConfig {
