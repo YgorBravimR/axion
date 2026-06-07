@@ -57,13 +57,14 @@ export const getInspectorWindow = async (
 			.select({ id: timeframes.id, code: timeframes.code })
 			.from(timeframes)
 		const tfIdByCode = new Map(tfRows.map((r) => [r.code, r.id]))
-		const tfId5m = tfIdByCode.get("5m")
-		const tfId15m = tfIdByCode.get("15m")
-		const tfId60m = tfIdByCode.get("1h")
+		const tfId5m = tfIdByCode.get("hawk_5m_win")
+		const tfId15m = tfIdByCode.get("hawk_15m_win")
+		const tfId60m = tfIdByCode.get("hawk_60m_win")
 		if (!tfId5m || !tfId15m || !tfId60m) {
 			return {
 				status: "error",
-				message: "Missing 5m, 15m, or 1h timeframe in DB",
+				message:
+					"hawk_5m_win / hawk_15m_win / hawk_60m_win timeframe missing in DB — run scripts/materialize-hawks-timeframes.ts",
 			}
 		}
 
@@ -179,9 +180,13 @@ export const getOverviewRange = async (
 		const tfRows = await db
 			.select({ id: timeframes.id, code: timeframes.code })
 			.from(timeframes)
-		const tfId5m = tfRows.find((t) => t.code === "5m")?.id
+		const tfId5m = tfRows.find((t) => t.code === "hawk_5m_win")?.id
 		if (!tfId5m) {
-			return { status: "error", message: "5m timeframe missing in DB" }
+			return {
+				status: "error",
+				message:
+					"hawk_5m_win timeframe missing in DB — run scripts/materialize-hawks-timeframes.ts",
+			}
 		}
 
 		const fromDate = new Date(`${params.fromDate}T00:00:00Z`)

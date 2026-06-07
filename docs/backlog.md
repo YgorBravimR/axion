@@ -43,6 +43,72 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Backtest / Inspector
 
+### Hawks catalog import: replace formulaic exit math with brick-walk simulation
+
+- **Priority**: P2
+- **Effort**: S
+- **Source**: 2026-06-05 — `scripts/import-hawks-catalog-as-trades.ts` ships v1 with formulaic exit prices (ST = entry ± 200pt, GA = entry ∓ 600pt, BE = entry) and `exit_date = entry_date + 30min`. This trusts the catalog's BE/GA/ST labels and computes outcome-implied prices. It does NOT simulate what actually happened in the brick sequence.
+- **What + Why**: A brick-walk simulator that reads forward from each entry brick in `hawk_5m_win` and finds the first brick that breached the stop, target, or BE-then-reversal would (a) yield real exit timestamps for analytics, (b) surface catalog rows where the labeled outcome disagrees with the price action (useful audit signal), and (c) capture the slippage between formulaic and realized prices. The current v1 is fine for "show me the catalog as trades" but limits any per-day execution-quality study.
+- **Fix shape**: For each trade, iterate hawk_5m_win bricks ordered by timestamp for the same BRT day starting at the entry brick + 1. For SHORT: ST if brick.high >= stop, GA if brick.low <= target, BE if MFE crossed +1R then price returned to entry. Mirror for LONG. Use that brick's close + timestamp.
+- **Done when**: A `--mode=walk` flag on the importer toggles between formulaic and walk-simulated exits. A separate audit script flags catalog rows whose labeled outcome disagrees with the simulated outcome.
+- **Date filed**: 2026-06-05.
+
+### Delete dead probe scripts from the old data-verification 7-step plan
+
+- **Priority**: P3
+- **Effort**: S
+- **Source**: 2026-06-07 — `scripts/` housekeeping pass after Phase 6 legacy-timeframe cleanup. The current pipeline (per-brick-size `load-hawks-bricks-by-size.ts` + `materialize-hawks-timeframes.ts` + asset_session_anchors + user-catalog mode) superseded the original 7-step "verify the data layer one column at a time" plan. Two dozen `check-*` / `diff-*` / `probe-*` / `sweep-*` scripts remain in `scripts/` as relic harnesses that were spec'd in `/Users/ygorbravim/.claude/plans/temporal-swimming-gem.md` (steps 1–6 probes) and the OPTIMIZE dead-axes investigation. They run against legacy timeframe codes (`"5m"/"15m"/"1h"` — now deleted) or stale CSV layouts (single `/Users/ygorbravim/Downloads/axion/data/hawks/candles/*.csv` paths that no longer exist).
+- **What + Why**: 51 files in `scripts/` is hard to navigate. Keeping known-broken probes encourages cargo-cult re-runs ("did anyone try `check-htf-emas.ts`?") instead of writing a fresh probe against the current pipeline. Deleting them shrinks the surface and makes the live runners (`audit-catalog-results`, `audit-parallel`, `trace-hawks`, `verify-csv-brick-closes`, `import-hawks-catalog-as-trades`, `load-hawks-bricks-by-size`, `materialize-hawks-timeframes`, `load-win-time-based-candles`, `run-user-catalog-backtest`) easier to spot.
+- **Two tiers — safe vs. needs investigation**:
+
+  **Tier A — safe to delete (0–1 external refs, doc-only references only):**
+  - `scripts/check-5m-indicators.ts` (step 4 probe)
+  - `scripts/check-days.ts`
+  - `scripts/check-htf-emas.ts` (step 6 probe)
+  - `scripts/check-htf-pivots.ts` (step 5 probe)
+  - `scripts/check-pivots.ts` (step 2 probe)
+  - `scripts/check-row-spacing.ts` (step 1 probe)
+  - `scripts/diff-5m-vs-csv.ts` (step 1 probe)
+  - `scripts/diff-pivots-vs-csv.ts`
+  - `scripts/diff-projection.ts` (step 3 probe)
+  - `scripts/probe-aggression-balance.ts`
+  - `scripts/probe-catalog-coverage.ts`
+  - `scripts/probe-dual-mode-effect.ts`
+  - `scripts/probe-keltner-exhaustion.ts`
+  - `scripts/probe-volume-vs-ema.ts`
+  - `scripts/bench-refine-cap.ts`
+
+  **Tier B — needs investigation first (referenced from production code, not just docs):**
+  - `scripts/load-hawks-candles.ts` — old monolithic loader; superseded by `load-hawks-bricks-by-size.ts`. Referenced from `src/components/dev/hawks-drawings.ts` and `scripts/seed-hawks-indicators.ts`. Verify whether those are comment-only references (likely) or live imports (would break).
+  - `scripts/sweep-validate.ts`, `scripts/sweep-detective.ts`, `scripts/check-dead-axes.ts` — referenced from `src/lib/backtest/presets/hawks-axis-roles.ts`. Likely doc-comment "to investigate further, run `pnpm tsx scripts/X.ts`" — but confirm before deletion.
+  - `scripts/sweep-monotonicity.ts`, `scripts/probe-macd-alignment.ts`, `scripts/probe-level-zones.ts`, `scripts/inspect-indicator-keys.ts`, `scripts/peek-aggression-sign.ts` — referenced from `docs/hawks-strategy/*.md`. Decide: either delete and remove the doc mention, or keep and document them as canonical diagnostic harnesses.
+
+- **Fix shape**:
+  1. Delete all 15 Tier A files in one commit. Run `pnpm lint` + `pnpm typecheck` — should be no-op since none are imported.
+  2. For each Tier B file: read the referencing file, decide if the reference is a live import (rare) vs. a code comment (likely). If comment-only, delete the script AND scrub the comment. If live import, leave a `// TODO(backlog): migrate to current pipeline` note and skip deletion for that file.
+  3. Update `docs/postMorten/backend.md`, `docs/gotchas.md`, `docs/hawks-strategy/*.md`, `docs/sweep-validate-catalog.md` to remove stale "run `scripts/X.ts`" prose for anything deleted.
+- **Done when**: `scripts/` count drops by ≥15 files. `pnpm lint` + `pnpm typecheck` green. No broken doc links to deleted scripts.
+- **Date filed**: 2026-06-07.
+
+### Hawks catalog tags: replace uninformative topos_fundos dimension
+
+- **Priority**: P3
+- **Effort**: XS
+- **Source**: 2026-06-05 — After importing 291 catalog trades, the topos_fundos dimension tagged 289/291 trades as "marked" (effectively no discriminative value). The CSV's `tbd1/tbd2/tbd3` columns aren't sparse-painted pivots — they're continuously-valued and never identically zero in practice.
+- **What + Why**: One of the 8 curated tag dimensions is wasted. Worth replacing with a discriminative tag. Candidates: "near session open" (entry brick within first N bricks of the day), "near recent high/low" (entry within K bricks' worth of the day's extreme), or proper pivot recency (look back N bricks and check if any tbd value crossed a threshold).
+- **Fix shape**: Decide on the replacement dimension in `scripts/import-hawks-catalog-as-trades.ts:TAG_DIMS`. Drop or remap `topos_fundos`. Re-run the importer — idempotent, so wipes + re-tags cleanly.
+- **Done when**: All 8 dimensions show <80% concentration on either side (a sign each is actually carrying information).
+- **Date filed**: 2026-06-05.
+
+### Hawks 90-day backtest window: treat March as WINM-anchored only
+
+- **Priority**: P1
+- **Effort**: XS (decision + doc only) or M (re-export March source CSVs at WINJ)
+- **Source**: 2026-06-05 — Brick-close audit (`scripts/verify-csv-brick-closes.ts`) after rebuilding the candle pipeline (`load-hawks-bricks-by-size` + `materialize-hawks-timeframes`) shows **118/120 March 2026 catalog entries** off by **+3800 to +4000 points** from the materialized `hawk_5m_win` close. April + May are clean (5 and 3 minor drifts respectively, all <300 pts).
+- **What + Why**: The source CSVs under `/Users/ygorbravim/Downloads/axion/WIN/<N>R.csv` contain **WINM (June-26)** contract data continuously across the 2026 window. The catalog (`/Users/ygorbravim/Downloads/Bravp - HK - Março.csv`) captured March BOX values at **WINJ (April-26)** contract levels — which is what the desk was actually trading at the time, since J→M rollover typically lands mid-March. The +3900pt delta is the J/M spread.
+- **Decision (user, 2026-06-05)**: Don't re-export. Document the spread, mark March as "WINM-anchored backtest only" in the catalog, and treat **April + May 2026 as the trustworthy 90-day window** for proving the Hawks strategy. March can still be used for sequencing / brick-by-brick logic checks, but absolute P&L numbers must reference WINM prices, not the catalog's WINJ prices.
+- **Done when**: A note in `data/hawks/user-entries/README.md` (create if missing) flags March 2026 as WINM-priced. The verifier's pass-rate report subtracts March mismatches as "expected" and surfaces only April + May divergences as actionable. Update if/when the user provides WINJ-period source CSVs for March.
+
 ### OPTIMIZE — post-fact result memoization for data-degenerate axes
 
 - **Priority**: P3
