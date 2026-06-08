@@ -33,9 +33,16 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
 	poweredByHeader: false,
 	// Prevent turbopack from bundling native/Node.js-only modules.
-	// bcryptjs and @neondatabase/serverless depend on Node.js built-ins
-	// that must be resolved at runtime, not compile time.
-	serverExternalPackages: ["bcryptjs"],
+	// bcryptjs depends on Node.js built-ins that must be resolved at runtime.
+	// Both @duckdb packages are listed explicitly — externalization does NOT
+	// cascade transitively in Turbopack, so the binding-shim layer (which
+	// `require()`s platform-specific .node files) gets bundled and fails on
+	// missing non-host platforms unless listed by name.
+	serverExternalPackages: [
+		"bcryptjs",
+		"@duckdb/node-api",
+		"@duckdb/node-bindings",
+	],
 	// Enable "use cache" directive + cacheTag/cacheLife for server-side caching
 	cacheComponents: true,
 	experimental: {

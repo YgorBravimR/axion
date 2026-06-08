@@ -27,7 +27,7 @@ import type { CandleRow } from "@/types/candle"
 const DATA_ROOT = resolve(process.cwd(), "data/hawks")
 const CATALOG_DIR = resolve(DATA_ROOT, "user-entries")
 const ASSET_SYMBOL = "WIN"
-const TIMEFRAME_CODE = "5m"
+const TIMEFRAME_CODE = "hawk_5m_win"
 
 // ─── Catalog loading ──────────────────────────────────────────────────────────
 

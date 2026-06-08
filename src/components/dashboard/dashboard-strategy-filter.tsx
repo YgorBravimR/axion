@@ -78,7 +78,7 @@ const DashboardStrategyFilter = ({
 		if (value.strategyId && options.length > 0 && !selectedStrategy) {
 			onChange({ strategyId: null, strategyVersionId: null })
 		}
-	}, [options.length, selectedStrategy, value.strategyId])
+	}, [options.length, selectedStrategy, value.strategyId, onChange])
 
 	const handleStrategyChange = (strategyId: string): void => {
 		if (strategyId === NO_STRATEGY) {

@@ -5,8 +5,8 @@
  * every column shipped in the 2026-05-28 Hawks Renko CSV exports (5m, 15m, 60m).
  *
  * Each definition stores the EXACT CSV column header as `csv_header` so the
- * loader can be auto-derived from it later if we want; for now, the loader
- * has the column indices hard-coded in `scripts/load-hawks-candles.ts`.
+ * loader can be auto-derived from it later if we want; for now, the loaders
+ * have the column indices hard-coded in their respective files.
  *
  * Run: `pnpm tsx scripts/seed-hawks-indicators.ts`
  */

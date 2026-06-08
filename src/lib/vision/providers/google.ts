@@ -10,14 +10,42 @@
  * then rely on the parser for structured data.
  */
 
-import type { VisionExtractionRequest, VisionExtractionResponse } from "../types"
+import { z } from "zod"
+import type {
+	VisionExtractionRequest,
+	VisionExtractionResponse,
+} from "../types"
+
+// Zod schema for Google Vision API response shape
+const GoogleVisionResponseSchema = z.object({
+	responses: z
+		.array(
+			z.object({
+				fullTextAnnotation: z
+					.object({
+						text: z.string(),
+					})
+					.optional(),
+				textAnnotations: z
+					.array(
+						z.object({
+							description: z.string(),
+						})
+					)
+					.optional(),
+			})
+		)
+		.optional(),
+})
 
 export const isGoogleVisionAvailable = (): boolean => {
 	const credentials = process.env.GOOGLE_APPLICATION_CREDENTIALS
 	const apiKey = process.env.GOOGLE_CLOUD_VISION_API_KEY
 
 	// Check if credentials looks like a file path (not an API key)
-	const hasValidCredentials = credentials && (credentials.endsWith('.json') || credentials.startsWith('/'))
+	const hasValidCredentials =
+		credentials &&
+		(credentials.endsWith(".json") || credentials.startsWith("/"))
 	const hasApiKey = !!apiKey
 
 	return hasValidCredentials || hasApiKey
@@ -57,7 +85,8 @@ const callGoogleVisionREST = async (imageBase64: string): Promise<string> => {
 		throw new Error(`Google Vision API error: ${response.status}`)
 	}
 
-	const data = await response.json()
+	const rawData = (await response.json()) as unknown
+	const data = GoogleVisionResponseSchema.parse(rawData)
 
 	// Try to get structured text from fullTextAnnotation (preserves layout)
 	const fullTextAnnotation = data.responses?.[0]?.fullTextAnnotation

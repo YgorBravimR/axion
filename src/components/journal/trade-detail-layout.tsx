@@ -149,7 +149,7 @@ const TradeDetailLayout = ({ children, chartData }: TradeDetailLayoutProps) => {
 								{tChart("chartButton")}
 							</Button>
 						</div>
-						{children}
+						<div className="mx-auto max-w-4xl">{children}</div>
 					</div>
 				)}
 			</div>

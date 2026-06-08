@@ -172,7 +172,8 @@ const EquityOverlayChart = memo(({ runs }: EquityOverlayChartProps) => {
 				))}
 				<Legend
 					formatter={(value) => {
-						const run = runsMap.get(value)
+						const runKey = typeof value === "string" ? value : String(value)
+						const run = runsMap.get(runKey)
 						return (
 							<span className="text-tiny text-txt-200">
 								{run?.label ?? value}

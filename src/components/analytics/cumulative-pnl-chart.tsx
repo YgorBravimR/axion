@@ -122,7 +122,7 @@ export const CumulativePnlChart = memo(({ data }: CumulativePnlChartProps) => {
 				/>
 				<XAxis
 					dataKey="date"
-					tickFormatter={(dateStr) => formatDate(dateStr, locale)}
+					tickFormatter={(dateStr: string) => formatDate(dateStr, locale)}
 					stroke="var(--color-txt-300)"
 					tick={AXIS_TICK}
 					tickLine={false}

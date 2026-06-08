@@ -30,6 +30,7 @@ import {
 	type EnumSelection,
 	type TimeSelection,
 } from "./leaf-controls"
+import { useFormatting } from "@/hooks/use-formatting"
 
 // ── Strategy-specific configuration ──────────────────────────────────
 
@@ -182,6 +183,7 @@ const StrategySweepBuilder = ({
 	const tInvariant = useTranslations("optimize.invariants")
 	const tWf = useTranslations("optimize.walkForward")
 	const tLeaf = useTranslations("optimize.sweepLeaf")
+	const { formatNumber } = useFormatting()
 
 	const { leaves, validators, sections, bundle, defaultTimeBaseline } = config
 
@@ -343,15 +345,13 @@ const StrategySweepBuilder = ({
 										: "text-txt-100"
 							)}
 						>
-							{cardinality.valid.toLocaleString()}
+							{formatNumber(cardinality.valid)}
 						</p>
 						{cardinality.raw !== cardinality.valid && (
 							<p className="text-tiny text-txt-300">
 								{tBuilder("rawDroppedSummary", {
-									raw: cardinality.raw.toLocaleString(),
-									dropped: (
-										cardinality.raw - cardinality.valid
-									).toLocaleString(),
+									raw: formatNumber(cardinality.raw),
+									dropped: formatNumber(cardinality.raw - cardinality.valid),
 								})}
 							</p>
 						)}
@@ -368,10 +368,10 @@ const StrategySweepBuilder = ({
 									key={reason}
 									className="bg-bg-300 text-txt-200 px-s-200 py-s-100 text-tiny rounded-full"
 									title={tBuilder("dropChipTooltip", {
-										count: count.toLocaleString(),
+										count: formatNumber(count),
 									})}
 								>
-									{tInvariant(reason)}: −{count.toLocaleString()}
+									{tInvariant(reason)}: −{formatNumber(count)}
 								</span>
 							)
 						)}
@@ -504,7 +504,7 @@ const StrategySweepBuilder = ({
 								id={`section-panel-${section.id}`}
 								className="border-bg-300 p-m-400 space-y-m-400 border-t"
 							>
-								{showBundleHint && bundle && lockingBundleValue && (
+								{showBundleHint && (
 									<div className="border-bg-400 bg-bg-300 p-s-300 text-tiny text-txt-200 rounded-md border">
 										{tBuilder("bundleLockHint", {
 											bundle:

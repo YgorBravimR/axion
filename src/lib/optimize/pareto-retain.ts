@@ -29,53 +29,51 @@ const paretoRetain = (runs: OptimizationRun[]): OptimizationRun[] => {
 		const pnl = run.summary.totalPnlCents ?? 0
 		const sharpe = run.summary.sharpeRatio ?? 0
 
-		if (!bestByPf || pf > (bestByPf.summary.profitFactor ?? 0)) {
+		const bestPf = bestByPf ? (bestByPf.summary.profitFactor ?? 0) : -Infinity
+		const bestPnl = bestByPnl
+			? (bestByPnl.summary.totalPnlCents ?? 0)
+			: -Infinity
+		const bestSharpe = bestBySharpe
+			? (bestBySharpe.summary.sharpeRatio ?? 0)
+			: -Infinity
+
+		if (pf > bestPf) {
 			bestByPf = run
 		}
-		if (!bestByPnl || pnl > (bestByPnl.summary.totalPnlCents ?? 0)) {
+		if (pnl > bestPnl) {
 			bestByPnl = run
 		}
-		if (!bestBySharpe || sharpe > (bestBySharpe.summary.sharpeRatio ?? 0)) {
+		if (sharpe > bestSharpe) {
 			bestBySharpe = run
 		}
 	}
 
-	// Compute 3-axis Pareto front using incremental dominance check.
+	// Compute 3-axis Pareto front using sorted-sweep O(N log N).
+	// Sort by profitFactor descending; sweep linearly tracking running max of (pnl, sharpe).
+	// A point is on the frontier iff it dominates the running max of one of the other axes.
 	const onFront = new Set<OptimizationRun>()
 
-	for (const candidate of runs) {
-		let isDominated = false
+	const sorted = [...runs].sort((a, b) => {
+		const pfA = a.summary.profitFactor ?? 0
+		const pfB = b.summary.profitFactor ?? 0
+		return pfB - pfA // descending
+	})
 
-		for (const other of runs) {
-			if (candidate === other) {
-				continue
-			}
+	let maxPnlSeen = -Infinity
+	let maxSharpeSeen = -Infinity
 
-			// other dominates candidate if it's >= on all axes and > on at least one.
-			const candPf = candidate.summary.profitFactor ?? 0
-			const candPnl = candidate.summary.totalPnlCents ?? 0
-			const candSharpe = candidate.summary.sharpeRatio ?? 0
+	for (const run of sorted) {
+		const pf = run.summary.profitFactor ?? 0
+		const pnl = run.summary.totalPnlCents ?? 0
+		const sharpe = run.summary.sharpeRatio ?? 0
 
-			const otherPf = other.summary.profitFactor ?? 0
-			const otherPnl = other.summary.totalPnlCents ?? 0
-			const otherSharpe = other.summary.sharpeRatio ?? 0
-
-			const pfOk = otherPf >= candPf
-			const pnlOk = otherPnl >= candPnl
-			const sharpeOk = otherSharpe >= candSharpe
-
-			const hasStrictWin =
-				otherPf > candPf || otherPnl > candPnl || otherSharpe > candSharpe
-
-			if (pfOk && pnlOk && sharpeOk && hasStrictWin) {
-				isDominated = true
-				break
-			}
+		// On frontier if pnl or sharpe exceeds the max seen so far (in sweep order).
+		if (pnl > maxPnlSeen || sharpe > maxSharpeSeen) {
+			onFront.add(run)
 		}
 
-		if (!isDominated) {
-			onFront.add(candidate)
-		}
+		maxPnlSeen = Math.max(maxPnlSeen, pnl)
+		maxSharpeSeen = Math.max(maxSharpeSeen, sharpe)
 	}
 
 	// Union: Pareto front + single-metric extremes.

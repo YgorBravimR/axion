@@ -4,8 +4,8 @@ Source-of-truth doc for the autonomous Hawks Triple-Screen entry engine and
 its quality-scoring layer. Companion to:
 
 - [`README.md`](./README.md) — Renko brick rules + BE/stop mechanics
-- [`../hawks-indicator-inventory.md`](../hawks-indicator-inventory.md) — indicator decisions
-- [`../hawks-backtest-improvement-plan.md`](../hawks-backtest-improvement-plan.md) — 8-step roadmap
+- [`./indicator-inventory.md`](./indicator-inventory.md) — indicator decisions
+- [`./improvement-plan.md`](./improvement-plan.md) — 8-step roadmap
 - [`../../scripts/audit-parallel.ts`](../../scripts/audit-parallel.ts) — reproduction audit
 - [`../../scripts/probe-*.ts`](../../scripts/) — per-indicator selectivity probes
 
@@ -137,15 +137,13 @@ Recommended Group A config: `htfMaBlock + srLevelFavor`. Drops EXTRAS from 57→
 | `keltner_inf_165` / `keltner_sup_165` | BLOCK   | `keltnerOuterBlock`   | OFF     | Within 2 bricks of outer wall = exhaustion; ∞× selectivity (tentative 1-sample) |
 | `keltner_inf_125` / `keltner_sup_125` | PENALTY | `keltnerInnerPenalty` | OFF     | NEAR_125 (0 < d ≤ 2 bricks) selectivity 4.45× — strong                          |
 
-**Direction-aware**: SHORT trades use `inf` (lower band) as their "ahead band"; LONG uses `sup`. The 125 band penalizes only when **NEAR** (approaching). When price has already crossed 125 (PAST_125), the catalog _favors_ it (8.6% vs 4.8% — anti-selective) so PAST_125 is intentionally NOT penalized.
+**Direction-aware**: SHORT trades use `inf` (lower band) as their "ahead band"; LONG uses `sup`. The 125 band penalizes only when **NEAR** (approaching). When price has already crossed 125 (PAST*125), the catalog \_favors* it (8.6% vs 4.8% — anti-selective) so PAST_125 is intentionally NOT penalized.
 
 Tunable via `keltnerNearBricks` (default 2).
 
 ### Group C — MACD
 
 **Skipped**: probe at thresholds 2/3/4/5/7 showed selectivity ≈ 1.0× for both sign alignment and slope streaks. Redundant with HTF EMA gate (which pre-filters for sign alignment). The against-streak signal showed weak reversed polarity (catalog fires INTO falling MACD = "fade-the-move"), but absolute differences too small to ship.
-
-Probe lives at `scripts/probe-macd-alignment.ts`. Re-run when catalog grows.
 
 ### Group D — Aggression balance
 
@@ -161,7 +159,7 @@ Probe lives at `scripts/probe-macd-alignment.ts`. Re-run when catalog grows.
 
 Recommended setting when enabling: `"reversed"`. But combined with other rules, ORIGINAL produced the strongest AAA tier separation (12 vs 5).
 
-Sign convention: positive `aggression_balance` = buy aggression (verified by `scripts/peek-aggression-sign.ts`, 6.39× agree/disagree ratio with brick direction). Tunable via `aggressionThreshold` (default 15000).
+Sign convention: positive `aggression_balance` = buy aggression (verified empirically against the catalog, 6.39× agree/disagree ratio with brick direction). Tunable via `aggressionThreshold` (default 15000).
 
 ### Group E — Volume vs running EMA
 
@@ -238,19 +236,9 @@ CLI flags toggle quality rules without touching the preset:
 --volume                volume FAVOR
 ```
 
-### Selectivity probes (one per indicator class)
+### Selectivity probes (retired 2026-06-08)
 
-| Script                        | What it probes                     | Parametric on                 |
-| ----------------------------- | ---------------------------------- | ----------------------------- |
-| `probe-level-zones.ts`        | BLOCK/FAVOR/NEUTRAL for S/R levels | direction-aware delta         |
-| `probe-keltner-exhaustion.ts` | NEAR/PAST 125/165 zones            | `--near-bricks`               |
-| `probe-macd-alignment.ts`     | Sign alignment + slope streak      | `--streak-threshold`          |
-| `probe-aggression-balance.ts` | ALIGNED/ANTI/NEUTRAL               | `--threshold`                 |
-| `probe-volume-vs-ema.ts`      | ABOVE/AT-OR-BELOW EMA              | `--ema-period`, 30-day warmup |
-| `inspect-indicator-keys.ts`   | DB coverage scan                   | —                             |
-| `peek-aggression-sign.ts`     | Verify sign convention             | —                             |
-
-Each probe is independent of engine changes and can be re-run as catalog grows. **Magic numbers stay tunable**.
+The original per-indicator probes (`probe-level-zones`, `probe-keltner-exhaustion`, `probe-macd-alignment`, `probe-aggression-balance`, `probe-volume-vs-ema`, `inspect-indicator-keys`, `peek-aggression-sign`) ran against the pre-Parquet `price_candles` table and are deleted. The findings they produced (selectivity tables above, default thresholds, polarity decisions) remain the source of truth for current defaults. If a quality rule needs re-tuning as the catalog grows, write a fresh probe against the candle-store (`@/lib/candle-store`) instead of resurrecting these.
 
 ---
 

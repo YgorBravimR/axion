@@ -57,20 +57,25 @@ const hawksV0: StrategyRecipe = {
 			ema27_15m_key: "mme27_15m",
 			ema55_15m_key: "mme55_15m",
 			macd_key: "macd",
-			topos_fundos_key: "topos_fundos",
 			prev_15m_open_key: "prev_15m_open",
 			prev_15m_close_key: "prev_15m_close",
 			prev_60m_open_key: "prev_60m_open",
 			prev_60m_close_key: "prev_60m_close",
 			// WIN micro-mini Bovespa: 1 tick = 5 points, brick = 20 ticks = 100 points
 			brickSize5mPoints: 100,
-			// Process from market open so the morning's first pivots (FUNDO
-			// painted around 09:04, TOPO around 09:10) update state. The
-			// "first wave" structural anchors are established here; gating
-			// at 09:30 would silently skip them and inherit stale pivots
-			// from the previous session.
+			// Process from market open so the morning's first pivots are detected
+			// via structural analysis. The engine uses 2-brick confirmation on 5m.
 			startTime: 900,
 			endTime: 1730,
+			// Fire cooldown: minimum bricks between re-fires (hardware default 5).
+			// Set to 5 to match engine's hardcoded FIRE_COOLDOWN_BRICKS.
+			fireCooldownBricks: 5,
+			// Wave-1 minimum bricks: structural impulse leg must have at least this
+			// many bricks. Engine default is 4; we use the same.
+			wave1MinBricks: 4,
+			// Retracement minimum bricks: wave-2 bounce must be at least this long.
+			// Engine default is 2; we use the same.
+			retracementMinBricks: 2,
 			// Quality gates default OFF — the audit toggles them on per run.
 			// Enable per audit via `hawksV0WithHtfMaBlock` (see below) or via
 			// runtime override before calling runBacktest.
@@ -98,11 +103,14 @@ const hawksV0: StrategyRecipe = {
 		"mme55_60m",
 		"mme27_15m",
 		"mme55_15m",
-		"topos_fundos",
 		"prev_15m_open",
 		"prev_15m_close",
 		"prev_60m_open",
 		"prev_60m_close",
+		// SR-level keys used by hawks-quality-rules. `ajuste` is sourced from
+		// asset_session_anchors at fetch time; `vwap_d` from per-brick JSONB.
+		"vwap_d",
+		"ajuste",
 	],
 }
 

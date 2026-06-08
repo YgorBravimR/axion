@@ -57,7 +57,6 @@ describe("recomputeAccountMonth", () => {
 			year: 2026,
 			month: 1,
 			carryoverInCents: 0,
-			userId: "user-001",
 		})
 
 		expect(result).toHaveProperty("grossGainCents")
@@ -165,7 +164,6 @@ describe("recomputeAccountMonth — per-asset fee rates", () => {
 			year: 2026,
 			month: 1,
 			carryoverInCents: 0,
-			userId: "user-001",
 		})
 
 		// Gross + counts cover both assets

@@ -128,7 +128,7 @@ const HawksTripleScreenInspector = ({
 		return () => {
 			cancelled = true
 		}
-	}, [trade, assetSymbol])
+	}, [trade, assetSymbol, t])
 
 	const panes = useMemo((): {
 		pane5m: PreparedPane | null

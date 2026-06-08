@@ -4,6 +4,95 @@
 		"brickIndex": 16,
 		"direction": "short",
 		"label": "T1",
-		"notes": "09:10 BRT, TOPO MENOR confirmed after FUNDO. Engine v0 fires correctly here."
+		"expectedResult": "BE",
+		"closePrice": 182100
+	},
+	{
+		"date": "2026-05-13",
+		"brickIndex": 35,
+		"direction": "short",
+		"label": "T2",
+		"expectedResult": "GA",
+		"closePrice": 182000
+	},
+	{
+		"date": "2026-05-13",
+		"brickIndex": 89,
+		"direction": "short",
+		"label": "T3",
+		"expectedResult": "BE",
+		"closePrice": 181800
+	},
+	{
+		"date": "2026-05-13",
+		"brickIndex": 93,
+		"direction": "short",
+		"label": "T4",
+		"expectedResult": "GA",
+		"closePrice": 181600
+	},
+	{
+		"date": "2026-05-13",
+		"brickIndex": 109,
+		"direction": "short",
+		"label": "T5",
+		"expectedResult": "BE",
+		"closePrice": 180600
+	},
+	{
+		"date": "2026-05-13",
+		"brickIndex": 120,
+		"direction": "short",
+		"label": "T6",
+		"expectedResult": "ST",
+		"closePrice": 180500
+	},
+	{
+		"date": "2026-05-13",
+		"brickIndex": 122,
+		"direction": "short",
+		"label": "T7",
+		"expectedResult": "GA",
+		"closePrice": 180500
+	},
+	{
+		"date": "2026-05-13",
+		"brickIndex": 135,
+		"direction": "short",
+		"label": "T8",
+		"expectedResult": "BE",
+		"closePrice": 180000
+	},
+	{
+		"date": "2026-05-13",
+		"brickIndex": 143,
+		"direction": "short",
+		"label": "T9",
+		"expectedResult": "BE",
+		"closePrice": 179800
+	},
+	{
+		"date": "2026-05-13",
+		"brickIndex": 168,
+		"direction": "short",
+		"label": "T10",
+		"expectedResult": "ST",
+		"closePrice": 179500
+	},
+	{
+		"date": "2026-05-13",
+		"brickIndex": 170,
+		"direction": "short",
+		"label": "T11",
+		"expectedResult": "GA",
+		"closePrice": 179500
+	},
+	{
+		"date": "2026-05-13",
+		"brickIndex": 183,
+		"direction": "short",
+		"label": "T12",
+		"expectedResult": "BE",
+		"closePrice": 179200
 	}
 ]

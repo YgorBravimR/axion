@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { SimulationParams } from "@/types/monte-carlo"
 import { cn } from "@/lib/utils"
+import { useFormatting } from "@/hooks/use-formatting"
 
 interface SimulationParamsFormProps {
 	params: SimulationParams
@@ -21,6 +22,7 @@ export const SimulationParamsForm = ({
 	budgetCap,
 }: SimulationParamsFormProps) => {
 	const t = useTranslations("monteCarlo.params")
+	const { formatNumber } = useFormatting()
 
 	const handleChange = (
 		field: keyof SimulationParams,
@@ -195,8 +197,8 @@ export const SimulationParamsForm = ({
 			{/* Budget Indicator */}
 			<div className="mt-m-400 text-small flex items-center justify-between">
 				<span className="text-txt-300">
-					{t("totalIterations")}: {totalIterations.toLocaleString()} /{" "}
-					{budgetCap.toLocaleString()}
+					{t("totalIterations")}: {formatNumber(totalIterations)} /{" "}
+					{formatNumber(budgetCap)}
 				</span>
 				<span
 					className={cn(
@@ -213,12 +215,12 @@ export const SimulationParamsForm = ({
 			{isOverBudget && (
 				<p className="mt-s-200 text-tiny text-fb-error">
 					{t("budgetExceeded", {
-						maxTrades: Math.floor(
-							budgetCap / params.simulationCount
-						).toLocaleString(),
-						maxSimulations: Math.floor(
-							budgetCap / params.numberOfTrades
-						).toLocaleString(),
+						maxTrades: formatNumber(
+							Math.floor(budgetCap / params.simulationCount)
+						),
+						maxSimulations: formatNumber(
+							Math.floor(budgetCap / params.numberOfTrades)
+						),
 					})}
 				</p>
 			)}

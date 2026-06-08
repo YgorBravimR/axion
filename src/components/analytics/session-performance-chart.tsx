@@ -267,9 +267,9 @@ export const SessionPerformanceChart = memo(
 						/>
 						<ChartTooltip content={<CustomTooltip />} />
 						<Bar dataKey={metricKey} radius={[4, 4, 0, 0]} maxBarSize={80}>
-							{data.map((entry, index) => (
+							{data.map((entry) => (
 								<Cell
-									key={`cell-${index}`}
+									key={`cell-${entry.session}`}
 									fill={
 										entry[metricKey] >= 0
 											? "var(--color-trade-buy)"

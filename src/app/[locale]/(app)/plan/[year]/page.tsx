@@ -308,7 +308,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 	)
 	const weekIsoBucketsByMonth: Map<number, number>[] = Array.from(
 		{ length: 12 },
-		() => new Map()
+		(): Map<number, number> => new Map()
 	)
 	const isoWeekOf = (d: Date): number => {
 		const t = new Date(

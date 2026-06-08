@@ -64,7 +64,7 @@ export const DayTradesList = ({ trades, onTradeClick }: DayTradesListProps) => {
 
 	if (trades.length === 0) {
 		return (
-			<div className="text-txt-300 flex h-[80px] items-center justify-center sm:h-[100px]">
+			<div className="text-txt-300 h-empty-state-xs sm:h-empty-state-sm flex items-center justify-center">
 				{t("dayDetail.noTrades")}
 			</div>
 		)

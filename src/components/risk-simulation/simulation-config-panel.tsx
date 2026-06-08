@@ -124,8 +124,8 @@ const SimulationConfigPanel = ({
 
 		if (tradeYears.length > 0) {
 			const oldest = tradeYears[tradeYears.length - 1]
-			const today = new Date().toISOString().split("T")[0]
-			if (dateFrom === `${oldest}-01-01` && dateTo === today) {
+			const today = new Date().toISOString().split("T")[0] ?? ""
+			if (dateFrom === `${oldest ?? ""}-01-01` && dateTo === today) {
 				return "all"
 			}
 		}

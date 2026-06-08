@@ -1,3 +1,4 @@
+import { z } from "zod"
 import type {
 	PersistedImage,
 	PendingImage,
@@ -14,6 +15,21 @@ interface UploadFilesResult {
 	uploaded: PersistedImage[]
 	errors: string[]
 }
+
+// Zod schema for the /api/uploads response
+const UploadResponseSchema = z.union([
+	z.object({
+		status: z.literal("success"),
+		data: z.object({
+			url: z.string(),
+			s3Key: z.string(),
+		}),
+	}),
+	z.object({
+		status: z.string(),
+		message: z.string().optional(),
+	}),
+])
 
 /**
  * Upload pending (local blob) images to S3 via /api/uploads.
@@ -40,16 +56,17 @@ const uploadFiles = async ({
 			body: formData,
 		})
 
-		// eslint-disable-next-line no-await-in-loop -- JSON parse depends on response from prior await
-		const result = await response.json()
+		// eslint-disable-next-line no-await-in-loop -- sequential uploads intentional; response.json() returns unknown, immediately validated by Zod schema
+		const rawResult = (await response.json()) as unknown
+		const result = UploadResponseSchema.parse(rawResult)
 
-		if (result.status === "success" && result.data) {
+		if (result.status === "success" && "data" in result) {
 			uploaded.push({ url: result.data.url, s3Key: result.data.s3Key })
 			URL.revokeObjectURL(pending.previewUrl)
+		} else if ("message" in result && result.message) {
+			errors.push(result.message)
 		} else {
-			errors.push(
-				result.message ?? `upload.errors.uploadFailed|${pending.file.name}`
-			)
+			errors.push(`upload.errors.uploadFailed|${pending.file.name}`)
 		}
 	}
 

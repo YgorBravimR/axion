@@ -80,7 +80,7 @@ const PresetSelector = ({
 
 	const handleApply = (preset: FilterPreset) => {
 		try {
-			const raw = JSON.parse(preset.filters)
+			const raw: unknown = JSON.parse(preset.filters)
 			const parsed = savedFilterStateSchema.safeParse(raw)
 			if (!parsed.success) {
 				showToast("error", t("loadError"))

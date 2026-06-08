@@ -15,6 +15,7 @@ import {
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { monteCarloGuide } from "@/components/ui/page-guide/guide-configs/monte-carlo"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
+import { useFormatting } from "@/hooks/use-formatting"
 import { InputModeSelector } from "./input-mode-selector"
 import { DataSourceSelector } from "./data-source-selector"
 import { StatsPreview } from "./stats-preview"
@@ -255,6 +256,7 @@ const EdgeExpectancyContent = memo(
 		budgetCap,
 	}: EdgeExpectancyContentProps) => {
 		const t = useTranslations("monteCarlo")
+		const { formatNumber } = useFormatting()
 
 		return (
 			<div className="space-y-m-400 sm:space-y-m-500">
@@ -329,7 +331,7 @@ const EdgeExpectancyContent = memo(
 									{t("results.simulations")}:
 								</span>
 								<span className="text-txt-100 font-medium">
-									{params.simulationCount.toLocaleString()}
+									{formatNumber(params.simulationCount)}
 								</span>
 							</div>
 							<div className="gap-m-400 flex items-center">

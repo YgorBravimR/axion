@@ -158,6 +158,15 @@
 	--height-chart-lg: 250px;
 	--height-chart-xl: 300px;
 
+	/* Empty-state placeholder heights — for "no data" divs in charts.
+	   Distinct from chart heights because they're semantic fallback containers,
+	   not active visualization surfaces. Use h-empty-state-xs / sm / md / lg / xl. */
+	--height-empty-state-xs: 80px;
+	--height-empty-state-sm: 120px;
+	--height-empty-state-md: 150px;
+	--height-empty-state-lg: 180px;
+	--height-empty-state-xl: 200px;
+
 	--screen-xs: 480px;
 	--screen-sm: 640px;
 	--screen-md: 768px;

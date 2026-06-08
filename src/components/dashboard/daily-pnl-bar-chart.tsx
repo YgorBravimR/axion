@@ -101,7 +101,7 @@ export const DailyPnLBarChart = ({
 				<h3 className="mb-s-300 text-small text-txt-100 sm:mb-m-400 sm:text-body font-semibold">
 					{t("dailyPnL.title")}
 				</h3>
-				<div className="text-txt-300 flex h-[160px] items-center justify-center sm:h-[200px]">
+				<div className="text-txt-300 h-chart-sm sm:h-empty-state-xl flex items-center justify-center">
 					{t("noData")}
 				</div>
 			</Panel>
@@ -153,9 +153,9 @@ export const DailyPnLBarChart = ({
 						// @see Recharts Bar onClick types `data` as `any`; narrow to DailyPnL
 						onClick={(data) => handleBarClick(data as unknown as DailyPnL)}
 					>
-						{sortedData.map((entry, index) => (
+						{sortedData.map((entry) => (
 							<Cell
-								key={`cell-${index}`}
+								key={entry.date}
 								fill={
 									entry.pnl >= 0
 										? "var(--color-trade-buy)"

@@ -29,8 +29,8 @@ const Kbd = ({ keys, className }: KbdProps) => {
 				className
 			)}
 		>
-			{displayKeys.map((key, index) => (
-				<span key={index}>{key}</span>
+			{displayKeys.map((key) => (
+				<span key={key}>{key}</span>
 			))}
 		</kbd>
 	)

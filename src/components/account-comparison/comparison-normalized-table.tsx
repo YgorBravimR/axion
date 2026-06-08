@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
@@ -98,7 +98,10 @@ const ComparisonNormalizedTable = ({
 		[t]
 	)
 
-	const getNormalizedValue = (rValue: number): number => rValue * referenceRisk
+	const getNormalizedValue = useCallback(
+		(rValue: number): number => rValue * referenceRisk,
+		[referenceRisk]
+	)
 
 	/**
 	 * Pre-compute best/worst index sets for ALL metrics in a single pass.
@@ -143,7 +146,7 @@ const ComparisonNormalizedTable = ({
 		}
 
 		return map
-	}, [metrics, accounts, referenceRisk])
+	}, [metrics, accounts, getNormalizedValue])
 
 	// Show each account's actual avg risk for reference
 	const hasRiskData = accounts.some((a) => a.avgRiskPerTrade > 0)

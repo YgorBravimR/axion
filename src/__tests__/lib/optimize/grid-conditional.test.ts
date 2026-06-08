@@ -108,7 +108,7 @@ describe("generateConditionalGrid — flat (no conditions, no owners)", () => {
 
 		const combos = generateConditionalGrid(leaves, selections, new Map())
 		expect(combos).toHaveLength(2 * 3)
-		const distinct = new Set(combos.map((c) => `${c.a}|${c.b}`))
+		const distinct = new Set(combos.map((c) => `${c.a ?? ""}|${c.b ?? ""}`))
 		expect(distinct.size).toBe(6)
 	})
 })

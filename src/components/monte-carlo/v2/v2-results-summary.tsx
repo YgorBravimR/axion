@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { Dices } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { SimulationParamsV2 } from "@/types/monte-carlo"
+import { useFormatting } from "@/hooks/use-formatting"
 
 interface V2ResultsSummaryProps {
 	params: SimulationParamsV2
@@ -13,6 +14,7 @@ interface V2ResultsSummaryProps {
 
 const V2ResultsSummary = ({ params, onRunAgain }: V2ResultsSummaryProps) => {
 	const t = useTranslations("monteCarlo.v2.results")
+	const { formatNumber } = useFormatting()
 
 	const { profile } = params
 	const impliedPF = useMemo(
@@ -40,7 +42,7 @@ const V2ResultsSummary = ({ params, onRunAgain }: V2ResultsSummaryProps) => {
 			<div className="gap-s-200 flex min-w-0 items-center">
 				<span className="text-txt-300 text-small">{t("simulations")}:</span>
 				<span className="text-txt-100 font-medium">
-					{params.simulationCount.toLocaleString()}
+					{formatNumber(params.simulationCount)}
 				</span>
 			</div>
 			<div className="gap-s-200 flex min-w-0 items-center">

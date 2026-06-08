@@ -270,7 +270,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 		const effectiveNow = useMemo(
 			() => (defaultDate ? new Date(defaultDate) : new Date()),
 
-			[]
+			[defaultDate]
 		)
 		const endOfDay = useMemo(
 			() => getEndOfDayLocal(effectiveNow),
@@ -289,7 +289,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 				return match?.symbol
 			}
 			return undefined
-		}, [initialSharedState?.asset, defaultAssetId, assets])
+		}, [initialSharedState, defaultAssetId, assets])
 
 		const defaultValues: Partial<TradeFormInput> = trade
 			? buildTradeFormValues(trade)
@@ -335,7 +335,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 			// schema uses discriminated unions or transform — cast required until
 			// @hookform/resolvers ships updated types for zod v4.
 
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any -- zodResolver return type doesn't satisfy react-hook-form resolver constraint with Zod 4 discriminated unions; cast required until @hookform/resolvers ships updated types
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment -- zodResolver return type doesn't satisfy react-hook-form resolver constraint with Zod 4 discriminated unions; cast required until @hookform/resolvers ships updated types
 			resolver: zodResolver(createTradeSchema) as any,
 			defaultValues,
 		})
@@ -389,7 +389,8 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 		const positionSize = watch("positionSize")
 		const stopLoss = watch("stopLoss")
 		const takeProfit = watch("takeProfit")
-		const selectedTagIds = watch("tagIds") || []
+		const tagIds = watch("tagIds")
+		const selectedTagIds = useMemo(() => tagIds || [], [tagIds])
 		const setupRank = watch("setupRank")
 		const followedPlan = watch("followedPlan")
 		const currentRating = watch("rating")
@@ -415,7 +416,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 			return () => {
 				cancelled = true
 			}
-		}, [trade?.id, setValue])
+		}, [trade, setValue])
 
 		// Real-time SL/TP cross-field validation indicators
 		const stopLossWarning = useMemo(() => {
@@ -701,7 +702,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 			<Form {...form}>
 				<form
 					onSubmit={handleSubmit(onSubmit)}
-					className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600"
+					className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-5xl"
 				>
 					<Tabs defaultValue="basic" className="w-full">
 						<TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">

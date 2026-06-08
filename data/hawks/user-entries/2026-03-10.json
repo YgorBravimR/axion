@@ -1,30 +1,34 @@
 [
 	{
 		"date": "2026-03-10",
-		"brickIndex": 81,
+		"brickIndex": 78,
 		"direction": "long",
 		"label": "T1",
-		"expectedResult": "BE"
+		"expectedResult": "BE",
+		"closePrice": 186080
 	},
 	{
 		"date": "2026-03-10",
 		"brickIndex": 86,
 		"direction": "long",
 		"label": "T2",
-		"expectedResult": "GA"
+		"expectedResult": "GA",
+		"closePrice": 186400
 	},
 	{
 		"date": "2026-03-10",
 		"brickIndex": 115,
 		"direction": "long",
 		"label": "T3",
-		"expectedResult": "ST"
+		"expectedResult": "ST",
+		"closePrice": 186560
 	},
 	{
 		"date": "2026-03-10",
 		"brickIndex": 117,
 		"direction": "long",
 		"label": "T4",
-		"expectedResult": "ST"
+		"expectedResult": "ST",
+		"closePrice": 186560
 	}
 ]

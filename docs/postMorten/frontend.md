@@ -2,6 +2,64 @@
 
 ---
 
+## [BUG-2026-06-02] E2E setup test hangs 90s when session already authenticated
+
+**Date:** 2026-06-02
+**Severity:** High (blocks all 33 E2E tests; cascades from setup timeout)
+**Affected Area:** `e2e/global.setup.ts:22-29`
+
+### Symptom
+
+`pnpm exec playwright test --project=setup` times out at 90s with "Test timeout of 90000ms exceeded". The screenshot shows the dashboard fully rendered in pt-BR (sidebar "Painel", header "Início", calendar "Calendário de Trades", metrics visible), proving the login succeeded. But the test never completed.
+
+### Root Cause
+
+When the auth session from a previous E2E run is still valid in the browser context, `page.goto("/en/login")` auto-redirects to the dashboard before the login form is rendered. The subsequent code (lines 27–28) then calls:
+
+```ts
+await page.getByLabel("Email").fill(TEST_USER.email)
+await page.locator("#password").fill(TEST_USER.password)
+```
+
+Playwright's actionability check waits up to 30s for the `Email` input element to become interactive. Since we're on the dashboard (not login), the element doesn't exist and never will. This 30s wait exhausts before the test can proceed, leaving only 60s from the original 90s budget. The test continues through the race and expect, but cumulative waits exceed 90s and the test timeout fires.
+
+The early 30s hang is invisible to the test author — it looks like the test is stuck at the form-fill line, when actually it's blocked on element actionability.
+
+### Why it Surfaced
+
+Between E2E test runs, the browser context persists authentication cookies and localStorage. When re-running setup on a warm dev environment, the same user session is still valid, and Next.js redirects happen at the Router layer (before React hydration). The first run clears nothing (or clears partially), so the second run inherits the cookies.
+
+### Fix
+
+Detect early if the page is already on the dashboard (not `/login` path) and skip the form fill:
+
+```ts
+if (!page.url().includes("/login")) {
+	// Already authenticated, skip form fill
+} else {
+	// Form fill as before
+	await page.getByLabel("Email").fill(TEST_USER.email)
+	await page.locator("#password").fill(TEST_USER.password)
+	await page.getByRole("button", { name: "Sign In" }).click()
+}
+```
+
+This eliminates the 30s actionability wait when the session is already valid, reducing test time from 90s to ~7s on a warm run.
+
+### Verification
+
+- Ran `pnpm exec playwright test --project=setup` twice in succession: first run 7.2s (fresh login), second run 6.8s (skipped form, used existing session). Both passed.
+- Auth state persisted to `e2e/.auth/user.json` after both runs.
+- Timestamp on user.json updated on each run, confirming re-authentication path still works when session is missing.
+
+### Prevention
+
+1. **Check page URL early in auth flows.** Before waiting on form elements that require navigation to occur, verify the current URL to short-circuit waits on missing elements.
+2. **E2E context cleanup between runs.** Add a `teardown` hook that clears storage and cookies if re-running setup is common. (Axion already has `global.teardown.ts` — consider extending it to clear auth state.)
+3. **Timeouts on form actionability waits.** If keeping the form-fill pattern, wrap in a `try/catch` with a shorter timeout so "element not found" fails fast (~5s) rather than waiting the default 30s.
+
+---
+
 ## [BUG-2026-05-31-01] Parameter heatmap grid disappears when sweep has optional params
 
 **Date:** 2026-05-31
@@ -88,7 +146,7 @@ Hoisted a module-level `SERVER_SNAPSHOT` constant and a named `getServerSnapshot
 
 ### Verification
 
-- Page reloaded on `localhost:3003/backtest/optimize` — Playwright console reports 0 errors (previously: 1 error per render).
+- Page reloaded on `localhost:3011/backtest/optimize` — Playwright console reports 0 errors (previously: 1 error per render).
 - `pnpm exec tsc --noEmit` clean.
 - `pnpm lint` clean.
 
@@ -888,3 +946,86 @@ Heatmap tab unusable any time the sweep varied a parameter inside an optional ad
 
 - `src/lib/optimize/parameter-grid.ts` (`getNestedValue`)
 - `src/lib/optimize/heatmap-utils.ts` (`getVaryingParams`, `buildHeatmapData`)
+
+---
+
+## [BUG-2026-06-01] Optimize runs store crashes on payload size: localStorage quota exceeded
+
+**Date:** 2026-06-01
+**Severity:** Critical (silent data loss; users unaware runs no longer persist on page reload)
+**Affected Area:** `src/lib/optimize/storage.ts:156` (`saveRuns`), `src/components/optimize/optimize-content.tsx:244–259` (hydration + save side effects)
+
+### Symptom
+
+On `/backtest/optimize` after running 2020→2026 backtests with hundreds of optimization sweeps, the browser console logs warnings (swallowed by try/catch):
+
+```
+Failed to persist optimization runs to localStorage
+QuotaExceededError: Failed to execute 'setItem' on 'Storage': Setting the property exceeded the quota.
+```
+
+OR
+
+```
+Failed to persist optimization runs to localStorage
+RangeError: Invalid string length
+```
+
+The UI continues running without visible error — the in-memory `runs` array grows, but new attempts to save also fail (payload never shrinks). On page reload, all runs vanish. Users lose optimization history silently.
+
+### Root Cause
+
+localStorage has a per-origin quota of ~5–10 MB (browser-dependent). The optimize runs store applies a Pareto retention policy (keep full trades for frontier runs only), but:
+
+- Frontier runs monotonically accumulate because the user is optimizing 2020–2026 multi-year backtests.
+- Each frontier run carries thousands of trades (`trades[]` array).
+- The recipe + config metadata is kept for every run.
+
+Over a long optimize session, `JSON.stringify(retained)` produces a payload that:
+
+1. Exceeds localStorage quota → `QuotaExceededError` on `setItem`.
+2. OR hits V8's internal ~512 MB string-length cap → `RangeError: Invalid string length`.
+
+The try/catch at `storage.ts:158` swallows both errors and only `console.warn`s. No UI indication → users don't realize persistence is broken.
+
+### Why It Surfaced
+
+The Phase 1 trust-foundations feature added multi-year backtests (2020–2026) as a testing pattern. With 7 years × 50+ weekly runs × 10–20 frontier runs per session, the payload easily exceeds ~500 KB and approaches the ~5 MB localStorage cap.
+
+### Fix
+
+**Migrate from localStorage to IndexedDB.**
+
+IndexedDB:
+
+- Supports gigabytes of headroom (vs ~5 MB localStorage quota).
+- Stores structured-clonable objects directly (no `JSON.stringify` string cap).
+- Eliminates both error modes structurally.
+
+Implementation:
+
+- `loadRuns()` now async (`Promise<OptimizationRun[]>`).
+- One-shot migration: on first load, if IndexedDB is empty but localStorage has legacy data, read from localStorage, apply the migration chain (v3 → v4 → v5 → v6), write to IndexedDB, clear localStorage keys.
+- `saveRuns()` and `clearRuns()` async; write directly to IDB object store.
+- Updated call sites in `optimize-content.tsx` to handle async via `void ... then()` pattern in useEffect.
+- Tests updated to use `fake-indexeddb`; pure `migrateRun()` function remains independently testable.
+- Pareto retention policy preserved — no behavioral change to what's saved.
+
+### Verification
+
+- `pnpm test src/__tests__/lib/optimize/storage-migration.test.ts` — 13 tests pass (all migration chains: v3 → current, v4 → current, v5 → current, idempotency).
+- Dev server on `/backtest/optimize` — page loads, IndexedDB `axion:optimize` database confirmed initialized, legacy localStorage keys absent, zero console errors/warnings related to storage.
+- Commit: `f208c330`
+
+### Prevention
+
+- **Cap payload size where the storage layer can't expand.** localStorage is ~5 MB hard limit; IndexedDB is gigabytes. Know your quota and choose the right store.
+- **Silent try/catch failures are data-loss bugs.** Errors that swallow data without user visibility should escalate (e.g. toast notification) or at minimum log visibly in the UI.
+- **Test large-payload persistence.** Regression tests should cover realistic session sizes (2-3 weeks of optimization runs, not just 1–5 test fixtures).
+
+### Related Files
+
+- `src/lib/optimize/storage.ts` (primary migration + new IndexedDB store)
+- `src/components/optimize/optimize-content.tsx` (updated useEffect hooks for async load/save)
+- `src/__tests__/lib/optimize/storage-migration.test.ts` (migration chain tests with fake-indexeddb)
+- `src/lib/optimize/pareto-retain.ts` (retention policy — unchanged behavior)

@@ -1,5 +1,6 @@
 "use server"
 
+import { getTranslations } from "next-intl/server"
 import { db } from "@/db/drizzle"
 import { trades } from "@/db/schema"
 import { eq, and, asc, gte, lte, isNotNull } from "drizzle-orm"
@@ -27,6 +28,7 @@ export const runEquityShieldFromDb = async (
 	dateFrom: string,
 	dateTo: string
 ): Promise<ActionResponse<EquityShieldResult>> => {
+	const t = await getTranslations("equityShield.errors")
 	try {
 		const { accountId } = await requireAuth()
 		const validated = dateRangeSchema.parse({ dateFrom, dateTo })
@@ -50,7 +52,7 @@ export const runEquityShieldFromDb = async (
 		if (decryptedTrades.length === 0) {
 			return {
 				status: "error",
-				message: "No closed trades found in this date range",
+				message: t("noTradesInRange"),
 				errors: [{ code: "NO_TRADES", detail: "No closed trades found" }],
 			}
 		}
@@ -77,7 +79,7 @@ export const runEquityShieldFromDb = async (
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to run Equity Shield analysis",
+			message: t("runFailed"),
 			errors: [
 				{
 					code: "SHIELD_FAILED",
@@ -98,6 +100,7 @@ export const getEquityShieldPreview = async (
 ): Promise<
 	ActionResponse<{ totalTrades: number; hasEnoughTrades: boolean }>
 > => {
+	const t = await getTranslations("equityShield.errors")
 	try {
 		const { accountId } = await requireAuth()
 		const validated = dateRangeSchema.parse({ dateFrom, dateTo })
@@ -127,7 +130,7 @@ export const getEquityShieldPreview = async (
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to get preview",
+			message: t("previewFailed"),
 			errors: [
 				{
 					code: "PREVIEW_FAILED",

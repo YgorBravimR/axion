@@ -109,12 +109,16 @@ const JournalContent = () => {
 		: "week"
 
 	// Read custom date range from URL (only relevant when period=custom)
-	const customFrom =
-		period === "custom" ? parseDateParam(urlParams.get("from")) : null
-	const customTo =
-		period === "custom" ? parseDateParam(urlParams.get("to")) : null
-	const customDateRange =
-		customFrom && customTo ? { from: customFrom, to: customTo } : undefined
+	const customDateRange = useMemo(() => {
+		if (period !== "custom") {
+			return undefined
+		}
+		const customFrom = parseDateParam(urlParams.get("from"))
+		const customTo = parseDateParam(urlParams.get("to"))
+		return customFrom && customTo
+			? { from: customFrom, to: customTo }
+			: undefined
+	}, [period, urlParams])
 
 	const [tradesByDay, setTradesByDay] = useState<TradesByDay[]>([])
 	const [isLoading, setIsLoading] = useState(true)
@@ -133,7 +137,7 @@ const JournalContent = () => {
 	const quickFilterParam = urlParams.get("qf")
 
 	const extendedFilters = useMemo(() => {
-		const filters: Record<string, string | string[]> = {}
+		const filters: Record<string, string | string[] | undefined> = {}
 		if (outcomesParam.length > 0) {
 			filters.outcomes = outcomesParam
 		}
@@ -146,30 +150,33 @@ const JournalContent = () => {
 		if (ratingParam.length > 0) {
 			filters.rating = ratingParam
 		}
-		if (followedPlanParam) {
+		if (followedPlanParam !== null) {
 			filters.followedPlan = followedPlanParam
 		}
-		if (hourFromParam) {
+		if (hourFromParam !== null) {
 			filters.hourFrom = hourFromParam
 		}
-		if (hourToParam) {
+		if (hourToParam !== null) {
 			filters.hourTo = hourToParam
 		}
-		if (pnlMinParam) {
+		if (pnlMinParam !== null) {
 			filters.pnlMin = pnlMinParam
 		}
-		if (pnlMaxParam) {
+		if (pnlMaxParam !== null) {
 			filters.pnlMax = pnlMaxParam
 		}
-		if (quickFilterParam) {
+		if (quickFilterParam !== null) {
 			filters._qf = quickFilterParam
 		}
-		return filters
+
+		return Object.fromEntries(
+			Object.entries(filters).filter(([, v]) => v !== undefined)
+		) as Record<string, string | string[]>
 	}, [
-		outcomesParam.join(","),
-		directionsParam.join(","),
-		assetsParam.join(","),
-		ratingParam.join(","),
+		outcomesParam,
+		directionsParam,
+		assetsParam,
+		ratingParam,
 		followedPlanParam,
 		hourFromParam,
 		hourToParam,
@@ -185,15 +192,15 @@ const JournalContent = () => {
 		(filters: Record<string, string | string[]>) => {
 			// Write to URL params
 			const updates: Record<string, string | string[] | null> = {
-				outcomes: (filters.outcomes as string[]) ?? null,
-				directions: (filters.directions as string[]) ?? null,
-				assets: (filters.assets as string[]) ?? null,
-				rating: (filters.rating as string[]) ?? null,
-				followedPlan: (filters.followedPlan as string) ?? null,
-				hourFrom: (filters.hourFrom as string) ?? null,
-				hourTo: (filters.hourTo as string) ?? null,
-				pnlMin: (filters.pnlMin as string) ?? null,
-				pnlMax: (filters.pnlMax as string) ?? null,
+				outcomes: (filters.outcomes as string[] | undefined) ?? null,
+				directions: (filters.directions as string[] | undefined) ?? null,
+				assets: (filters.assets as string[] | undefined) ?? null,
+				rating: (filters.rating as string[] | undefined) ?? null,
+				followedPlan: (filters.followedPlan as string | undefined) ?? null,
+				hourFrom: (filters.hourFrom as string | undefined) ?? null,
+				hourTo: (filters.hourTo as string | undefined) ?? null,
+				pnlMin: (filters.pnlMin as string | undefined) ?? null,
+				pnlMax: (filters.pnlMax as string | undefined) ?? null,
 			}
 			urlParams.set(updates)
 		},
@@ -249,18 +256,22 @@ const JournalContent = () => {
 									: extendedFilters.followedPlan === "false"
 										? false
 										: undefined,
-							hourFrom: extendedFilters.hourFrom
-								? parseInt(extendedFilters.hourFrom as string, 10)
-								: undefined,
-							hourTo: extendedFilters.hourTo
-								? parseInt(extendedFilters.hourTo as string, 10)
-								: undefined,
-							pnlMin: extendedFilters.pnlMin
-								? parseFloat(extendedFilters.pnlMin as string)
-								: undefined,
-							pnlMax: extendedFilters.pnlMax
-								? parseFloat(extendedFilters.pnlMax as string)
-								: undefined,
+							hourFrom:
+								(extendedFilters.hourFrom as string | undefined) !== undefined
+									? parseInt(extendedFilters.hourFrom as string, 10)
+									: undefined,
+							hourTo:
+								(extendedFilters.hourTo as string | undefined) !== undefined
+									? parseInt(extendedFilters.hourTo as string, 10)
+									: undefined,
+							pnlMin:
+								(extendedFilters.pnlMin as string | undefined) !== undefined
+									? parseFloat(extendedFilters.pnlMin as string)
+									: undefined,
+							pnlMax:
+								(extendedFilters.pnlMax as string | undefined) !== undefined
+									? parseFloat(extendedFilters.pnlMax as string)
+									: undefined,
 						}
 					: undefined
 
@@ -296,13 +307,7 @@ const JournalContent = () => {
 		}
 
 		void fetchTrades()
-	}, [
-		period,
-		customDateRange?.from?.getTime(),
-		customDateRange?.to?.getTime(),
-		effectiveDate,
-		extendedFilters,
-	])
+	}, [period, customDateRange, effectiveDate, extendedFilters])
 
 	// Memoized handlers to prevent unnecessary re-renders in child components
 	const handlePeriodChange = useCallback(
@@ -325,6 +330,7 @@ const JournalContent = () => {
 	)
 
 	// Delete handlers
+
 	const handleDeleteRequest = useCallback((tradeId: string) => {
 		setDeletingTradeId(tradeId)
 	}, [])

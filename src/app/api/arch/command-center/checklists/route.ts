@@ -57,7 +57,9 @@ const GET = async (request: NextRequest) => {
 			const completion =
 				completions.find((c) => c.checklistId === checklist.id) ?? null
 			const completedItemIds: string[] = completion
-				? JSON.parse(completion.completedItems)
+				? ((
+						JSON.parse(completion.completedItems) as unknown[] | undefined
+					)?.filter((x): x is string => typeof x === "string") ?? [])
 				: []
 
 			return {

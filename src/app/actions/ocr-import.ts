@@ -1,5 +1,6 @@
 "use server"
 
+import { getTranslations } from "next-intl/server"
 import { invalidateTradeData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
 import { trades, tradeExecutions, assets } from "@/db/schema"
@@ -335,6 +336,7 @@ export const createTradeFromOcr = async (
 export const bulkCreateTradesFromOcr = async (
 	inputs: z.input<typeof ocrImportSchema>[]
 ): Promise<ActionResponse<BulkOcrImportResult>> => {
+	const t = await getTranslations("imports.ocr")
 	try {
 		const { accountId, userId } = await requireAuth()
 
@@ -375,8 +377,11 @@ export const bulkCreateTradesFromOcr = async (
 
 		const message =
 			result.failedCount === 0
-				? `Successfully imported ${result.successCount} trade(s)`
-				: `Imported ${result.successCount} trade(s), ${result.failedCount} failed`
+				? t("bulkSuccess", { count: result.successCount })
+				: t("bulkPartial", {
+						success: result.successCount,
+						failed: result.failedCount,
+					})
 
 		return {
 			status: result.failedCount === inputs.length ? "error" : "success",
@@ -386,7 +391,7 @@ export const bulkCreateTradesFromOcr = async (
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to import trades from OCR data",
+			message: t("bulkError"),
 			errors: [
 				{
 					code: "IMPORT_FAILED",

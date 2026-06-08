@@ -69,20 +69,32 @@ const initCapture = () => {
 
 	// Capture uncaught errors
 	window.addEventListener("error", (event) => {
+		const errorStack =
+			typeof event.error === "object" &&
+			event.error !== null &&
+			"stack" in event.error
+				? (event.error as { stack?: string }).stack
+				: undefined
 		consoleBuffer = pushToBuffer(consoleBuffer, {
 			level: "error",
 			message: event.message,
-			stack: event.error?.stack,
+			stack: errorStack,
 			timestamp: new Date().toISOString(),
 		})
 	})
 
 	// Capture unhandled promise rejections
 	window.addEventListener("unhandledrejection", (event) => {
+		const rejectionStack =
+			typeof event.reason === "object" &&
+			event.reason !== null &&
+			"stack" in event.reason
+				? (event.reason as { stack?: string }).stack
+				: undefined
 		consoleBuffer = pushToBuffer(consoleBuffer, {
 			level: "error",
 			message: `Unhandled rejection: ${String(event.reason)}`,
-			stack: event.reason?.stack,
+			stack: rejectionStack,
 			timestamp: new Date().toISOString(),
 		})
 	})

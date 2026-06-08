@@ -1,5 +1,6 @@
 "use server"
 
+import { getTranslations } from "next-intl/server"
 import { requireAuth } from "@/app/actions/auth"
 import { db } from "@/db/drizzle"
 import { accountFeeRates, monthlyTaxLedger, tradingAccounts } from "@/db/schema"
@@ -46,9 +47,8 @@ const recomputeFromMonth = async (params: {
 	accountId: string
 	year: number
 	month: number
-	userId: string
 }): Promise<number> => {
-	const { accountId, userId } = params
+	const { accountId } = params
 	// timestamptz: ledger.month stored as UTC first-of-month. Iterate integer
 	// year/month so we never feed local-TZ Dates into eq() matchers, and we
 	// avoid date-fns addMonths DST drift around UTC-anchored instants.
@@ -87,7 +87,6 @@ const recomputeFromMonth = async (params: {
 			year,
 			month,
 			carryoverInCents: carryoverIn,
-			userId,
 		})
 
 		carryoverIn = result.carryoverOutCents
@@ -115,6 +114,7 @@ export const getMonthlyDarf = async (params: {
 	year: number
 	month: number
 }): Promise<ActionResponse<MonthlyDarfRow>> => {
+	const t = await getTranslations("tax.errors")
 	const { userId } = await requireAuth()
 	const { accountId, year, month } = params
 
@@ -123,7 +123,7 @@ export const getMonthlyDarf = async (params: {
 	if (!account) {
 		return {
 			status: "error",
-			message: "Account not found.",
+			message: t("accountNotFound"),
 			errors: [{ code: "ACCOUNT_NOT_FOUND", detail: "Account not found." }],
 		}
 	}
@@ -131,7 +131,7 @@ export const getMonthlyDarf = async (params: {
 	if (!account.showTaxEstimates) {
 		return {
 			status: "error",
-			message: "Tax estimates are disabled for this account.",
+			message: t("taxDisabled"),
 			errors: [
 				{
 					code: "TAX_DISABLED",
@@ -156,7 +156,7 @@ export const getMonthlyDarf = async (params: {
 		.then((rows) => rows[0])
 
 	if (!existing || existing.isDirty) {
-		await recomputeFromMonth({ accountId, year, month, userId })
+		await recomputeFromMonth({ accountId, year, month })
 	}
 
 	const row = await db
@@ -173,7 +173,7 @@ export const getMonthlyDarf = async (params: {
 	if (!row) {
 		return {
 			status: "error",
-			message: "Could not compute ledger row.",
+			message: t("ledgerNotFound"),
 			errors: [
 				{ code: "LEDGER_NOT_FOUND", detail: "Could not compute ledger row." },
 			],
@@ -205,6 +205,7 @@ export const getCarryoverState = async (params: {
 		}>
 	}>
 > => {
+	const t = await getTranslations("tax.errors")
 	const { userId } = await requireAuth()
 	const { accountId } = params
 
@@ -213,7 +214,7 @@ export const getCarryoverState = async (params: {
 	if (!account) {
 		return {
 			status: "error",
-			message: "Account not found.",
+			message: t("accountNotFound"),
 			errors: [{ code: "ACCOUNT_NOT_FOUND", detail: "Account not found." }],
 		}
 	}
@@ -256,11 +257,12 @@ export const recomputeLedger = async (params: {
 	fromYear?: number
 	fromMonth?: number
 }): Promise<ActionResponse<{ recomputedMonths: number }>> => {
+	const t = await getTranslations("tax.errors")
 	const parsed = recomputeLedgerSchema.safeParse(params)
 	if (!parsed.success) {
 		return {
 			status: "error",
-			message: "Invalid input.",
+			message: t("invalidInput"),
 			errors: parsed.error.issues.map((issue) => ({
 				code: "INVALID_INPUT",
 				detail: issue.message,
@@ -276,7 +278,7 @@ export const recomputeLedger = async (params: {
 	if (!account) {
 		return {
 			status: "error",
-			message: "Account not found.",
+			message: t("accountNotFound"),
 			errors: [{ code: "ACCOUNT_NOT_FOUND", detail: "Account not found." }],
 		}
 	}
@@ -309,7 +311,6 @@ export const recomputeLedger = async (params: {
 		accountId,
 		year: startYear,
 		month: startMonth,
-		userId,
 	})
 
 	return {
@@ -328,6 +329,7 @@ export const getYearTaxSummary = async (params: {
 	accountId: string
 	year: number
 }): Promise<ActionResponse<YearTaxSummary>> => {
+	const t = await getTranslations("tax.errors")
 	const { userId } = await requireAuth()
 	const { accountId, year } = params
 
@@ -336,7 +338,7 @@ export const getYearTaxSummary = async (params: {
 	if (!account) {
 		return {
 			status: "error",
-			message: "Account not found.",
+			message: t("accountNotFound"),
 			errors: [{ code: "ACCOUNT_NOT_FOUND", detail: "Account not found." }],
 		}
 	}
@@ -416,6 +418,7 @@ export const getEffectiveTaxRate = async (params: {
 		breakdown: { feesPercent: number; irPercent: number }
 	}>
 > => {
+	const t = await getTranslations("tax.errors")
 	const { userId } = await requireAuth()
 	const { accountId } = params
 
@@ -424,7 +427,7 @@ export const getEffectiveTaxRate = async (params: {
 	if (!account) {
 		return {
 			status: "error",
-			message: "Account not found.",
+			message: t("accountNotFound"),
 			errors: [{ code: "ACCOUNT_NOT_FOUND", detail: "Account not found." }],
 		}
 	}
@@ -433,7 +436,7 @@ export const getEffectiveTaxRate = async (params: {
 	if (y === undefined || m === undefined) {
 		return {
 			status: "error",
-			message: "Invalid month format.",
+			message: t("invalidMonthFormat"),
 			errors: [
 				{
 					code: "INVALID_MONTH",
@@ -496,6 +499,7 @@ export const markDarfPaid = async (params: {
 	month: number
 	paidAmountCents: number
 }): Promise<ActionResponse<void>> => {
+	const t = await getTranslations("tax.errors")
 	const { userId } = await requireAuth()
 	const { accountId } = params
 
@@ -504,7 +508,7 @@ export const markDarfPaid = async (params: {
 	if (!account) {
 		return {
 			status: "error",
-			message: "Account not found.",
+			message: t("accountNotFound"),
 			errors: [{ code: "ACCOUNT_NOT_FOUND", detail: "Account not found." }],
 		}
 	}
@@ -512,8 +516,7 @@ export const markDarfPaid = async (params: {
 	if (!isMonthFinalized(params.year, params.month)) {
 		return {
 			status: "error",
-			message:
-				"Mês ainda em curso — DARF só pode ser marcada após o último dia do mês.",
+			message: t("monthInProgress"),
 			errors: [
 				{
 					code: "MONTH_NOT_FINALIZED",
@@ -549,7 +552,7 @@ export const markDarfPaid = async (params: {
 	if (result.length === 0) {
 		return {
 			status: "error",
-			message: "Ledger row not found for month.",
+			message: t("ledgerRowNotFoundForMonth"),
 			errors: [
 				{
 					code: "LEDGER_ROW_NOT_FOUND",

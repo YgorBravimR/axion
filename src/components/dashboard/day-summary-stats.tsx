@@ -63,6 +63,7 @@ export const DaySummaryStats = ({ summary }: DaySummaryStatsProps) => {
 			summary.totalTrades,
 			summary.avgR,
 			accountCurrency,
+			formatBrlWithSign,
 		]
 	)
 

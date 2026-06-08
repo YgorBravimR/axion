@@ -89,7 +89,7 @@ interface FormattedExecution {
  * @returns The parsed number, or null
  */
 const parseNumericField = (value: string | null | undefined): number | null => {
-	if (value === null || value === undefined || value === "") {
+	if (!value || value === "") {
 		return null
 	}
 	const parsed = Number(value)
@@ -153,7 +153,7 @@ const formatTradeForArch = (trade: TradeRecord): FormattedTrade => {
 		...rest
 	} = trade
 
-	const tagNames = (tradeTags ?? [])
+	const tagNames = (Array.isArray(tradeTags) ? tradeTags : [])
 		.map((tradeTag) => tradeTag.tag?.name)
 		.filter((name): name is string => Boolean(name))
 

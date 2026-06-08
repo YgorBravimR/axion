@@ -1,9 +1,10 @@
 "use server"
 
-import { and, asc, desc, eq, gte, lte } from "drizzle-orm"
+import { desc, eq, lte } from "drizzle-orm"
 import { db } from "@/db/drizzle"
-import { assets, hawksRenkoSizes, priceCandles, timeframes } from "@/db/schema"
+import { assets, hawksRenkoSizes, timeframes } from "@/db/schema"
 import { requireAuth } from "@/app/actions/auth"
+import { getCandleStore } from "@/lib/candle-store"
 import type {
 	GetInspectorWindowParams,
 	GetOverviewRangeParams,
@@ -57,36 +58,26 @@ export const getInspectorWindow = async (
 			.select({ id: timeframes.id, code: timeframes.code })
 			.from(timeframes)
 		const tfIdByCode = new Map(tfRows.map((r) => [r.code, r.id]))
-		const tfId5m = tfIdByCode.get("5m")
-		const tfId15m = tfIdByCode.get("15m")
-		const tfId60m = tfIdByCode.get("1h")
+		const tfId5m = tfIdByCode.get("hawk_5m_win")
+		const tfId15m = tfIdByCode.get("hawk_15m_win")
+		const tfId60m = tfIdByCode.get("hawk_60m_win")
 		if (!tfId5m || !tfId15m || !tfId60m) {
 			return {
 				status: "error",
-				message: "Missing 5m, 15m, or 1h timeframe in DB",
+				message:
+					"hawk_5m_win / hawk_15m_win / hawk_60m_win timeframe missing in DB — run scripts/materialize-hawks-timeframes.ts",
 			}
 		}
 
-		const fetchRange = async (tfId: string, paddingMs: number) =>
-			db
-				.select({
-					timestamp: priceCandles.timestamp,
-					open: priceCandles.open,
-					high: priceCandles.high,
-					low: priceCandles.low,
-					close: priceCandles.close,
-					indicators: priceCandles.indicators,
-				})
-				.from(priceCandles)
-				.where(
-					and(
-						eq(priceCandles.assetId, assetRow.id),
-						eq(priceCandles.timeframeId, tfId),
-						gte(priceCandles.timestamp, new Date(centerMs - paddingMs)),
-						lte(priceCandles.timestamp, new Date(centerMs + paddingMs))
-					)
-				)
-				.orderBy(asc(priceCandles.timestamp))
+		const store = getCandleStore()
+		const fetchRange = (tfId: string, paddingMs: number) =>
+			store.fetchRange({
+				assetId: assetRow.id,
+				timeframeId: tfId,
+				from: new Date(centerMs - paddingMs),
+				to: new Date(centerMs + paddingMs),
+				indicatorKeys: "*",
+			})
 
 		const [rows5m, rows15m, rows60m] = await Promise.all([
 			fetchRange(tfId5m, padding5m),
@@ -120,19 +111,19 @@ export const getInspectorWindow = async (
 			: FALLBACK_SIZES
 
 		const toCandleRow = (r: {
-			timestamp: Date
-			open: string
-			high: string
-			low: string
-			close: string
-			indicators: unknown
+			timestamp: string
+			open: number
+			high: number
+			low: number
+			close: number
+			indicators: Record<string, number>
 		}): InspectorCandleRow => ({
-			timestamp: r.timestamp.toISOString(),
-			open: Number(r.open),
-			high: Number(r.high),
-			low: Number(r.low),
-			close: Number(r.close),
-			indicators: (r.indicators ?? {}) as Record<string, number>,
+			timestamp: r.timestamp,
+			open: r.open,
+			high: r.high,
+			low: r.low,
+			close: r.close,
+			indicators: r.indicators,
 		})
 
 		return {
@@ -179,33 +170,25 @@ export const getOverviewRange = async (
 		const tfRows = await db
 			.select({ id: timeframes.id, code: timeframes.code })
 			.from(timeframes)
-		const tfId5m = tfRows.find((t) => t.code === "5m")?.id
+		const tfId5m = tfRows.find((t) => t.code === "hawk_5m_win")?.id
 		if (!tfId5m) {
-			return { status: "error", message: "5m timeframe missing in DB" }
+			return {
+				status: "error",
+				message:
+					"hawk_5m_win timeframe missing in DB — run scripts/materialize-hawks-timeframes.ts",
+			}
 		}
 
 		const fromDate = new Date(`${params.fromDate}T00:00:00Z`)
 		const toDate = new Date(`${params.toDate}T23:59:59Z`)
 
-		const rows = await db
-			.select({
-				timestamp: priceCandles.timestamp,
-				open: priceCandles.open,
-				high: priceCandles.high,
-				low: priceCandles.low,
-				close: priceCandles.close,
-				indicators: priceCandles.indicators,
-			})
-			.from(priceCandles)
-			.where(
-				and(
-					eq(priceCandles.assetId, assetRow.id),
-					eq(priceCandles.timeframeId, tfId5m),
-					gte(priceCandles.timestamp, fromDate),
-					lte(priceCandles.timestamp, toDate)
-				)
-			)
-			.orderBy(asc(priceCandles.timestamp))
+		const rows = await getCandleStore().fetchRange({
+			assetId: assetRow.id,
+			timeframeId: tfId5m,
+			from: fromDate,
+			to: toDate,
+			indicatorKeys: "*",
+		})
 
 		const sizeRow = (
 			await db
@@ -226,12 +209,12 @@ export const getOverviewRange = async (
 			status: "success",
 			data: {
 				candles5m: rows.map((r) => ({
-					timestamp: r.timestamp.toISOString(),
-					open: Number(r.open),
-					high: Number(r.high),
-					low: Number(r.low),
-					close: Number(r.close),
-					indicators: (r.indicators ?? {}) as Record<string, number>,
+					timestamp: r.timestamp,
+					open: r.open,
+					high: r.high,
+					low: r.low,
+					close: r.close,
+					indicators: r.indicators,
 				})),
 				sizes: sizeRow
 					? {

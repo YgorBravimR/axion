@@ -438,7 +438,7 @@ const ParameterHeatmap = ({ runs, onSelectRun }: ParameterHeatmapProps) => {
 									{param.values.map((val) => (
 										<SelectItem key={String(val)} value={String(val)}>
 											{param.kind === "enum"
-												? t(`sweepParam.${param.optionLabelKeys[val]}`)
+												? t(`sweepParam.${param.optionLabelKeys[val] ?? ""}`)
 												: val}
 										</SelectItem>
 									))}

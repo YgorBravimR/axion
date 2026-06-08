@@ -1,0 +1,90 @@
+[
+	{
+		"date": "2026-05-07",
+		"brickIndex": 6,
+		"direction": "short",
+		"label": "T1",
+		"expectedResult": "GA",
+		"closePrice": 190380
+	},
+	{
+		"date": "2026-05-07",
+		"brickIndex": 23,
+		"direction": "short",
+		"label": "T2",
+		"expectedResult": "GA",
+		"closePrice": 189335
+	},
+	{
+		"date": "2026-05-07",
+		"brickIndex": 42,
+		"direction": "short",
+		"label": "T3",
+		"expectedResult": "ST",
+		"closePrice": 189050
+	},
+	{
+		"date": "2026-05-07",
+		"brickIndex": 57,
+		"direction": "short",
+		"label": "T4",
+		"expectedResult": "GA",
+		"closePrice": 188765
+	},
+	{
+		"date": "2026-05-07",
+		"brickIndex": 81,
+		"direction": "short",
+		"label": "T5",
+		"expectedResult": "BE",
+		"closePrice": 187055
+	},
+	{
+		"date": "2026-05-07",
+		"brickIndex": 100,
+		"direction": "short",
+		"label": "T6",
+		"expectedResult": "ST",
+		"closePrice": 186580
+	},
+	{
+		"date": "2026-05-07",
+		"brickIndex": 102,
+		"direction": "short",
+		"label": "T7",
+		"expectedResult": "ST",
+		"closePrice": 186580
+	},
+	{
+		"date": "2026-05-07",
+		"brickIndex": 104,
+		"direction": "short",
+		"label": "T8",
+		"expectedResult": "ST",
+		"closePrice": 186580
+	},
+	{
+		"date": "2026-05-07",
+		"brickIndex": 118,
+		"direction": "short",
+		"label": "T9",
+		"expectedResult": "BE",
+		"closePrice": 186580
+	},
+	{
+		"date": "2026-05-07",
+		"brickIndex": 135,
+		"direction": "short",
+		"label": "T10",
+		"expectedResult": "GA",
+		"closePrice": 186105
+	},
+	{
+		"date": "2026-05-07",
+		"brickIndex": 161,
+		"direction": "short",
+		"label": "T11",
+		"expectedResult": "GA",
+		"closePrice": 185915
+	}
+]

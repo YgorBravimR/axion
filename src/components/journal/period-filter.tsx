@@ -64,7 +64,7 @@ export const PeriodFilter = ({
 	}
 
 	const handleCustomApply = () => {
-		if (tempRange?.from && tempRange?.to) {
+		if (tempRange && tempRange.from && tempRange.to) {
 			const fromDate = new Date(tempRange.from)
 			fromDate.setHours(0, 0, 0, 0)
 			const toDate = new Date(tempRange.to)
@@ -147,7 +147,7 @@ export const PeriodFilter = ({
 							id="period-filter-apply"
 							size="sm"
 							onClick={handleCustomApply}
-							disabled={!tempRange?.from || !tempRange?.to}
+							disabled={!tempRange || !tempRange.from || !tempRange.to}
 						>
 							{t("period.apply")}
 						</Button>

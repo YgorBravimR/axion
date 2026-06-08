@@ -43,17 +43,89 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Backtest / Inspector
 
-### Detective: stale `expectedRole` on `keltnerNearBricks` and `aggression.scoreMode`
+### Precomputed structural pivots — `asset_pivots` table (N=1..6, all timeframes, Renko first)
+
+- **Priority**: P1
+- **Effort**: L
+- **Source**: 2026-06-08 — session continuing the /backtest vs /optimize parity fix (commit `1022fdc4`). Ygor surfaced that the engine reproduces topos/fundos at runtime via the v0.7 structural state machine (`src/lib/backtest/modules/entry/hawks-triple-screen.ts:223–260`), but every other surface that needs pivots — chart overlays, Fibonacci retracement/expansion levels, alternate-N strategy variants — would either re-derive them or fail to find them. Persisting the swing sequence per (asset, timeframe, confirmation_n) unlocks Fib features and gives every analytics surface a single canonical answer.
+- **What + Why**: Build a persisted swing-sequence table indexed by `(asset_id, timeframe_id, confirmation_n, brick_index)` and populate it via a one-time backfill + per-ingest write. Both the engine (entry filters, stop logic, Fib-confluent gates) and the chart (overlay levels, Fib boxes) read from the same source. The master goal stated by Ygor is **data fidelity**: every consumer sees the same pivot, no drift across recompute boundaries, no silent regressions when detection logic evolves.
+- **Schema shape** (single source of truth, normalized):
+  ```sql
+  create type pivot_type_enum as enum ('topo', 'fundo');
+  create table asset_pivots (
+    asset_id          text     not null references assets(id),
+    timeframe_id      text     not null references timeframes(id),
+    confirmation_n    smallint not null check (confirmation_n between 1 and 6),
+    brick_index       integer  not null,           -- 0-based row in price_candles for (asset, tf)
+    pivot_type        pivot_type_enum not null,
+    pivot_price       numeric(20, 8)  not null,    -- candle.high (topo) or candle.low (fundo)
+    pivot_timestamp   timestamptz     not null,
+    algorithm_version text     not null,           -- bump when detection logic changes (e.g. "pivots-v1")
+    computed_at       timestamptz not null default now(),
+    primary key (asset_id, timeframe_id, confirmation_n, brick_index)
+  );
+  create index idx_asset_pivots_seq
+    on asset_pivots (asset_id, timeframe_id, confirmation_n, brick_index);
+  ```
+  Read-time Fib pair-up uses a `LAG()` window — no `prior_brick_idx` denorm field, intentionally, to keep each row independently correct.
+- **Detection algorithm** (Renko v1; time-based deferred): generalize the v0.7 state machine to parameter N. Track `direction`, `runExtreme`, `runExtremeBrickIdx`, `oppositeStreak`. On direction flip, after `oppositeStreak >= N` and a prior run-extreme exists, that extreme becomes a pivot at confirmation_n=N. Compute N=1..6 in parallel during a single brick scan (O(candles × 6) with a ~10-op inner loop). Single source of truth in `src/lib/pivots/detect-renko.ts` consumed by both backfill and per-ingest writer.
+- **Fidelity invariants (testable)**:
+  1. **Subset rule** — `pivots(N=k+1) ⊆ pivots(N=k)` is a math fact (more confirmation can only drop pivots, never add). Assert as a hard test after backfill on every (asset, tf).
+  2. **Price-match rule** — every row's `pivot_price` must equal `candles[brick_index].high` (topo) or `.low` (fundo). Run as an assert during backfill; throws on mismatch.
+  3. **Algorithm-version stamp** — every row carries the version that produced it. Lets queries say "give me only pivots from v1+" and lets re-detection target only stale rows.
+  4. **Freshness** — when `price_candles` for a (asset, tf) is reloaded, any pivot rows with `computed_at < candles_loaded_at` must be invalidated and recomputed. Either cascade-delete or compare timestamps at read time.
+- **Engine wiring**: extend `fetchCandles` (`src/app/actions/backtest.ts:44`) to JOIN `asset_pivots` for the recipe's requested N and attach as `candle.pivots[N] = { type, price } | undefined`. Mirrors the existing anchor-merge pattern at lines 70–96. Hawks engine swaps its runtime detection for `candle.pivots[recipe.entry.config.pivotConfirmationN ?? 2]`. **Hard regression bar:** after the swap, /backtest and /optimize must still report 325 trades on the Hawks v0 baseline (the number locked in by commit `1022fdc4`).
+- **Display wiring**: `/api/pivots?asset=…&tf=…&n=2&from=…&to=…` returns the pivot stream; chart overlay component draws topo/fundo markers + on-demand Fib retracement / extension between any user-selected pair (math in `src/lib/fibonacci/levels.ts` — derive levels on read, do not persist).
+- **Phased rollout**:
+  1. Schema + detection lib + unit tests against v0.7 fixtures (must reproduce existing N=2 pivots exactly). **Touches `src/db/schema.ts` — protected path, requires explicit user go-ahead.**
+  2. Backfill script `scripts/backfill-pivots.ts` — Renko sources only in v1, idempotent via `ON CONFLICT DO NOTHING`. Runs the subset + price-match invariants as hard asserts at the end.
+  3. Engine swap (Hawks reads `candle.pivots[N]`), re-run the parity test, confirm 325/325.
+  4. Display API + Fib utils + chart overlay component.
+  5. Time-based candle detection — separate algorithm, same table, deferred until 1–4 land.
+- **Done when**: All six N values populated for every Renko (asset, timeframe) pair currently in `price_candles`; Hawks v0 still reports 325 trades on both /backtest and /optimize; subset and price-match invariants pass on the full table; one chart in the app displays an N=2 pivot overlay; Fib retracement/extension levels render between any two user-selected pivots.
+- **Date filed**: 2026-06-08.
+
+### Hawks catalog import: replace formulaic exit math with brick-walk simulation
+
+- **Priority**: P2
+- **Effort**: S
+- **Source**: 2026-06-05 — `scripts/import-hawks-catalog-as-trades.ts` ships v1 with formulaic exit prices (ST = entry ± 200pt, GA = entry ∓ 600pt, BE = entry) and `exit_date = entry_date + 30min`. This trusts the catalog's BE/GA/ST labels and computes outcome-implied prices. It does NOT simulate what actually happened in the brick sequence.
+- **What + Why**: A brick-walk simulator that reads forward from each entry brick in `hawk_5m_win` and finds the first brick that breached the stop, target, or BE-then-reversal would (a) yield real exit timestamps for analytics, (b) surface catalog rows where the labeled outcome disagrees with the price action (useful audit signal), and (c) capture the slippage between formulaic and realized prices. The current v1 is fine for "show me the catalog as trades" but limits any per-day execution-quality study.
+- **Fix shape**: For each trade, iterate hawk_5m_win bricks ordered by timestamp for the same BRT day starting at the entry brick + 1. For SHORT: ST if brick.high >= stop, GA if brick.low <= target, BE if MFE crossed +1R then price returned to entry. Mirror for LONG. Use that brick's close + timestamp.
+- **Done when**: A `--mode=walk` flag on the importer toggles between formulaic and walk-simulated exits. A separate audit script flags catalog rows whose labeled outcome disagrees with the simulated outcome.
+- **Date filed**: 2026-06-05.
+
+### Hawks catalog tags: replace uninformative topos_fundos dimension
 
 - **Priority**: P3
 - **Effort**: XS
-- **Source**: 2026-06-01 — full `pnpm tsx scripts/sweep-detective.ts` run after fixing the `aggressionThreshold` LABEL-ONLY probe (gotcha logged 2026-06-01). Two pre-existing axes still disagree with their annotated `expectedRole`:
-  - `qualityGates.keltnerNearBricks` — annotated `GATES` but observed `LABEL-ONLY` across `[1,2,3]`. Fingerprints: identical trades/PnL, only tier mix changes.
-  - `entry.config.qualityGates.aggression.scoreMode` — annotated `GATES` but observed `LABEL-ONLY` across `[off, original, reversed]`. Same trades/PnL, only tier counts move (e.g. AAA 8 → 11 → 4).
-- **What + Why**: These are not behavior regressions — the rules work as designed. The annotations are stale assertions from when the rules were authored. Today scoreMode only feeds the tier-score path, never the block path, so it cannot move trade count or PnL by construction. `keltnerNearBricks` likewise only tunes the inner-penalty band, which is score-only. Leaving the annotations stale weakens the detective's signal: future regressions in these axes won't be flagged because the harness already prints `expected GATES`. Correct annotation makes the disagreement column meaningful.
-- **Fix shape**: In `scripts/sweep-detective.ts`, change `expectedRole` to `"LABEL-ONLY"` for both axes (lines ~344-350 for `keltnerNearBricks`, ~498-507 for `aggression.scoreMode`). Update `notes` to reflect that score-band tuning is the only effect. Re-run detective; both should land in the LABEL-ONLY cluster with `agree? ✓`.
-- **Done when**: `pnpm tsx scripts/sweep-detective.ts` shows 0 disagreements and 0 DEAD axes; both axes appear in the LABEL-ONLY classification section.
-- **Date filed**: 2026-06-01.
+- **Source**: 2026-06-05 — After importing 291 catalog trades, the topos_fundos dimension tagged 289/291 trades as "marked" (effectively no discriminative value). The CSV's `tbd1/tbd2/tbd3` columns aren't sparse-painted pivots — they're continuously-valued and never identically zero in practice.
+- **What + Why**: One of the 8 curated tag dimensions is wasted. Worth replacing with a discriminative tag. Candidates: "near session open" (entry brick within first N bricks of the day), "near recent high/low" (entry within K bricks' worth of the day's extreme), or proper pivot recency (look back N bricks and check if any tbd value crossed a threshold).
+- **Fix shape**: Decide on the replacement dimension in `scripts/import-hawks-catalog-as-trades.ts:TAG_DIMS`. Drop or remap `topos_fundos`. Re-run the importer — idempotent, so wipes + re-tags cleanly.
+- **Done when**: All 8 dimensions show <80% concentration on either side (a sign each is actually carrying information).
+- **Date filed**: 2026-06-05.
+
+### Hawks 90-day backtest window: treat March as WINM-anchored only
+
+- **Priority**: P1
+- **Effort**: XS (decision + doc only) or M (re-export March source CSVs at WINJ)
+- **Source**: 2026-06-05 — Brick-close audit (`scripts/verify-csv-brick-closes.ts`) after rebuilding the candle pipeline (`load-hawks-bricks-by-size` + `materialize-hawks-timeframes`) shows **118/120 March 2026 catalog entries** off by **+3800 to +4000 points** from the materialized `hawk_5m_win` close. April + May are clean (5 and 3 minor drifts respectively, all <300 pts).
+- **What + Why**: The source CSVs under `/Users/ygorbravim/Downloads/axion/WIN/<N>R.csv` contain **WINM (June-26)** contract data continuously across the 2026 window. The catalog (`/Users/ygorbravim/Downloads/Bravp - HK - Março.csv`) captured March BOX values at **WINJ (April-26)** contract levels — which is what the desk was actually trading at the time, since J→M rollover typically lands mid-March. The +3900pt delta is the J/M spread.
+- **Decision (user, 2026-06-05)**: Don't re-export. Document the spread, mark March as "WINM-anchored backtest only" in the catalog, and treat **April + May 2026 as the trustworthy 90-day window** for proving the Hawks strategy. March can still be used for sequencing / brick-by-brick logic checks, but absolute P&L numbers must reference WINM prices, not the catalog's WINJ prices.
+- **Done when**: A note in `data/hawks/user-entries/README.md` (create if missing) flags March 2026 as WINM-priced. The verifier's pass-rate report subtracts March mismatches as "expected" and surfaces only April + May divergences as actionable. Update if/when the user provides WINJ-period source CSVs for March.
+
+### OPTIMIZE — post-fact result memoization for data-degenerate axes
+
+- **Priority**: P3
+- **Effort**: M
+- **Source**: 2026-06-02 — CSV audit of `axion-optimize-runs-2026-06-02T08-33-09.csv` (8,352 rows) showed 97.8% refine redundancy collapsed to 84 unique result signatures (`pf|wr|pnl|dd|trades|sharpe|avgR|match`). Pre-execution recipe dedup landed (`src/lib/optimize/recipe-dedup.ts`) and collapses structurally identical recipes before dispatch. Remaining redundancy comes from **structurally distinct recipes that produce identical backtests** when one axis is data-degenerate (e.g., a stop-distance variation that never triggers in the date window).
+- **What + Why**: Pre-execution dedup is necessary but not sufficient. A result-hash memo (`hash(trades) → metrics`) inside `runSweep` would catch the residual after pre-dedup. Trade-off: caching by output requires the backtest to run at least once per output signature, so the saving is per repeat — material only if the audit shows a meaningful residual after #2 (pre-dedup) ships.
+- **Fix shape**:
+  1. In `src/lib/optimize/backtest-worker.ts`, hash the trades array (or summary key fields) after each backtest.
+  2. Keep an in-worker `Map<resultHash, Result>` for the sweep duration.
+  3. On the next recipe, run the backtest, then if `resultHash` is a hit, emit the previously stored synthetic result with a `dedupSource` tag so the runs table can mark redundant runs.
+- **Done when**: A 1,000-run sweep with a known data-degenerate axis (e.g., stop-distance variation outside the daily price range) produces ≤200 unique result signatures **AND** the redundant rows show a `dedup` provenance tag in the UI.
+- **Date filed**: 2026-06-02.
 
 ### OPTIMIZE — cache `fetchBacktestData` results across runs in the same session
 
@@ -277,3 +349,49 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Source**: `docs/scans/2026-05-29-layout-drift-from-core.md` — still-armed #5.
 - **What + Why**: The scan moved width constraints from 5 page routes to their feature components. Several other pages still have `mx-auto max-w-*` at the page level: `journal/[id]/page.tsx:155`, `journal/new/page.tsx:57`, `journal/[id]/edit/page.tsx:37`, `playbook/[id]/page.tsx:152`, `playbook/new/page.tsx:129`, `plan/layout.tsx:15`, `edit-strategy-form.tsx:199`, `command-center-content.tsx:145`. The scan deliberately did not touch them because their respective Wave 1/4/5 sweep logs documented the page-level wrapper as canonical at the time. Worth a pass to either propagate the new rule, or formally exempt these pages with a docs note.
 - **Date filed**: 2026-05-29.
+
+---
+
+## Performance (from 2026-06-02 perf scan #2 — backtest/optimize/PDF)
+
+### LIB-14 — Offload `@react-pdf/renderer` `renderToBuffer` to a worker thread
+
+- **Priority**: P2
+- **Effort**: M
+- **Source**: `docs/scans/2026-06-02-backtest-optimize-perf.md` — LIB-14 (critical, deferred).
+- **What + Why**: `src/lib/pdf/generate-report-pdf.ts:28-62` calls `renderToBuffer` synchronously. Each PDF render blocks the Node event loop ~300-500ms for a multi-page report. With 2+ concurrent users, the second request queues behind the first. Real fix requires Node `worker_threads`: ship the React tree + data to a worker, render there, return the buffer. Significant infra (worker spawn, message serialization, error propagation) — out of scope for a /scan pass.
+- **Fix shape**:
+  1. New `src/lib/pdf/render-worker.ts` — receives `{templateName, props}`, calls `renderToBuffer`, returns buffer.
+  2. New helper `renderInWorker(template, props)` that pools workers.
+  3. Update `generate-report-pdf.ts` callers to use the helper.
+  4. Add worker pool size config (`PDF_RENDER_CONCURRENCY` env var) defaulting to `os.cpus().length / 2`.
+- **Done when**: PDF render no longer blocks the event loop; concurrent users don't queue.
+- **Date filed**: 2026-06-02.
+
+### OPT-003 — Row virtualization for `runs-comparison-table.tsx`
+
+- **Priority**: P3
+- **Effort**: M
+- **Source**: `docs/scans/2026-06-02-backtest-optimize-perf.md` — OPT-003 (medium, deferred).
+- **What + Why**: For 1000+ sweep runs, pagination at 20 rows/page produces 50+ pages of UX friction. Virtualization keeps DOM small and enables seamless scroll. `@tanstack/react-virtual@^3.13.26` is **already installed** (added during scan #2 prep) but not yet integrated — the table uses the generic `@/components/ui/data-table` wrapper, and integrating virtualization there would touch all 13+ other `DataTable` callers.
+- **Fix shape**:
+  1. Add a `virtual?: boolean` prop to `DataTable` that switches the body to `useVirtualizer`.
+  2. Existing pagination behavior preserved when `virtual` is false (default).
+  3. Pass `virtual` from `runs-comparison-table.tsx`.
+- **Done when**: 5K-run sweep table scrolls at 60fps without pagination; other DataTable callers unaffected.
+- **Date filed**: 2026-06-02.
+
+### OPT-004 — Canvas-based heatmap for large parameter grids
+
+- **Priority**: P3
+- **Effort**: L
+- **Source**: `docs/scans/2026-06-02-backtest-optimize-perf.md` — OPT-004 (medium, deferred).
+- **What + Why**: `parameter-heatmap.tsx:457` renders a 50×50 grid as 2500 DOM nodes. Canvas would render 100× faster and use a fraction of the memory. The blocker is interactivity: current cells have hover tooltips, click handlers, accessibility hooks. Canvas-equivalent of these is achievable but a significant feature-quality change (hit-testing, tooltip portal, focus management) — needs design review, not just a perf pass.
+- **Fix shape**:
+  1. Audit interactivity surface — list every cell interaction.
+  2. Decide which interactions stay (hover tooltip likely yes, full click-context-menu maybe no).
+  3. Render cells to canvas; reuse a single overlay div for tooltip on hover.
+  4. Implement keyboard navigation via grid coords (not focusable DOM).
+  5. DOM fallback for <500 cells.
+- **Done when**: heatmaps with 1000+ cells render in <16ms; existing interactivity preserved or explicitly migrated.
+- **Date filed**: 2026-06-02.

@@ -91,7 +91,7 @@ const fetchSeriesLast = async (
 /** Convert BCB date "DD/MM/YYYY" to "YYYY-MM-DD" */
 const parseBcbDate = (bcbDate: string): string => {
 	const [day, month, year] = bcbDate.split("/")
-	return `${year}-${month}-${day}`
+	return `${year ?? ""}-${month ?? ""}-${day ?? ""}`
 }
 
 /**

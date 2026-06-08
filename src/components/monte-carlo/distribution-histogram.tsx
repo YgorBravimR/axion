@@ -259,7 +259,9 @@ export const DistributionHistogram = ({
 						fontSize={10}
 						tickLine={false}
 						axisLine={false}
-						tickFormatter={(value) => formatR(value)}
+						tickFormatter={(value) =>
+							typeof value === "number" ? formatR(value) : String(value)
+						}
 						interval="preserveStartEnd"
 					/>
 					<YAxis

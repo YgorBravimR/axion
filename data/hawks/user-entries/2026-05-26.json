@@ -1,0 +1,42 @@
+[
+	{
+		"date": "2026-05-26",
+		"brickIndex": 68,
+		"direction": "short",
+		"label": "T1",
+		"expectedResult": "ST",
+		"closePrice": 178000
+	},
+	{
+		"date": "2026-05-26",
+		"brickIndex": 101,
+		"direction": "short",
+		"label": "T2",
+		"expectedResult": "ST",
+		"closePrice": 177100
+	},
+	{
+		"date": "2026-05-26",
+		"brickIndex": 103,
+		"direction": "short",
+		"label": "T3",
+		"expectedResult": "BE",
+		"closePrice": 177100
+	},
+	{
+		"date": "2026-05-26",
+		"brickIndex": 110,
+		"direction": "short",
+		"label": "T4",
+		"expectedResult": "ST",
+		"closePrice": 177000
+	},
+	{
+		"date": "2026-05-26",
+		"brickIndex": 146,
+		"direction": "short",
+		"label": "T5",
+		"expectedResult": "BE",
+		"closePrice": 177200
+	}
+]

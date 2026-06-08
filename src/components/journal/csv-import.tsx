@@ -196,7 +196,7 @@ export const CsvImport = () => {
 				showToast("error", t("failedToReadFile"))
 			}
 		},
-		[showToast, showLoading, hideLoading, tOverlay]
+		[showToast, showLoading, hideLoading, tOverlay, t]
 	)
 
 	const handleDrop = useCallback(

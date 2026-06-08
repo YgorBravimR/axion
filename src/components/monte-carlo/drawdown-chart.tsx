@@ -119,7 +119,10 @@ export const DrawdownChart = ({ trades }: DrawdownChartProps) => {
 						fontSize={11}
 						tickLine={false}
 						axisLine={false}
-						tickFormatter={(value) => `-${value.toFixed(1)}R`}
+						tickFormatter={(value) => {
+							const num = typeof value === "number" ? value : Number(value)
+							return `-${num.toFixed(1)}R`
+						}}
 						domain={[0, maxDrawdown + padding]}
 						reversed
 						width={yAxisWidth}

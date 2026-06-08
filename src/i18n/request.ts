@@ -11,8 +11,22 @@ export default getRequestConfig(async ({ requestLocale }) => {
 		locale = routing.defaultLocale
 	}
 
+	const messageModule = (await import(
+		`../../messages/${locale}.json`
+	)) as unknown
+	const messages = (() => {
+		if (
+			typeof messageModule === "object" &&
+			messageModule !== null &&
+			"default" in messageModule
+		) {
+			return (messageModule as { default: Record<string, unknown> }).default
+		}
+		return {} as Record<string, unknown>
+	})()
+
 	return {
 		locale,
-		messages: (await import(`../../messages/${locale}.json`)).default,
+		messages,
 	}
 })

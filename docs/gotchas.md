@@ -40,6 +40,12 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 
 ## Drizzle ORM / Database Drivers
 
+### Candle data lives in R2 Parquet, not Postgres — `price_candles` was dropped 2026-06-08
+
+- **What**: `price_candles` no longer exists in the Drizzle schema. Phase 5 of the migration in `docs/backlog.md` (2026-06-08) moved every candle row to R2 Parquet under `s3://bravo-journal/candles/<tfCode>/<assetSymbol>.parquet`. The on-Postgres registry survives as `price_data_versions` — that's the catalog the UI reads to know what datasets exist. `priceCandles`, `PriceCandle`, `NewPriceCandle`, and `createDrizzleCandleStore` are gone.
+- **What to do**: Read candles via `getCandleStore().fetchRange({ assetId, timeframeId, from, to, indicatorKeys })` from `@/lib/candle-store`. The factory returns a DuckDB-backed `CandleStore` that reads Parquet (local on dev, R2 on prod via `httpfs`). When `indicatorKeys === "*"` it projects every key; an array projects only the requested keys. Write paths use `writeCandleParquet({ timeframeCode, assetSymbol, indicatorKeys, rows, … })` from `@/lib/candle-store/parquet-writer`. **Do not** add a new Drizzle table or model to hold candle data — that's the regression this migration was designed to prevent. Loaders still upsert `price_data_versions` after each Parquet write so the UI catalog stays in sync. CLI dev probes that hand-roll `SELECT … FROM price_candles` will fail at runtime; rewrite them through the candle-store or delete them.
+- **Source**: 2026-06-08 phase-5 cutover — migration `src/db/migrations/0017_good_thunderbolts.sql` (single line: `DROP TABLE "price_candles" CASCADE;`). Trade-off: 91% storage reduction (400 MB → 35 MB), R2 cold read 663 ms / warm 251 ms. Bit-equal verification: 4/4 probes × 8,802 rows × ~30 indicators on phase 4 round-trip. The CSV files on disk remain source-of-truth — Parquet can always be re-built.
+
 ### `pnpm db:generate` crashes on column rename without a TTY — and for backfill migrations you don't want the rename anyway
 
 - **What**: `drizzle-kit generate` interactively asks "Is column `X` -> `Y` a rename?" any time it detects a column being removed and a new one added in the same diff. In a non-TTY context (Claude, CI) it crashes with `Error: Interactive prompts require a TTY terminal`. Piping `\n` or wrapping in `script -q /dev/null` doesn't help — the `process.stdin.isTTY` check fires before any input is read.
@@ -75,6 +81,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: 2026-05-26 session adding `pnpm db:migrate` to the deploy workflow alongside the `defaultAsset → defaultAssetId` rename. The rename itself shipped single-shot (acceptable given low traffic + handful-of-rows blast radius), but future renames should follow expand-contract.
 
 ---
+
+### DuckDB Node API returns DECIMAL as `{width, scale, value}` and TIMESTAMP as `{micros: bigint}` — naïve `Number(row.x)` silently corrupts data
+
+- **What**: `@duckdb/node-api` (the new "Neo" Node binding for DuckDB ≥1.5) does NOT return Parquet DECIMAL columns as JS numbers. They come back as `{width: 21, scale: 1, value: 1000}` — actual value is `value / 10^scale`. TIMESTAMP columns come back as `{micros: <BigInt>}`. BIGINT columns come back as JS BigInt. Only DOUBLE/REAL come back as JS number.
+- **Symptom**: `Number({width, scale, value})` returns `NaN`. If you don't notice (e.g., downstream code does `n > 0 ? ... : ...`), every NaN row silently evaluates the falsy branch — equity curves go to zero, fire checks never trigger, no error thrown. The bug is invisible unless you log raw row shape.
+- **What to do**: Two defenses. (a) On the write side, force the export schema to DOUBLE for numeric columns: `CAST(value AS DOUBLE)` in any `COPY (... ) TO 'x.parquet'` statement. (b) On the read side, never `Number(v)` raw — use a `toNumber(v)` helper that handles DECIMAL object shape, BigInt, and plain number. See `src/lib/candle-store/duckdb-impl.ts` (`toNumber` + `toIsoString`).
+- **Source**: 2026-06-08 phase-2 probe (`scripts/_probe-r2-duckdb.ts`) of price_candles → R2+DuckDB migration. The probe revealed the gotcha before any production code path used the impl. Saved a multi-hour silent-data-corruption hunt.
 
 ### Dual-mode rule fallback chain must be single-line — scatter it and missed fallbacks hide from code review
 
@@ -197,6 +210,14 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Timeframes seeded on first run**: `renko-5m-cal`, `renko-15m-cal`, `renko-60m-cal` (`timeframe.type = 'renko'`, `unit = 'points'`). The action upserts them via `onConflictDoNothing` — no separate migration needed.
 - **Date logged**: 2026-05-15.
 
+### Zod `safeParse` silently strips fields the engine reads — creates asymmetry between validated/unvalidated code paths
+
+- **What**: When a server action validates an input via `schema.safeParse(input)`, Zod's default behavior strips unknown keys. If the engine (or any downstream consumer) reads a field that exists on the runtime object but is NOT in the schema, the server-action path sees that field as `undefined` (and falls back to `??` defaults), while a parallel path that bypasses Zod (Web Worker, direct call, client-side engine) sees the field as set. Same recipe object in React state → two different engine behaviors. This caused the Hawks /backtest = 325 trades vs /optimize = 502 trades parity bug (commit `1022fdc4`): `fireCooldownBricks`, `wave1MinBricks`, `retracementMinBricks` were read by the engine at `hawks-triple-screen.ts:223–225` but absent from `hawksTripleScreenConfigSchema`. /backtest's `runBacktestAction` Zod-stripped them → engine used `5, 4, 2`. /optimize's worker bypassed Zod and `deriveInitialSelections` filled them with sweep-axis `defaultMin` of `1, 3, 1` → engine fired far more often. Both surfaces reported matching `recipeHash` because the hash only covered known fields.
+- **What to do**: When the engine reads a field with a `?? default` fallback, **the schema must list that field as `.optional()`**. Treat Zod schema and engine read-sites as one contract; drift between them is a silent correctness bug, not a validation niceness. Audit by greping engine modules for `config.X ?? Y` patterns and confirming every X appears in the corresponding Zod schema.
+- **Detection pattern**: Two surfaces that take the "same" config object via different entry points (one server-action + Zod, one worker/client + no validation) producing different deterministic outputs on identical inputs is almost always this bug. Reproduce by logging `JSON.stringify(recipe)` at engine entry in both contexts and diffing.
+- **Source**: `src/lib/validations/backtest.ts`, `src/lib/backtest/modules/entry/hawks-triple-screen.ts`, `src/app/actions/backtest.ts:123`, `src/lib/optimize/backtest-worker.ts:162`. Post-mortem: `docs/postMorten/2026-06-08-hawks-parity-baseline-divergence.md`.
+- **Date logged**: 2026-06-08.
+
 ---
 
 ## TypeScript / Lint
@@ -234,6 +255,20 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: Extract the switch into a helper that returns the value: `const next = (() => { switch (key) { case "A": return 1; ... default: return null } })()`. The rule is happy because there's no reassignment, and the post-switch guard still works.
 - **Date logged**: 2026-05-15.
 - **Source**: `src/components/ui/segmented-toggle.tsx` — Command Center sweep follow-up.
+
+### `no-unnecessary-condition` is OFF by design — don't re-enable
+
+- **What**: `@typescript-eslint/no-unnecessary-condition` is set to `"off"` in `eslint.config.strict.mjs` (line ~49). At first glance it looks like a useful rule (catches dead checks) but in this codebase it's high-noise-low-signal — an exhaustive sample of 292 flagged sites in 2026-06 found nearly all were legitimate defensive patterns: optional chains against external data shapes, `??` fallbacks for partial-fetch results, discriminated-union exhaustive checks, and numeric `0`-falsy business-logic guards (prices, lots, counts where `0` is meaningful but TS narrows to `number`).
+- **What to do**: Don't re-enable the rule. If you write a guard the rule WOULD have flagged, that's fine — the type system can't see runtime contract violations, partial-data states, or business-zero values. If you spot a truly-dead check in a code review, just remove it; you don't need the linter to find it. The `no-unsafe-*` family stays on because those are security-adjacent.
+- **Date logged**: 2026-06-02.
+- **Source**: feat/optimize-phase-1-trust-foundations lint cleanup pass — three agent sweeps confirmed the rule's signal-to-noise inversion in this codebase.
+
+### Tier-1 lint config doesn't load every plugin Tier-2 does — disable-comments are tier-asymmetric
+
+- **What**: `eslint.config.mjs` (Tier-1, fast, pre-commit) loads `@typescript-eslint`, `react-hooks`, `drizzle`, `axion`, etc. — but NOT `@eslint-react/eslint-plugin` (which Tier-2 strict adds) and NOT any of the type-checked rules (which require `projectService` and slow Tier-1 to a crawl). Two consequences: (1) a `// eslint-disable-next-line @eslint-react/no-array-index-key -- WHY` comment passes Tier-2 but Tier-1 errors with "Definition for rule `@eslint-react/no-array-index-key` was not found". (2) A `// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- WHY` comment is valid in Tier-2 but the directive looks "unused" in Tier-1, which would fire `reportUnusedDisableDirectives`.
+- **What to do**: For plugins-not-in-Tier-1 rules (anything `@eslint-react/*`), don't use disable-comments — refactor the code instead (e.g. precompute a slot-id array `Array.from(N, (_, i) => \`prefix-${i}\`)`keyed on`cell.id`, so the rule never fires). For Tier-1-known plugins (`@typescript-eslint/_`, `react-hooks/_`), disable-comments work, AND `eslint.config.mjs`now has`linterOptions.reportUnusedDisableDirectives: "off"` so Tier-1 doesn't false-positive on strict-only rule references.
+- **Date logged**: 2026-06-02.
+- **Source**: feat/optimize-phase-1-trust-foundations parallel agent pass — Agent 1 wrote disable comments using the strict-tier rule namespace, pre-commit blocked the commit with 4 unknown-rule errors.
 
 ### `pnpm exec tsc --noEmit` catches things `next dev` + `pnpm lint:strict` silently allow
 
@@ -323,6 +358,37 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: `scripts/load-hawks-candles.ts` dedupes by `(timestamp, candle_index)` first-wins after sorting. Do **not** drop the unique index — it protects against real corruption. Do **not** dedupe at the CSV level (the source-of-truth file should match what ProfitChart exported). The loader logs e.g. `15m: dropped 202 duplicate (timestamp, candle_index) rows` so the count is visible per ingest.
 - **Source**: `scripts/load-hawks-candles.ts` (the `seen` set after the per-file sort).
 - **Date logged**: 2026-05-28.
+
+### Hawks candles are per-brick-size now (`R<n>`), not generic `5m/15m/1h`
+
+- **What**: As of 2026-06-05 the Hawks candle pipeline switched from "one big CSV per generic timeframe" to "one CSV per Renko brick size." The user exports each brick size separately (`15R.csv`, `17R.csv`, …, `123R.csv` under `/Users/ygorbravim/Downloads/axion/WIN`). The loader (`scripts/load-hawks-bricks-by-size.ts`) seeds one `timeframes` row per size (codes `R15`, `R17`, …) and ingests the raw bricks with all 28 CSV indicator columns stored verbatim in `indicators` JSONB (`ema9`, `macd1_histo`, `vwap_d`, etc.). The CSV's `contador` column → `candle_index` (gaps in `contador` are intentional — they match what ProfitChart shows on the chart, not row-order).
+- **Why**: Hawks brick size changes every Monday (`hawks_renko_sizes` table). A single backtest run spans multiple weeks, so a single fixed `timeframe_id` no longer represents the engine's "5m role" — different weeks need different brick sizes. The per-brick-size source data plus a materialized view (`Hawk_5m_win`/`Hawk_15m_win`/`Hawk_60m_win`) decouples raw ingest from role assignment.
+- **What to do**: Engine code reads from the materialized timeframes (`code = "hawk_5m_win"`, etc.), not from `R<n>` directly and not from the legacy `5m/15m/1h` codes (which still exist in the table but have 0 candles). To rebuild: `pnpm tsx scripts/load-hawks-bricks-by-size.ts` (raw R<n> ingest), then `pnpm tsx scripts/materialize-hawks-timeframes.ts` (role assignment + cross-TF projection). Run both whenever the source CSVs change. Run only the materializer when `hawks_renko_sizes` changes (e.g. new week's brick sizes added) — no re-ingest needed.
+- **Source**: `scripts/load-hawks-bricks-by-size.ts`, `scripts/materialize-hawks-timeframes.ts`, `src/app/actions/inspector-data.ts:182`, `src/app/actions/hawks-audit-debug.ts:92`.
+- **Date logged**: 2026-06-05.
+
+### Daily-constant indicators live in `asset_session_anchors`, not in candle JSONB
+
+- **What**: Values that are FIXED across the trading day (`ajuste`, `ajuste_adj`, future: prior O/H/L/C, pivot R1/R2/S1/S2, opening range, anchored VWAPs) are stored once per `(asset, BRT date)` in `asset_session_anchors`. They are NOT duplicated across every candle row. Engine code that still wants to read `candle.indicators.ajuste` does so transparently because `src/app/actions/backtest.ts:fetchCandles` merges the day's anchor payload into each candle's `indicators` blob in-memory at fetch time.
+- **Why it matters**: Old key names (`ajuste_d1`, `vwap_d_5m`) are obsolete. The canonical names match the CSV columns (`ajuste`, `vwap_d`). `vwap_d`/`vwap_w`/`vwap_m` are PER-BRICK and live in candle JSONB; only `ajuste`/`ajuste_adj` are anchor-table values. If you're tempted to add `prior_high` to candle JSONB, don't — write a new key in the loader's anchor-aggregation step (`scripts/load-hawks-bricks-by-size.ts:ANCHOR_COLS`) and let the existing fetch enrichment pick it up.
+- **What to do**: To consume a new anchor in engine code: (1) add the key to the strategy preset's `requiredIndicators`, (2) read it as `candle.indicators.<key>` in engine code, (3) make sure the loader writes it to the anchor payload. The Zod schema in `src/lib/indicators/daily-anchors.ts` is `.passthrough()` so unknown keys flow through without errors — but add the key explicitly to the schema once it's stable for type safety.
+- **Source**: `src/db/schema.ts:assetSessionAnchors`, `src/lib/indicators/daily-anchors.ts`, `src/app/actions/backtest.ts:fetchCandles`, `scripts/load-hawks-bricks-by-size.ts:ANCHOR_COLS`.
+- **Date logged**: 2026-06-07.
+
+### Neon free tier 512 MB ceiling — `VACUUM FULL` to reclaim space after large wipes
+
+- **What**: Neon's free tier caps project size at 512 MB. The Hawks pipeline loads ~317K candle rows × ~30 JSONB keys = ~465 MB. Re-running the loader (which does `DELETE FROM price_candles`) does NOT immediately reclaim space — Postgres marks tuples deleted but keeps the page allocations. A second ingest then hits `NeonDbError: could not extend file because project size limit (512 MB) has been exceeded`.
+- **What to do**: Before re-running the Hawks loader on a near-full project, run `TRUNCATE price_candles, price_data_versions, asset_session_anchors` followed by `VACUUM FULL` on each. `TRUNCATE` is faster than `DELETE` because it skips the per-row WAL and immediately reclaims tablespace at the next checkpoint. `VACUUM FULL` rewrites the table to compact pages. With both, the project drops from ~465 MB → ~14 MB. If iterations get tighter, upgrade Neon or carve the Hawks data into its own Neon project.
+- **Note on autovacuum**: Neon's autovacuum is conservative on free tier — don't expect it to reclaim hundreds of MB on its own. Manual VACUUM FULL is the reliable lever.
+- **Source**: 2026-06-07 session — hit the wall on the second loader run after adding `asset_session_anchors`. Recovery via `scripts/_vacuum.ts` (one-off, deleted after use).
+- **Date logged**: 2026-06-07.
+
+### Neon HTTP driver aborts large SELECTs with `ETIMEDOUT` — use postgres-js TCP for big reads
+
+- **What**: `@neondatabase/serverless`'s `neon()` HTTP client times out on long-running queries (~300K+ row SELECTs) with `TypeError: terminated` / `read ETIMEDOUT`. The HTTP API has aggressive read deadlines that surface only when the result set is large enough that streaming takes more than a few seconds. The error is opaque (no SQL context) and can look like a transient network failure.
+- **What to do**: For backfill/migration/materialization scripts that need to load tens of thousands of rows in one shot, use `postgres-js` over TCP directly: `const sql = postgres(process.env.DATABASE_URL!, { max: 4, idle_timeout: 30 })`. The Neon pooler hostname (`*-pooler.*.neon.tech`) supports raw TCP postgres connections. Don't try to work around the HTTP driver with smaller queries or retries — the underlying limit isn't going away. Production code paths (server actions, page fetches) should keep using the HTTP driver because they query small page-sized result sets and benefit from the lower connection overhead.
+- **Source**: `scripts/materialize-hawks-timeframes.ts` hit this on a 317K-row source load; fixed by switching to `postgres-js`.
+- **Date logged**: 2026-06-05.
 
 ### postgres-js + `jsonb`: never pre-stringify the value, pass the object
 
@@ -667,6 +733,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: `src/lib/optimize/parameter-grid.ts`, `src/lib/optimize/heatmap-utils.ts`; bug fix session 2026-05-29.
 - **Date logged**: 2026-05-29.
 
+### Counter-intuitive metric? Diff working tree against HEAD before assuming a runtime bug
+
+- **What**: Audited two optimize-run CSV exports and concluded `MAX_COMBINATIONS = 2000` had been bypassed (a sweep produced 4,512 broad runs). Spent investigation time hunting a count-vs-generate divergence in `countConditionalGrid`. Root cause: an **uncommitted local edit** had dropped the cap from `5000 → 2000` in my working tree only. At the time the CSVs were exported, the cap was 5000 and 4,512 passed legitimately. `countConditionalGrid` literally calls `generateConditionalGrid().length` so the two cannot diverge by construction — that should have been the first signal the premise was wrong.
+- **What to do**: Before chasing any "this number violates a constant" finding, run `git diff HEAD -- <file>` and `git log --all -p -S "<CONSTANT>" -- <file>` to see whether the constant's working-tree value matches what the artifact was produced under. The artifact's runtime knows nothing about your dirty tree.
+- **Source**: optimize CSV audit session 2026-06-02; `src/lib/optimize/parameter-grid.ts`.
+- **Date logged**: 2026-06-02.
+
 ### Agent isolation: `isolation: "worktree"` does not always isolate commits to the worktree branch
 
 - **What**: Spawning parallel agents with `isolation: "worktree"` is supposed to give each agent its own git worktree on a dedicated `worktree-agent-*` branch. In practice (session 2026-05-22, six parallel agents on `feat/hawks-mode-v0`), all six agents' commits landed directly on the parent branch (`feat/hawks-mode-v0`), and the worktree branches stayed at the baseline. The commits ended up linearized cleanly because file ownership was strictly disjoint, but if two agents had touched the same file, the second commit would have failed or surprised the orchestrator with an unexpected merge.
@@ -747,4 +820,12 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Why it's easy to miss**: The worker is correct. The runner collects all the other fields (equityCurve, summaryIS, summaryOOS, equityCurveOOS, etc.) and threads them through correctly. Trades were just forgotten. No type error because ProgressMessage is a narrowly-typed interface, not an object spread.
 - **What to do**: When a worker computes a new data structure, update the ProgressMessage interface explicitly and thread it into the OptimizationRun in the runner's message handler. Use a checklist: summary✓, equityCurve✓, trades✓, OOS variants✓. Don't rely on "I'll add it later" or shape inference.
 - **Related**: `[BUG-2026-06-01]` in `docs/postMorten/backend.md`.
+- **Date logged**: 2026-06-01.
+
+### localStorage is ~5 MB per origin — use IndexedDB for unbounded client storage
+
+- **What**: localStorage has a hard quota of ~5–10 MB per origin (varies by browser). `JSON.stringify()` also has a ~512 MB V8 string cap. When the optimize runs store applies a Pareto retention policy (keep full trades for frontier runs), frontier runs monotonically accumulate over a long session. Multi-year backtests (2020–2026 with hundreds of sweeps) easily exceed ~500 KB and approach the localStorage quota. Failures are silent: the try/catch swallows `QuotaExceededError` and `RangeError: Invalid string length`, only `console.warn`s, and users lose runs on page reload without realizing.
+- **Why it's easy to miss**: In shorter sessions (single-week backtest, handful of sweeps) the payload stays <2 MB. The problem only surfaces with realistic long-running sessions. Testing with production-scale data sizes is rare.
+- **What to do**: For unbounded client storage (optimization history, session recordings, large result sets), use **IndexedDB**. It supports gigabytes of headroom, stores structured-clonable objects directly (no JSON.stringify cap), and handles quota overflow gracefully. localStorage is fine for small session tokens or flags (<1 MB), but not for accumulated data. If migrating from localStorage, do one-shot migration on first load: read legacy data, apply schema migrations, write to IDB, clear localStorage keys.
+- **Related**: `[BUG-2026-06-01]` in `docs/postMorten/frontend.md`. Fix: commit `f208c330`.
 - **Date logged**: 2026-06-01.

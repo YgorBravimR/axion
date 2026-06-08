@@ -250,7 +250,6 @@ const FilterPanel = ({
 	const tTrade = useTranslations("trade")
 	const {
 		filters,
-		groupBy,
 		expectancyMode,
 		activePresetKey,
 		setDatePreset,
@@ -284,7 +283,8 @@ const FilterPanel = ({
 	// Memoize serialized filters to avoid creating new object on every render
 	const currentFiltersMemo = useMemo(
 		() => serializeFilters(),
-		[filters, groupBy, expectancyMode, activePresetKey]
+
+		[serializeFilters]
 	)
 
 	// Count active advanced filters (excludes date since that's in the main bar)
@@ -302,7 +302,7 @@ const FilterPanel = ({
 			{/* Slim filter bar */}
 			<div className="gap-s-200 sm:gap-s-300 flex flex-wrap items-center">
 				{/* Period presets */}
-				<div className="scrollbar-none gap-s-100 relative flex items-center overflow-x-auto">
+				<div className="gap-s-100 relative flex scrollbar-none items-center overflow-x-auto">
 					<div className="from-bg-100 pointer-events-none absolute top-0 right-0 bottom-0 w-6 bg-linear-to-l sm:hidden" />
 					{DATE_PRESET_CONFIGS.map((preset) => (
 						<button

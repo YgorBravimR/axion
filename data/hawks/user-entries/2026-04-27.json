@@ -1,0 +1,26 @@
+[
+	{
+		"date": "2026-04-27",
+		"brickIndex": 92,
+		"direction": "short",
+		"label": "T1",
+		"expectedResult": "ST",
+		"closePrice": 193620
+	},
+	{
+		"date": "2026-04-27",
+		"brickIndex": 94,
+		"direction": "short",
+		"label": "T2",
+		"expectedResult": "BE",
+		"closePrice": 193620
+	},
+	{
+		"date": "2026-04-27",
+		"brickIndex": 104,
+		"direction": "short",
+		"label": "T3",
+		"expectedResult": "ST",
+		"closePrice": 193410
+	}
+]

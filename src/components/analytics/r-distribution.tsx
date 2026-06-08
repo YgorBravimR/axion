@@ -206,9 +206,9 @@ export const RDistribution = memo(({ data }: RDistributionProps) => {
 						strokeDasharray="3 3"
 					/>
 					<Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={80}>
-						{data.map((entry, index) => (
+						{data.map((entry) => (
 							<Cell
-								key={`cell-${index}`}
+								key={`cell-${entry.range}`}
 								fill={
 									entry.rangeMin >= 0
 										? "var(--color-trade-buy)"

@@ -104,7 +104,7 @@ const BacktestOverviewChart = ({
 		return () => {
 			cancelled = true
 		}
-	}, [assetSymbol, dateFrom, dateTo])
+	}, [assetSymbol, dateFrom, dateTo, t])
 
 	const theme = useMemo(() => {
 		if (typeof window === "undefined") {
@@ -140,12 +140,12 @@ const BacktestOverviewChart = ({
 			handleScale: true,
 		})
 		const candleSeries = chart.addSeries(CandlestickSeries, {
-			upColor: theme.tradeBuy ?? "rgb(60, 180, 110)",
-			downColor: theme.tradeSell ?? "rgb(220, 90, 80)",
-			borderUpColor: theme.tradeBuy ?? "rgb(60, 180, 110)",
-			borderDownColor: theme.tradeSell ?? "rgb(220, 90, 80)",
-			wickUpColor: theme.tradeBuy ?? "rgb(60, 180, 110)",
-			wickDownColor: theme.tradeSell ?? "rgb(220, 90, 80)",
+			upColor: theme.tradeBuy,
+			downColor: theme.tradeSell,
+			borderUpColor: theme.tradeBuy,
+			borderDownColor: theme.tradeSell,
+			wickUpColor: theme.tradeBuy,
+			wickDownColor: theme.tradeSell,
 		})
 		chartRef.current = chart
 		candleSeriesRef.current = candleSeries
@@ -188,9 +188,9 @@ const BacktestOverviewChart = ({
 		}
 		tradeLineSeriesRef.current = []
 
-		const winColor = theme.tradeBuy ?? "rgb(60, 180, 110)"
-		const lossColor = theme.tradeSell ?? "rgb(220, 90, 80)"
-		const neutralColor = theme.txt300 ?? "rgb(150, 150, 150)"
+		const winColor = theme.tradeBuy
+		const lossColor = theme.tradeSell
+		const neutralColor = theme.txt300
 
 		const markers: SeriesMarker<UTCTimestamp>[] = []
 		for (const trade of trades) {
@@ -235,7 +235,7 @@ const BacktestOverviewChart = ({
 			markers.push({
 				time: entryIdx as UTCTimestamp,
 				position: isLong ? "belowBar" : "aboveBar",
-				color: isSelected ? (theme.acc100 ?? outcomeColor) : outcomeColor,
+				color: isSelected ? theme.acc100 : outcomeColor,
 				shape: isLong ? "arrowUp" : "arrowDown",
 				text: isSelected ? `#${trade.id}` : "",
 			})
@@ -252,7 +252,7 @@ const BacktestOverviewChart = ({
 
 	const handleClick = useCallback(
 		(param: MouseEventParams) => {
-			if (param.time === undefined || param.time === null) {
+			if (param.time === undefined) {
 				return
 			}
 			const clickedIdx = Number(param.time)

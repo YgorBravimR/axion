@@ -1,5 +1,6 @@
 "use server"
 
+import { getTranslations } from "next-intl/server"
 import { db } from "@/db/drizzle"
 import type { Tag } from "@/db/schema"
 import { assets, strategies, tags, trades as tradesTable } from "@/db/schema"
@@ -55,11 +56,12 @@ const findAssetBySymbol = (
 export const validateCsvTrades = async (
 	csvTrades: CsvTradeInput[]
 ): Promise<ActionResponse<CsvValidationResult>> => {
+	const t = await getTranslations("imports")
 	try {
 		const { accountId, userId } = await requireAuth()
 		const account = await getCurrentAccount()
 		if (!account) {
-			return { status: "error", message: "Account not found" }
+			return { status: "error", message: t("errors.accountNotFound") }
 		}
 
 		// Collect unique asset symbols (normalized + original + FUT variants)
@@ -372,6 +374,7 @@ export const validateCsvTrades = async (
 export const importCsvTrades = async (
 	trades: ProcessedCsvTrade[]
 ): Promise<ActionResponse<CsvImportResult>> => {
+	const tImports = await getTranslations("imports")
 	try {
 		const { userId } = await requireAuth()
 
@@ -383,7 +386,7 @@ export const importCsvTrades = async (
 		if (validTrades.length === 0) {
 			return {
 				status: "error",
-				message: "No valid trades to import",
+				message: tImports("errors.noValidTrades"),
 			}
 		}
 
@@ -482,7 +485,9 @@ export const importCsvTrades = async (
 
 		return {
 			status: "success",
-			message: `Successfully imported ${result.data?.successCount || 0} trades`,
+			message: tImports("success.csvImported", {
+				count: result.data?.successCount || 0,
+			}),
 			data: {
 				success: result.data?.successCount || 0,
 				failed: result.data?.failedCount || 0,

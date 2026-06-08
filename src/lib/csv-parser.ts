@@ -561,7 +561,7 @@ const parseProfitChartContent = (
 			result.errors.push({
 				row: rowNumber,
 				field: "entryDate",
-				message: `imports.errors.invalidEntryDate|${rawData.pc_openDateTime}`,
+				message: `imports.errors.invalidEntryDate|${rawData.pc_openDateTime ?? ""}`,
 			})
 			continue
 		}

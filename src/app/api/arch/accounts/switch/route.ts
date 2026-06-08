@@ -13,8 +13,15 @@ const POST = async (request: NextRequest) => {
 	const { auth } = authResult
 
 	try {
-		const body = await request.json()
-		const { accountId } = body
+		const body = (await request.json()) as unknown
+		const rawAccountId = (() => {
+			if (typeof body === "object" && body !== null && "accountId" in body) {
+				return (body as { accountId?: unknown }).accountId
+			}
+			return undefined
+		})()
+		const accountId =
+			typeof rawAccountId === "string" ? rawAccountId : undefined
 
 		if (!accountId) {
 			return archError("Missing required field: accountId", [

@@ -11,7 +11,6 @@ interface RecomputeInput {
 	year: number
 	month: number // 1–12
 	carryoverInCents: number
-	userId: string
 }
 
 interface RecomputeOutput {
@@ -42,12 +41,12 @@ interface RecomputeOutput {
  * runs darf-calculator with the provided carryoverIn, and upserts the result.
  * Returns the computed output so the caller can chain carryoverOut → next month.
  *
- * @param input - accountId, year, month (1-12), carryoverIn, userId for decryption
+ * @param input - accountId, year, month (1-12), carryoverIn
  */
 const recomputeAccountMonth = async (
 	input: RecomputeInput
 ): Promise<RecomputeOutput> => {
-	const { accountId, year, month, carryoverInCents, userId } = input
+	const { accountId, year, month, carryoverInCents } = input
 
 	// timestamptz columns: build UTC range bounds, never local-tz date-fns helpers
 	const monthStart = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0))

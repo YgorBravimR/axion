@@ -20,6 +20,7 @@ import { orbPresets } from "@/lib/backtest/presets/orb-presets"
 // DEZK strategy archived 2026-05-29 — see dezk-presets.ts header. Not in UI.
 import { hawksPresets } from "@/lib/backtest/presets/hawks-presets"
 import { formatLocalYMD, parseLocalYMD } from "@/lib/backtest/time-utils"
+import { DataSourceSelect } from "./data-source-select"
 import { OrbEntrySection } from "./sections/orb-entry-section"
 // DEZK entry section archived 2026-05-29 — see dezk-entry-section.tsx header.
 import { HawksEntrySection } from "./sections/hawks-entry-section"
@@ -35,12 +36,31 @@ import {
 import { listBundledCatalogs } from "@/app/actions/user-catalog-bundles"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import dynamic from "next/dynamic"
 import { BacktestSummaryCards } from "./backtest-summary-cards"
 import { BacktestTierBreakdown } from "./backtest-tier-breakdown"
-import { BacktestEquityChart } from "./backtest-equity-chart"
+const BacktestEquityChart = dynamic(
+	() =>
+		import("./backtest-equity-chart").then((m) => ({
+			default: m.BacktestEquityChart,
+		})),
+	{ ssr: false }
+)
 import { BacktestTradesTable } from "./backtest-trades-table"
-import { HawksTripleScreenInspector } from "./inspector/triple-screen-inspector"
-import { BacktestOverviewChart } from "./inspector/backtest-overview-chart"
+const HawksTripleScreenInspector = dynamic(
+	() =>
+		import("./inspector/triple-screen-inspector").then((m) => ({
+			default: m.HawksTripleScreenInspector,
+		})),
+	{ ssr: false }
+)
+const BacktestOverviewChart = dynamic(
+	() =>
+		import("./inspector/backtest-overview-chart").then((m) => ({
+			default: m.BacktestOverviewChart,
+		})),
+	{ ssr: false }
+)
 import { BacktestHawksResultsPanel } from "./backtest-hawks-results-panel"
 import type { DataSourceInfo } from "@/types/candle"
 import type {
@@ -414,7 +434,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 							<SelectContent>
 								{ALL_PRESETS.map((preset, i) => (
 									<SelectItem
-										key={`${preset.entry.type}-${i}`}
+										key={`${preset.entry.type}-${preset.displayName}`}
 										value={String(i)}
 									>
 										{preset.displayName}
@@ -462,27 +482,12 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 							>
 								{t("config.asset")} / {t("config.timeframe")}
 							</label>
-							<Select
+							<DataSourceSelect
+								id="backtest-source"
+								dataSources={dataSources}
 								value={String(selectedSourceIndex)}
 								onValueChange={handleSourceChange}
-							>
-								<SelectTrigger id="backtest-source">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{dataSources.map((source, i) => (
-										<SelectItem
-											key={`${source.assetId}-${source.timeframeId}`}
-											value={String(i)}
-										>
-											{source.assetSymbol} — {source.timeframeCode}
-											{source.rowCount
-												? ` (${source.rowCount.toLocaleString()})`
-												: ""}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
+							/>
 						</div>
 					)}
 				</div>

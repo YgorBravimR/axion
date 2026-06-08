@@ -56,9 +56,6 @@ const TargetsExitSection = memo(
 			[t]
 		)
 
-		if (recipe.target.type !== "fixed_levels") {
-			return null
-		}
 		const targetConfig = recipe.target
 
 		const totalAllocation = targetConfig.levels.reduce(
@@ -164,7 +161,7 @@ const TargetsExitSection = memo(
 							const hideValueInput = index === 0 && isFirstTargetValueSwept
 							return (
 								<div
-									key={index}
+									key={level.label}
 									className="border-bg-300 bg-bg-100/50 gap-m-400 p-s-300 flex items-end rounded-lg border"
 								>
 									{!hideValueInput && (

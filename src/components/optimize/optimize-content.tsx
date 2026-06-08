@@ -1,8 +1,20 @@
 "use client"
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react"
+import dynamic from "next/dynamic"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
+import {
+	AlertDialog,
+	AlertDialogTrigger,
+	AlertDialogContent,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogAction,
+	AlertDialogCancel,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import {
@@ -57,13 +69,18 @@ import { StopProtectionSection } from "@/components/backtest/sections/stop-prote
 import { TargetsExitSection } from "@/components/backtest/sections/targets-exit-section"
 import { SizingExecutionSection } from "@/components/backtest/sections/sizing-execution-section"
 import { RunsComparisonTable } from "./runs-comparison-table"
-import { EquityOverlayChart } from "./equity-overlay-chart"
+const EquityOverlayChart = dynamic(
+	() =>
+		import("./equity-overlay-chart").then((m) => ({
+			default: m.EquityOverlayChart,
+		})),
+	{ ssr: false }
+)
 import { RunDetailPanel } from "./run-detail-panel"
 import { SweepConfigPanel } from "./sweep-config-panel"
 import { SweptPathsProvider } from "./swept-paths-context"
 import { HawksSweepBuilder } from "./hawks-sweep-builder"
 import { OrbSweepBuilder } from "./orb-sweep-builder"
-import { OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED } from "@/lib/optimize/feature-flags"
 import {
 	HAWKS_LEAVES,
 	HAWKS_VALIDATORS,
@@ -83,14 +100,19 @@ import {
 } from "@/lib/optimize/grid-conditional"
 import { deriveInitialSelections } from "@/lib/optimize/recipe-to-selections"
 import { recipeFromCombo } from "@/lib/optimize/recipe-from-combo"
+import { dedupeRecipes } from "@/lib/optimize/recipe-dedup"
 import { buildKParentNeighborhood } from "@/lib/optimize/refine-neighborhood"
 import { mintJourneyId, backfillJourneyId } from "@/lib/optimize/journey"
 import { useHeroPresets } from "@/lib/optimize/use-hero-presets"
+import { DataSourceSelect } from "@/components/backtest/data-source-select"
 import { FreezeHeroModal } from "./freeze-hero-modal"
 import { LoserPatternInspector } from "./loser-pattern-inspector"
 import { SweepProgressBar } from "./sweep-progress-bar"
 import { ParameterHeatmap } from "./parameter-heatmap"
-import { ParetoScatter } from "./pareto-scatter"
+const ParetoScatter = dynamic(
+	() => import("./pareto-scatter").then((m) => ({ default: m.ParetoScatter })),
+	{ ssr: false }
+)
 import { WizardStepper } from "./wizard-stepper"
 import { SummaryCards } from "./summary-cards"
 import { SweepAxisDiagnostics } from "./sweep-axis-diagnostics"
@@ -107,6 +129,7 @@ import type {
 import type { ParameterRange } from "@/lib/optimize/parameter-grid"
 import type { SweepHandle } from "@/lib/optimize/sweep-runner"
 import type { WizardStepDef } from "./wizard-stepper"
+import { useFormatting } from "@/hooks/use-formatting"
 
 const ALL_PRESETS = [...orbPresets, ...hawksPresets]
 
@@ -136,6 +159,7 @@ type WizardStep = "setup" | "parameters" | "results"
 
 const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	const t = useTranslations("optimize")
+	const { formatNumber } = useFormatting()
 	const tBacktest = useTranslations("backtest")
 	const { showToast } = useToast()
 	const { showLoading, hideLoading } = useLoadingOverlay()
@@ -155,7 +179,13 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	// backtest page's typical entry point. Users can still switch to ORB or
 	// user_catalog via the Strategy selector in Setup.
 	const [recipe, setRecipe] = useState<StrategyRecipe>(hawksV0)
-	const [selectedSourceIndex, setSelectedSourceIndex] = useState(0)
+	// Initial recipe defaults to Hawks — auto-route to the first hawk_5m_win
+	// source so the wizard produces real trades on first load. Mirrors the
+	// auto-route in handleStrategyChange for the reactive case.
+	const [selectedSourceIndex, setSelectedSourceIndex] = useState(() => {
+		const idx = dataSources.findIndex((s) => s.timeframeCode === "hawk_5m_win")
+		return idx >= 0 ? idx : 0
+	})
 	const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
 	const [quickRangeKey, setQuickRangeKey] = useState("")
 
@@ -185,10 +215,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		validators: LeafGroupValidator[]
 		strategyKey: "hawks" | "orb"
 	} | null>(() => {
-		if (
-			OPTIMIZE_INLINE_SWEEP_HAWKS_ENABLED &&
-			recipe.entry.type === "hawks_triple_screen"
-		) {
+		if (recipe.entry.type === "hawks_triple_screen") {
 			return {
 				leaves: HAWKS_LEAVES,
 				validators: HAWKS_VALIDATORS,
@@ -214,6 +241,11 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	// ── Runs state ────────────────────────────────────────────────
 	const [runs, setRuns] = useState<OptimizationRun[]>([])
 	const [expandedRunId, setExpandedRunId] = useState<string | null>(null)
+	// Bulk multi-select state for the runs comparison table. The dialog flag
+	// is separate so the count badge stays visible after dismiss-without-action.
+	const [selectedRunIds, setSelectedRunIds] = useState<Set<string>>(
+		() => new Set()
+	)
 	const [robustFilterEnabled, setRobustFilterEnabled] = useState(false)
 	// Funnel state — set when the user clicks "Breed selected" on the Pareto scatter.
 	// `null` = ad-hoc sweep (no journey). Cleared on sweep completion.
@@ -235,25 +267,33 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		() => [...ALL_PRESETS, ...heroPresets.map((h) => h.recipe)],
 		[heroPresets]
 	)
-	const runCounterRef = useRef(0)
 	const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
 		undefined
 	)
 
-	// Hydrate from localStorage on mount
+	// Hydrate from IndexedDB on mount. When stored runs exist, jump straight
+	// to the results step — landing on "setup" with prior runs hidden behind
+	// two nav clicks felt like fresh-app every reload.
 	useEffect(() => {
-		const stored = loadRuns()
-		if (stored.length > 0) {
-			setRuns(stored)
-			runCounterRef.current = stored.length
+		let cancelled = false
+		void loadRuns().then((stored) => {
+			if (!cancelled && stored.length > 0) {
+				setRuns(stored)
+				setStep("results")
+			}
+		})
+		return () => {
+			cancelled = true
 		}
 	}, [])
 
-	// Persist to localStorage on change — debounced 1s
+	// Persist to IndexedDB on change — debounced 1s
 	useEffect(() => {
 		if (runs.length > 0) {
 			clearTimeout(saveTimeoutRef.current)
-			saveTimeoutRef.current = setTimeout(() => saveRuns(runs), 1000)
+			saveTimeoutRef.current = setTimeout(() => {
+				void saveRuns(runs)
+			}, 1000)
 		}
 		return () => clearTimeout(saveTimeoutRef.current)
 	}, [runs])
@@ -428,14 +468,63 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	}
 
 	const handleStrategyChange = (type: string) => {
-		if (type === "orb_breakout") {
-			setRecipe(orbPresets[0])
-		} else if (type === "hawks_triple_screen") {
-			setRecipe(hawksV0)
-		} else if (type === "user_catalog") {
-			setRecipe(hawksUserCatalog)
-		}
 		// `macd_wma_alignment` (DEZK) is archived — not selectable from UI.
+		let nextRecipe: StrategyRecipe | null = null
+		if (type === "orb_breakout") {
+			nextRecipe = orbPresets[0]
+		} else if (type === "hawks_triple_screen") {
+			nextRecipe = hawksV0
+		} else if (type === "user_catalog") {
+			nextRecipe = hawksUserCatalog
+		}
+		if (nextRecipe === null) {
+			return
+		}
+
+		// Hawks recipes (and user_catalog, which reuses Hawks data) need the
+		// hawk_5m_win projection columns (mme27_60m, mme55_60m, topos_fundos,
+		// etc). Those columns only exist on the materialized hawk_*_win Parquet
+		// files — not on R<n> or time-based sources. If the current source
+		// can't satisfy the recipe, auto-route to a hawk_5m_win source for the
+		// same asset so the wizard produces real trades instead of zero-trade
+		// runs. Skip when no compatible source exists for the asset.
+		const needsHawksSource =
+			type === "hawks_triple_screen" || type === "user_catalog"
+		const current = dataSources[selectedSourceIndex]
+		let nextIndex = selectedSourceIndex
+		if (needsHawksSource && current?.timeframeCode !== "hawk_5m_win") {
+			const fallback = dataSources.findIndex(
+				(s) =>
+					s.timeframeCode === "hawk_5m_win" &&
+					(!current || s.assetId === current.assetId)
+			)
+			if (fallback >= 0) {
+				nextIndex = fallback
+			}
+		}
+
+		// Recompute monetary_risk vpp against the target source — without
+		// this, the recipe carries stale valuePerPointCents from the previous
+		// preset and the sizing calc is off.
+		const targetSource = dataSources[nextIndex]
+		let recipeWithVpp = nextRecipe
+		if (targetSource && nextRecipe.sizing.type === "monetary_risk") {
+			const vpp = Math.round(
+				targetSource.assetTickValueCents / targetSource.assetTickSize
+			)
+			recipeWithVpp = {
+				...nextRecipe,
+				sizing: { ...nextRecipe.sizing, valuePerPointCents: vpp },
+			}
+		}
+
+		setRecipe(recipeWithVpp)
+		if (nextIndex !== selectedSourceIndex) {
+			setSelectedSourceIndex(nextIndex)
+			candlesRef.current = []
+			assetConfigRef.current = null
+			setCandleCount(0)
+		}
 		setActiveRanges([])
 		// Same reason as handlePresetChange — re-derive selections from the
 		// new strategy's recipe so the inline builder reflects the swap.
@@ -529,7 +618,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			showToast(
 				"success",
 				t("candlesLoaded", {
-					count: response.data.candles.length.toLocaleString(),
+					count: formatNumber(response.data.candles.length),
 				})
 			)
 		} else {
@@ -566,7 +655,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		if (totalCombos > MAX_COMBINATIONS) {
 			showToast(
 				"error",
-				t("sweepOverLimit", { max: MAX_COMBINATIONS.toLocaleString() })
+				t("sweepOverLimit", { max: formatNumber(MAX_COMBINATIONS) })
 			)
 			return
 		}
@@ -580,7 +669,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			}
 		}
 
-		const recipes = useInlineGrid
+		const rawRecipes = useInlineGrid
 			? generateConditionalGrid(
 					inlineSweepBundle!.leaves,
 					leafSelections!,
@@ -588,10 +677,36 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					inlineSweepBundle!.validators
 				).map((combo) => recipeFromCombo(recipe, combo))
 			: generateRecipeGrid(recipe, activeRanges)
+
+		// Drop structurally identical recipes before dispatch — K-parent
+		// refine neighborhoods routinely emit 100+ duplicates from degenerate
+		// axes, which the engine would otherwise re-run for no new signal.
+		const { unique: recipes, droppedCount } = dedupeRecipes(rawRecipes)
+		if (droppedCount > 0) {
+			showToast(
+				"info",
+				t("recipesDeduped", { dropped: droppedCount, total: rawRecipes.length })
+			)
+		}
+
 		setIsSweeping(true)
 		setSweepProgress({ current: 0, total: recipes.length })
 
 		const sweepRuns: OptimizationRun[] = []
+
+		// Seed the per-stage label counter from the highest existing #N for
+		// this stage so the new sweep continues the numbering instead of
+		// restarting at #1 and producing dupes.
+		const stagePrefix = refineState ? "Refine" : "Broad"
+		const labelPattern = new RegExp(`^${stagePrefix} #(\\d+)$`)
+		const initialRunCounter = runs.reduce((max, r) => {
+			const match = labelPattern.exec(r.label)
+			if (!match) {
+				return max
+			}
+			const n = Number(match[1])
+			return n > max ? n : max
+		}, 0)
 
 		const handle = runSweep(
 			candlesRef.current,
@@ -616,6 +731,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 				funnelStage: refineState ? "refine" : "broad",
 				parentRunIds: refineState?.parentRunIds,
 				journeyId: refineState?.journeyId,
+				initialRunCounter,
 			},
 			{
 				onProgress: (run, index, total) => {
@@ -633,7 +749,6 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					}))
 
 					setRuns((prev) => [...finalRuns, ...prev])
-					runCounterRef.current += sweepRuns.length
 					setIsSweeping(false)
 					sweepHandleRef.current = null
 					setRefineState(null)
@@ -648,7 +763,6 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 				onError: (message) => {
 					if (sweepRuns.length > 0) {
 						setRuns((prev) => [...sweepRuns, ...prev])
-						runCounterRef.current += sweepRuns.length
 					}
 					setIsSweeping(false)
 					sweepHandleRef.current = null
@@ -669,6 +783,9 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		walkForwardConfig,
 		showToast,
 		t,
+		refineState,
+		runs,
+		formatNumber,
 	])
 
 	const handleCancelSweep = useCallback(() => {
@@ -691,15 +808,109 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		)
 	}, [])
 
+	// Row trash button: delete immediately and surface an undo toast.
+	// The toast's 5s window is the recovery window; on Undo we splice the
+	// run back at its original index so order is preserved.
 	const handleDeleteRun = useCallback(
 		(runId: string) => {
+			const index = runs.findIndex((run) => run.id === runId)
+			if (index === -1) {
+				return
+			}
+			const removedRun = runs[index]
+			if (removedRun === undefined) {
+				return
+			}
 			setRuns((prev) => prev.filter((run) => run.id !== runId))
 			if (expandedRunId === runId) {
 				setExpandedRunId(null)
 			}
+			showToast("info", t("runDeletedToast", { label: removedRun.label }), {
+				label: t("undo"),
+				onClick: () => {
+					setRuns((prev) => {
+						const next = [...prev]
+						next.splice(index, 0, removedRun)
+						return next
+					})
+				},
+			})
 		},
-		[expandedRunId]
+		[runs, expandedRunId, showToast, t]
 	)
+
+	// Multi-select handlers for the runs table.
+	const handleToggleSelect = useCallback((runId: string) => {
+		setSelectedRunIds((prev) => {
+			const next = new Set(prev)
+			if (next.has(runId)) {
+				next.delete(runId)
+			} else {
+				next.add(runId)
+			}
+			return next
+		})
+	}, [])
+
+	// "Select all" target = the ids the table currently shows (post robust
+	// filter). If all visible are already selected, deselect them; otherwise
+	// select them. Other-page selections (visible-vs-stored) survive — the
+	// set is the union of selections across operations.
+	const handleSelectAll = useCallback((visibleRunIds: string[]) => {
+		setSelectedRunIds((prev) => {
+			const allChecked = visibleRunIds.every((id) => prev.has(id))
+			const next = new Set(prev)
+			for (const id of visibleRunIds) {
+				if (allChecked) {
+					next.delete(id)
+				} else {
+					next.add(id)
+				}
+			}
+			return next
+		})
+	}, [])
+
+	const handleClearSelection = useCallback(() => {
+		setSelectedRunIds(new Set())
+	}, [])
+
+	// Bulk delete: capture each removed run + its original index, delete
+	// immediately, and surface an undo toast. Restoration order is ascending
+	// by index — when each splice runs, all earlier-indexed restorations are
+	// already back in place, so the captured indices line up exactly.
+	const handleBulkDelete = useCallback(() => {
+		if (selectedRunIds.size === 0) {
+			return
+		}
+		const removed: Array<{ run: OptimizationRun; index: number }> = []
+		for (const [index, run] of runs.entries()) {
+			if (selectedRunIds.has(run.id)) {
+				removed.push({ run, index })
+			}
+		}
+		if (removed.length === 0) {
+			return
+		}
+		const selectedSnapshot = selectedRunIds
+		setRuns((prev) => prev.filter((r) => !selectedSnapshot.has(r.id)))
+		if (expandedRunId !== null && selectedSnapshot.has(expandedRunId)) {
+			setExpandedRunId(null)
+		}
+		setSelectedRunIds(new Set())
+		showToast("info", t("bulkRunsDeletedToast", { count: removed.length }), {
+			label: t("undo"),
+			onClick: () => {
+				setRuns((prev) => {
+					const next = [...prev]
+					for (const { run, index } of removed) {
+						next.splice(index, 0, run)
+					}
+					return next
+				})
+			},
+		})
+	}, [runs, selectedRunIds, expandedRunId, showToast, t])
 
 	const handleToggleExpand = useCallback((runId: string) => {
 		setExpandedRunId((prev) => (prev === runId ? null : runId))
@@ -746,9 +957,11 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 	const handleClearAll = useCallback(() => {
 		setRuns([])
-		clearRuns()
+		void clearRuns()
 		setExpandedRunId(null)
-		runCounterRef.current = 0
+		// Mirror the hydrate-to-results symmetry: zero runs → land back on
+		// setup so the user isn't stranded staring at an empty results card.
+		setStep("setup")
 	}, [])
 
 	const handleUpdateLabel = useCallback((runId: string, label: string) => {
@@ -879,10 +1092,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 											currentEngine &&
 											currentEngine !== heroPreset.engineVersion
 										return (
-											<SelectItem
-												key={`${preset.entry.type}-${i}`}
-												value={String(i)}
-											>
+											<SelectItem key={`${preset.presetId}`} value={String(i)}>
 												<span className="gap-s-200 flex items-center">
 													<span>{preset.displayName}</span>
 													{heroPreset && (
@@ -893,7 +1103,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 															className="text-tiny text-warning border-warning rounded-sm border px-1"
 															title={t("freezeHero.staleTooltip", {
 																frozen: heroPreset.engineVersion,
-																current: currentEngine ?? "unknown",
+																current: currentEngine,
 															})}
 														>
 															{t("freezeHero.staleChip")}
@@ -949,27 +1159,12 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 								>
 									{tBacktest("config.asset")} / {tBacktest("config.timeframe")}
 								</label>
-								<Select
+								<DataSourceSelect
+									id="optimize-source"
+									dataSources={dataSources}
 									value={String(selectedSourceIndex)}
 									onValueChange={handleSourceChange}
-								>
-									<SelectTrigger id="optimize-source">
-										<SelectValue />
-									</SelectTrigger>
-									<SelectContent>
-										{dataSources.map((source, i) => (
-											<SelectItem
-												key={`${source.assetId}-${source.timeframeId}`}
-												value={String(i)}
-											>
-												{source.assetSymbol} — {source.timeframeCode}
-												{source.rowCount
-													? ` (${source.rowCount.toLocaleString()})`
-													: ""}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
+								/>
 							</div>
 						)}
 
@@ -1033,7 +1228,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 						>
 							<Database className="h-4 w-4" aria-hidden="true" />
 							{hasData
-								? t("candlesLoaded", { count: candleCount.toLocaleString() })
+								? t("candlesLoaded", { count: formatNumber(candleCount) })
 								: t("loadData")}
 						</Button>
 					</div>
@@ -1279,21 +1474,19 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 									className={`font-semibold tabular-nums ${totalCombinations > MAX_COMBINATIONS ? "text-fb-error" : "text-txt-100"}`}
 								>
 									{t("summary.combinations", {
-										count: totalCombinations.toLocaleString(),
+										count: formatNumber(totalCombinations),
 									})}
 								</span>
 							</div>
-							{isInlineSweepMode &&
-								inlineSweepBundle &&
-								leafSelections !== null && (
-									<SweepAxisDiagnostics
-										leaves={inlineSweepBundle.leaves}
-										selections={leafSelections}
-										breakdown={cardinalityBreakdown ?? undefined}
-										validators={inlineSweepBundle.validators}
-										onSelectionsChange={setLeafSelections}
-									/>
-								)}
+							{isInlineSweepMode && leafSelections !== null && (
+								<SweepAxisDiagnostics
+									leaves={inlineSweepBundle.leaves}
+									selections={leafSelections}
+									breakdown={cardinalityBreakdown ?? undefined}
+									validators={inlineSweepBundle.validators}
+									onSelectionsChange={setLeafSelections}
+								/>
+							)}
 						</div>
 					</div>
 				</div>
@@ -1410,16 +1603,43 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 											<Download className="h-3.5 w-3.5" aria-hidden="true" />
 											{t("exportCsv")}
 										</Button>
-										<Button
-											id="optimize-clear-all"
-											variant="ghost"
-											size="sm"
-											onClick={handleClearAll}
-											className="text-txt-300 hover:text-fb-error gap-s-200"
-										>
-											<Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-											{t("clearAll")}
-										</Button>
+										<AlertDialog>
+											<AlertDialogTrigger asChild>
+												<Button
+													id="optimize-clear-all"
+													variant="ghost"
+													size="sm"
+													className="text-txt-300 hover:text-fb-error gap-s-200"
+												>
+													<Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+													{t("clearAll")}
+												</Button>
+											</AlertDialogTrigger>
+											<AlertDialogContent size="sm">
+												<AlertDialogHeader>
+													<AlertDialogTitle>
+														{t("clearAllConfirmTitle")}
+													</AlertDialogTitle>
+													<AlertDialogDescription>
+														{t("clearAllConfirmDescription", {
+															count: runs.length,
+														})}
+													</AlertDialogDescription>
+												</AlertDialogHeader>
+												<AlertDialogFooter>
+													<AlertDialogCancel id="cancel-clear-all">
+														{t("clearAllConfirmCancel")}
+													</AlertDialogCancel>
+													<AlertDialogAction
+														id="confirm-clear-all"
+														onClick={handleClearAll}
+														variant="destructive"
+													>
+														{t("clearAllConfirmAction")}
+													</AlertDialogAction>
+												</AlertDialogFooter>
+											</AlertDialogContent>
+										</AlertDialog>
 									</div>
 								</div>
 
@@ -1472,6 +1692,43 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 												{t("runsCount", { count: runs.length })}
 											</Badge>
 										</div>
+										{selectedRunIds.size > 0 && (
+											<div
+												id="bulk-action-bar"
+												className="border-acc-100/40 bg-acc-100/5 gap-s-300 p-s-300 flex items-center justify-between rounded-md border"
+											>
+												<span className="text-small text-txt-100">
+													{t("bulkSelectionCount", {
+														count: selectedRunIds.size,
+													})}
+												</span>
+												<div className="gap-s-200 flex items-center">
+													<Button
+														id="bulk-clear-selection"
+														variant="ghost"
+														size="sm"
+														onClick={handleClearSelection}
+													>
+														{t("bulkClearSelection")}
+													</Button>
+													<Button
+														id="bulk-delete-trigger"
+														variant="ghost"
+														size="sm"
+														onClick={handleBulkDelete}
+														className="text-fb-error gap-s-200"
+													>
+														<Trash2
+															className="h-3.5 w-3.5"
+															aria-hidden="true"
+														/>
+														{t("bulkDeleteSelected", {
+															count: selectedRunIds.size,
+														})}
+													</Button>
+												</div>
+											</div>
+										)}
 										<RunsComparisonTable
 											runs={runs}
 											expandedRunId={expandedRunId}
@@ -1481,6 +1738,9 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 											onUpdateLabel={handleUpdateLabel}
 											robustFilterEnabled={robustFilterEnabled}
 											onRobustFilterChange={setRobustFilterEnabled}
+											selectedRunIds={selectedRunIds}
+											onToggleSelect={handleToggleSelect}
+											onSelectAll={handleSelectAll}
 										/>
 									</div>
 								</TabsContent>

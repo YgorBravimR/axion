@@ -68,7 +68,6 @@ const hawksTripleScreenConfigSchema = z.object({
 	ema27_15m_key: z.string().min(1),
 	ema55_15m_key: z.string().min(1),
 	macd_key: z.string().min(1),
-	topos_fundos_key: z.string().min(1),
 	prev_15m_open_key: z.string().min(1),
 	prev_15m_close_key: z.string().min(1),
 	prev_60m_open_key: z.string().min(1),
@@ -76,6 +75,9 @@ const hawksTripleScreenConfigSchema = z.object({
 	brickSize5mPoints: z.number().positive().max(10000),
 	startTime: z.number().int().min(800).max(1200),
 	endTime: z.number().int().min(800).max(1800),
+	fireCooldownBricks: z.number().int().min(1).max(50).optional(),
+	wave1MinBricks: z.number().int().min(1).max(50).optional(),
+	retracementMinBricks: z.number().int().min(1).max(50).optional(),
 	qualityGates: qualityGatesConfigSchema.optional(),
 })
 
@@ -91,7 +93,7 @@ const userEntrySchema = z.object({
 	notes: z.string().optional(),
 	// Dev/test catalog files carry these for the audit pipeline; pass-through
 	// so the engine/UI can read them without Zod stripping them.
-	expectedResult: z.string().nullable().optional(),
+	expectedResult: z.enum(["BE", "GA", "ST"]).nullable().optional(),
 	closingBrickPrice: z.number().nullable().optional(),
 })
 

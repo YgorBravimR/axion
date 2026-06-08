@@ -329,7 +329,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 				return t("validation.stopLossMustBeAboveEntry")
 			}
 			return null
-		}, [stopLoss, positionSummary.avgEntryPrice, direction])
+		}, [stopLoss, positionSummary.avgEntryPrice, direction, t])
 
 		const takeProfitWarning = useMemo(() => {
 			const tp = parseFloat(takeProfit)
@@ -344,7 +344,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 				return t("validation.takeProfitMustBeBelowEntry")
 			}
 			return null
-		}, [takeProfit, positionSummary.avgEntryPrice, direction])
+		}, [takeProfit, positionSummary.avgEntryPrice, direction, t])
 
 		// Expose shared state for parent to capture before mode switch
 		useImperativeHandle(ref, () => ({

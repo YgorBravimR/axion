@@ -54,13 +54,17 @@ const updateEMA = (
 // ═══════════════════════════════════════════════════════════════════
 
 interface WMAState {
-	buffer: number[]
+	buffer: Float64Array
+	head: number
 	period: number
+	count: number
 }
 
 const createWMA = (period: number): WMAState => ({
-	buffer: [],
+	buffer: new Float64Array(period),
+	head: 0,
 	period,
+	count: 0,
 })
 
 /** Update WMA with a new price. Returns updated state + current WMA value. */
@@ -68,35 +72,43 @@ const updateWMA = (
 	state: WMAState,
 	price: number
 ): { state: WMAState; value: number } => {
-	const buffer = [...state.buffer, price]
-	if (buffer.length > state.period) {
-		buffer.shift()
-	}
+	state.buffer[state.head] = price
+	const newHead = (state.head + 1) % state.period
+	const newCount = Math.min(state.count + 1, state.period)
 
-	if (buffer.length < state.period) {
-		return { state: { ...state, buffer }, value: price }
+	if (newCount < state.period) {
+		return { state: { ...state, head: newHead, count: newCount }, value: price }
 	}
 
 	// WMA = sum(price[i] * weight[i]) / sum(weights)
-	// weight[0] = 1, weight[1] = 2, ..., weight[n-1] = n
+	// Iterate from head (oldest) forward, wrapping around.
 	let weightedSum = 0
 	let weightSum = 0
-	for (let i = 0; i < buffer.length; i++) {
+	for (let i = 0; i < state.period; i++) {
+		const idx = (state.head + i) % state.period
 		const weight = i + 1
-		weightedSum += buffer[i]! * weight
+		weightedSum += state.buffer[idx]! * weight
 		weightSum += weight
 	}
 
-	return { state: { ...state, buffer }, value: weightedSum / weightSum }
+	return {
+		state: { ...state, head: newHead, count: newCount },
+		value: weightedSum / weightSum,
+	}
 }
 
-/** Compute WMA from a fixed-length buffer slice. */
-const computeWMAFromSlice = (slice: number[]): number => {
+/** Compute WMA from ring buffer at given head position. */
+const computeWMAFromRingBuffer = (
+	buffer: Float64Array,
+	head: number,
+	period: number
+): number => {
 	let weightedSum = 0
 	let weightSum = 0
-	for (let i = 0; i < slice.length; i++) {
+	for (let i = 0; i < period; i++) {
+		const idx = (head + i) % period
 		const weight = i + 1
-		weightedSum += slice[i]! * weight
+		weightedSum += buffer[idx]! * weight
 		weightSum += weight
 	}
 	return weightedSum / weightSum
@@ -104,19 +116,20 @@ const computeWMAFromSlice = (slice: number[]): number => {
 
 /** Get WMA value with offset (0 = current, 1 = previous bar, etc.) */
 const getWMAWithOffset = (state: WMAState, offset: number): number | null => {
-	if (offset === 0) {
-		if (state.buffer.length < state.period) {
-			return null
-		}
-		return computeWMAFromSlice(state.buffer)
-	}
-
-	// For offset > 0, compute WMA on a shorter slice
-	const end = state.buffer.length - offset
-	if (end < state.period) {
+	if (state.count < state.period) {
 		return null
 	}
-	return computeWMAFromSlice(state.buffer.slice(end - state.period, end))
+
+	// Current WMA (offset 0)
+	if (offset === 0) {
+		return computeWMAFromRingBuffer(state.buffer, state.head, state.period)
+	}
+
+	// For offset > 0, rewind head by offset positions
+	const histHead =
+		(state.head - offset + state.period * Math.ceil(offset / state.period)) %
+		state.period
+	return computeWMAFromRingBuffer(state.buffer, histHead, state.period)
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -218,7 +231,6 @@ export {
 	// WMA
 	createWMA,
 	updateWMA,
-	computeWMAFromSlice,
 	getWMAWithOffset,
 	type WMAState,
 	// MACD

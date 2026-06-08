@@ -12,18 +12,22 @@ Systematically fix all open bug reports from the Axion database **and** unresolv
 Before starting, **auto-resolve both prerequisites** — do NOT ask the user:
 
 1. **Arch API key:** Always set it yourself:
+
    ```bash
    export ARCH_API_KEY="profitjournal-arch-bravo"
    ```
+
    Use this value in all curl commands directly if `$ARCH_API_KEY` is not in the environment.
 
 2. **Sentry API token:** Extract from `.env` (never hardcode):
+
    ```bash
    export SENTRY_TOKEN=$(grep SENTRY_API_TOKEN .env | cut -d'"' -f2)
    ```
+
    Sentry org: `bravo-fn`, project: `profit-journal`.
 
-3. **Dev server running:** Check with `curl -s -o /dev/null -w "%{http_code}" http://localhost:3003/en`.
+3. **Dev server running:** Check with `curl -s -o /dev/null -w "%{http_code}" http://localhost:3011/en`.
    - If it returns `200` or `307` — server is up, proceed.
    - If it fails (connection refused / non-2xx/3xx) — start it yourself:
      ```bash
@@ -42,12 +46,14 @@ Spawn a `general-purpose` agent with this prompt:
 >
 > **Step 1A — Fetch bug reports from Arch API:**
 > Run BOTH curl commands to get all actionable bugs (open + accepted):
+>
 > ```bash
-> curl -s "http://localhost:3003/api/arch/bugs/list?status=open" \
+> curl -s "http://localhost:3011/api/arch/bugs/list?status=open" \
 >   -H "Authorization: Bearer profitjournal-arch-bravo" | cat
 > ```
+>
 > ```bash
-> curl -s "http://localhost:3003/api/arch/bugs/list?status=accepted" \
+> curl -s "http://localhost:3011/api/arch/bugs/list?status=accepted" \
 >   -H "Authorization: Bearer profitjournal-arch-bravo" | cat
 > ```
 >
@@ -55,6 +61,7 @@ Spawn a `general-purpose` agent with this prompt:
 >
 > **Step 1B — Fetch unresolved Sentry errors:**
 > Extract the Sentry token from `.env` and fetch unresolved issues:
+>
 > ```bash
 > SENTRY_TOKEN=$(grep SENTRY_API_TOKEN .env | cut -d'"' -f2)
 > curl -s "https://sentry.io/api/0/projects/bravo-fn/profit-journal/issues/?query=is:unresolved&sort=date&limit=20" \
@@ -62,6 +69,7 @@ Spawn a `general-purpose` agent with this prompt:
 > ```
 >
 > For each Sentry issue, also fetch the latest event to get the stack trace:
+>
 > ```bash
 > curl -s "https://sentry.io/api/0/issues/<ISSUE_ID>/events/latest/" \
 >   -H "Authorization: Bearer $SENTRY_TOKEN" | cat
@@ -70,6 +78,7 @@ Spawn a `general-purpose` agent with this prompt:
 > From the event, extract: exception type/value, stack trace frames (especially `inApp: true` frames), tags (url, transaction, browser, runtime).
 >
 > **Sentry triage rules:**
+>
 > - **Include** issues with `inApp` frames pointing to project code (not just Next.js/node_modules internals)
 > - **Skip** issues that are purely framework-internal (e.g., Next.js router state parsing) with ≤ 3 events and no user-facing impact — mark these as `skipped (framework noise)` in your output
 > - **Skip** issues already resolved in Sentry
@@ -84,6 +93,7 @@ Spawn a `general-purpose` agent with this prompt:
 >
 > **Step 3 — Map bugs to source code:**
 > For each bug's `currentUrl`, map the URL path to the source code:
+>
 > - `/en/journal` → `src/app/[locale]/(app)/journal/`
 > - `/en/analytics` → `src/app/[locale]/(app)/analytics/`
 > - `/en/dashboard` or `/en` → `src/app/[locale]/(app)/` (root page)
@@ -95,6 +105,7 @@ Spawn a `general-purpose` agent with this prompt:
 >
 > **Step 4 — Cluster bugs and Sentry errors into groups:**
 > Group items (bugs + Sentry errors) that share:
+>
 > - Same `currentUrl`/route prefix or same `transaction` tag
 > - Similar keywords in subject/description/exception message
 > - Same component, hook, or utility in error traces/stack frames
@@ -105,6 +116,7 @@ Spawn a `general-purpose` agent with this prompt:
 >
 > **Step 5 — Analyze and propose fixes:**
 > For each group:
+>
 > - Identify the root cause by reading the relevant source code
 > - Propose a specific fix strategy (which files to change, what the change is)
 > - Assess confidence: `high` (clear root cause), `medium` (likely cause, needs verification), `low` (uncertain)
@@ -113,12 +125,14 @@ Spawn a `general-purpose` agent with this prompt:
 > **Output format — return EXACTLY this structure:**
 >
 > First, if any Sentry issues were skipped, list them:
+>
 > ```
 > === Skipped Sentry Issues ===
 > - PROFIT-JOURNAL-N: [title] — reason: [framework noise / low impact / ≤3 events]
 > ```
 >
 > For each actionable group:
+>
 > ```
 > === Group N: [descriptive name] ===
 > Items: [arch:<id> "subject", sentry:PROFIT-JOURNAL-N "title", ...]
@@ -143,9 +157,9 @@ Otherwise, continue with the research output.
 
 Present the research agent's grouped findings as a table:
 
-| # | Group | Bugs | Root Cause | Files | Fix | Confidence |
-|---|-------|------|------------|-------|-----|------------|
-| 1 | ... | ... | ... | ... | ... | ... |
+| #   | Group | Bugs | Root Cause | Files | Fix | Confidence |
+| --- | ----- | ---- | ---------- | ----- | --- | ---------- |
+| 1   | ...   | ...  | ...        | ...   | ... | ...        |
 
 Then ask:
 
@@ -153,6 +167,7 @@ Then ask:
 > Examples: `all`, `1, 3`, `skip 2`
 
 Wait for user response:
+
 - `all` → proceed with every group
 - Comma-separated numbers (e.g., `1, 3`) → fix only those groups
 - `skip N` → fix all except group N
@@ -167,16 +182,19 @@ For each approved group, execute these steps **sequentially**. Complete one grou
 Apply the proposed changes from the research agent's fix strategy.
 
 Rules:
+
 - Follow all code conventions from `CLAUDE.md` (arrow functions, no default exports, typed, early returns, etc.)
 - Do NOT add unnecessary changes outside the fix scope
 - Do NOT add comments explaining the bug fix unless the logic is non-obvious
 
 After applying changes, run:
+
 ```bash
 pnpm tsc --noEmit
 ```
 
 If type check fails:
+
 - Diagnose the error
 - Fix it
 - Re-run type check
@@ -186,7 +204,7 @@ If type check fails:
 
 Use the Playwright MCP browser tools to verify the fix:
 
-1. `browser_navigate` to the bug's `currentUrl` (use `http://localhost:3003` + the path)
+1. `browser_navigate` to the bug's `currentUrl` (use `http://localhost:3011` + the path)
 2. `browser_snapshot` to see the current page state
 3. Follow the reproduction steps described in the bug's `description`
 4. Interact with the page using `browser_click`, `browser_fill_form`, `browser_type`, etc. as needed
@@ -196,6 +214,7 @@ Use the Playwright MCP browser tools to verify the fix:
 **If the bug has no `currentUrl`:** Skip browser verification. Rely on unit test only.
 
 **If verification fails** (symptom still present):
+
 - Revert all code changes for this group (`git checkout -- <files>`)
 - Mark group as **failed** in the summary
 - Keep all bugs in this group as `open` in DB
@@ -212,6 +231,7 @@ Use the Playwright MCP browser tools to verify the fix:
 - Follow existing test patterns in the project
 
 Run the test to verify it passes:
+
 ```bash
 pnpm test:unit -- --run src/__tests__/<test-file>.test.ts
 ```
@@ -234,7 +254,7 @@ Do NOT run the full e2e suite — that's too slow. The e2e spec is committed as 
 For each bug ID in the group, close it via the Arch API:
 
 ```bash
-curl -s -X POST http://localhost:3003/api/arch/bugs/update \
+curl -s -X POST http://localhost:3011/api/arch/bugs/update \
   -H "Authorization: Bearer $ARCH_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"id": "<BUG_ID>", "action": "close", "adminNotes": "Fixed in commit <SHORT_SHA>. Regression tests added."}' | cat
@@ -251,11 +271,13 @@ Replace `<BUG_ID>` with the actual bug ID and `<SHORT_SHA>` with the commit hash
 Run `git status` and `git diff --stat` to review changes.
 
 Stage only files related to this group:
+
 ```bash
 git add <fixed-source-files> <test-files>
 ```
 
 Commit with this format:
+
 ```
 fix: <short group description>
 
@@ -272,15 +294,17 @@ Save the commit SHA for the bug closure step.
 Now close each item with the real commit SHA from Step 5:
 
 **For Arch bugs:**
+
 ```bash
 COMMIT_SHA=$(git rev-parse --short HEAD)
-curl -s -X POST http://localhost:3003/api/arch/bugs/update \
+curl -s -X POST http://localhost:3011/api/arch/bugs/update \
   -H "Authorization: Bearer profitjournal-arch-bravo" \
   -H "Content-Type: application/json" \
   -d "{\"id\": \"<BUG_ID>\", \"action\": \"close\", \"adminNotes\": \"Fixed in commit $COMMIT_SHA. Regression tests added.\"}" | cat
 ```
 
 **For Sentry issues:**
+
 ```bash
 SENTRY_TOKEN=$(grep SENTRY_API_TOKEN .env | cut -d'"' -f2)
 COMMIT_SHA=$(git rev-parse --short HEAD)
@@ -298,11 +322,11 @@ Then move to the next group.
 
 After all groups are processed, print a summary table:
 
-| Group | Source | Status | Items Closed | Commit | Tests Added |
-|-------|--------|--------|--------------|--------|-------------|
-| Journal date picker | arch | fixed | arch:abc, arch:def | `a1b2c3d` | `calculations.test.ts`, `journal.spec.ts` |
-| Settings router error | sentry | fixed | sentry:PROFIT-JOURNAL-9 | `e4f5g6h` | `settings.test.ts` |
-| Dashboard KPI NaN | arch+sentry | failed | — | — | — |
+| Group                 | Source      | Status | Items Closed            | Commit    | Tests Added                               |
+| --------------------- | ----------- | ------ | ----------------------- | --------- | ----------------------------------------- |
+| Journal date picker   | arch        | fixed  | arch:abc, arch:def      | `a1b2c3d` | `calculations.test.ts`, `journal.spec.ts` |
+| Settings router error | sentry      | fixed  | sentry:PROFIT-JOURNAL-9 | `e4f5g6h` | `settings.test.ts`                        |
+| Dashboard KPI NaN     | arch+sentry | failed | —                       | —         | —                                         |
 
 If any groups failed, explain why and suggest next steps.
 

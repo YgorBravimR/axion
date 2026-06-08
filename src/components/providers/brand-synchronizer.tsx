@@ -52,7 +52,7 @@ const BrandSynchronizer = ({ serverBrand }: BrandSynchronizerProps) => {
 
 		void syncBrand()
 		// Only run on mount — hasSynced ref prevents re-execution
-	}, [])
+	}, [serverBrand, brand, setBrand])
 
 	return null
 }

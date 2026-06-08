@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useCallback } from "react"
+import { useMemo, useState, useCallback, useDeferredValue } from "react"
 import { useTranslations } from "next-intl"
 import { minePatterns, topDrivers } from "@/lib/optimize/loser-pattern"
 import { getSweepableParams } from "@/lib/optimize/parameter-grid"
@@ -127,20 +127,24 @@ const LoserPatternInspector = ({
 		return map
 	}, [catalogParams])
 
+	const deferredWinnerThresh = useDeferredValue(winnerThresh)
+	const deferredLoserThresh = useDeferredValue(loserThresh)
+	const deferredMinDelta = useDeferredValue(minDelta)
+
 	const mining = useMemo(
 		() =>
 			minePatterns({
 				runs,
 				leafPaths: inferredPaths,
-				winnerPfMin: winnerThresh,
-				loserPfMax: loserThresh,
+				winnerPfMin: deferredWinnerThresh,
+				loserPfMax: deferredLoserThresh,
 			}),
-		[runs, inferredPaths, winnerThresh, loserThresh]
+		[runs, inferredPaths, deferredWinnerThresh, deferredLoserThresh]
 	)
 
 	const drivers = useMemo(
-		() => topDrivers(mining, DEFAULT_LIMIT, minDelta),
-		[mining, minDelta]
+		() => topDrivers(mining, DEFAULT_LIMIT, deferredMinDelta),
+		[mining, deferredMinDelta]
 	)
 
 	const handleApplySingle = useCallback(

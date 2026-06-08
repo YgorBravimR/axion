@@ -59,6 +59,9 @@ video/node_modules/
 data/hawks/candles/*.csv
 data/hawks/renko-sizes.csv
 
+# parquet candle snapshots (derived from CSVs / Postgres, mirrored to R2)
+data/parquet/
+
 # claude code
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
@@ -71,3 +74,4 @@ data/hawks/renko-sizes.csv
 .arch/
 tmp/
 results-snapshot.md
+*.png

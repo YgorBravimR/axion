@@ -171,9 +171,12 @@ export const B3TradingCalendar = () => {
 				aria-label={`${monthName} ${year}`}
 			>
 				{/* Empty cells for first-week offset */}
-				{Array.from({ length: firstDayOffset }).map((_, i) => (
+				{Array.from(
+					{ length: firstDayOffset },
+					(_, i) => `lead-${String(i)}`
+				).map((slotId) => (
 					<div
-						key={`empty-${i}`}
+						key={slotId}
 						className="py-s-100 text-small flex items-center justify-center rounded-sm border-2 border-transparent text-center text-transparent transition-colors"
 					>
 						-
@@ -236,9 +239,12 @@ export const B3TradingCalendar = () => {
 				})}
 
 				{/* Trailing empty cells — always 6 rows to prevent layout shift */}
-				{Array.from({ length: trailingEmpty }).map((_, i) => (
+				{Array.from(
+					{ length: trailingEmpty },
+					(_, i) => `trail-${String(i)}`
+				).map((slotId) => (
 					<div
-						key={`trail-${i}`}
+						key={slotId}
 						className="py-s-100 text-small flex items-center justify-center rounded-sm border-2 border-transparent text-center text-transparent transition-colors"
 					>
 						-

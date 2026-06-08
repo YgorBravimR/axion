@@ -4,6 +4,7 @@
 		"brickIndex": 68,
 		"direction": "long",
 		"label": "T1",
-		"expectedResult": "BE"
+		"expectedResult": "BE",
+		"closePrice": 187680
 	}
 ]

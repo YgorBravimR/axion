@@ -129,22 +129,15 @@ const SizingExecutionSection = memo(
 									id="risk-amount"
 									type="number"
 									step="0.01"
-									value={
-										recipe.sizing.type === "monetary_risk"
-											? recipe.sizing.riskAmountCents / 100
-											: 80
-									}
+									value={recipe.sizing.riskAmountCents / 100}
 									onChange={(e) => {
 										const reais = parseFloat(e.target.value) || 80
-										if (recipe.sizing.type !== "monetary_risk") {
-											return
-										}
 										onRecipeChange({
 											...recipe,
 											sizing: {
 												...recipe.sizing,
 												riskAmountCents: Math.round(reais * 100),
-											},
+											} as typeof recipe.sizing,
 										})
 									}}
 								/>
@@ -165,9 +158,7 @@ const SizingExecutionSection = memo(
 							<Input
 								id="fixed-lots"
 								type="number"
-								value={
-									recipe.sizing.type === "fixed_lots" ? recipe.sizing.lots : 2
-								}
+								value={recipe.sizing.lots}
 								onChange={(e) => {
 									const lots = parseInt(e.target.value) || 2
 									onRecipeChange({

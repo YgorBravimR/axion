@@ -168,9 +168,9 @@ const FillTable = ({
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{fills.map((fill, idx) => (
+					{fills.map((fill) => (
 						<FillRow
-							key={`${fill.sequenceNumber}-${idx}`}
+							key={fill.sequenceNumber}
 							fill={fill}
 							t={t}
 							locale={locale}

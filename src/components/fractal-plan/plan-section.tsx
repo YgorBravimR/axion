@@ -1,5 +1,7 @@
 import type { ReactNode } from "react"
 
+import { Panel } from "@/components/ui/panel"
+
 interface PlanSectionProps {
 	title: string
 	subtitle?: string
@@ -21,9 +23,7 @@ const PlanSection = ({
 			<h1 className="text-txt-100 text-h2 font-medium">{title}</h1>
 			{subtitle ? <p className="text-txt-200">{subtitle}</p> : null}
 		</header>
-		<div className="border-bg-300 bg-bg-200 p-m-400 rounded-lg border">
-			{children}
-		</div>
+		<Panel padding="md">{children}</Panel>
 	</section>
 )
 

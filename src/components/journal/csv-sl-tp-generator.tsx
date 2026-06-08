@@ -123,15 +123,12 @@ export const CsvSlTpGenerator = ({
 			if (trade.status === "skipped" || !trade.assetConfig) {
 				return trade
 			}
-			if (
-				trade.originalData.entryPrice === null ||
-				!trade.originalData.entryPrice
-			) {
+			if (!trade.originalData.entryPrice) {
 				return trade
 			}
 
 			const config = assetConfigs[trade.assetConfig.symbol]
-			if (!config) {
+			if (config === undefined) {
 				return trade
 			}
 
@@ -230,7 +227,7 @@ export const CsvSlTpGenerator = ({
 					continue
 				}
 				const target = updatedTrades[tradeIndex]
-				if (!target) {
+				if (target === undefined) {
 					continue
 				}
 				updatedTrades[tradeIndex] = generateSlTpForTrade(target)
@@ -288,7 +285,7 @@ export const CsvSlTpGenerator = ({
 					<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 md:grid-cols-2">
 						{uniqueAssets.map((asset) => {
 							const config = assetConfigs[asset]
-							if (!config) {
+							if (config === undefined) {
 								return null
 							}
 

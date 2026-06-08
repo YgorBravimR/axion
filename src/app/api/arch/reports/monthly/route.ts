@@ -87,14 +87,27 @@ const GET = async (request: NextRequest) => {
 
 		const summary = calculateReportSummary(monthTrades)
 
-		// Best/worst day
+		// Pre-index trades by day and week in a single pass
 		const dailyPnl = new Map<string, number>()
+		const tradesByWeek = new Map<string, typeof monthTrades>()
+
 		for (const trade of monthTrades) {
-			const day = formatDateKey(new Date(trade.entryDate))
-			const currentPnl = dailyPnl.get(day) || 0
-			dailyPnl.set(day, currentPnl + fromCents(trade.pnl))
+			const entryDate = new Date(trade.entryDate)
+			const day = formatDateKey(entryDate)
+			const weekStart = startOfWeek(entryDate, { weekStartsOn: 1 })
+			const weekKey = formatDateKey(weekStart)
+
+			// Accumulate daily PnL
+			dailyPnl.set(day, (dailyPnl.get(day) || 0) + fromCents(trade.pnl))
+
+			// Index trades by week
+			if (!tradesByWeek.has(weekKey)) {
+				tradesByWeek.set(weekKey, [])
+			}
+			tradesByWeek.get(weekKey)!.push(trade)
 		}
 
+		// Find best/worst day
 		let bestDay: { date: string; pnl: number } | null = null
 		let worstDay: { date: string; pnl: number } | null = null
 		for (const [date, pnl] of dailyPnl) {
@@ -106,7 +119,7 @@ const GET = async (request: NextRequest) => {
 			}
 		}
 
-		// Weekly breakdown
+		// Weekly breakdown using pre-indexed trades
 		const weeklyBreakdown: Array<{
 			weekStart: string
 			weekEnd: string
@@ -117,13 +130,11 @@ const GET = async (request: NextRequest) => {
 		let currentWeekStart = startOfWeek(monthStart, { weekStartsOn: 1 })
 
 		while (currentWeekStart <= monthEnd) {
-			const currentWeekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 1 })
-			const weekTrades = monthTrades.filter((t) => {
-				const entryDate = new Date(t.entryDate)
-				return entryDate >= currentWeekStart && entryDate <= currentWeekEnd
-			})
+			const weekKey = formatDateKey(currentWeekStart)
+			const weekTrades = tradesByWeek.get(weekKey)
 
-			if (weekTrades.length > 0) {
+			if (weekTrades && weekTrades.length > 0) {
+				const currentWeekEnd = endOfWeek(currentWeekStart, { weekStartsOn: 1 })
 				const weekWins = weekTrades.filter((t) => t.outcome === "win").length
 				const weekLosses = weekTrades.filter((t) => t.outcome === "loss").length
 				const weekPnl = weekTrades.reduce((sum, t) => sum + fromCents(t.pnl), 0)

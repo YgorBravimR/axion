@@ -3,7 +3,7 @@ import type { FunnelStage } from "@/types/backtest"
 /**
  * Stage-aware cardinality caps for the broad-to-specific funnel.
  *
- * Values empirically validated on 2026-05-30 via `scripts/bench-refine-cap.ts`:
+ * Values empirically validated on 2026-05-30:
  *   - 3000 Hawks recipes against 2000 synthetic candles → 6.0s wall-clock,
  *     2.0 ms/combo. Verdict: PASS (well inside the 6-min SLA budget).
  *     Real-world candles with live indicators run slower per combo, but

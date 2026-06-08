@@ -107,15 +107,38 @@ const generateValues = (min: number, max: number, step: number): number[] => {
 	return values
 }
 
-/** Compute Cartesian product of multiple value arrays */
+/** Compute Cartesian product of multiple value arrays (imperative, O(product) space only) */
 const cartesianProduct = <T>(arrays: T[][]): T[][] => {
 	if (arrays.length === 0) {
 		return [[]]
 	}
-	return arrays.reduce<T[][]>(
-		(acc, values) => acc.flatMap((combo) => values.map((v) => [...combo, v])),
-		[[]]
-	)
+
+	// Pre-compute product size to allocate result array once
+	let productSize = 1
+	for (const arr of arrays) {
+		productSize *= arr.length
+	}
+
+	const result: T[][] = []
+	const indices = new Array(arrays.length).fill(0)
+
+	// Generate all combinations by treating indices as a mixed-radix number
+	for (let i = 0; i < productSize; i++) {
+		const combo: T[] = []
+		for (let j = 0; j < arrays.length; j++) {
+			combo.push(arrays[j]![indices[j]!]!)
+		}
+		result.push(combo)
+
+		// Increment indices (mixed-radix: each position has its own modulus)
+		let carry = 1
+		for (let j = arrays.length - 1; j >= 0 && carry; j--) {
+			indices[j] = (indices[j]! + carry) % arrays[j]!.length
+			carry = indices[j]! === 0 ? 1 : 0
+		}
+	}
+
+	return result
 }
 
 /** Set a value at a dot-path in a deeply nested object */
@@ -269,7 +292,7 @@ const generateRecipeGrid = (
 			)
 			if (option) {
 				variant = option.applyOption(variant)
-				enumDescs.push(`${enumRanges[i]!.label}=${combo[i]}`)
+				enumDescs.push(`${enumRanges[i]!.label}=${combo[i] ?? ""}`)
 			}
 		}
 
@@ -300,7 +323,7 @@ const generateRecipeGrid = (
 				const numDescs: string[] = []
 				for (let j = 0; j < applicable.length; j++) {
 					setNestedValue(r, applicable[j]!.path, numValues[j]!)
-					numDescs.push(`${applicable[j]!.label}=${numValues[j]}`)
+					numDescs.push(`${applicable[j]!.label}=${numValues[j] ?? 0}`)
 				}
 				r.displayName = `${baseRecipe.displayName} (${[...enumDescs, ...numDescs].join(", ")})`
 				recipes.push(r)

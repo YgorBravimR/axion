@@ -21,6 +21,7 @@ import type {
 	LeafSelection,
 	SweepableLeaf,
 } from "@/lib/optimize/sweep-leaf"
+import { useFormatting } from "@/hooks/use-formatting"
 
 interface ValidatorBreakdown {
 	raw: number
@@ -73,6 +74,7 @@ const SweepAxisDiagnostics = ({
 	const t = useTranslations("optimize.sweepDiagnosis")
 	const tLeaf = useTranslations("optimize.sweepLeaf")
 	const tInvariant = useTranslations("optimize.invariants")
+	const { formatNumber } = useFormatting()
 
 	const diagnoses = diagnoseSweepAxes(leaves, selections)
 	const counts = countByStatus(diagnoses)
@@ -207,8 +209,8 @@ const SweepAxisDiagnostics = ({
 				<div className="border-warning/40 bg-warning/5 space-y-s-200 mt-s-200 p-s-200 rounded-md border">
 					<div className="text-tiny text-warning font-medium">
 						{t("dropsHeader", {
-							dropped: (breakdown.raw - breakdown.valid).toLocaleString(),
-							raw: breakdown.raw.toLocaleString(),
+							dropped: breakdown.raw - breakdown.valid,
+							raw: formatNumber(breakdown.raw),
 						})}
 					</div>
 					<ul className="space-y-s-200 text-tiny">
@@ -222,7 +224,7 @@ const SweepAxisDiagnostics = ({
 												{tInvariant(reason)}
 											</span>
 											<span className="text-warning shrink-0 font-medium tabular-nums">
-												−{count.toLocaleString()}
+												−{formatNumber(count)}
 											</span>
 										</div>
 										{fixable && onSelectionsChange && (

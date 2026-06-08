@@ -272,7 +272,7 @@ export const logoutUser = async (): Promise<void> => {
 
 export const getCurrentUser = async (): Promise<SafeUser | null> => {
 	const session = await auth()
-	if (!session?.user?.id) {
+	if (!session) {
 		return null
 	}
 
@@ -305,7 +305,7 @@ export const getCurrentUser = async (): Promise<SafeUser | null> => {
 
 export const getCurrentAccount = async (): Promise<TradingAccount | null> => {
 	const session = await auth()
-	if (!session?.user?.accountId || !session?.user?.id) {
+	if (!session || !session.user.accountId) {
 		return null
 	}
 
@@ -327,7 +327,7 @@ export const getCurrentAccount = async (): Promise<TradingAccount | null> => {
 
 export const getUserAccounts = async (): Promise<TradingAccount[]> => {
 	const session = await auth()
-	if (!session?.user?.id) {
+	if (!session) {
 		return []
 	}
 
@@ -348,10 +348,10 @@ export const getUserAccounts = async (): Promise<TradingAccount[]> => {
  */
 export const requireAuth = cache(async (): Promise<AuthContext> => {
 	const session = await auth()
-	if (!session?.user?.id) {
+	if (!session) {
 		redirect("/login")
 	}
-	if (!session?.user?.accountId) {
+	if (!session.user.accountId) {
 		// No account selected - redirect to login to re-authenticate
 		redirect("/login")
 	}
@@ -417,7 +417,7 @@ export const switchAccount = async (
 	const tSettings = await getTranslations("settings")
 	try {
 		const session = await auth()
-		if (!session?.user?.id) {
+		if (!session) {
 			return { status: "error", error: t("errors.notAuthenticated") }
 		}
 
@@ -450,7 +450,7 @@ export const switchAccount = async (
  */
 export const revalidateAfterAccountSwitch = async (): Promise<void> => {
 	const session = await auth()
-	invalidateAllData(session?.user?.id)
+	invalidateAllData(session ? session.user.id : "")
 }
 
 // ==========================================
@@ -463,7 +463,7 @@ export const updateUserProfile = async (
 	const t = await getTranslations("auth")
 	try {
 		const session = await auth()
-		if (!session?.user?.id) {
+		if (!session) {
 			return { status: "error", error: t("errors.notAuthenticated") }
 		}
 
@@ -497,7 +497,7 @@ export const changePassword = async (
 	const t = await getTranslations("auth")
 	try {
 		const session = await auth()
-		if (!session?.user?.id) {
+		if (!session) {
 			return { status: "error", error: t("errors.notAuthenticated") }
 		}
 
@@ -557,7 +557,7 @@ export const changePassword = async (
 export const getAccountCurrency = cache(async (): Promise<string> => {
 	try {
 		const session = await auth()
-		if (!session?.user?.accountId) {
+		if (!session || !session.user.accountId) {
 			return "BRL" // Default to BRL if no account selected
 		}
 

@@ -363,9 +363,9 @@ const EquityShieldChart = ({
 					{!isComparisonMode &&
 						zoneBands
 							.filter((band) => band.mode === "sim")
-							.map((band, idx) => (
+							.map((band) => (
 								<ReferenceArea
-									key={`sim-zone-${idx}`}
+									key={`${band.x1}-${band.x2}`}
 									x1={band.x1}
 									x2={band.x2}
 									fill="var(--color-txt-300)"

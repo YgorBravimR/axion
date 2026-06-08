@@ -35,6 +35,12 @@ interface SweepContext {
 	parentRunIds?: string[]
 	/** Journey grouping. Set by the orchestrator when entering refine/freeze. */
 	journeyId?: string
+	/**
+	 * Seed for the per-stage label counter so labels stay globally monotonic
+	 * across sweep sessions (e.g. "Broad #6" picks up where "Broad #5" left
+	 * off in the runs store). Defaults to 0 → first run is "#1".
+	 */
+	initialRunCounter?: number
 }
 
 const runSweep = (
@@ -52,7 +58,7 @@ const runSweep = (
 		context.engineVersion
 	)
 
-	let runCounter = 0
+	let runCounter = context.initialRunCounter ?? 0
 
 	worker.onmessage = (event: MessageEvent<WorkerOutMessage>) => {
 		const msg = event.data

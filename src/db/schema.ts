@@ -39,6 +39,7 @@ export const timeframeUnitEnum = pgEnum("timeframe_unit", [
 	"hours",
 	"days",
 	"weeks",
+	"months",
 	"ticks",
 	"points",
 ])
@@ -1951,51 +1952,9 @@ export const filterPresets = pgTable(
 // HISTORICAL PRICE DATA
 // ==========================================
 
-export const priceCandles = pgTable(
-	"price_candles",
-	{
-		id: uuid("id").primaryKey().defaultRandom(),
-		assetId: uuid("asset_id")
-			.notNull()
-			.references(() => assets.id, { onDelete: "cascade" }),
-		timeframeId: uuid("timeframe_id")
-			.notNull()
-			.references(() => timeframes.id, { onDelete: "cascade" }),
-
-		// OHLC core data
-		timestamp: timestamp("timestamp", { withTimezone: true }).notNull(),
-		open: decimal("open", { precision: 18, scale: 8 }).notNull(),
-		high: decimal("high", { precision: 18, scale: 8 }).notNull(),
-		low: decimal("low", { precision: 18, scale: 8 }).notNull(),
-		close: decimal("close", { precision: 18, scale: 8 }).notNull(),
-
-		// Candle metadata ("Contador de Candles" from ProfitChart CSV)
-		candleIndex: integer("candle_index"),
-
-		// Flexible indicator storage — keys are normalized slugs (e.g., "vwap_d", "trava_0")
-		// Missing/null indicators are simply absent from the object
-		indicators: jsonb("indicators").$type<Record<string, number>>().default({}),
-
-		createdAt: timestamp("created_at", { withTimezone: true })
-			.defaultNow()
-			.notNull(),
-		updatedAt: timestamp("updated_at", { withTimezone: true })
-			.defaultNow()
-			.notNull(),
-	},
-	(table) => [
-		// Renko candles: candleIndex resets daily, so we need both timestamp + index.
-		// Multiple boxes can share the same millisecond, but (timestamp + candleIndex) is unique.
-		uniqueIndex("price_candles_unique_idx").on(
-			table.assetId,
-			table.timeframeId,
-			table.timestamp,
-			table.candleIndex
-		),
-		// Note: GIN index on indicators added manually in migration SQL:
-		// CREATE INDEX price_candles_indicators_gin_idx ON price_candles USING gin (indicators);
-	]
-)
+// price_candles moved to R2 Parquet — see docs/backlog.md 2026-06-08 entry
+// and src/lib/candle-store/. The on-Postgres registry (priceDataVersions)
+// remains as the dataset directory for the UI.
 
 export const indicatorGroups = pgTable("indicator_groups", {
 	id: uuid("id").primaryKey().defaultRandom(),
@@ -2066,6 +2025,12 @@ export const priceDataVersions = pgTable(
 
 		lastImportedAt: timestamp("last_imported_at", { withTimezone: true }),
 		rowCount: integer("row_count"),
+
+		// Min/max candle timestamp captured at ingest. Powers the date-range
+		// chips on the backtest dropdown without a R2 round-trip per render.
+		// Nullable while pre-2026-06-08 rows are backfilled.
+		firstCandleAt: timestamp("first_candle_at", { withTimezone: true }),
+		lastCandleAt: timestamp("last_candle_at", { withTimezone: true }),
 
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.defaultNow()
@@ -2353,6 +2318,45 @@ export const hawksRenkoSizes = pgTable(
 )
 
 // ═══════════════════════════════════════════════════════════════════
+// Asset Session Anchors — per-(asset, BRT-day) daily-constant indicators
+// ═══════════════════════════════════════════════════════════════════
+//
+// One row per (asset, BRT date) holding values that are FIXED for the
+// trading day (D-1 settlement, prior-day O/H/L/C, pivot levels, opening
+// range, etc.). Decoupled from price_candles to avoid duplicating the
+// same value across N candles × M timeframes, and to let new daily
+// indicators land without backfilling every candle row.
+//
+// Payload is JSONB so new keys can be added without a migration.
+// Readers wrap with a Zod schema at the application boundary
+// (`src/lib/indicators/daily-anchors.ts`).
+export const assetSessionAnchors = pgTable(
+	"asset_session_anchors",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		assetId: uuid("asset_id")
+			.notNull()
+			.references(() => assets.id, { onDelete: "cascade" }),
+		date: date("date").notNull(),
+		payload: jsonb("payload").notNull(),
+		source: varchar("source", { length: 20 }).default("imported").notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex("asset_session_anchors_asset_date_idx").on(
+			table.assetId,
+			table.date
+		),
+		index("asset_session_anchors_date_idx").on(table.date),
+	]
+)
+
+// ═══════════════════════════════════════════════════════════════════
 // Hawks Weekly OCO — One-Cancels-Other order config per (account, week, asset)
 // ═══════════════════════════════════════════════════════════════════
 
@@ -2549,7 +2553,6 @@ export const tradeExecutionsRelations = relations(
 export const timeframesRelations = relations(timeframes, ({ many }) => ({
 	trades: many(trades),
 	accountTimeframes: many(accountTimeframes),
-	priceCandles: many(priceCandles),
 	priceDataVersions: many(priceDataVersions),
 }))
 
@@ -2616,7 +2619,6 @@ export const assetsRelations = relations(assets, ({ one, many }) => ({
 	accountAssets: many(accountAssets),
 	dailyAssetSettings: many(dailyAssetSettings),
 	accountAssetSettings: many(accountAssetSettings),
-	priceCandles: many(priceCandles),
 	priceDataVersions: many(priceDataVersions),
 }))
 
@@ -2819,18 +2821,6 @@ export const filterPresetsRelations = relations(filterPresets, ({ one }) => ({
 	account: one(tradingAccounts, {
 		fields: [filterPresets.accountId],
 		references: [tradingAccounts.id],
-	}),
-}))
-
-// Price Candle Relations
-export const priceCandlesRelations = relations(priceCandles, ({ one }) => ({
-	asset: one(assets, {
-		fields: [priceCandles.assetId],
-		references: [assets.id],
-	}),
-	timeframe: one(timeframes, {
-		fields: [priceCandles.timeframeId],
-		references: [timeframes.id],
 	}),
 }))
 
@@ -3037,8 +3027,7 @@ export type FilterPreset = typeof filterPresets.$inferSelect
 export type NewFilterPreset = typeof filterPresets.$inferInsert
 
 // Historical Price Data Types
-export type PriceCandle = typeof priceCandles.$inferSelect
-export type NewPriceCandle = typeof priceCandles.$inferInsert
+// (PriceCandle types removed — candle data moved to R2 Parquet)
 
 export type IndicatorGroup = typeof indicatorGroups.$inferSelect
 export type NewIndicatorGroup = typeof indicatorGroups.$inferInsert

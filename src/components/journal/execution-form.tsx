@@ -126,6 +126,7 @@ export const ExecutionForm = ({
 	)
 
 	// Update form data when execution prop changes (for edit mode)
+
 	useEffect(() => {
 		setFormData(
 			execution
@@ -172,6 +173,7 @@ export const ExecutionForm = ({
 
 			if (result.status === "success") {
 				onOpenChange(false)
+
 				onSuccess?.()
 				setFormData(buildNewExecutionState(existingExecutions, effectiveDate))
 			} else {

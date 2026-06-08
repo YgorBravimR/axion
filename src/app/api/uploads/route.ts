@@ -5,6 +5,7 @@
 
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
+import { z } from "zod"
 import { auth } from "@/auth"
 import { uploadFile, deleteFile } from "@/lib/storage"
 import {
@@ -12,6 +13,10 @@ import {
 	buildS3Key,
 	uploadSchema,
 } from "@/lib/validations/upload"
+
+const deleteSchema = z.object({
+	s3Key: z.string().min(1),
+})
 
 export const POST = async (request: NextRequest) => {
 	const session = await auth()
@@ -88,15 +93,15 @@ export const DELETE = async (request: NextRequest) => {
 		)
 	}
 
-	const body = await request.json()
-	const { s3Key } = body as { s3Key?: string }
-
-	if (!s3Key) {
+	const body = (await request.json()) as Record<string, unknown>
+	const parsed = deleteSchema.safeParse(body)
+	if (!parsed.success) {
 		return NextResponse.json(
 			{ status: "error", message: "api.errors.missingFields" },
 			{ status: 400 }
 		)
 	}
+	const { s3Key } = parsed.data
 
 	await deleteFile(s3Key)
 

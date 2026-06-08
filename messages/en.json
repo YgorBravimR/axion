@@ -72,11 +72,14 @@
 			"pickColor": "Pick a color",
 			"toggleFormat": "Toggle between HEX and RGB input",
 			"hexValue": "Hex color value",
-			"rgbValue": "RGB color value"
+			"rgbValue": "RGB color value",
+			"modeHex": "HEX",
+			"modeRgb": "RGB"
 		},
 		"winRateAbbr": "WR",
 		"clearFile": "Clear file",
 		"dismiss": "Dismiss",
+		"stackedCount": "{count, plural, one {1 notification} other {# notifications}}",
 		"actionCannotBeUndone": "This action cannot be undone.",
 		"sortBy": "Sort by {column}",
 		"breadcrumb": "Breadcrumb",
@@ -1685,6 +1688,8 @@
 		},
 		"nota": {
 			"title": "Nota de Corretagem",
+			"creditIndicator": "C",
+			"debitIndicator": "D",
 			"description": "Import fills from your brokerage note (SINACOR PDF) to enrich existing trades with individual execution data.",
 			"dropHere": "Drop your Nota de Corretagem PDF here",
 			"orClick": "or click to browse",
@@ -2252,6 +2257,15 @@
 			"strategyLive": "Strategy has trades attached — create a new version to change its conditions",
 			"invalidInput": "Invalid input"
 		},
+		"conditionErrors": {
+			"validationFailed": "Validation failed.",
+			"duplicateName": "A condition with this name already exists.",
+			"createFailed": "Failed to create condition.",
+			"notFound": "Condition not found.",
+			"updateFailed": "Failed to update condition.",
+			"fetchFailed": "Failed to retrieve conditions.",
+			"deleteFailed": "Failed to delete condition."
+		},
 		"yourStrategies": "Your Strategies",
 		"newStrategy": "New Strategy",
 		"addStrategy": "Add Strategy",
@@ -2697,6 +2711,15 @@
 			"deleteAriaLabel": "Delete {eventType} on {date}",
 			"depositLabel": "Depósito",
 			"withdrawalLabel": "Retirada"
+		},
+		"capitalEventErrors": {
+			"invalidEventType": "Invalid event type",
+			"amountMustBePositive": "Amount must be a positive integer (cents)",
+			"invalidEventDate": "Invalid event date",
+			"eventDateInFuture": "Event date cannot be in the future",
+			"failedToInsert": "Failed to insert capital event",
+			"notFoundOrAccessDenied": "Event not found or access denied",
+			"accountNotFound": "Account not found"
 		},
 		"weeklyMeta": {
 			"beforeAccountStart": "Before account start",
@@ -3185,7 +3208,11 @@
 			"invalidTheme": "Invalid theme value",
 			"invalidBrand": "Invalid brand value",
 			"cannotChangeOwnRole": "Cannot change your own role",
-			"assetNotFound": "Asset not found"
+			"assetNotFound": "Asset not found",
+			"startMonthRange": "Start month must be between 1 and 12",
+			"startYearRange": "Start year must be between 2000 and {year}",
+			"openingBalancePositive": "Opening balance must be greater than zero",
+			"withdrawalTargetRange": "Withdrawal target must be between 0 and 100"
 		},
 		"trading": {
 			"propFirms": {
@@ -3970,7 +3997,10 @@
 		"title": "Equity Shield",
 		"subtitle": "Leverage drawdowns to protect your combine. Apply discipline-based equity curve management to your trade history.",
 		"errors": {
-			"unexpected": "An unexpected error occurred. Please try again."
+			"unexpected": "An unexpected error occurred. Please try again.",
+			"noTradesInRange": "No closed trades found in this date range.",
+			"runFailed": "Failed to run Equity Shield analysis.",
+			"previewFailed": "Failed to load trade preview."
 		},
 		"params": {
 			"title": "Parameters",
@@ -4063,6 +4093,11 @@
 			"ageNow": "just now"
 		}
 	},
+	"candleQuery": {
+		"errors": {
+			"fetchFailed": "Failed to fetch candles."
+		}
+	},
 	"commandMenu": {
 		"placeholder": "Type a command or search...",
 		"navigation": "Navigation",
@@ -4124,6 +4159,11 @@
 		"redirecting": "Redirecting to dashboard..."
 	},
 	"imports": {
+		"ocr": {
+			"bulkSuccess": "Successfully imported {count, plural, =1 {1 trade} other {# trades}}.",
+			"bulkPartial": "Imported {success, plural, =1 {1 trade} other {# trades}}, {failed, plural, =1 {1 failed} other {# failed}}.",
+			"bulkError": "Failed to import trades from OCR data."
+		},
 		"title": "Import Broker Statement",
 		"description": "Upload a trade statement from your broker to import with exact execution prices and quantities",
 		"broker": "Broker",
@@ -4165,10 +4205,13 @@
 			"invalidFormat": "Invalid CSV format",
 			"parseFailed": "Failed to parse CSV",
 			"previewExpired": "Import preview not found or expired",
-			"accountMismatch": "Account mismatch"
+			"accountMismatch": "Account mismatch",
+			"accountNotFound": "Account not found.",
+			"noValidTrades": "No valid trades to import."
 		},
 		"success": {
-			"imported": "Successfully imported {count} trades from {broker}"
+			"imported": "Successfully imported {count} trades from {broker}",
+			"csvImported": "Successfully imported {count, plural, =1 {1 trade} other {# trades}}."
 		}
 	},
 	"notaImport": {
@@ -4687,6 +4730,9 @@
 			"custom": "Custom",
 			"asset": "Asset",
 			"timeframe": "Timeframe",
+			"sourceGroupHawks": "Hawks",
+			"sourceGroupRenko": "Renko",
+			"sourceGroupTime": "Time-based",
 			"dateRange": "Date Range",
 			"from": "From",
 			"to": "To",
@@ -5081,6 +5127,18 @@
 		"noParamsSelected": "Select at least one parameter to sweep",
 		"runSweep": "Run Sweep",
 		"clearAll": "Clear All",
+		"clearAllConfirmTitle": "Delete all optimization runs?",
+		"clearAllConfirmDescription": "This removes {count} stored runs and their trade history from this browser. The action cannot be undone — re-run the sweeps to regenerate the data.",
+		"clearAllConfirmCancel": "Keep runs",
+		"clearAllConfirmAction": "Delete all",
+		"runDeletedToast": "Run {label} deleted",
+		"undo": "Undo",
+		"bulkSelectionCount": "{count, plural, one {# run selected} other {# runs selected}}",
+		"bulkClearSelection": "Clear selection",
+		"bulkDeleteSelected": "{count, plural, one {Delete selected (#)} other {Delete selected (#)}}",
+		"bulkRunsDeletedToast": "{count, plural, one {1 run deleted} other {# runs deleted}}",
+		"selectRow": "Select run",
+		"selectAllRows": "Select all runs",
 		"postRefineHint": {
 			"title": "Refine wave complete — pick your next move",
 			"body": "Best refine run so far: {best} (PF {pf}). Iterate to narrow further or freeze the winner as a hero preset.",
@@ -5094,6 +5152,7 @@
 		"exportCsvTitle": "Download summary metrics per run as CSV (Excel-friendly)",
 		"noRuns": "No runs yet",
 		"sweepOverLimit": "Too many combinations (max {max})",
+		"recipesDeduped": "Skipped {dropped} of {total} duplicate recipes",
 		"sweepComplete": "{total} runs completed in {seconds}s",
 		"sweepError": "Sweep error: {message}",
 		"sweepCancelled": "Sweep cancelled after {count} runs",
@@ -5588,6 +5647,15 @@
 		}
 	},
 	"tax": {
+		"errors": {
+			"accountNotFound": "Account not found.",
+			"taxDisabled": "Tax estimates are disabled for this account.",
+			"ledgerNotFound": "Could not compute ledger row.",
+			"invalidInput": "Invalid input.",
+			"invalidMonthFormat": "Invalid month format.",
+			"monthInProgress": "Month still in progress — DARF can only be marked after the last day of the month.",
+			"ledgerRowNotFoundForMonth": "Ledger row not found for month."
+		},
 		"annualSummary": {
 			"title": "Annual Summary {year}",
 			"tableAriaLabel": "Tax summary {year}",
@@ -5694,6 +5762,8 @@
 		"monthlyDarf": {
 			"cardTitle": "Monthly DARF",
 			"inCourseLabel": "In Progress",
+			"darfLabel": "DARF",
+			"previewLabel": "Preview",
 			"propAccountNote": "N/A — Prop Account. IR is the broker/desk's responsibility.",
 			"tableAriaLabel": "DARF Breakdown",
 			"rows": {

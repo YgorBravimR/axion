@@ -23,6 +23,7 @@ import type {
 import { getChartThemeColors } from "@/lib/chart/theme-colors"
 import type { BrickChartSeries } from "@/lib/renko/bricks-to-chart"
 import type { ProjectedDrawings } from "@/components/dev/hawks-drawings"
+import { useFormatting } from "@/hooks/use-formatting"
 
 interface IndicatorOverlay {
 	readonly key: string
@@ -93,6 +94,7 @@ const RenkoPane = ({
 	className,
 }: RenkoPaneProps) => {
 	const containerRef = useRef<HTMLDivElement>(null)
+	const { formatNumber } = useFormatting()
 	const chartRef = useRef<IChartApi | null>(null)
 	const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null)
 	const indicatorSeriesRef = useRef<Map<string, ISeriesApi<"Line">>>(new Map())
@@ -139,21 +141,22 @@ const RenkoPane = ({
 			crosshair: { mode: CrosshairMode.Normal },
 		})
 		const candleSeries = chart.addSeries(CandlestickSeries, {
-			upColor: theme.tradeBuy ?? "rgb(60, 180, 110)",
-			downColor: theme.tradeSell ?? "rgb(220, 90, 80)",
-			borderUpColor: theme.tradeBuy ?? "rgb(60, 180, 110)",
-			borderDownColor: theme.tradeSell ?? "rgb(220, 90, 80)",
-			wickUpColor: theme.tradeBuy ?? "rgb(60, 180, 110)",
-			wickDownColor: theme.tradeSell ?? "rgb(220, 90, 80)",
+			upColor: theme.tradeBuy,
+			downColor: theme.tradeSell,
+			borderUpColor: theme.tradeBuy,
+			borderDownColor: theme.tradeSell,
+			wickUpColor: theme.tradeBuy,
+			wickDownColor: theme.tradeSell,
 		})
 		chartRef.current = chart
 		candleSeriesRef.current = candleSeries
+		const indicatorSeriesMap = indicatorSeriesRef.current
 
 		return () => {
 			chart.remove()
 			chartRef.current = null
 			candleSeriesRef.current = null
-			indicatorSeriesRef.current.clear()
+			indicatorSeriesMap.clear()
 			entryLineRef.current = null
 			exitLineRef.current = null
 			markersPluginRef.current = null
@@ -232,14 +235,14 @@ const RenkoPane = ({
 			return
 		}
 
-		const winColor = theme.tradeBuy ?? "rgb(60, 180, 110)"
-		const lossColor = theme.tradeSell ?? "rgb(220, 90, 80)"
+		const winColor = theme.tradeBuy
+		const lossColor = theme.tradeSell
 
 		// Entry line color follows the entry-marker palette so they read as
 		// a pair. In "trade" mode that's tradeBuy/tradeSell by direction; in
 		// "action" mode it's actionBuy/actionSell.
-		const actionBuyColor = theme.actionBuy ?? "rgb(91, 184, 214)"
-		const actionSellColor = theme.actionSell ?? "rgb(251, 146, 60)"
+		const actionBuyColor = theme.actionBuy
+		const actionSellColor = theme.actionSell
 		const entryLineColor =
 			markerColorMode === "action"
 				? trade.direction === "long"
@@ -304,8 +307,8 @@ const RenkoPane = ({
 			) as ISeriesMarkersPluginApi<UTCTimestamp>
 		}
 		const isLong = trade.direction === "long"
-		const actionBuy = theme.actionBuy ?? "rgb(91, 184, 214)"
-		const actionSell = theme.actionSell ?? "rgb(251, 146, 60)"
+		const actionBuy = theme.actionBuy
+		const actionSell = theme.actionSell
 		const entryColor =
 			markerColorMode === "action"
 				? isLong
@@ -321,7 +324,7 @@ const RenkoPane = ({
 				position: isLong ? "belowBar" : "aboveBar",
 				color: entryColor,
 				shape: isLong ? "arrowUp" : "arrowDown",
-				text: `entry ${trade.entryPrice.toLocaleString()}`,
+				text: `entry ${formatNumber(trade.entryPrice)}`,
 			},
 			{
 				time: trade.exitBrickIdx as UTCTimestamp,
@@ -331,12 +334,12 @@ const RenkoPane = ({
 				// LONG exit (above bar): arrowDown points into the bar from above.
 				// SHORT exit (below bar): arrowUp points into the bar from below.
 				shape: isLong ? "arrowDown" : "arrowUp",
-				text: `exit ${trade.exitPrice.toLocaleString()}`,
+				text: `exit ${formatNumber(trade.exitPrice)}`,
 			},
 		]
 		markers.sort((m1, m2) => (m1.time as number) - (m2.time as number))
 		markersPluginRef.current.setMarkers(markers)
-	}, [trade, theme, markerColorMode])
+	}, [trade, theme, markerColorMode, series, formatNumber])
 
 	// Optional histogram sub-pane (e.g., MACD). Mounted at paneIndex 1 so it
 	// shares the time axis with the price pane above. Per-point `color` on each
@@ -461,7 +464,7 @@ const RenkoPane = ({
 			return
 		}
 		const handler = (param: MouseEventParams) => {
-			if (param.time === undefined || param.time === null) {
+			if (param.time === undefined) {
 				return
 			}
 			if (!param.point) {
@@ -494,7 +497,7 @@ const RenkoPane = ({
 			return
 		}
 		const handler = (param: MouseEventParams) => {
-			if (param.time === undefined || param.time === null) {
+			if (param.time === undefined) {
 				onCrosshairMove(null)
 				return
 			}

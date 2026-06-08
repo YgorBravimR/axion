@@ -32,6 +32,9 @@ interface RunsComparisonTableProps {
 	onUpdateLabel: (_runId: string, _label: string) => void
 	robustFilterEnabled?: boolean
 	onRobustFilterChange?: (_enabled: boolean) => void
+	selectedRunIds?: Set<string>
+	onToggleSelect?: (_runId: string) => void
+	onSelectAll?: (_visibleRunIds: string[]) => void
 }
 
 const MIN_TRADES_THRESHOLD = 30
@@ -45,6 +48,9 @@ const RunsComparisonTable = ({
 	onUpdateLabel: _onUpdateLabel,
 	robustFilterEnabled = false,
 	onRobustFilterChange,
+	selectedRunIds,
+	onToggleSelect,
+	onSelectAll,
 }: RunsComparisonTableProps) => {
 	const t = useTranslations("optimize")
 
@@ -73,8 +79,57 @@ const RunsComparisonTable = ({
 		).id
 	}, [runs])
 
+	const selectionEnabled =
+		selectedRunIds !== undefined && onToggleSelect !== undefined
+	const visibleRunIds = useMemo(
+		() => filteredRuns.map((r) => r.id),
+		[filteredRuns]
+	)
+	const allVisibleSelected =
+		selectionEnabled &&
+		visibleRunIds.length > 0 &&
+		visibleRunIds.every((id) => selectedRunIds.has(id))
+	const someVisibleSelected =
+		selectionEnabled &&
+		!allVisibleSelected &&
+		visibleRunIds.some((id) => selectedRunIds.has(id))
+
 	const columns = useMemo<ColumnDef<OptimizationRun, unknown>[]>(
 		() => [
+			...(selectionEnabled
+				? [
+						{
+							id: "select",
+							header: () => (
+								<Checkbox
+									id="select-all-runs"
+									checked={
+										allVisibleSelected
+											? true
+											: someVisibleSelected
+												? "indeterminate"
+												: false
+									}
+									onCheckedChange={() => onSelectAll?.(visibleRunIds)}
+									aria-label={t("selectAllRows")}
+								/>
+							),
+							cell: ({ row }: { row: { original: OptimizationRun } }) => {
+								const run = row.original
+								return (
+									<Checkbox
+										id={`select-${run.id}`}
+										checked={selectedRunIds.has(run.id)}
+										onCheckedChange={() => onToggleSelect(run.id)}
+										aria-label={t("selectRow")}
+									/>
+								)
+							},
+							enableSorting: false,
+							meta: { headerClassName: "w-10", cellClassName: "w-10" },
+						} as ColumnDef<OptimizationRun, unknown>,
+					]
+				: []),
 			{
 				id: "pin",
 				header: "",
@@ -397,7 +452,20 @@ const RunsComparisonTable = ({
 				meta: { headerClassName: "w-20", cellClassName: "w-20" },
 			},
 		],
-		[bestRunId, onTogglePin, onToggleExpand, onDelete, t]
+		[
+			bestRunId,
+			onTogglePin,
+			onToggleExpand,
+			onDelete,
+			t,
+			selectionEnabled,
+			selectedRunIds,
+			allVisibleSelected,
+			someVisibleSelected,
+			visibleRunIds,
+			onToggleSelect,
+			onSelectAll,
+		]
 	)
 
 	// Check if any runs have walk-forward data

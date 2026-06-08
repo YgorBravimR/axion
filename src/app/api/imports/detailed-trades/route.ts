@@ -7,17 +7,23 @@
 
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
+import { z } from "zod"
 import { auth } from "@/auth"
 import {
 	parseStatementCSV,
 	validateStatementCSV,
 	groupExecutionsIntoTrades,
 	createImportPreview,
-	type BrokerName,
 	type ImportPreview,
 } from "@/lib/csv-parsers"
 
 import { createDbRateLimiter } from "@/lib/db-rate-limiter"
+
+const importRequestSchema = z.object({
+	accountId: z.string().min(1),
+	brokerName: z.enum(["CLEAR", "XP", "GENIAL"]),
+	csvContent: z.string().min(1),
+})
 
 // DB-backed rate limiting (survives serverless cold starts)
 // 10 imports per hour per account — covers multi-export workflows (e.g. ProfitChart per-trade exports)
@@ -54,15 +60,9 @@ export const POST = async (req: NextRequest) => {
 		}
 
 		// Parse request
-		const body = await req.json()
-		const {
-			accountId,
-			brokerName,
-			csvContent,
-		}: { accountId: string; brokerName: BrokerName; csvContent: string } = body
-
-		// Validate inputs
-		if (!accountId || !brokerName || !csvContent) {
+		const body = (await req.json()) as Record<string, unknown>
+		const parsed = importRequestSchema.safeParse(body)
+		if (!parsed.success) {
 			return NextResponse.json(
 				{
 					error: "api.errors.missingFields",
@@ -70,13 +70,7 @@ export const POST = async (req: NextRequest) => {
 				{ status: 400 }
 			)
 		}
-
-		if (!["CLEAR", "XP", "GENIAL"].includes(brokerName)) {
-			return NextResponse.json(
-				{ error: `api.errors.invalidParams|${brokerName}` },
-				{ status: 400 }
-			)
-		}
+		const { accountId, brokerName, csvContent } = parsed.data
 
 		// Check rate limit (30-minute cooldown, DB-backed)
 		const rateLimitResult = await importLimiter.check(`csv-import:${accountId}`)

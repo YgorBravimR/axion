@@ -1,5 +1,6 @@
 "use server"
 
+import { getTranslations } from "next-intl/server"
 import { db } from "@/db/drizzle"
 import { accountCapitalEvents, tradingAccounts } from "@/db/schema"
 import { eq, and, asc, gte, lte } from "drizzle-orm"
@@ -29,22 +30,23 @@ export const recordCapitalEvent = async (
 	params: RecordCapitalEventParams
 ): Promise<ActionResult<{ id: string }>> => {
 	const { accountId } = await requireAuth()
+	const t = await getTranslations("reports.capitalEventErrors")
 
 	if (!["deposit", "withdrawal"].includes(params.eventType)) {
-		return { status: "error", message: "Invalid event type" }
+		return { status: "error", message: t("invalidEventType") }
 	}
 	if (!Number.isInteger(params.amountCents) || params.amountCents <= 0) {
 		return {
 			status: "error",
-			message: "Amount must be a positive integer (cents)",
+			message: t("amountMustBePositive"),
 		}
 	}
 	const eventDateObj = new Date(params.eventDate)
 	if (Number.isNaN(eventDateObj.getTime())) {
-		return { status: "error", message: "Invalid event date" }
+		return { status: "error", message: t("invalidEventDate") }
 	}
 	if (eventDateObj > new Date()) {
-		return { status: "error", message: "Event date cannot be in the future" }
+		return { status: "error", message: t("eventDateInFuture") }
 	}
 
 	const [inserted] = await db
@@ -59,7 +61,7 @@ export const recordCapitalEvent = async (
 		.returning({ id: accountCapitalEvents.id })
 
 	if (!inserted) {
-		return { status: "error", message: "Failed to insert capital event" }
+		return { status: "error", message: t("failedToInsert") }
 	}
 
 	await invalidateAggregates(accountId, eventDateObj)
@@ -69,6 +71,7 @@ export const recordCapitalEvent = async (
 
 export const deleteCapitalEvent = async (id: string): Promise<ActionResult> => {
 	const { accountId } = await requireAuth()
+	const t = await getTranslations("reports.capitalEventErrors")
 
 	const rows = await db
 		.select()
@@ -82,7 +85,7 @@ export const deleteCapitalEvent = async (id: string): Promise<ActionResult> => {
 		.limit(1)
 
 	if (!rows[0]) {
-		return { status: "error", message: "Event not found or access denied" }
+		return { status: "error", message: t("notFoundOrAccessDenied") }
 	}
 
 	const eventDate = new Date(rows[0].eventDate)

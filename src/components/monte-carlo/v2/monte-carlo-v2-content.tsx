@@ -30,6 +30,7 @@ import type {
 	RiskManagementProfileForSim,
 	SourceStats,
 } from "@/types/monte-carlo"
+import { useFormatting } from "@/hooks/use-formatting"
 
 interface MonteCarloV2ContentProps {
 	profiles: RiskManagementProfile[]
@@ -56,6 +57,7 @@ const MonteCarloV2Content = ({
 	budgetCap,
 }: MonteCarloV2ContentProps) => {
 	const t = useTranslations("monteCarlo.v2")
+	const { formatNumber } = useFormatting()
 	const tMC = useTranslations("monteCarlo")
 	const tOverlay = useTranslations("overlay")
 	const tCommon = useTranslations("common")
@@ -219,7 +221,7 @@ const MonteCarloV2Content = ({
 			tradingDaysPerMonth: parseInt(form.tradingDaysPerMonth, 10) || 22,
 			tradingDaysPerWeek: parseInt(form.tradingDaysPerWeek, 10) || 5,
 		})
-	}, [form, selectedProfile])
+	}, [form, selectedProfile, effectiveRR])
 
 	const handleRunSimulation = useCallback(async () => {
 		if (!simProfile) {
@@ -268,6 +270,7 @@ const MonteCarloV2Content = ({
 		hideLoading,
 		tOverlay,
 		tMC,
+		setSnapshot,
 	])
 
 	const handleRunAgain = useCallback(() => {
@@ -581,8 +584,8 @@ const MonteCarloV2Content = ({
 					<div className="mt-m-400 text-small flex items-center justify-between">
 						<span className="text-txt-300">
 							{t("params.totalIterations")}:{" "}
-							{budgetInfo.totalIterations.toLocaleString()} /{" "}
-							{budgetCap.toLocaleString()}
+							{formatNumber(budgetInfo.totalIterations)} /{" "}
+							{formatNumber(budgetCap)}
 						</span>
 						<span
 							className={cn(

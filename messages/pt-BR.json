@@ -72,11 +72,14 @@
 			"pickColor": "Escolher uma cor",
 			"toggleFormat": "Alternar entre entrada HEX e RGB",
 			"hexValue": "Valor da cor em Hex",
-			"rgbValue": "Valor da cor em RGB"
+			"rgbValue": "Valor da cor em RGB",
+			"modeHex": "HEX",
+			"modeRgb": "RGB"
 		},
 		"winRateAbbr": "TA",
 		"clearFile": "Limpar arquivo",
 		"dismiss": "Dispensar",
+		"stackedCount": "{count, plural, one {1 notificação} other {# notificações}}",
 		"actionCannotBeUndone": "Esta ação não pode ser desfeita.",
 		"sortBy": "Ordenar por {column}",
 		"breadcrumb": "Navegação",
@@ -1685,6 +1688,8 @@
 		},
 		"nota": {
 			"title": "Nota de Corretagem",
+			"creditIndicator": "C",
+			"debitIndicator": "D",
 			"description": "Importe as execuções da sua nota de corretagem (PDF SINACOR) para enriquecer trades existentes com dados individuais de execução.",
 			"dropHere": "Arraste o PDF da Nota de Corretagem aqui",
 			"orClick": "ou clique para selecionar",
@@ -2252,6 +2257,15 @@
 			"strategyLive": "Estratégia possui trades vinculados — crie uma nova versão para alterar as condições",
 			"invalidInput": "Entrada inválida"
 		},
+		"conditionErrors": {
+			"validationFailed": "Falha na validação.",
+			"duplicateName": "Já existe uma condição com este nome.",
+			"createFailed": "Falha ao criar condição.",
+			"notFound": "Condição não encontrada.",
+			"updateFailed": "Falha ao atualizar condição.",
+			"fetchFailed": "Falha ao buscar condições.",
+			"deleteFailed": "Falha ao excluir condição."
+		},
 		"yourStrategies": "Suas Estratégias",
 		"newStrategy": "Nova Estratégia",
 		"addStrategy": "Adicionar Estratégia",
@@ -2697,6 +2711,15 @@
 			"deleteAriaLabel": "Excluir {eventType} em {date}",
 			"depositLabel": "Depósito",
 			"withdrawalLabel": "Retirada"
+		},
+		"capitalEventErrors": {
+			"invalidEventType": "Tipo de evento inválido",
+			"amountMustBePositive": "O valor deve ser um inteiro positivo (em centavos)",
+			"invalidEventDate": "Data do evento inválida",
+			"eventDateInFuture": "A data do evento não pode estar no futuro",
+			"failedToInsert": "Falha ao inserir evento de capital",
+			"notFoundOrAccessDenied": "Evento não encontrado ou acesso negado",
+			"accountNotFound": "Conta não encontrada"
 		},
 		"weeklyMeta": {
 			"beforeAccountStart": "Antes do início da conta",
@@ -3185,7 +3208,11 @@
 			"invalidTheme": "Valor de tema inválido",
 			"invalidBrand": "Valor de marca inválido",
 			"cannotChangeOwnRole": "Não é possível alterar seu próprio papel",
-			"assetNotFound": "Ativo não encontrado"
+			"assetNotFound": "Ativo não encontrado",
+			"startMonthRange": "O mês inicial deve estar entre 1 e 12",
+			"startYearRange": "O ano inicial deve estar entre 2000 e {year}",
+			"openingBalancePositive": "O saldo inicial deve ser maior que zero",
+			"withdrawalTargetRange": "A meta de retirada deve estar entre 0 e 100"
 		},
 		"trading": {
 			"propFirms": {
@@ -3970,7 +3997,10 @@
 		"title": "Equity Shield",
 		"subtitle": "Aproveite os drawdowns para proteger seu combine. Aplique gestão de curva de equity baseada em disciplina ao seu histórico de trades.",
 		"errors": {
-			"unexpected": "Ocorreu um erro inesperado. Tente novamente."
+			"unexpected": "Ocorreu um erro inesperado. Tente novamente.",
+			"noTradesInRange": "Nenhum trade encerrado encontrado neste intervalo.",
+			"runFailed": "Falha ao executar análise do Equity Shield.",
+			"previewFailed": "Falha ao carregar pré-visualização de trades."
 		},
 		"params": {
 			"title": "Parâmetros",
@@ -4063,6 +4093,11 @@
 			"ageNow": "agora mesmo"
 		}
 	},
+	"candleQuery": {
+		"errors": {
+			"fetchFailed": "Falha ao buscar candles."
+		}
+	},
 	"commandMenu": {
 		"placeholder": "Digite um comando ou busque...",
 		"navigation": "Navegação",
@@ -4124,6 +4159,11 @@
 		"redirecting": "Redirecionando para o dashboard..."
 	},
 	"imports": {
+		"ocr": {
+			"bulkSuccess": "Importado com sucesso: {count, plural, =1 {1 trade} other {# trades}}.",
+			"bulkPartial": "Importados {success, plural, =1 {1 trade} other {# trades}}, {failed, plural, =1 {1 falhou} other {# falharam}}.",
+			"bulkError": "Falha ao importar trades dos dados de OCR."
+		},
 		"title": "Importar Extrato da Corretora",
 		"description": "Envie um extrato de operações da sua corretora para importar com preços e quantidades exatas",
 		"broker": "Corretora",
@@ -4165,10 +4205,13 @@
 			"invalidFormat": "Formato CSV inválido",
 			"parseFailed": "Falha ao analisar CSV",
 			"previewExpired": "Pré-visualização de importação não encontrada ou expirada",
-			"accountMismatch": "Conta não corresponde"
+			"accountMismatch": "Conta não corresponde",
+			"accountNotFound": "Conta não encontrada.",
+			"noValidTrades": "Nenhum trade válido para importar."
 		},
 		"success": {
-			"imported": "{count} operações importadas com sucesso de {broker}"
+			"imported": "{count} operações importadas com sucesso de {broker}",
+			"csvImported": "{count, plural, =1 {1 trade importado} other {# trades importados}} com sucesso."
 		}
 	},
 	"notaImport": {
@@ -4687,6 +4730,9 @@
 			"custom": "Personalizado",
 			"asset": "Ativo",
 			"timeframe": "Timeframe",
+			"sourceGroupHawks": "Hawks",
+			"sourceGroupRenko": "Renko",
+			"sourceGroupTime": "Tempo",
 			"dateRange": "Período",
 			"from": "De",
 			"to": "Até",
@@ -5081,6 +5127,18 @@
 		"noParamsSelected": "Selecione ao menos um parâmetro para varrer",
 		"runSweep": "Executar Varredura",
 		"clearAll": "Limpar Tudo",
+		"clearAllConfirmTitle": "Apagar todas as execuções de otimização?",
+		"clearAllConfirmDescription": "Isso remove {count} execuções salvas e o histórico de trades deste navegador. A ação não pode ser desfeita — rode as varreduras novamente para gerar os dados.",
+		"clearAllConfirmCancel": "Manter execuções",
+		"clearAllConfirmAction": "Apagar tudo",
+		"runDeletedToast": "Execução {label} apagada",
+		"undo": "Desfazer",
+		"bulkSelectionCount": "{count, plural, one {# execução selecionada} other {# execuções selecionadas}}",
+		"bulkClearSelection": "Limpar seleção",
+		"bulkDeleteSelected": "{count, plural, one {Apagar selecionada (#)} other {Apagar selecionadas (#)}}",
+		"bulkRunsDeletedToast": "{count, plural, one {1 execução apagada} other {# execuções apagadas}}",
+		"selectRow": "Selecionar execução",
+		"selectAllRows": "Selecionar todas as execuções",
 		"postRefineHint": {
 			"title": "Refine concluído — escolha o próximo passo",
 			"body": "Melhor run do refine: {best} (PF {pf}). Itere para estreitar mais ou congele o vencedor como preset hero.",
@@ -5094,6 +5152,7 @@
 		"exportCsvTitle": "Baixar métricas resumidas por execução em CSV (amigável ao Excel)",
 		"noRuns": "Nenhuma execução ainda",
 		"sweepOverLimit": "Combinações demais (máx {max})",
+		"recipesDeduped": "Pulou {dropped} de {total} receitas duplicadas",
 		"sweepComplete": "{total} execuções concluídas em {seconds}s",
 		"sweepError": "Erro na varredura: {message}",
 		"sweepCancelled": "Varredura cancelada após {count} execuções",
@@ -5588,6 +5647,15 @@
 		}
 	},
 	"tax": {
+		"errors": {
+			"accountNotFound": "Conta não encontrada.",
+			"taxDisabled": "Estimativas de impostos estão desativadas para esta conta.",
+			"ledgerNotFound": "Não foi possível calcular a linha do ledger.",
+			"invalidInput": "Entrada inválida.",
+			"invalidMonthFormat": "Formato de mês inválido.",
+			"monthInProgress": "Mês ainda em curso — DARF só pode ser marcada após o último dia do mês.",
+			"ledgerRowNotFoundForMonth": "Linha do ledger não encontrada para este mês."
+		},
 		"annualSummary": {
 			"title": "Resumo Anual {year}",
 			"tableAriaLabel": "Resumo fiscal {year}",
@@ -5694,6 +5762,8 @@
 		"monthlyDarf": {
 			"cardTitle": "DARF do Mês",
 			"inCourseLabel": "Em curso",
+			"darfLabel": "DARF",
+			"previewLabel": "Prévia",
 			"propAccountNote": "N/A — Conta Prop. O IR é responsabilidade da corretora/mesa.",
 			"tableAriaLabel": "Detalhamento DARF",
 			"rows": {

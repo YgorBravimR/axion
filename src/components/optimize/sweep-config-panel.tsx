@@ -19,6 +19,7 @@ import type {
 	EnumSweepableParam,
 } from "@/lib/optimize/parameter-grid"
 import type { StrategyRecipe } from "@/types/backtest"
+import { useFormatting } from "@/hooks/use-formatting"
 
 interface WalkForwardConfig {
 	enabled: boolean
@@ -41,6 +42,7 @@ const SweepConfigPanel = ({
 	onWalkForwardChange,
 }: SweepConfigPanelProps) => {
 	const t = useTranslations("optimize")
+	const { formatNumber } = useFormatting()
 
 	// Derive active enum selections for union filtering of numeric params
 	// Stable ref prevents new object identity when content hasn't changed
@@ -509,12 +511,12 @@ const SweepConfigPanel = ({
 							/>
 						)}
 						<span className="text-small text-txt-100 tabular-nums">
-							{totalCombinations.toLocaleString()} {t("sweepCombinations")}
+							{formatNumber(totalCombinations)} {t("sweepCombinations")}
 						</span>
 					</div>
 					{isOverLimit && (
 						<span className="text-tiny text-fb-error">
-							{t("sweepOverLimit", { max: MAX_COMBINATIONS.toLocaleString() })}
+							{t("sweepOverLimit", { max: formatNumber(MAX_COMBINATIONS) })}
 						</span>
 					)}
 					{isWarning && (

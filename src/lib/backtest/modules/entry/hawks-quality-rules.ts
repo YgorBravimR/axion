@@ -54,8 +54,6 @@ const DEFAULT_SR_BLOCK_BUFFER_BRICKS = 2
 const DEFAULT_SR_FAVOR_RANGE_BRICKS = 3
 const DEFAULT_KELTNER_NEAR_BRICKS = 2
 const DEFAULT_AGGRESSION_THRESHOLD = 15000
-const DEFAULT_MACD_SLOPE_WINDOW = 3
-const DEFAULT_VOLUME_EMA_PERIOD = 500
 const DEFAULT_TIER_THRESHOLDS: TierThresholds = { AAA: 3, AA: 2, A: 1 }
 
 // Dual-mode rule interface: evaluates both scoring and blocking signals independently.
@@ -102,17 +100,20 @@ interface AggressionDualModeRule extends DualModeRule {
 // S/R level set — shared between BLOCK and FAVOR rules
 // ════════════════════════════════════════════════════════════════════
 //
-// Active set: 4 HTF MAs + vwap_d_5m + ajuste_d1.
+// Active set: 4 HTF MAs + vwap_d + ajuste.
 // Deferred (probe was anti-predictive — re-probe with more data):
-//   vwap_m_5m, vwap_s_5m
-// See docs/hawks-indicator-inventory.md for reasoning.
+//   vwap_m, vwap_w
+// `ajuste` comes from `asset_session_anchors` (one row per day), injected
+// into candle.indicators at fetch time by daily-anchors.ts. The others are
+// per-brick indicators stored in price_candles.indicators JSONB.
+// See docs/hawks-strategy/indicator-inventory.md for reasoning.
 const ACTIVE_SR_LEVEL_KEYS = [
 	"mme27_60m",
 	"mme55_60m",
 	"mme27_15m",
 	"mme55_15m",
-	"vwap_d_5m",
-	"ajuste_d1",
+	"vwap_d",
+	"ajuste",
 ] as const
 
 // Sign convention for any level L at entry price P with direction D:
@@ -304,7 +305,7 @@ const aggressionSplitRule: AggressionDualModeRule = {
 		c.qualityGates?.aggressionMode ??
 		"off",
 	resolveBlockMode: (c) => c.qualityGates?.aggression?.blockMode ?? "off",
-	evaluateSignal: (candle, direction, brickSize, config, ctx) => {
+	evaluateSignal: (candle, direction, brickSize, config, _ctx) => {
 		const scoreMode = config.qualityGates?.aggression?.scoreMode ?? "off"
 		const blockMode = config.qualityGates?.aggression?.blockMode ?? "off"
 		const scoreSignal =

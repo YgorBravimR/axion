@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import { useTranslations } from "next-intl"
+import { useFormatting } from "@/hooks/use-formatting"
 import {
 	ArrowUpRight,
 	ArrowDownRight,
@@ -56,6 +57,7 @@ interface TradeInfoStatsTabProps {
 
 const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 	const tTrade = useTranslations("trade")
+	const { formatNumber } = useFormatting()
 
 	const isLong = trade.direction === "long"
 	const pnl = trade.pnl !== null ? fromCents(trade.pnl) : null
@@ -177,7 +179,7 @@ const TradeInfoStatsTab = ({ trade, fullTrade }: TradeInfoStatsTabProps) => {
 			/>
 			<MetricRow
 				label={tTrade("positionSize")}
-				value={Number(trade.positionSize).toLocaleString()}
+				value={formatNumber(Number(trade.positionSize))}
 			/>
 
 			{/* Risk */}

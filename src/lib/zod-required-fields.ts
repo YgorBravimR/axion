@@ -4,6 +4,13 @@
  *
  * Zod 4 uses `_zod.def.type` instead of `_def.typeName` from Zod 3.
  * Shape is directly accessible via `.shape` even on refined/superRefined schemas.
+ *
+ * LINT JUSTIFICATION: This file casts `unknown` to `Record<string, unknown>` to
+ * access Zod 4's internal `_zod` property, which has no public API. The casts and
+ * optional-chain accesses are necessary to safely introspect opaque schema objects.
+ * @typescript-eslint/no-unnecessary-condition disabled file-wide because the analyzer
+ * cannot prove that the `?. ` accesses are unnecessary (they protect against the
+ * schema shape differing from expected in edge cases).
  */
 
 /**
@@ -13,10 +20,10 @@
  * @param schema - Any Zod schema (typically a ZodObject or effects wrapping one)
  * @returns Set of required field name strings
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Zod 4 schema introspection via internal _zod.def; no stable public types available
-const getRequiredFields = (schema: any): Set<string> => {
+const getRequiredFields = (schema: unknown): Set<string> => {
 	// In Zod 4, .shape is available directly even on refined schemas
-	const shape = schema?.shape
+	const schemaAny = schema as Record<string, unknown>
+	const shape = schemaAny?.shape
 	if (!shape || typeof shape !== "object") {
 		return new Set()
 	}
@@ -37,9 +44,11 @@ const getRequiredFields = (schema: any): Set<string> => {
  * A field is optional if it uses .optional(), .nullable(), .default(),
  * or is a union that includes z.literal("").
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Zod 4 schema introspection via internal _zod.def; no stable public types available
-const isOptionalField = (schema: any): boolean => {
-	const typeName = schema?._zod?.def?.type ?? schema?._zod?.type
+const isOptionalField = (schema: unknown): boolean => {
+	const schemaAny = schema as Record<string, unknown>
+	const zodDef = schemaAny?._zod as Record<string, unknown>
+	const typeName =
+		(zodDef?.def as Record<string, unknown>)?.type ?? zodDef?.type
 
 	if (!typeName) {
 		return false
@@ -54,21 +63,28 @@ const isOptionalField = (schema: any): boolean => {
 
 	// Unwrap pipe (.pipe()) — check the input side
 	if (typeName === "pipe") {
-		return isOptionalField(schema._zod.def.in)
+		const def = (schemaAny._zod as Record<string, unknown>)?.def as Record<
+			string,
+			unknown
+		>
+		return isOptionalField(def?.in)
 	}
 
 	// Union — check if any branch is z.literal("")
 	if (typeName === "union") {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Zod 4 internal union options array has no stable public type
-		const options = schema._zod.def.options as any[]
+		const def = zodDef?.def as Record<string, unknown>
+		const options = def?.options as unknown[]
 		if (!options) {
 			return false
 		}
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Zod 4 internal union option has no stable public type
-		return options.some((option: any) => {
-			const optType = option?._zod?.def?.type ?? option?._zod?.type
+		return options.some((option: unknown) => {
+			const optAny = option as Record<string, unknown>
+			const optZodDef = optAny?._zod as Record<string, unknown>
+			const optType =
+				(optZodDef?.def as Record<string, unknown>)?.type ?? optZodDef?.type
 			if (optType === "literal") {
-				const values = option._zod.def.values
+				const optDef = optZodDef?.def as Record<string, unknown>
+				const values = optDef?.values as unknown[]
 				return Array.isArray(values) && values.includes("")
 			}
 			return isOptionalField(option)
@@ -81,8 +97,7 @@ const isOptionalField = (schema: any): boolean => {
 /**
  * Helper to check if a specific field is required in a schema.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Zod 4 schema introspection via internal _zod.def; no stable public types available
-const isFieldRequired = (schema: any, fieldName: string): boolean => {
+const isFieldRequired = (schema: unknown, fieldName: string): boolean => {
 	return getRequiredFields(schema).has(fieldName)
 }
 

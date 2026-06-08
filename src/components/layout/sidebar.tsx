@@ -155,27 +155,25 @@ const Sidebar = ({
 				<Image
 					src="/axion-mark-white.png"
 					alt="Axion"
-					width={32}
-					height={32}
+					width={3487}
+					height={2348}
 					data-axion-logo="invertable"
 					className={cn(
 						"absolute h-8 w-auto object-contain transition-opacity duration-200 motion-reduce:transition-none",
 						isCompact ? "opacity-100" : "opacity-0"
 					)}
-					style={{ height: "auto" }}
 					priority
 				/>
 				<Image
 					src="/axion-wordmark-white.png"
 					alt="Axion"
-					width={120}
-					height={32}
+					width={3818}
+					height={1163}
 					data-axion-logo="invertable"
 					className={cn(
 						"absolute h-8 w-auto object-contain transition-opacity duration-200 motion-reduce:transition-none",
 						isCompact ? "opacity-0" : "opacity-100"
 					)}
-					style={{ height: "auto" }}
 					priority
 				/>
 			</div>

@@ -5,6 +5,14 @@ Renko bricks, stop-loss placement, and the breakeven (BE) exit. Derived from
 the user's explanation and the reference image
 [`renko-and-be-explanation-1.png`](./renko-and-be-explanation-1.png).
 
+## Other docs in this folder
+
+- [`engine-and-quality.md`](./engine-and-quality.md) — autonomous entry engine state machine + quality registry
+- [`indicator-inventory.md`](./indicator-inventory.md) — `price_candles.indicators` JSONB keys, what each means
+- [`improvement-plan.md`](./improvement-plan.md) — 8-step roadmap to engine v1
+- [`zero-to-hero-seed.md`](./zero-to-hero-seed.md) — manual seed (tags/conditions/playbooks) for a Hawks user
+- [`chart-palette.md`](./chart-palette.md) — chart colour decisions for Renko panes
+
 ---
 
 ## Renko brick rules (ProfitChart "21 Renko" convention)

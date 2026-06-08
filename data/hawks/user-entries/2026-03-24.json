@@ -1,26 +1,18 @@
 [
 	{
 		"date": "2026-03-24",
-		"brickIndex": 67,
+		"brickIndex": 53,
 		"direction": "long",
 		"label": "T1",
 		"expectedResult": "BE",
-		"closingBrickPrice": 183150
+		"closePrice": 183150
 	},
 	{
 		"date": "2026-03-24",
-		"brickIndex": 71,
+		"brickIndex": 67,
 		"direction": "long",
 		"label": "T2",
-		"expectedResult": "ST",
-		"closingBrickPrice": 183480
-	},
-	{
-		"date": "2026-03-24",
-		"brickIndex": 73,
-		"direction": "long",
-		"label": "T3",
 		"expectedResult": "BE",
-		"closingBrickPrice": 183480
+		"closePrice": 183150
 	}
 ]

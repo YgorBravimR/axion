@@ -55,7 +55,7 @@ const NewTradePage = async ({ searchParams }: NewTradePageProps) => {
 	return (
 		<div className="flex h-full flex-col">
 			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto">
-				<div className="space-y-m-400 mx-auto max-w-5xl">
+				<div className="space-y-m-400">
 					{isHawksAtCap && <HawksDailyCapBanner ordinal={dailyOrdinal} />}
 					<Panel padding="lg">
 						<NewTradeTabs

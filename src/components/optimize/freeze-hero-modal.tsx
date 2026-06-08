@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, memo } from "react"
 import { useTranslations } from "next-intl"
 import { Info } from "lucide-react"
 import {
@@ -36,6 +36,133 @@ interface FreezeHeroModalProps {
 	sourcePresetId: string
 	onFrozen?: (_preset: HeroWinPreset) => void
 }
+
+interface GatesSummaryProps {
+	run: OptimizationRun
+	t: (key: string, values?: Record<string, string | number>) => string
+}
+
+const GatesSummary = memo(({ run, t }: GatesSummaryProps) => (
+	<section>
+		<h4 className="text-small text-txt-200 mb-s-100 font-medium">
+			{t("gatesTitle")}
+		</h4>
+		<ul className="space-y-s-100">
+			<li className="text-tiny gap-s-200 flex items-center">
+				<Badge
+					id="freeze-gate-pf"
+					variant="outline"
+					className={
+						run.summary.profitFactor >= HERO_WIN_RULES.minProfitFactor
+							? "border-trade-buy text-trade-buy"
+							: "border-fb-error text-fb-error"
+					}
+				>
+					{run.summary.profitFactor >= HERO_WIN_RULES.minProfitFactor
+						? "✓"
+						: "✗"}
+				</Badge>
+				<span className="text-txt-300">
+					{t("ruleMinPF", {
+						min: HERO_WIN_RULES.minProfitFactor,
+						actual: run.summary.profitFactor.toFixed(2),
+					})}
+				</span>
+			</li>
+			<li className="text-tiny gap-s-200 flex items-center">
+				<Badge
+					id="freeze-gate-robust"
+					variant="outline"
+					className={
+						run.oosRobust === true
+							? "border-trade-buy text-trade-buy"
+							: "border-fb-error text-fb-error"
+					}
+				>
+					{run.oosRobust === true ? "✓" : "✗"}
+				</Badge>
+				<span className="text-txt-300">{t("ruleRobust")}</span>
+			</li>
+			<li className="text-tiny gap-s-200 flex items-center">
+				<Badge
+					id="freeze-gate-trades"
+					variant="outline"
+					className={
+						run.summary.totalTrades >= HERO_WIN_RULES.minTrades
+							? "border-trade-buy text-trade-buy"
+							: "border-fb-error text-fb-error"
+					}
+				>
+					{run.summary.totalTrades >= HERO_WIN_RULES.minTrades ? "✓" : "✗"}
+				</Badge>
+				<span className="text-txt-300">
+					{t("ruleMinTrades", {
+						min: HERO_WIN_RULES.minTrades,
+						actual: run.summary.totalTrades,
+					})}
+				</span>
+			</li>
+		</ul>
+	</section>
+))
+GatesSummary.displayName = "GatesSummary"
+
+type Translator = (
+	key: string,
+	values?: Record<string, string | number>
+) => string
+
+interface MetricsDisplayProps {
+	run: OptimizationRun
+	t: Translator
+	tWalkForward: Translator
+}
+
+const MetricsDisplay = memo(({ run, t, tWalkForward }: MetricsDisplayProps) => (
+	<section>
+		<h4 className="text-small text-txt-200 mb-s-100 font-medium">
+			{t("metricsTitle")}
+		</h4>
+		<dl className="text-tiny grid grid-cols-2 gap-x-3 gap-y-1">
+			<dt className="text-txt-300">{t("metricPF")}</dt>
+			<dd className="text-txt-100 font-mono">
+				{run.summary.profitFactor.toFixed(2)}
+				{run.summaryOOS && (
+					<>
+						{" / "}
+						<span className="gap-s-100 inline-flex items-center">
+							{run.summaryOOS.profitFactor.toFixed(2)}
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<span className="text-txt-300 hover:text-txt-200 border-bg-300 px-s-100 text-micro inline-flex cursor-help items-center rounded-full border py-[1px] font-medium">
+										<Info className="size-3" aria-hidden />
+									</span>
+								</TooltipTrigger>
+								<TooltipContent
+									id="freeze-oos-metric-tooltip"
+									className="max-w-xs"
+								>
+									{tWalkForward("outOfSampleTooltip")}
+								</TooltipContent>
+							</Tooltip>
+						</span>
+					</>
+				)}
+			</dd>
+			<dt className="text-txt-300">{t("metricDD")}</dt>
+			<dd className="text-trade-sell font-mono">
+				{formatCentsAsCurrency(run.summary.maxDrawdownCents, "BRL")}
+			</dd>
+			<dt className="text-txt-300">{t("metricTrades")}</dt>
+			<dd className="text-txt-100 font-mono">{run.summary.totalTrades}</dd>
+			<dt className="text-txt-300">{t("metricWinRate")}</dt>
+			<dd className="text-txt-100 font-mono">
+				{run.summary.winRate.toFixed(1)}%
+			</dd>
+		</dl>
+	</section>
+))
+MetricsDisplay.displayName = "MetricsDisplay"
 
 const FreezeHeroModal = ({
 	open,
@@ -107,114 +234,8 @@ const FreezeHeroModal = ({
 				</DialogHeader>
 
 				<div className="space-y-s-300 py-s-200">
-					<section>
-						<h4 className="text-small text-txt-200 mb-s-100 font-medium">
-							{t("gatesTitle")}
-						</h4>
-						<ul className="space-y-s-100">
-							<li className="text-tiny gap-s-200 flex items-center">
-								<Badge
-									id="freeze-gate-pf"
-									variant="outline"
-									className={
-										run.summary.profitFactor >= HERO_WIN_RULES.minProfitFactor
-											? "border-trade-buy text-trade-buy"
-											: "border-fb-error text-fb-error"
-									}
-								>
-									{run.summary.profitFactor >= HERO_WIN_RULES.minProfitFactor
-										? "✓"
-										: "✗"}
-								</Badge>
-								<span className="text-txt-300">
-									{t("ruleMinPF", {
-										min: HERO_WIN_RULES.minProfitFactor,
-										actual: run.summary.profitFactor.toFixed(2),
-									})}
-								</span>
-							</li>
-							<li className="text-tiny gap-s-200 flex items-center">
-								<Badge
-									id="freeze-gate-robust"
-									variant="outline"
-									className={
-										run.oosRobust === true
-											? "border-trade-buy text-trade-buy"
-											: "border-fb-error text-fb-error"
-									}
-								>
-									{run.oosRobust === true ? "✓" : "✗"}
-								</Badge>
-								<span className="text-txt-300">{t("ruleRobust")}</span>
-							</li>
-							<li className="text-tiny gap-s-200 flex items-center">
-								<Badge
-									id="freeze-gate-trades"
-									variant="outline"
-									className={
-										run.summary.totalTrades >= HERO_WIN_RULES.minTrades
-											? "border-trade-buy text-trade-buy"
-											: "border-fb-error text-fb-error"
-									}
-								>
-									{run.summary.totalTrades >= HERO_WIN_RULES.minTrades
-										? "✓"
-										: "✗"}
-								</Badge>
-								<span className="text-txt-300">
-									{t("ruleMinTrades", {
-										min: HERO_WIN_RULES.minTrades,
-										actual: run.summary.totalTrades,
-									})}
-								</span>
-							</li>
-						</ul>
-					</section>
-
-					<section>
-						<h4 className="text-small text-txt-200 mb-s-100 font-medium">
-							{t("metricsTitle")}
-						</h4>
-						<dl className="text-tiny grid grid-cols-2 gap-x-3 gap-y-1">
-							<dt className="text-txt-300">{t("metricPF")}</dt>
-							<dd className="text-txt-100 font-mono">
-								{run.summary.profitFactor.toFixed(2)}
-								{run.summaryOOS && (
-									<>
-										{" / "}
-										<span className="gap-s-100 inline-flex items-center">
-											{run.summaryOOS.profitFactor.toFixed(2)}
-											<Tooltip>
-												<TooltipTrigger asChild>
-													<span className="text-txt-300 hover:text-txt-200 border-bg-300 px-s-100 text-micro inline-flex cursor-help items-center rounded-full border py-[1px] font-medium">
-														<Info className="size-3" aria-hidden />
-													</span>
-												</TooltipTrigger>
-												<TooltipContent
-													id="freeze-oos-metric-tooltip"
-													className="max-w-xs"
-												>
-													{tWalkForward("outOfSampleTooltip")}
-												</TooltipContent>
-											</Tooltip>
-										</span>
-									</>
-								)}
-							</dd>
-							<dt className="text-txt-300">{t("metricDD")}</dt>
-							<dd className="text-trade-sell font-mono">
-								{formatCentsAsCurrency(run.summary.maxDrawdownCents, "BRL")}
-							</dd>
-							<dt className="text-txt-300">{t("metricTrades")}</dt>
-							<dd className="text-txt-100 font-mono">
-								{run.summary.totalTrades}
-							</dd>
-							<dt className="text-txt-300">{t("metricWinRate")}</dt>
-							<dd className="text-txt-100 font-mono">
-								{run.summary.winRate.toFixed(1)}%
-							</dd>
-						</dl>
-					</section>
+					<GatesSummary run={run} t={t} />
+					<MetricsDisplay run={run} t={t} tWalkForward={tWalkForward} />
 
 					<section className="space-y-s-100">
 						<label

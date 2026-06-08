@@ -46,7 +46,15 @@ export default [
 				"warn",
 				{ allowNumber: true, allowBoolean: true, allowNullish: false },
 			],
-			"@typescript-eslint/no-unnecessary-condition": "warn",
+			// Off by design: an exhaustive sample of all 292 sites flagged in 2026
+			// found that nearly every warning is a legitimate defensive guard
+			// (optional chains against external data, ?? fallbacks for partial
+			// responses, discriminated-union exhaustive checks). The rule's
+			// "trust the type system as ground truth" heuristic doesn't fit a
+			// codebase that hardens runtime boundaries beyond what TS narrows.
+			// Keep no-unsafe-* (security-adjacent) on; this one is noise here.
+			// See docs/gotchas.md for the policy.
+			"@typescript-eslint/no-unnecessary-condition": "off",
 
 			// React 19 / hooks v5.
 			"@eslint-react/no-nested-component-definitions": "error",

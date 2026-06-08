@@ -228,7 +228,12 @@ export const TradingCalendar = memo(
 					>
 						{calendarDays.map((dayData, index) => {
 							if (!dayData) {
-								return <div key={`empty-${index}`} className="aspect-square" />
+								return (
+									<div
+										key={`empty-${String(index)}`}
+										className="aspect-square"
+									/>
+								)
 							}
 
 							const dateKey = formatDateKey(dayData.date)

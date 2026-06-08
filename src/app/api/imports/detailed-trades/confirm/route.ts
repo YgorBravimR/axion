@@ -6,12 +6,18 @@
 
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
+import { z } from "zod"
 import { auth } from "@/auth"
 import { db } from "@/db/drizzle"
 import { trades as tradesTable } from "@/db/schema"
 import { previewCache } from "../route"
 import { toNumericString } from "@/lib/money"
 import type { GroupedTrade } from "@/lib/csv-parsers"
+
+const confirmSchema = z.object({
+	importId: z.string().min(1),
+	accountId: z.string().min(1),
+})
 
 /**
  * Converts a numeric value to string, throwing if null.
@@ -38,16 +44,15 @@ export const POST = async (req: NextRequest) => {
 			)
 		}
 		// Parse request
-		const body = await req.json()
-		const { importId, accountId }: { importId: string; accountId: string } =
-			body
-
-		if (!importId || !accountId) {
+		const body = (await req.json()) as Record<string, unknown>
+		const parsed = confirmSchema.safeParse(body)
+		if (!parsed.success) {
 			return NextResponse.json(
 				{ error: "api.errors.missingFields" },
 				{ status: 400 }
 			)
 		}
+		const { importId, accountId } = parsed.data
 
 		// Retrieve cached preview
 		const cached = previewCache.get(importId)

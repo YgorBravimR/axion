@@ -236,6 +236,7 @@ const SmartSearch = ({
 	) => {
 		setConditions([])
 		onFiltersChange(params)
+
 		onQuickFilterChange?.(key)
 	}
 
@@ -258,6 +259,7 @@ const SmartSearch = ({
 
 		const updated = [...conditions, condition]
 		setConditions(updated)
+
 		onQuickFilterChange?.(null)
 
 		// Apply all conditions
@@ -282,6 +284,7 @@ const SmartSearch = ({
 
 	const handleClearAll = () => {
 		setConditions([])
+
 		onQuickFilterChange?.(null)
 		onClear()
 	}

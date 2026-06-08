@@ -40,14 +40,20 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 
 	const isRMode = expectancyMode === "edge"
 
-	const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-	const dayLabels = [
-		tDays("mon"),
-		tDays("tue"),
-		tDays("wed"),
-		tDays("thu"),
-		tDays("fri"),
-	]
+	const days = useMemo(
+		() => ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+		[]
+	)
+	const dayLabels = useMemo(
+		() => [
+			tDays("mon"),
+			tDays("tue"),
+			tDays("wed"),
+			tDays("thu"),
+			tDays("fri"),
+		],
+		[tDays]
+	)
 
 	// Get translated short day name from English day name
 	const getTranslatedDayShort = (dayName: string): string => {
@@ -163,7 +169,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 			bestDay: sortedDays[0],
 			worstDay: sortedDays[sortedDays.length - 1],
 		}
-	}, [data, isRMode])
+	}, [data, isRMode, days, dayLabels])
 
 	const getMetricValue = (cell: TimeHeatmapCell): number =>
 		isRMode ? cell.avgR : cell.totalPnl

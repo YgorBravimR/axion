@@ -453,9 +453,9 @@ export const NotaImport = () => {
 								</span>
 							</div>
 							<div className="mt-s-200 space-y-s-100">
-								{preview.unmatchedFills.map((fill, idx) => (
+								{preview.unmatchedFills.map((fill) => (
 									<div
-										key={`unmatched-${idx}`}
+										key={`${fill.sequenceNumber}-${fill.side}`}
 										className="text-tiny text-txt-300 gap-s-200 flex items-center"
 									>
 										<span
@@ -574,7 +574,9 @@ export const NotaImport = () => {
 										{parseResult.netTotal.toLocaleString(locale, {
 											minimumFractionDigits: 2,
 										})}{" "}
-										{parseResult.netTotalDebitCredit === "C" ? "C" : "D"}
+										{parseResult.netTotalDebitCredit === "C"
+											? t("creditIndicator")
+											: t("debitIndicator")}
 									</span>
 								</div>
 							</div>

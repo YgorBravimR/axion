@@ -5,7 +5,7 @@
 		"direction": "long",
 		"label": "T1",
 		"expectedResult": "BE",
-		"closingBrickPrice": 186615
+		"closePrice": 186615
 	},
 	{
 		"date": "2026-03-25",
@@ -13,7 +13,7 @@
 		"direction": "long",
 		"label": "T2",
 		"expectedResult": "ST",
-		"closingBrickPrice": 186120
+		"closePrice": 186120
 	},
 	{
 		"date": "2026-03-25",
@@ -21,7 +21,7 @@
 		"direction": "long",
 		"label": "T3",
 		"expectedResult": "ST",
-		"closingBrickPrice": 186450
+		"closePrice": 186450
 	},
 	{
 		"date": "2026-03-25",
@@ -29,7 +29,7 @@
 		"direction": "long",
 		"label": "T4",
 		"expectedResult": "ST",
-		"closingBrickPrice": 186285
+		"closePrice": 186285
 	},
 	{
 		"date": "2026-03-25",
@@ -37,7 +37,7 @@
 		"direction": "long",
 		"label": "T5",
 		"expectedResult": "GA",
-		"closingBrickPrice": 186285
+		"closePrice": 186285
 	},
 	{
 		"date": "2026-03-25",
@@ -45,7 +45,7 @@
 		"direction": "long",
 		"label": "T6",
 		"expectedResult": "BE",
-		"closingBrickPrice": 186615
+		"closePrice": 186615
 	},
 	{
 		"date": "2026-03-25",
@@ -53,14 +53,6 @@
 		"direction": "long",
 		"label": "T7",
 		"expectedResult": "BE",
-		"closingBrickPrice": 186945
-	},
-	{
-		"date": "2026-03-25",
-		"brickIndex": 108,
-		"direction": "long",
-		"label": "T8",
-		"expectedResult": "BE",
-		"closingBrickPrice": 187110
+		"closePrice": 186945
 	}
 ]

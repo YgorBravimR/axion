@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, beforeEach } from "vitest"
+import "fake-indexeddb/auto"
 import { migrateRun } from "@/lib/optimize/storage"
 import type { OptimizationRun } from "@/types/backtest"
 
@@ -17,8 +18,17 @@ const baseRun = (overrides: Partial<OptimizationRun>): OptimizationRun =>
 		dayBreakdown: [],
 		pinned: false,
 		createdAt: "2026-05-30T00:00:00.000Z",
+		tradesRetained: false,
 		...overrides,
 	}) as OptimizationRun
+
+beforeEach(() => {
+	// Reset IndexedDB between tests by clearing the fake store.
+	// This ensures each test starts with a clean slate.
+	if (typeof indexedDB !== "undefined") {
+		indexedDB.deleteDatabase("axion:optimize")
+	}
+})
 
 describe("migrateRun (v3 → v4)", () => {
 	it("tags an untagged broad sweep as stage='broad'", () => {
@@ -149,7 +159,7 @@ describe("migrateRun (v5 → v6)", () => {
 						ema27_15m_key: "mme27_15m",
 						ema55_15m_key: "mme55_15m",
 						macd_key: "macd",
-						topos_fundos_key: "topos_fundos",
+
 						prev_15m_open_key: "prev_15m_open",
 						prev_15m_close_key: "prev_15m_close",
 						prev_60m_open_key: "prev_60m_open",
@@ -194,7 +204,7 @@ describe("migrateRun (v5 → v6)", () => {
 						ema27_15m_key: "mme27_15m",
 						ema55_15m_key: "mme55_15m",
 						macd_key: "macd",
-						topos_fundos_key: "topos_fundos",
+
 						prev_15m_open_key: "prev_15m_open",
 						prev_15m_close_key: "prev_15m_close",
 						prev_60m_open_key: "prev_60m_open",
@@ -241,7 +251,7 @@ describe("migrateRun (v5 → v6)", () => {
 						ema27_15m_key: "mme27_15m",
 						ema55_15m_key: "mme55_15m",
 						macd_key: "macd",
-						topos_fundos_key: "topos_fundos",
+
 						prev_15m_open_key: "prev_15m_open",
 						prev_15m_close_key: "prev_15m_close",
 						prev_60m_open_key: "prev_60m_open",
@@ -289,7 +299,7 @@ describe("migrateRun (v5 → v6)", () => {
 						ema27_15m_key: "mme27_15m",
 						ema55_15m_key: "mme55_15m",
 						macd_key: "macd",
-						topos_fundos_key: "topos_fundos",
+
 						prev_15m_open_key: "prev_15m_open",
 						prev_15m_close_key: "prev_15m_close",
 						prev_60m_open_key: "prev_60m_open",
@@ -335,7 +345,7 @@ describe("migrateRun (v5 → v6)", () => {
 						ema27_15m_key: "mme27_15m",
 						ema55_15m_key: "mme55_15m",
 						macd_key: "macd",
-						topos_fundos_key: "topos_fundos",
+
 						prev_15m_open_key: "prev_15m_open",
 						prev_15m_close_key: "prev_15m_close",
 						prev_60m_open_key: "prev_60m_open",

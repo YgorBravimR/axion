@@ -220,7 +220,7 @@ const matchNotaFillsToTrades = async (
 			// No trades found for this asset+date — all fills are unmatched
 			allUnmatchedFills.push(...group.buyFills, ...group.sellFills)
 			warnings.push(
-				`No trades found for ${group.asset} on ${notaDate.toISOString().split("T")[0]}`
+				`No trades found for ${group.asset ?? ""} on ${notaDate.toISOString().split("T")[0] ?? ""}`
 			)
 			continue
 		}

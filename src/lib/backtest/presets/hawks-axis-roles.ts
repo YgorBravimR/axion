@@ -2,17 +2,14 @@
  * Hawks sweep-axis role catalog.
  *
  * Source of truth for which Hawks sweepable axes change PnL versus only tier
- * label. Used by:
- *   - `<LeafControl>` in the inline sweep builder to surface a "tier label
- *     only" badge so the user doesn't waste optimizer budget on score-only
- *     axes when they want PnL-driven optimization.
- *   - `scripts/check-dead-axes.ts` CI gate to verify the classification is
- *     internally consistent with `hawks-quality-rules.ts`.
+ * label. Consumed by `<LeafControl>` in the inline sweep builder to surface a
+ * "tier label only" badge so the user doesn't waste optimizer budget on
+ * score-only axes when they want PnL-driven optimization.
  *
  * Update protocol when adding or moving a rule:
  *   1. Add the new path to LABEL_ONLY_PATHS if it gates only `quality.tier`.
- *   2. Re-run `pnpm tsx scripts/sweep-detective.ts` and confirm the axis
- *      appears under LABEL-ONLY (or GATES if it joined `blockRules`).
+ *   2. Validate behavior by sweeping the axis and confirming whether it lands
+ *      under LABEL-ONLY (no PnL change) or GATES (PnL/Sharpe shifts).
  *   3. If a path stops affecting tier labels entirely, remove it from the
  *      sweep catalog AND from this file (it's dead code).
  */
@@ -29,8 +26,6 @@
  * macdSlopeWindow, volumeEmaPeriod, aggressionThreshold) remain reused thresholds
  * and are GATES when referenced by a rule in block/both mode, LABEL-ONLY when
  * referenced only by score-side rules.
- *
- * Empirically verified by `scripts/sweep-detective.ts`.
  */
 const LABEL_ONLY_AXIS_PATHS: ReadonlySet<string> = new Set([
 	"entry.config.qualityGates.srLevelFavor",

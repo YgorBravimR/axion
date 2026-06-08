@@ -78,7 +78,7 @@ const POST = async (request: NextRequest) => {
 	const { accountId } = authResult.auth
 
 	try {
-		const body = await request.json()
+		const body = (await request.json()) as Record<string, unknown>
 		const validated = dailyNotesSchema.parse(body)
 
 		const target =

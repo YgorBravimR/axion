@@ -1,10 +1,39 @@
 import type { OptimizationRun } from "@/types/backtest"
 import { STORAGE_SCHEMA_VERSION } from "./provenance"
 import { paretoRetain } from "./pareto-retain"
+import { openDB, type IDBPDatabase } from "idb"
 
-const STORAGE_KEY = "axion:optimize:runs"
-const STORAGE_VERSION_KEY = "axion:optimize:schemaVersion"
+const DB_NAME = "axion:optimize"
+const DB_VERSION = 1
+const STORE_NAME = "runs"
+const LEGACY_STORAGE_KEY = "axion:optimize:runs"
+const LEGACY_STORAGE_VERSION_KEY = "axion:optimize:schemaVersion"
 const MAX_RUNS_WARNING = 50
+
+let dbInstance: IDBPDatabase<OptimizeDB> | null = null
+
+interface OptimizeDB {
+	runs: {
+		key: string
+		value: OptimizationRun
+	}
+}
+
+const getDB = async (): Promise<IDBPDatabase<OptimizeDB>> => {
+	if (dbInstance) {
+		return dbInstance
+	}
+
+	dbInstance = await openDB<OptimizeDB>(DB_NAME, DB_VERSION, {
+		upgrade: (db) => {
+			if (!db.objectStoreNames.contains(STORE_NAME)) {
+				db.createObjectStore(STORE_NAME, { keyPath: "id" })
+			}
+		},
+	})
+
+	return dbInstance
+}
 
 /**
  * Migrate a single run forward to the current schema. Idempotent — runs
@@ -118,56 +147,94 @@ const migrateRun = (run: OptimizationRun): OptimizationRun => {
 	return withV5Migration
 }
 
-const loadRuns = (): OptimizationRun[] => {
+const loadRuns = async (): Promise<OptimizationRun[]> => {
 	if (typeof window === "undefined") {
 		return []
 	}
+
 	try {
-		const raw = localStorage.getItem(STORAGE_KEY)
+		const db = await getDB()
+		const allKeys = await db.getAllKeys(STORE_NAME)
+
+		// If IDB has data, we're already migrated. Load and return.
+		if (allKeys.length > 0) {
+			const runs = await Promise.all(
+				allKeys.map((key) => db.get(STORE_NAME, key))
+			)
+			return runs.filter((r): r is OptimizationRun => r !== undefined)
+		}
+
+		// IDB is empty. Check if localStorage has legacy data to migrate.
+		const raw = localStorage.getItem(LEGACY_STORAGE_KEY)
 		if (!raw) {
 			return []
 		}
+
 		const runs = JSON.parse(raw) as OptimizationRun[]
 		const storedVersion = Number(
-			localStorage.getItem(STORAGE_VERSION_KEY) ?? "1"
+			localStorage.getItem(LEGACY_STORAGE_VERSION_KEY) ?? "1"
 		)
+
 		// Migrations are idempotent — running them on already-current data is
-		// a no-op — so we can apply unconditionally and persist the bumped
-		// version on the next save. This keeps the version check simple
-		// (single `<`) regardless of how many cumulative bumps land.
-		if (storedVersion < STORAGE_SCHEMA_VERSION) {
-			return runs.map(migrateRun)
-		}
-		return runs
-	} catch {
+		// a no-op — so we can apply unconditionally. This keeps the version
+		// check simple (single `<`) regardless of cumulative bumps.
+		const migratedRuns =
+			storedVersion < STORAGE_SCHEMA_VERSION ? runs.map(migrateRun) : runs
+
+		// Write migrated runs to IDB and clear localStorage.
+		const tx = db.transaction(STORE_NAME, "readwrite")
+		const store = tx.objectStore(STORE_NAME)
+		const putPromises = migratedRuns.map((run) => store.put(run))
+		await Promise.all(putPromises)
+		await tx.done
+
+		// Clear legacy keys after successful migration.
+		localStorage.removeItem(LEGACY_STORAGE_KEY)
+		localStorage.removeItem(LEGACY_STORAGE_VERSION_KEY)
+
+		return migratedRuns
+	} catch (error) {
+		console.error("Failed to load optimization runs from IndexedDB", error)
 		return []
 	}
 }
 
-const saveRuns = (runs: OptimizationRun[]): void => {
+const saveRuns = async (runs: OptimizationRun[]): Promise<void> => {
 	if (typeof window === "undefined") {
 		return
 	}
+
 	try {
-		// Apply Pareto retention policy to manage localStorage quota: keep full
-		// trades only for Pareto-front runs and single-metric extremes. This ensures
-		// we can store complete optimization histories without hitting quota limits.
+		// Apply Pareto retention policy to manage storage quota: keep full
+		// trades only for Pareto-front runs and single-metric extremes. IndexedDB
+		// has gigabytes of headroom, but we retain this policy for consistency.
 		const retained = paretoRetain(runs)
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(retained))
-		localStorage.setItem(STORAGE_VERSION_KEY, String(STORAGE_SCHEMA_VERSION))
+
+		const db = await getDB()
+		const tx = db.transaction(STORE_NAME, "readwrite")
+		const store = tx.objectStore(STORE_NAME)
+
+		// Clear all existing runs and write retained set.
+		await store.clear()
+		const putPromises = retained.map((run) => store.put(run))
+		await Promise.all(putPromises)
+		await tx.done
 	} catch (error) {
-		// Log quota failures instead of silent swallow. Callers can inspect
-		// console.warn to diagnose storage issues.
-		console.warn("Failed to persist optimization runs to localStorage", error)
+		console.warn("Failed to persist optimization runs to IndexedDB", error)
 	}
 }
 
-const clearRuns = (): void => {
+const clearRuns = async (): Promise<void> => {
 	if (typeof window === "undefined") {
 		return
 	}
-	localStorage.removeItem(STORAGE_KEY)
-	localStorage.removeItem(STORAGE_VERSION_KEY)
+
+	try {
+		const db = await getDB()
+		await db.clear(STORE_NAME)
+	} catch (error) {
+		console.warn("Failed to clear optimization runs from IndexedDB", error)
+	}
 }
 
 const isNearCapacity = (runs: OptimizationRun[]): boolean =>
