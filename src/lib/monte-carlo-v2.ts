@@ -18,6 +18,7 @@ import {
 	toSortedNonEmpty,
 	type NonEmptyArray,
 } from "@/lib/non-empty"
+import { sampleStdDev } from "@/lib/finance/annualize"
 
 // ==========================================
 // MONTE CARLO V2 — DAY-AWARE SIMULATION
@@ -868,12 +869,7 @@ const aggregateStatisticsV2 = (
 		arr.length === 0 ? 0 : mean(arr as NonEmptyArray<number>)
 
 	const stdDev = (values: readonly number[]): number => {
-		if (values.length === 0) {
-			return 0
-		}
-		const avg = meanOrZero(values)
-		const squaredDiffs = values.map((v) => Math.pow(v - avg, 2))
-		return Math.sqrt(meanOrZero(squaredDiffs))
+		return sampleStdDev(values)
 	}
 
 	const profitableRuns = runs.filter((r) => r.totalPnl > 0).length
@@ -899,8 +895,9 @@ const aggregateStatisticsV2 = (
 			dailyReturns.reduce((sum, r) => (r < 0 ? sum + r * r : sum), 0) /
 				dailyReturns.length
 		)
-		perRunSharpes.push(sd > 0 ? m / sd : 0)
-		perRunSortinos.push(dd > 0 ? m / dd : 0)
+		// Compute daily Sharpe/Sortino, then annualize by multiplying by √252
+		perRunSharpes.push(sd > 0 ? (m / sd) * Math.sqrt(252) : 0)
+		perRunSortinos.push(dd > 0 ? (m / dd) * Math.sqrt(252) : 0)
 	}
 	const sharpeRatio = meanOrZero(perRunSharpes)
 	const sortinoRatio = meanOrZero(perRunSortinos)

@@ -591,10 +591,13 @@ interface BacktestSummary {
 	maxDrawdownCents: number
 	maxConsecutiveLosses: number
 	maxConsecutiveWins: number
-	sharpeRatio: number
+	rSharpe: number // per-trade R-Sharpe (diagnostic only; not annualized)
+	sharpeRatio: number // annualized Sharpe (canonical user-facing metric, from daily returns)
 	expectancy: number // avg R-multiple (same as avgRMultiple, kept for clarity)
 	totalDays: number
 	tradingDays: number // days with at least one trade
+	cagr: number | null // compound annual growth rate (null if < 21 trading days)
+	annualizedVolatility: number // annualized standard deviation of daily returns
 }
 
 interface DayBreakdown {
