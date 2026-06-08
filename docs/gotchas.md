@@ -210,6 +210,14 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Timeframes seeded on first run**: `renko-5m-cal`, `renko-15m-cal`, `renko-60m-cal` (`timeframe.type = 'renko'`, `unit = 'points'`). The action upserts them via `onConflictDoNothing` — no separate migration needed.
 - **Date logged**: 2026-05-15.
 
+### Zod `safeParse` silently strips fields the engine reads — creates asymmetry between validated/unvalidated code paths
+
+- **What**: When a server action validates an input via `schema.safeParse(input)`, Zod's default behavior strips unknown keys. If the engine (or any downstream consumer) reads a field that exists on the runtime object but is NOT in the schema, the server-action path sees that field as `undefined` (and falls back to `??` defaults), while a parallel path that bypasses Zod (Web Worker, direct call, client-side engine) sees the field as set. Same recipe object in React state → two different engine behaviors. This caused the Hawks /backtest = 325 trades vs /optimize = 502 trades parity bug (commit `1022fdc4`): `fireCooldownBricks`, `wave1MinBricks`, `retracementMinBricks` were read by the engine at `hawks-triple-screen.ts:223–225` but absent from `hawksTripleScreenConfigSchema`. /backtest's `runBacktestAction` Zod-stripped them → engine used `5, 4, 2`. /optimize's worker bypassed Zod and `deriveInitialSelections` filled them with sweep-axis `defaultMin` of `1, 3, 1` → engine fired far more often. Both surfaces reported matching `recipeHash` because the hash only covered known fields.
+- **What to do**: When the engine reads a field with a `?? default` fallback, **the schema must list that field as `.optional()`**. Treat Zod schema and engine read-sites as one contract; drift between them is a silent correctness bug, not a validation niceness. Audit by greping engine modules for `config.X ?? Y` patterns and confirming every X appears in the corresponding Zod schema.
+- **Detection pattern**: Two surfaces that take the "same" config object via different entry points (one server-action + Zod, one worker/client + no validation) producing different deterministic outputs on identical inputs is almost always this bug. Reproduce by logging `JSON.stringify(recipe)` at engine entry in both contexts and diffing.
+- **Source**: `src/lib/validations/backtest.ts`, `src/lib/backtest/modules/entry/hawks-triple-screen.ts`, `src/app/actions/backtest.ts:123`, `src/lib/optimize/backtest-worker.ts:162`. Post-mortem: `docs/postMorten/2026-06-08-hawks-parity-baseline-divergence.md`.
+- **Date logged**: 2026-06-08.
+
 ---
 
 ## TypeScript / Lint

@@ -43,6 +43,48 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Backtest / Inspector
 
+### Precomputed structural pivots — `asset_pivots` table (N=1..6, all timeframes, Renko first)
+
+- **Priority**: P1
+- **Effort**: L
+- **Source**: 2026-06-08 — session continuing the /backtest vs /optimize parity fix (commit `1022fdc4`). Ygor surfaced that the engine reproduces topos/fundos at runtime via the v0.7 structural state machine (`src/lib/backtest/modules/entry/hawks-triple-screen.ts:223–260`), but every other surface that needs pivots — chart overlays, Fibonacci retracement/expansion levels, alternate-N strategy variants — would either re-derive them or fail to find them. Persisting the swing sequence per (asset, timeframe, confirmation_n) unlocks Fib features and gives every analytics surface a single canonical answer.
+- **What + Why**: Build a persisted swing-sequence table indexed by `(asset_id, timeframe_id, confirmation_n, brick_index)` and populate it via a one-time backfill + per-ingest write. Both the engine (entry filters, stop logic, Fib-confluent gates) and the chart (overlay levels, Fib boxes) read from the same source. The master goal stated by Ygor is **data fidelity**: every consumer sees the same pivot, no drift across recompute boundaries, no silent regressions when detection logic evolves.
+- **Schema shape** (single source of truth, normalized):
+  ```sql
+  create type pivot_type_enum as enum ('topo', 'fundo');
+  create table asset_pivots (
+    asset_id          text     not null references assets(id),
+    timeframe_id      text     not null references timeframes(id),
+    confirmation_n    smallint not null check (confirmation_n between 1 and 6),
+    brick_index       integer  not null,           -- 0-based row in price_candles for (asset, tf)
+    pivot_type        pivot_type_enum not null,
+    pivot_price       numeric(20, 8)  not null,    -- candle.high (topo) or candle.low (fundo)
+    pivot_timestamp   timestamptz     not null,
+    algorithm_version text     not null,           -- bump when detection logic changes (e.g. "pivots-v1")
+    computed_at       timestamptz not null default now(),
+    primary key (asset_id, timeframe_id, confirmation_n, brick_index)
+  );
+  create index idx_asset_pivots_seq
+    on asset_pivots (asset_id, timeframe_id, confirmation_n, brick_index);
+  ```
+  Read-time Fib pair-up uses a `LAG()` window — no `prior_brick_idx` denorm field, intentionally, to keep each row independently correct.
+- **Detection algorithm** (Renko v1; time-based deferred): generalize the v0.7 state machine to parameter N. Track `direction`, `runExtreme`, `runExtremeBrickIdx`, `oppositeStreak`. On direction flip, after `oppositeStreak >= N` and a prior run-extreme exists, that extreme becomes a pivot at confirmation_n=N. Compute N=1..6 in parallel during a single brick scan (O(candles × 6) with a ~10-op inner loop). Single source of truth in `src/lib/pivots/detect-renko.ts` consumed by both backfill and per-ingest writer.
+- **Fidelity invariants (testable)**:
+  1. **Subset rule** — `pivots(N=k+1) ⊆ pivots(N=k)` is a math fact (more confirmation can only drop pivots, never add). Assert as a hard test after backfill on every (asset, tf).
+  2. **Price-match rule** — every row's `pivot_price` must equal `candles[brick_index].high` (topo) or `.low` (fundo). Run as an assert during backfill; throws on mismatch.
+  3. **Algorithm-version stamp** — every row carries the version that produced it. Lets queries say "give me only pivots from v1+" and lets re-detection target only stale rows.
+  4. **Freshness** — when `price_candles` for a (asset, tf) is reloaded, any pivot rows with `computed_at < candles_loaded_at` must be invalidated and recomputed. Either cascade-delete or compare timestamps at read time.
+- **Engine wiring**: extend `fetchCandles` (`src/app/actions/backtest.ts:44`) to JOIN `asset_pivots` for the recipe's requested N and attach as `candle.pivots[N] = { type, price } | undefined`. Mirrors the existing anchor-merge pattern at lines 70–96. Hawks engine swaps its runtime detection for `candle.pivots[recipe.entry.config.pivotConfirmationN ?? 2]`. **Hard regression bar:** after the swap, /backtest and /optimize must still report 325 trades on the Hawks v0 baseline (the number locked in by commit `1022fdc4`).
+- **Display wiring**: `/api/pivots?asset=…&tf=…&n=2&from=…&to=…` returns the pivot stream; chart overlay component draws topo/fundo markers + on-demand Fib retracement / extension between any user-selected pair (math in `src/lib/fibonacci/levels.ts` — derive levels on read, do not persist).
+- **Phased rollout**:
+  1. Schema + detection lib + unit tests against v0.7 fixtures (must reproduce existing N=2 pivots exactly). **Touches `src/db/schema.ts` — protected path, requires explicit user go-ahead.**
+  2. Backfill script `scripts/backfill-pivots.ts` — Renko sources only in v1, idempotent via `ON CONFLICT DO NOTHING`. Runs the subset + price-match invariants as hard asserts at the end.
+  3. Engine swap (Hawks reads `candle.pivots[N]`), re-run the parity test, confirm 325/325.
+  4. Display API + Fib utils + chart overlay component.
+  5. Time-based candle detection — separate algorithm, same table, deferred until 1–4 land.
+- **Done when**: All six N values populated for every Renko (asset, timeframe) pair currently in `price_candles`; Hawks v0 still reports 325 trades on both /backtest and /optimize; subset and price-match invariants pass on the full table; one chart in the app displays an N=2 pivot overlay; Fib retracement/extension levels render between any two user-selected pivots.
+- **Date filed**: 2026-06-08.
+
 ### Hawks catalog import: replace formulaic exit math with brick-walk simulation
 
 - **Priority**: P2
