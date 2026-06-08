@@ -3,7 +3,6 @@ import type { BacktestTrade, UserEntry } from "@/types/backtest"
 export type ResultCode = "GA" | "BE" | "ST" | "EOD" | "???"
 
 export interface CatalogEntry extends UserEntry {
-	expectedResult?: string | null
 	closingBrickPrice?: number | null
 }
 

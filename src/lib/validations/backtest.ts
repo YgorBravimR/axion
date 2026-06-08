@@ -91,7 +91,7 @@ const userEntrySchema = z.object({
 	notes: z.string().optional(),
 	// Dev/test catalog files carry these for the audit pipeline; pass-through
 	// so the engine/UI can read them without Zod stripping them.
-	expectedResult: z.string().nullable().optional(),
+	expectedResult: z.enum(["BE", "GA", "ST"]).nullable().optional(),
 	closingBrickPrice: z.number().nullable().optional(),
 })
 

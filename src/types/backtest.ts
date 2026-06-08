@@ -225,7 +225,7 @@ interface UserEntry {
 	// Verification metadata — not consumed by the engine, used by probes
 	// (scripts/verify-csv-brick-closes.ts) to cross-check that the stored
 	// brick at this (date, brickIndex) matches the user's observed value.
-	expectedResult?: "BE" | "GA" | "ST" // CSV outcome code: BE=breakeven, GA=gain, ST=stop
+	expectedResult?: "BE" | "GA" | "ST" | null // CSV outcome code: BE=breakeven, GA=gain, ST=stop; null when CSV row omits it
 	closePrice?: number // raw points (e.g., 182100) — FECHAMENTO BOX from CSV
 }
 
