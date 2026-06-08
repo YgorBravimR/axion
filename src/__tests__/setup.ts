@@ -7,6 +7,10 @@
 
 import { beforeEach, vi } from "vitest"
 import { resetTradeIdCounter } from "./lib/fixtures/trade-factory"
+import { loadEnvFile } from "process"
+
+// Load .env file for tests that need DB access
+loadEnvFile(".env")
 
 // next-intl/server cannot run in Vitest's Node environment — it requires the
 // Next.js RSC runtime. Mock it globally so any test that imports a server action
