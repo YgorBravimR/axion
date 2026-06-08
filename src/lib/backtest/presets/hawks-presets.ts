@@ -57,18 +57,14 @@ const hawksV0: StrategyRecipe = {
 			ema27_15m_key: "mme27_15m",
 			ema55_15m_key: "mme55_15m",
 			macd_key: "macd",
-			topos_fundos_key: "topos_fundos",
 			prev_15m_open_key: "prev_15m_open",
 			prev_15m_close_key: "prev_15m_close",
 			prev_60m_open_key: "prev_60m_open",
 			prev_60m_close_key: "prev_60m_close",
 			// WIN micro-mini Bovespa: 1 tick = 5 points, brick = 20 ticks = 100 points
 			brickSize5mPoints: 100,
-			// Process from market open so the morning's first pivots (FUNDO
-			// painted around 09:04, TOPO around 09:10) update state. The
-			// "first wave" structural anchors are established here; gating
-			// at 09:30 would silently skip them and inherit stale pivots
-			// from the previous session.
+			// Process from market open so the morning's first pivots are detected
+			// via structural analysis. The engine uses 2-brick confirmation on 5m.
 			startTime: 900,
 			endTime: 1730,
 			// Quality gates default OFF — the audit toggles them on per run.
@@ -98,7 +94,6 @@ const hawksV0: StrategyRecipe = {
 		"mme55_60m",
 		"mme27_15m",
 		"mme55_15m",
-		"topos_fundos",
 		"prev_15m_open",
 		"prev_15m_close",
 		"prev_60m_open",

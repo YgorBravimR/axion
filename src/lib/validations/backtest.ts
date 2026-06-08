@@ -68,7 +68,6 @@ const hawksTripleScreenConfigSchema = z.object({
 	ema27_15m_key: z.string().min(1),
 	ema55_15m_key: z.string().min(1),
 	macd_key: z.string().min(1),
-	topos_fundos_key: z.string().min(1),
 	prev_15m_open_key: z.string().min(1),
 	prev_15m_close_key: z.string().min(1),
 	prev_60m_open_key: z.string().min(1),

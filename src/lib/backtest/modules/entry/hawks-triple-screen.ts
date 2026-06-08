@@ -12,7 +12,7 @@ import {
 } from "./hawks-quality-rules"
 
 /**
- * Hawks triple-screen entry module (engine v0.4 — real-time TOPO MENOR).
+ * Hawks triple-screen entry module (engine v0.7 — structural pivot detection).
  *
  * Iteration log:
  *   - v0.3 waited for the TOPOS E FUNDOS indicator to mark TOPO MENOR. The
@@ -21,23 +21,29 @@ import {
  *     window is already past. That cost us T1/T3/T4 on 2026-05-13 — only T2
  *     (where the indicator had time to confirm before the bearish brick)
  *     fired.
- *   - v0.4 uses the indicator only for the two anchor pivots (TOPO MAIOR,
- *     FUNDO) and detects the TOPO MENOR in real time: any bearish brick
+ *   - v0.4 used the indicator only for the two anchor pivots (TOPO MAIOR,
+ *     FUNDO) and detected the TOPO MENOR in real time: any bearish brick
  *     after FUNDO whose high < TOPO_MAIOR is a structural lower-high.
+ *   - v0.7 replaces the indicator-painted pivot source entirely with structural
+ *     detection: TOPO confirmed when 2 consecutive bearish bricks close after
+ *     a bullish sequence (value = high of the last bullish brick); FUNDO
+ *     confirmed when 2 consecutive bullish bricks close after a bearish
+ *     sequence (value = low of the last bearish brick). This eliminates the
+ *     dependency on the CSV-sourced `topos_fundos` column, which the Phase-5
+ *     migration stopped writing post-2026-06-05.
  *
  * SHORT setup (mirrored for LONG):
- *   1. Indicator paints TOPO_MAIOR.
- *   2. Indicator paints FUNDO with (TOPO_MAIOR − FUNDO) ≥ 4 × brick.
+ *   1. Engine detects TOPO_MAIOR via 2-brick structural confirmation.
+ *   2. Engine detects FUNDO with (TOPO_MAIOR − FUNDO) ≥ 4 × brick.
  *   3. After FUNDO, track the max brick high (the running retracement peak).
  *   4. On every bearish brick whose `high < TOPO_MAIOR` AND
  *      `maxHighSinceFundo − FUNDO ≥ 2 × brick` AND the 15m/60m gate
  *      passes → fire SHORT at this brick's close. Stop = 1 brick against.
  *
  * Re-arm policy: after a fire, keep TOPO_MAIOR and clear FUNDO + retracement
- * peak; wait for the indicator to paint the next FUNDO (it will once 2 up
- * bricks confirm a swing low), then resume the per-brick lower-high watch.
- * TOPO_MAIOR only rolls forward when the indicator paints a TOPO higher
- * than the current anchor.
+ * peak; wait for the next FUNDO structural confirmation, then resume the
+ * per-brick lower-high watch. TOPO_MAIOR only rolls forward when structural
+ * confirmation paints a TOPO higher than the current anchor.
  */
 
 type Phase =
@@ -64,6 +70,10 @@ interface HawksState {
 	// Re-arm cooldown: brickIndex of the last fire. Used to require N bricks
 	// between fires. null = no fire yet today.
 	lastFireBrickIndex: number | null
+	// Structural pivot detector state for 2-brick confirmation on 5m.
+	// Track the last brick's direction and high/low to detect consecutive moves.
+	lastBrickWasBullish: boolean | null // true = bullish (close > open), false = bearish
+	priorExtremePrice: number | null // high of last bullish (for TOPO), low of last bearish (for FUNDO)
 	// Carried across bricks for stateful quality rules (MACD slope, vol EMA).
 	qualityContext: QualityContext
 }
@@ -80,6 +90,8 @@ const createInitialHawksState = (): HawksState => ({
 	minLowSinceTopo: null,
 	consecutiveAgainstInWave1: 0,
 	lastFireBrickIndex: null,
+	lastBrickWasBullish: null,
+	priorExtremePrice: null,
 	qualityContext: createQualityContext(),
 })
 
@@ -178,7 +190,7 @@ const processHawksCandle = (
 	// Cross-day continuity: keep the prior TOPO/FUNDO anchors and pivot
 	// alternation, but clear the intraday retracement tracking so we don't
 	// fire on the first brick of a new session using yesterday's mid-day
-	// peak as `maxHighSinceFundo`.
+	// peak as `maxHighSinceFundo`. Also reset the structural detector.
 	const dayBoundary = ctx.candleIndexInDay === 0
 	const base: HawksState = dayBoundary
 		? {
@@ -190,6 +202,8 @@ const processHawksCandle = (
 				minLowSinceTopo: null,
 				consecutiveAgainstInWave1: 0,
 				lastFireBrickIndex: null,
+				lastBrickWasBullish: null,
+				priorExtremePrice: null,
 			}
 		: state
 
@@ -197,9 +211,6 @@ const processHawksCandle = (
 		return { state: base, signal: null }
 	}
 
-	const ind = candle.indicators
-	const pivotRaw = ind[config.topos_fundos_key]
-	const pivot = typeof pivotRaw === "number" ? pivotRaw : null
 	const isBullish = candle.close > candle.open
 	const isBearish = candle.close < candle.open
 	// Dynamic brickSize from the brick's own body (= (R-1) × tickSize for
@@ -401,20 +412,63 @@ const processHawksCandle = (
 	}
 
 	// ────────────────────────────────────────────────────────────────────
-	// Pivot handling — runs AFTER the fire checks. Updates anchors for
-	// future bricks. Every new indicator-painted pivot updates the
-	// corresponding anchor (always-update; the "TOPO ANTERIOR" is the
-	// most recent indicator TOPO, not the all-time high).
+	// Structural pivot detection — runs AFTER the fire checks.
+	// Confirms TOPO when 2 consecutive bearish bricks close after bullish
+	// sequence; FUNDO when 2 consecutive bullish bricks close after bearish
+	// sequence. Each detection updates the corresponding anchor.
 	// ────────────────────────────────────────────────────────────────────
-	if (pivot !== null) {
+
+	// Check for 2-brick confirmation pattern.
+	// priorExtremePrice stores the extreme (high for bullish, low for bearish) of
+	// the LAST brick of that direction. When we see 2 consecutive of the opposite
+	// direction, that extreme becomes the pivot value.
+	let structuralPivot: { type: "topo" | "fundo"; price: number } | null = null
+
+	if (next.lastBrickWasBullish === true && isBearish) {
+		// Transition from bullish to bearish. The prior bullish extreme is stored;
+		// if we see another bearish next, it becomes a TOPO. For now, update direction
+		// but keep the stored extreme.
+		next.lastBrickWasBullish = false
+		// Don't overwrite priorExtremePrice yet — it holds the last bullish high.
+	} else if (next.lastBrickWasBullish === false && isBearish) {
+		// Two consecutive bearish bricks. The stored bullish high is our TOPO.
+		if (next.priorExtremePrice !== null) {
+			structuralPivot = { type: "topo", price: next.priorExtremePrice }
+		}
+		// Update extreme to this bearish brick's low for potential FUNDO.
+		next.priorExtremePrice = candle.low
+	} else if (next.lastBrickWasBullish === false && isBullish) {
+		// Transition from bearish to bullish. The prior bearish extreme is stored;
+		// if we see another bullish next, it becomes a FUNDO. For now, just update direction.
+		next.lastBrickWasBullish = true
+		// Don't overwrite priorExtremePrice yet — it holds the last bearish low.
+	} else if (next.lastBrickWasBullish === true && isBullish) {
+		// Two consecutive bullish bricks. The stored bearish low is our FUNDO.
+		if (next.priorExtremePrice !== null) {
+			structuralPivot = { type: "fundo", price: next.priorExtremePrice }
+		}
+		// Update extreme to this bullish brick's high for potential TOPO.
+		next.priorExtremePrice = candle.high
+	} else {
+		// Initialize on first brick.
+		next.lastBrickWasBullish = isBullish
+		next.priorExtremePrice = isBullish ? candle.high : candle.low
+	}
+
+	// Process structural pivot if detected.
+	if (structuralPivot !== null) {
+		const pivot = structuralPivot.price
 		const prev = next.lastPivotPrice
+
+		// Classify current pivot relative to previous (if available).
 		const isTopoPivot = prev === null ? null : pivot > prev
 		const isFundoPivot = prev === null ? null : pivot < prev
 		next.lastPivotPrice = pivot
 
-		if (isTopoPivot === true) {
-			// SHORT anchor: always set topoMaior to the latest indicator
-			// TOPO. Clear fundo + retracement (fresh wave-1 starts now).
+		if (structuralPivot.type === "topo" && isTopoPivot !== false) {
+			// TOPO confirmation (and not lower than prior pivot, or first pivot).
+			// SHORT anchor: always set topoMaior to the latest structural TOPO.
+			// Clear fundo + retracement (fresh wave-1 starts now).
 			next.topoMaiorPrice = pivot
 			next.fundoPrice = null
 			next.maxHighSinceFundo = null
@@ -427,15 +481,16 @@ const processHawksCandle = (
 				next.minLowSinceTopo = pivot
 				next.phase = "WAVE_2_DOWN"
 			}
-		} else if (isFundoPivot === true) {
+		} else if (structuralPivot.type === "fundo" && isFundoPivot !== false) {
+			// FUNDO confirmation (and not higher than prior pivot, or first pivot).
 			// SHORT side: this FUNDO is the wave-1 endpoint.
 			if (next.topoMaiorPrice !== null) {
 				next.fundoPrice = pivot
 				next.maxHighSinceFundo = pivot
 				next.phase = "WAVE_2_UP"
 			}
-			// LONG anchor: always set fundoMaior to the latest indicator
-			// FUNDO. Clear topo + retracement.
+			// LONG anchor: always set fundoMaior to the latest structural FUNDO.
+			// Clear topo + retracement.
 			next.fundoMaiorPrice = pivot
 			next.topoPrice = null
 			next.minLowSinceTopo = null
@@ -446,8 +501,6 @@ const processHawksCandle = (
 				next.consecutiveAgainstInWave1 = 0
 			}
 		}
-		// First pivot of all time (prev === null): we can't classify
-		// without a reference. Wait for the next pivot.
 	}
 
 	return { state: next, signal: null }

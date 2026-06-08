@@ -114,11 +114,6 @@ interface HawksTripleScreenConfig {
 	ema27_15m_key: string // default: "mme27_15m"
 	ema55_15m_key: string // default: "mme55_15m"
 	macd_key: string // default: "macd"
-	// ProfitChart "TOPOS E FUNDOS" pivot column. Sparse — a value (the pivot
-	// price) appears only on bars that are confirmed pivots; the rest are
-	// empty. Alternation TOPO↔FUNDO is implicit; the engine classifies by
-	// comparing each pivot value to the previous one.
-	topos_fundos_key: string // default: "topos_fundos"
 	// Previous-closed-candle OHLC projected from 15m / 60m at ingest time.
 	// Used by the higher-TF gate: the brick BEFORE the current one must have
 	// opened AND closed below both EMAs (for SHORT) / above both (for LONG).

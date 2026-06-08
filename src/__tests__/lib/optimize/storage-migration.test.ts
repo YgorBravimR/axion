@@ -159,7 +159,7 @@ describe("migrateRun (v5 → v6)", () => {
 						ema27_15m_key: "mme27_15m",
 						ema55_15m_key: "mme55_15m",
 						macd_key: "macd",
-						topos_fundos_key: "topos_fundos",
+
 						prev_15m_open_key: "prev_15m_open",
 						prev_15m_close_key: "prev_15m_close",
 						prev_60m_open_key: "prev_60m_open",
@@ -204,7 +204,7 @@ describe("migrateRun (v5 → v6)", () => {
 						ema27_15m_key: "mme27_15m",
 						ema55_15m_key: "mme55_15m",
 						macd_key: "macd",
-						topos_fundos_key: "topos_fundos",
+
 						prev_15m_open_key: "prev_15m_open",
 						prev_15m_close_key: "prev_15m_close",
 						prev_60m_open_key: "prev_60m_open",
@@ -251,7 +251,7 @@ describe("migrateRun (v5 → v6)", () => {
 						ema27_15m_key: "mme27_15m",
 						ema55_15m_key: "mme55_15m",
 						macd_key: "macd",
-						topos_fundos_key: "topos_fundos",
+
 						prev_15m_open_key: "prev_15m_open",
 						prev_15m_close_key: "prev_15m_close",
 						prev_60m_open_key: "prev_60m_open",
@@ -299,7 +299,7 @@ describe("migrateRun (v5 → v6)", () => {
 						ema27_15m_key: "mme27_15m",
 						ema55_15m_key: "mme55_15m",
 						macd_key: "macd",
-						topos_fundos_key: "topos_fundos",
+
 						prev_15m_open_key: "prev_15m_open",
 						prev_15m_close_key: "prev_15m_close",
 						prev_60m_open_key: "prev_60m_open",
@@ -345,7 +345,7 @@ describe("migrateRun (v5 → v6)", () => {
 						ema27_15m_key: "mme27_15m",
 						ema55_15m_key: "mme55_15m",
 						macd_key: "macd",
-						topos_fundos_key: "topos_fundos",
+
 						prev_15m_open_key: "prev_15m_open",
 						prev_15m_close_key: "prev_15m_close",
 						prev_60m_open_key: "prev_60m_open",
