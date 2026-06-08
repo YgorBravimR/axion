@@ -103,6 +103,10 @@ const hawksV0: StrategyRecipe = {
 		"prev_15m_close",
 		"prev_60m_open",
 		"prev_60m_close",
+		// SR-level keys used by hawks-quality-rules. `ajuste` is sourced from
+		// asset_session_anchors at fetch time; `vwap_d` from per-brick JSONB.
+		"vwap_d",
+		"ajuste",
 	],
 }
 

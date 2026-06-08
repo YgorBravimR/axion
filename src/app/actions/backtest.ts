@@ -10,9 +10,14 @@ import { backtestInputSchema } from "@/lib/validations/backtest"
 import { runBacktest } from "@/lib/backtest/engine"
 import { getAssetsWithPriceData } from "@/app/actions/candle-query"
 import { db } from "@/db/drizzle"
-import { assets, priceCandles } from "@/db/schema"
-import { and, eq, gte, lte, asc } from "drizzle-orm"
+import { assets } from "@/db/schema"
+import { eq } from "drizzle-orm"
 import { BRT_OFFSET } from "@/lib/dates"
+import {
+	getDailyAnchors,
+	candleTimestampToBrtDate,
+} from "@/lib/indicators/daily-anchors"
+import { getCandleStore } from "@/lib/candle-store"
 import { getTranslations } from "next-intl/server"
 
 const MAX_CANDLES = 500_000
@@ -50,52 +55,44 @@ const fetchCandles = async (
 	const to = new Date(`${dateRange.to}T18:00:00${BRT_OFFSET}`)
 	const needsIndicators = requiredIndicators.length > 0
 
-	const selectFields = {
-		timestamp: priceCandles.timestamp,
-		open: priceCandles.open,
-		high: priceCandles.high,
-		low: priceCandles.low,
-		close: priceCandles.close,
-		candleIndex: priceCandles.candleIndex,
-		...(needsIndicators ? { indicators: priceCandles.indicators } : {}),
-	}
+	// Pull rows via the candle store (R2 Parquet via DuckDB).
+	const baseRows = await getCandleStore().fetchRange({
+		assetId,
+		timeframeId,
+		from,
+		to,
+		indicatorKeys: needsIndicators ? requiredIndicators : undefined,
+	})
 
-	const rows = await db
-		.select(selectFields)
-		.from(priceCandles)
-		.where(
-			and(
-				eq(priceCandles.assetId, assetId),
-				eq(priceCandles.timeframeId, timeframeId),
-				gte(priceCandles.timestamp, from),
-				lte(priceCandles.timestamp, to)
-			)
+	// Daily session anchors (ajuste, prior O/H/L/C, pivots, …) live in
+	// `asset_session_anchors`, one row per (asset, BRT date). Anchor data
+	// stays on Postgres regardless of candle backend; merge per-row below.
+	const anchorsByDate = needsIndicators
+		? await getDailyAnchors(assetId, dateRange.from, dateRange.to)
+		: new Map<string, Record<string, unknown>>()
+
+	const candles: CandleRow[] = baseRows.map((row) => {
+		if (!needsIndicators) {
+			return row
+		}
+		const anchorPayload = anchorsByDate.get(
+			candleTimestampToBrtDate(new Date(row.timestamp))
 		)
-		.orderBy(asc(priceCandles.timestamp))
-
-	const requiredKeys = new Set(requiredIndicators)
-
-	const candles: CandleRow[] = rows.map((r) => {
-		const indicators: Record<string, number> = {}
-		if (needsIndicators && "indicators" in r && r.indicators) {
-			const raw = r.indicators as Record<string, number>
-			for (const key of requiredKeys) {
-				const value = raw[key]
-				if (value !== undefined) {
-					indicators[key] = value
+		if (!anchorPayload) {
+			return row
+		}
+		// Fill in any indicator the row didn't carry but the anchor does.
+		// Per-row keys win over anchors (anchors are session-constant).
+		const merged: Record<string, number> = { ...row.indicators }
+		for (const key of requiredIndicators) {
+			if (merged[key] === undefined) {
+				const anchorValue = anchorPayload[key]
+				if (typeof anchorValue === "number") {
+					merged[key] = anchorValue
 				}
 			}
 		}
-
-		return {
-			timestamp: r.timestamp.toISOString(),
-			open: Number(r.open),
-			high: Number(r.high),
-			low: Number(r.low),
-			close: Number(r.close),
-			candleIndex: r.candleIndex,
-			indicators,
-		}
+		return { ...row, indicators: merged }
 	})
 
 	if (candles.length === 0) {

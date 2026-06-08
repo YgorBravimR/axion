@@ -19,7 +19,6 @@ import { useToast } from "@/components/ui/toast"
 import { FeatureStamp } from "@/components/ui/feature-stamp"
 import { HelpText } from "@/components/ui/help-text"
 import { startHawksMode, stopHawksMode } from "@/app/actions/hawks-mode"
-import { HawksImportSection } from "./hawks-import-section"
 
 interface HawksSettingsProps {
 	initialActive: boolean
@@ -126,8 +125,6 @@ const HawksSettings = ({ initialActive }: HawksSettingsProps) => {
 					</div>
 				</div>
 			</div>
-
-			<HawksImportSection />
 
 			<AlertDialog
 				open={pendingTarget !== null}

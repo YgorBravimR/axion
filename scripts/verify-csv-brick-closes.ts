@@ -26,7 +26,7 @@ import postgres from "postgres"
 import { isNeonUrl } from "@/db/url"
 
 const ASSET_SYMBOL = "WIN"
-const TIMEFRAME_CODE = "5m"
+const TIMEFRAME_CODE = "hawk_5m_win"
 const TOLERANCE_POINTS = 5 // 1 WIN tick
 
 interface CatalogEntry {

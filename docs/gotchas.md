@@ -40,6 +40,12 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 
 ## Drizzle ORM / Database Drivers
 
+### Candle data lives in R2 Parquet, not Postgres — `price_candles` was dropped 2026-06-08
+
+- **What**: `price_candles` no longer exists in the Drizzle schema. Phase 5 of the migration in `docs/backlog.md` (2026-06-08) moved every candle row to R2 Parquet under `s3://bravo-journal/candles/<tfCode>/<assetSymbol>.parquet`. The on-Postgres registry survives as `price_data_versions` — that's the catalog the UI reads to know what datasets exist. `priceCandles`, `PriceCandle`, `NewPriceCandle`, and `createDrizzleCandleStore` are gone.
+- **What to do**: Read candles via `getCandleStore().fetchRange({ assetId, timeframeId, from, to, indicatorKeys })` from `@/lib/candle-store`. The factory returns a DuckDB-backed `CandleStore` that reads Parquet (local on dev, R2 on prod via `httpfs`). When `indicatorKeys === "*"` it projects every key; an array projects only the requested keys. Write paths use `writeCandleParquet({ timeframeCode, assetSymbol, indicatorKeys, rows, … })` from `@/lib/candle-store/parquet-writer`. **Do not** add a new Drizzle table or model to hold candle data — that's the regression this migration was designed to prevent. Loaders still upsert `price_data_versions` after each Parquet write so the UI catalog stays in sync. CLI dev probes that hand-roll `SELECT … FROM price_candles` will fail at runtime; rewrite them through the candle-store or delete them.
+- **Source**: 2026-06-08 phase-5 cutover — migration `src/db/migrations/0017_good_thunderbolts.sql` (single line: `DROP TABLE "price_candles" CASCADE;`). Trade-off: 91% storage reduction (400 MB → 35 MB), R2 cold read 663 ms / warm 251 ms. Bit-equal verification: 4/4 probes × 8,802 rows × ~30 indicators on phase 4 round-trip. The CSV files on disk remain source-of-truth — Parquet can always be re-built.
+
 ### `pnpm db:generate` crashes on column rename without a TTY — and for backfill migrations you don't want the rename anyway
 
 - **What**: `drizzle-kit generate` interactively asks "Is column `X` -> `Y` a rename?" any time it detects a column being removed and a new one added in the same diff. In a non-TTY context (Claude, CI) it crashes with `Error: Interactive prompts require a TTY terminal`. Piping `\n` or wrapping in `script -q /dev/null` doesn't help — the `process.stdin.isTTY` check fires before any input is read.
@@ -75,6 +81,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: 2026-05-26 session adding `pnpm db:migrate` to the deploy workflow alongside the `defaultAsset → defaultAssetId` rename. The rename itself shipped single-shot (acceptable given low traffic + handful-of-rows blast radius), but future renames should follow expand-contract.
 
 ---
+
+### DuckDB Node API returns DECIMAL as `{width, scale, value}` and TIMESTAMP as `{micros: bigint}` — naïve `Number(row.x)` silently corrupts data
+
+- **What**: `@duckdb/node-api` (the new "Neo" Node binding for DuckDB ≥1.5) does NOT return Parquet DECIMAL columns as JS numbers. They come back as `{width: 21, scale: 1, value: 1000}` — actual value is `value / 10^scale`. TIMESTAMP columns come back as `{micros: <BigInt>}`. BIGINT columns come back as JS BigInt. Only DOUBLE/REAL come back as JS number.
+- **Symptom**: `Number({width, scale, value})` returns `NaN`. If you don't notice (e.g., downstream code does `n > 0 ? ... : ...`), every NaN row silently evaluates the falsy branch — equity curves go to zero, fire checks never trigger, no error thrown. The bug is invisible unless you log raw row shape.
+- **What to do**: Two defenses. (a) On the write side, force the export schema to DOUBLE for numeric columns: `CAST(value AS DOUBLE)` in any `COPY (... ) TO 'x.parquet'` statement. (b) On the read side, never `Number(v)` raw — use a `toNumber(v)` helper that handles DECIMAL object shape, BigInt, and plain number. See `src/lib/candle-store/duckdb-impl.ts` (`toNumber` + `toIsoString`).
+- **Source**: 2026-06-08 phase-2 probe (`scripts/_probe-r2-duckdb.ts`) of price_candles → R2+DuckDB migration. The probe revealed the gotcha before any production code path used the impl. Saved a multi-hour silent-data-corruption hunt.
 
 ### Dual-mode rule fallback chain must be single-line — scatter it and missed fallbacks hide from code review
 
@@ -337,6 +350,37 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: `scripts/load-hawks-candles.ts` dedupes by `(timestamp, candle_index)` first-wins after sorting. Do **not** drop the unique index — it protects against real corruption. Do **not** dedupe at the CSV level (the source-of-truth file should match what ProfitChart exported). The loader logs e.g. `15m: dropped 202 duplicate (timestamp, candle_index) rows` so the count is visible per ingest.
 - **Source**: `scripts/load-hawks-candles.ts` (the `seen` set after the per-file sort).
 - **Date logged**: 2026-05-28.
+
+### Hawks candles are per-brick-size now (`R<n>`), not generic `5m/15m/1h`
+
+- **What**: As of 2026-06-05 the Hawks candle pipeline switched from "one big CSV per generic timeframe" to "one CSV per Renko brick size." The user exports each brick size separately (`15R.csv`, `17R.csv`, …, `123R.csv` under `/Users/ygorbravim/Downloads/axion/WIN`). The loader (`scripts/load-hawks-bricks-by-size.ts`) seeds one `timeframes` row per size (codes `R15`, `R17`, …) and ingests the raw bricks with all 28 CSV indicator columns stored verbatim in `indicators` JSONB (`ema9`, `macd1_histo`, `vwap_d`, etc.). The CSV's `contador` column → `candle_index` (gaps in `contador` are intentional — they match what ProfitChart shows on the chart, not row-order).
+- **Why**: Hawks brick size changes every Monday (`hawks_renko_sizes` table). A single backtest run spans multiple weeks, so a single fixed `timeframe_id` no longer represents the engine's "5m role" — different weeks need different brick sizes. The per-brick-size source data plus a materialized view (`Hawk_5m_win`/`Hawk_15m_win`/`Hawk_60m_win`) decouples raw ingest from role assignment.
+- **What to do**: Engine code reads from the materialized timeframes (`code = "hawk_5m_win"`, etc.), not from `R<n>` directly and not from the legacy `5m/15m/1h` codes (which still exist in the table but have 0 candles). To rebuild: `pnpm tsx scripts/load-hawks-bricks-by-size.ts` (raw R<n> ingest), then `pnpm tsx scripts/materialize-hawks-timeframes.ts` (role assignment + cross-TF projection). Run both whenever the source CSVs change. Run only the materializer when `hawks_renko_sizes` changes (e.g. new week's brick sizes added) — no re-ingest needed.
+- **Source**: `scripts/load-hawks-bricks-by-size.ts`, `scripts/materialize-hawks-timeframes.ts`, `src/app/actions/inspector-data.ts:182`, `src/app/actions/hawks-audit-debug.ts:92`.
+- **Date logged**: 2026-06-05.
+
+### Daily-constant indicators live in `asset_session_anchors`, not in candle JSONB
+
+- **What**: Values that are FIXED across the trading day (`ajuste`, `ajuste_adj`, future: prior O/H/L/C, pivot R1/R2/S1/S2, opening range, anchored VWAPs) are stored once per `(asset, BRT date)` in `asset_session_anchors`. They are NOT duplicated across every candle row. Engine code that still wants to read `candle.indicators.ajuste` does so transparently because `src/app/actions/backtest.ts:fetchCandles` merges the day's anchor payload into each candle's `indicators` blob in-memory at fetch time.
+- **Why it matters**: Old key names (`ajuste_d1`, `vwap_d_5m`) are obsolete. The canonical names match the CSV columns (`ajuste`, `vwap_d`). `vwap_d`/`vwap_w`/`vwap_m` are PER-BRICK and live in candle JSONB; only `ajuste`/`ajuste_adj` are anchor-table values. If you're tempted to add `prior_high` to candle JSONB, don't — write a new key in the loader's anchor-aggregation step (`scripts/load-hawks-bricks-by-size.ts:ANCHOR_COLS`) and let the existing fetch enrichment pick it up.
+- **What to do**: To consume a new anchor in engine code: (1) add the key to the strategy preset's `requiredIndicators`, (2) read it as `candle.indicators.<key>` in engine code, (3) make sure the loader writes it to the anchor payload. The Zod schema in `src/lib/indicators/daily-anchors.ts` is `.passthrough()` so unknown keys flow through without errors — but add the key explicitly to the schema once it's stable for type safety.
+- **Source**: `src/db/schema.ts:assetSessionAnchors`, `src/lib/indicators/daily-anchors.ts`, `src/app/actions/backtest.ts:fetchCandles`, `scripts/load-hawks-bricks-by-size.ts:ANCHOR_COLS`.
+- **Date logged**: 2026-06-07.
+
+### Neon free tier 512 MB ceiling — `VACUUM FULL` to reclaim space after large wipes
+
+- **What**: Neon's free tier caps project size at 512 MB. The Hawks pipeline loads ~317K candle rows × ~30 JSONB keys = ~465 MB. Re-running the loader (which does `DELETE FROM price_candles`) does NOT immediately reclaim space — Postgres marks tuples deleted but keeps the page allocations. A second ingest then hits `NeonDbError: could not extend file because project size limit (512 MB) has been exceeded`.
+- **What to do**: Before re-running the Hawks loader on a near-full project, run `TRUNCATE price_candles, price_data_versions, asset_session_anchors` followed by `VACUUM FULL` on each. `TRUNCATE` is faster than `DELETE` because it skips the per-row WAL and immediately reclaims tablespace at the next checkpoint. `VACUUM FULL` rewrites the table to compact pages. With both, the project drops from ~465 MB → ~14 MB. If iterations get tighter, upgrade Neon or carve the Hawks data into its own Neon project.
+- **Note on autovacuum**: Neon's autovacuum is conservative on free tier — don't expect it to reclaim hundreds of MB on its own. Manual VACUUM FULL is the reliable lever.
+- **Source**: 2026-06-07 session — hit the wall on the second loader run after adding `asset_session_anchors`. Recovery via `scripts/_vacuum.ts` (one-off, deleted after use).
+- **Date logged**: 2026-06-07.
+
+### Neon HTTP driver aborts large SELECTs with `ETIMEDOUT` — use postgres-js TCP for big reads
+
+- **What**: `@neondatabase/serverless`'s `neon()` HTTP client times out on long-running queries (~300K+ row SELECTs) with `TypeError: terminated` / `read ETIMEDOUT`. The HTTP API has aggressive read deadlines that surface only when the result set is large enough that streaming takes more than a few seconds. The error is opaque (no SQL context) and can look like a transient network failure.
+- **What to do**: For backfill/migration/materialization scripts that need to load tens of thousands of rows in one shot, use `postgres-js` over TCP directly: `const sql = postgres(process.env.DATABASE_URL!, { max: 4, idle_timeout: 30 })`. The Neon pooler hostname (`*-pooler.*.neon.tech`) supports raw TCP postgres connections. Don't try to work around the HTTP driver with smaller queries or retries — the underlying limit isn't going away. Production code paths (server actions, page fetches) should keep using the HTTP driver because they query small page-sized result sets and benefit from the lower connection overhead.
+- **Source**: `scripts/materialize-hawks-timeframes.ts` hit this on a 317K-row source load; fixed by switching to `postgres-js`.
+- **Date logged**: 2026-06-05.
 
 ### postgres-js + `jsonb`: never pre-stringify the value, pass the object
 

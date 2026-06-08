@@ -1,17 +1,17 @@
 # Axion — Server Actions & API
 
-> **Single source of truth: `src/app/actions/**` and `src/app/api/**`.**
-> This doc describes the *patterns* — response shape, auth, account scoping, error codes, and the action-vs-route split — not individual function signatures.
+> **Single source of truth: `src/app/actions/**`and`src/app/api/**`.**
+> This doc describes the _patterns_ — response shape, auth, account scoping, error codes, and the action-vs-route split — not individual function signatures.
 > For the live signature of any action, read its source file.
 
 ## 1. Two Layers
 
 Axion exposes its server-side surface in two ways:
 
-| Layer | Path | Use for |
-|---|---|---|
-| **Server Actions** | `src/app/actions/**/*.ts` | First-party calls from React Server Components and form actions. The default surface. |
-| **API Routes** | `src/app/api/**/route.ts` | Third-party callers, webhooks, file uploads, and internal endpoints under `/api/arch/*` consumed by client components or external tools. |
+| Layer              | Path                      | Use for                                                                                                                                  |
+| ------------------ | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Server Actions** | `src/app/actions/**/*.ts` | First-party calls from React Server Components and form actions. The default surface.                                                    |
+| **API Routes**     | `src/app/api/**/route.ts` | Third-party callers, webhooks, file uploads, and internal endpoints under `/api/arch/*` consumed by client components or external tools. |
 
 If both a server action and an API route exist for a feature, the action is canonical and the route is a thin HTTP wrapper around it. Never duplicate logic — share the underlying service function.
 
@@ -21,14 +21,15 @@ Every server action returns the canonical `ActionResponse<T>` defined in `src/ty
 
 ```ts
 type ActionResponse<T> = {
-  status: "success" | "error";
-  message: string;
-  data?: T;
-  errors?: Array<{ code: string; detail: string }>;
-};
+	status: "success" | "error"
+	message: string
+	data?: T
+	errors?: Array<{ code: string; detail: string }>
+}
 ```
 
 Rules:
+
 - Always populate `message` — it's not optional. Use a short user-readable phrase.
 - `data` is present only on `status: "success"`.
 - `errors` is an array, even for a single error, so callers can iterate uniformly.
@@ -58,22 +59,22 @@ There is no per-action role check sprinkled in code — role gating is done at t
 
 Use a stable, uppercase, snake-case code. Detail message is human-readable. Common codes:
 
-| Code | Meaning |
-|---|---|
-| `UNAUTHORIZED` | No session / not logged in |
-| `VALIDATION_ERROR` | Zod parse failure |
-| `NOT_FOUND` | Requested entity does not exist for this account |
-| `ACCOUNT_NOT_FOUND` | Active account not resolvable |
-| `FORBIDDEN` | Action not allowed for this user / role |
-| `CONFLICT` | Uniqueness or constraint violation |
+| Code                | Meaning                                          |
+| ------------------- | ------------------------------------------------ |
+| `UNAUTHORIZED`      | No session / not logged in                       |
+| `VALIDATION_ERROR`  | Zod parse failure                                |
+| `NOT_FOUND`         | Requested entity does not exist for this account |
+| `ACCOUNT_NOT_FOUND` | Active account not resolvable                    |
+| `FORBIDDEN`         | Action not allowed for this user / role          |
+| `CONFLICT`          | Uniqueness or constraint violation               |
 
 Tax-engine-specific:
 
-| Code | Meaning |
-|---|---|
-| `TAX_DISABLED` | Tax engine off for this account |
-| `MONTH_NOT_FINALIZED` | Operation requires the month to be closed |
-| `LEDGER_NOT_FOUND` / `LEDGER_ROW_NOT_FOUND` | Tax ledger row missing |
+| Code                                        | Meaning                                   |
+| ------------------------------------------- | ----------------------------------------- |
+| `TAX_DISABLED`                              | Tax engine off for this account           |
+| `MONTH_NOT_FINALIZED`                       | Operation requires the month to be closed |
+| `LEDGER_NOT_FOUND` / `LEDGER_ROW_NOT_FOUND` | Tax ledger row missing                    |
 
 Add a new code only when an existing one doesn't fit — keep the table small.
 
@@ -111,8 +112,7 @@ src/app/actions/
 ├── csv-import.ts            CSV trade import
 ├── nota-import.ts           BR brokerage nota import
 ├── ocr-import.ts            Screenshot OCR import
-├── candle-import.ts         Price candle import
-├── candle-query.ts          Price candle queries
+├── candle-query.ts          Price candle queries (reads R2 Parquet via candle-store)
 ├── indicators.ts            Indicator definitions
 ├── bug-reports.ts           In-app bug capture
 ├── email-verification.ts    Email verification flow

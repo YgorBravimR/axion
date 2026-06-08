@@ -10,16 +10,16 @@ import type {
 import type { TradeExecution } from "@/db/schema"
 import { db } from "@/db/drizzle"
 import {
-	priceCandles,
 	indicatorGroups,
 	indicatorDefinitions,
 	trades,
 	assets,
 	priceDataVersions,
 } from "@/db/schema"
-import { and, eq, gte, lte, asc, min, max } from "drizzle-orm"
+import { and, eq, asc } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
+import { getCandleStore } from "@/lib/candle-store"
 
 // Fetch candles for a specific time range
 export const getCandlesForRange = async (
@@ -39,28 +39,9 @@ export const getCandlesForRange = async (
 		// runtime then throws as "unexpected response," leaving any caller that
 		// doesn't .catch() stuck in a loading state forever.
 		await requireAuth()
-		const rows = await db
-			.select({
-				timestamp: priceCandles.timestamp,
-				open: priceCandles.open,
-				high: priceCandles.high,
-				low: priceCandles.low,
-				close: priceCandles.close,
-				candleIndex: priceCandles.candleIndex,
-				indicators: priceCandles.indicators,
-			})
-			.from(priceCandles)
-			.where(
-				and(
-					eq(priceCandles.assetId, params.assetId),
-					eq(priceCandles.timeframeId, params.timeframeId),
-					gte(priceCandles.timestamp, params.from),
-					lte(priceCandles.timestamp, params.to)
-				)
-			)
-			.orderBy(asc(priceCandles.timestamp))
 
-		// Fetch indicator groups with their keys
+		// Fetch indicator groups with their keys — we'll project every key
+		// from the candle store so the chart can toggle any indicator.
 		const groups = await db.query.indicatorGroups.findMany({
 			where: eq(indicatorGroups.isActive, true),
 			with: {
@@ -72,15 +53,17 @@ export const getCandlesForRange = async (
 			orderBy: asc(indicatorGroups.sortOrder),
 		})
 
-		const candles: CandleRow[] = rows.map((r) => ({
-			timestamp: r.timestamp.toISOString(),
-			open: Number(r.open),
-			high: Number(r.high),
-			low: Number(r.low),
-			close: Number(r.close),
-			candleIndex: r.candleIndex,
-			indicators: (r.indicators ?? {}) as Record<string, number>,
-		}))
+		const allIndicatorKeys = groups.flatMap((g) =>
+			g.indicators.map((i) => i.key)
+		)
+
+		const candles: CandleRow[] = await getCandleStore().fetchRange({
+			assetId: params.assetId,
+			timeframeId: params.timeframeId,
+			from: params.from,
+			to: params.to,
+			indicatorKeys: allIndicatorKeys,
+		})
 
 		const indicatorGroupsData: IndicatorGroupWithKeys[] = groups.map((g) => ({
 			key: g.key,
@@ -104,63 +87,48 @@ export const getCandlesForRange = async (
 	}
 }
 
-// Fetch available assets with price data
+// Fetch available assets with price data.
+//
+// Candle bytes live in R2 Parquet now (one file per asset+timeframe);
+// `priceDataVersions` is the on-Postgres registry that lists what's
+// available. `candleDateFrom` / `candleDateTo` are no longer derived
+// from priceCandles MIN/MAX — they return null until loaders persist
+// them on priceDataVersions (P3 follow-up).
 export const getAssetsWithPriceData = async () => {
 	try {
-		const [versions, dateRangeRows] = await Promise.all([
-			db.query.priceDataVersions.findMany({
-				with: {
-					asset: {
-						columns: {
-							id: true,
-							symbol: true,
-							name: true,
-							tickSize: true,
-							tickValue: true,
-							currency: true,
-						},
+		const versions = await db.query.priceDataVersions.findMany({
+			with: {
+				asset: {
+					columns: {
+						id: true,
+						symbol: true,
+						name: true,
+						tickSize: true,
+						tickValue: true,
+						currency: true,
 					},
-					timeframe: { columns: { id: true, code: true, name: true } },
 				},
-			}),
-			db
-				.select({
-					assetId: priceCandles.assetId,
-					timeframeId: priceCandles.timeframeId,
-					dateFrom: min(priceCandles.timestamp),
-					dateTo: max(priceCandles.timestamp),
-				})
-				.from(priceCandles)
-				.groupBy(priceCandles.assetId, priceCandles.timeframeId),
-		])
-
-		const dateRangeMap = new Map(
-			dateRangeRows.map((r) => [
-				`${r.assetId}-${r.timeframeId}`,
-				{ dateFrom: r.dateFrom, dateTo: r.dateTo },
-			])
-		)
+				timeframe: { columns: { id: true, code: true, name: true } },
+			},
+		})
 
 		return {
 			status: "success" as const,
-			data: versions.map((v) => {
-				const dr = dateRangeMap.get(`${v.asset.id}-${v.timeframe.id}`)
-				return {
-					assetId: v.asset.id,
-					assetSymbol: v.asset.symbol,
-					assetName: v.asset.name,
-					assetTickSize: Number(v.asset.tickSize),
-					assetTickValueCents: v.asset.tickValue,
-					assetCurrency: v.asset.currency,
-					timeframeId: v.timeframe.id,
-					timeframeCode: v.timeframe.code,
-					timeframeName: v.timeframe.name,
-					rowCount: v.rowCount,
-					lastImported: v.lastImportedAt?.toISOString() ?? null,
-					candleDateFrom: dr?.dateFrom?.toISOString().slice(0, 10) ?? null,
-					candleDateTo: dr?.dateTo?.toISOString().slice(0, 10) ?? null,
-				}
-			}),
+			data: versions.map((v) => ({
+				assetId: v.asset.id,
+				assetSymbol: v.asset.symbol,
+				assetName: v.asset.name,
+				assetTickSize: Number(v.asset.tickSize),
+				assetTickValueCents: v.asset.tickValue,
+				assetCurrency: v.asset.currency,
+				timeframeId: v.timeframe.id,
+				timeframeCode: v.timeframe.code,
+				timeframeName: v.timeframe.name,
+				rowCount: v.rowCount,
+				lastImported: v.lastImportedAt?.toISOString() ?? null,
+				candleDateFrom: null,
+				candleDateTo: null,
+			})),
 		}
 	} catch {
 		return { status: "error" as const, data: [] }

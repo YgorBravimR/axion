@@ -100,17 +100,20 @@ interface AggressionDualModeRule extends DualModeRule {
 // S/R level set — shared between BLOCK and FAVOR rules
 // ════════════════════════════════════════════════════════════════════
 //
-// Active set: 4 HTF MAs + vwap_d_5m + ajuste_d1.
+// Active set: 4 HTF MAs + vwap_d + ajuste.
 // Deferred (probe was anti-predictive — re-probe with more data):
-//   vwap_m_5m, vwap_s_5m
+//   vwap_m, vwap_w
+// `ajuste` comes from `asset_session_anchors` (one row per day), injected
+// into candle.indicators at fetch time by daily-anchors.ts. The others are
+// per-brick indicators stored in price_candles.indicators JSONB.
 // See docs/hawks-strategy/indicator-inventory.md for reasoning.
 const ACTIVE_SR_LEVEL_KEYS = [
 	"mme27_60m",
 	"mme55_60m",
 	"mme27_15m",
 	"mme55_15m",
-	"vwap_d_5m",
-	"ajuste_d1",
+	"vwap_d",
+	"ajuste",
 ] as const
 
 // Sign convention for any level L at entry price P with direction D:

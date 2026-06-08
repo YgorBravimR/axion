@@ -32,6 +32,7 @@
 		"@anthropic-ai/sdk": "0.100.1",
 		"@auth/drizzle-adapter": "1.11.2",
 		"@aws-sdk/client-s3": "3.1058.0",
+		"@duckdb/node-api": "1.5.3-r.3",
 		"@google-cloud/vision": "5.3.6",
 		"@hookform/resolvers": "5.4.0",
 		"@neondatabase/serverless": "1.1.0",

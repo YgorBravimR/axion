@@ -2,12 +2,13 @@
 
 import { readFileSync, readdirSync } from "node:fs"
 import { resolve } from "node:path"
-import { and, asc, eq, gte, lte } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import { db } from "@/db/drizzle"
-import { assets, priceCandles, timeframes } from "@/db/schema"
+import { assets, timeframes } from "@/db/schema"
 import { requireRole } from "@/lib/auth-utils"
 import { runBacktest } from "@/lib/backtest/engine"
 import { hawksUserCatalog } from "@/lib/backtest/presets/hawks-presets"
+import { getCandleStore } from "@/lib/candle-store"
 import type { CandleRow } from "@/types/candle"
 import type { BacktestTrade, StrategyRecipe, UserEntry } from "@/types/backtest"
 import type {
@@ -89,42 +90,31 @@ const fetchCandles = async (
 		await db
 			.select({ id: timeframes.id })
 			.from(timeframes)
-			.where(eq(timeframes.code, "5m"))
+			.where(eq(timeframes.code, "hawk_5m_win"))
 			.limit(1)
 	)[0]
 	if (!tfRow) {
-		throw new Error("Timeframe 5m not found")
+		throw new Error(
+			"Timeframe hawk_5m_win not found — run scripts/materialize-hawks-timeframes.ts"
+		)
 	}
 
-	const rows = await db
-		.select({
-			timestamp: priceCandles.timestamp,
-			open: priceCandles.open,
-			high: priceCandles.high,
-			low: priceCandles.low,
-			close: priceCandles.close,
-			candleIndex: priceCandles.candleIndex,
-			indicators: priceCandles.indicators,
-		})
-		.from(priceCandles)
-		.where(
-			and(
-				eq(priceCandles.assetId, assetRow.id),
-				eq(priceCandles.timeframeId, tfRow.id),
-				gte(priceCandles.timestamp, fromUtc),
-				lte(priceCandles.timestamp, toUtc)
-			)
-		)
-		.orderBy(asc(priceCandles.timestamp), asc(priceCandles.candleIndex))
+	const rows = await getCandleStore().fetchRange({
+		assetId: assetRow.id,
+		timeframeId: tfRow.id,
+		from: fromUtc,
+		to: toUtc,
+		indicatorKeys: "*",
+	})
 
 	return rows.map((r) => ({
-		timestamp: r.timestamp.toISOString(),
-		open: Number(r.open),
-		high: Number(r.high),
-		low: Number(r.low),
-		close: Number(r.close),
+		timestamp: r.timestamp,
+		open: r.open,
+		high: r.high,
+		low: r.low,
+		close: r.close,
 		candleIndex: r.candleIndex ?? 0,
-		indicators: (r.indicators ?? {}) as Record<string, number>,
+		indicators: r.indicators,
 	}))
 }
 
