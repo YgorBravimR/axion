@@ -424,13 +424,25 @@ const run = async () => {
 		})
 
 		const tfId = timeframeIdByCode.get(spec.code)!
+		let firstAt: Date | null = null
+		let lastAt: Date | null = null
+		for (const r of rows) {
+			if (!firstAt || r.timestamp < firstAt) {
+				firstAt = r.timestamp
+			}
+			if (!lastAt || r.timestamp > lastAt) {
+				lastAt = r.timestamp
+			}
+		}
 		await sql`
-			INSERT INTO price_data_versions (asset_id, timeframe_id, version, row_count, last_imported_at, updated_at)
-			VALUES (${assetId}, ${tfId}, 1, ${result.rowCount}, NOW(), NOW())
+			INSERT INTO price_data_versions (asset_id, timeframe_id, version, row_count, last_imported_at, first_candle_at, last_candle_at, updated_at)
+			VALUES (${assetId}, ${tfId}, 1, ${result.rowCount}, NOW(), ${firstAt ?? null}, ${lastAt ?? null}, NOW())
 			ON CONFLICT (asset_id, timeframe_id) DO UPDATE SET
 				version = price_data_versions.version + 1,
 				row_count = EXCLUDED.row_count,
 				last_imported_at = EXCLUDED.last_imported_at,
+				first_candle_at = EXCLUDED.first_candle_at,
+				last_candle_at = EXCLUDED.last_candle_at,
 				updated_at = EXCLUDED.updated_at
 		`
 

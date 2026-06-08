@@ -127,6 +127,13 @@
 			"when": 1780908524319,
 			"tag": "0017_good_thunderbolts",
 			"breakpoints": true
+		},
+		{
+			"idx": 18,
+			"version": "7",
+			"when": 1780909719123,
+			"tag": "0018_salty_norman_osborn",
+			"breakpoints": true
 		}
 	]
 }

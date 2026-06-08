@@ -89,11 +89,10 @@ export const getCandlesForRange = async (
 
 // Fetch available assets with price data.
 //
-// Candle bytes live in R2 Parquet now (one file per asset+timeframe);
-// `priceDataVersions` is the on-Postgres registry that lists what's
-// available. `candleDateFrom` / `candleDateTo` are no longer derived
-// from priceCandles MIN/MAX — they return null until loaders persist
-// them on priceDataVersions (P3 follow-up).
+// Candle bytes live in R2 Parquet (one file per asset+timeframe);
+// `priceDataVersions` is the on-Postgres registry. `firstCandleAt` /
+// `lastCandleAt` are captured by each loader at ingest, so the dropdown
+// can show a date range without hitting R2.
 export const getAssetsWithPriceData = async () => {
 	try {
 		const versions = await db.query.priceDataVersions.findMany({
@@ -126,8 +125,8 @@ export const getAssetsWithPriceData = async () => {
 				timeframeName: v.timeframe.name,
 				rowCount: v.rowCount,
 				lastImported: v.lastImportedAt?.toISOString() ?? null,
-				candleDateFrom: null,
-				candleDateTo: null,
+				candleDateFrom: v.firstCandleAt?.toISOString() ?? null,
+				candleDateTo: v.lastCandleAt?.toISOString() ?? null,
 			})),
 		}
 	} catch {

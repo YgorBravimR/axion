@@ -2026,6 +2026,12 @@ export const priceDataVersions = pgTable(
 		lastImportedAt: timestamp("last_imported_at", { withTimezone: true }),
 		rowCount: integer("row_count"),
 
+		// Min/max candle timestamp captured at ingest. Powers the date-range
+		// chips on the backtest dropdown without a R2 round-trip per render.
+		// Nullable while pre-2026-06-08 rows are backfilled.
+		firstCandleAt: timestamp("first_candle_at", { withTimezone: true }),
+		lastCandleAt: timestamp("last_candle_at", { withTimezone: true }),
+
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.defaultNow()
 			.notNull(),
