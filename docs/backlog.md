@@ -395,3 +395,20 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
   5. DOM fallback for <500 cells.
 - **Done when**: heatmaps with 1000+ cells render in <16ms; existing interactivity preserved or explicitly migrated.
 - **Date filed**: 2026-06-02.
+
+## Tax & Compliance
+
+### DARF sub-threshold deferral (Lei 9.430/96 art. 68 §1°)
+
+- **Priority**: P3
+- **Effort**: M
+- **Source**: 2026-06-08 — Bundle D of Wave 1 calculations audit (`docs/scans/calculations-audit/08-tax-computations.md`). The R$10 floor is now applied (commits land on `chore/math-audit-scan-wave-1`), but art. 68 §1° actually requires sub-threshold amounts to be **deferred to the next month** and summed with future IR until the cumulative figure crosses R$10 — at which point the deferred balance is owed. We currently zero those amounts (slight under-taxation, very rare in day-trade volume).
+- **What + Why**: Brazilian Receita Federal art. 68 §1° text: _"Os valores não pagos, em razão do disposto neste artigo, serão adicionados ao imposto devido no período subseqüente, em que se atinja o valor mínimo."_ Strict compliance means the calculator + persistence layer carry a separate `deferredIrCents` balance forward across months. Practical impact on Axion's user base is small (sub-R$10 cases are rare in day-trade — typically only when carryover almost-but-not-quite offsets a small gain) and skews in the user's favor (under-taxes never over-files). But if Axion ever produces filing-ready DARF documents (not just preview/estimates), strict deferral matters.
+- **Fix shape**:
+  1. Add `deferredIrInCents` to `DarfInput` and `deferredIrOutCents` to `DarfOutput` in `src/lib/tax/darf-calculator.ts`.
+  2. Sum `deferredIrIn + currentIrNetOfIrrf` before applying the R$10 threshold; floor only the combined value.
+  3. `src/lib/tax/recompute-month.ts` (PROTECTED) reads + writes the deferred balance per month — requires explicit user go-ahead for protected path.
+  4. New DB column `monthly_darf_status.deferred_ir_cents` (default 0) — schema migration.
+  5. Tests: chain 3 consecutive sub-threshold months → final month crosses R$10 → DARF emitted with accumulated total.
+- **Done when**: Sub-threshold tax accumulates across months; once cumulative crosses R$10, the next eligible month emits a DARF with the full deferred sum; existing month-by-month tests still pass; new chained-deferral test covers the cross-month accumulation.
+- **Date filed**: 2026-06-08.

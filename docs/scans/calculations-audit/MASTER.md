@@ -135,10 +135,12 @@ Three bundles, each fits in one PR with regression tests + a short post-mortem:
 
 No code changes. Pure documentation.
 
-### Bundle D (PROTECTED — escalation required)
+### Bundle D (PROTECTED — escalation required) — SHIPPED 2026-06-08
 
-**Files**: `src/lib/tax/darf-calculator.ts` — apply R$10 DARF floor.
-**Gate**: requires user explicit go-ahead because adjacent file `recompute-month.ts` is on protected paths list. Status flag downstream handles this correctly, so the user-facing number is right — fix is for clarity, not correctness.
+**Files**: `src/lib/tax/darf-calculator.ts` — applies R$10 DARF floor (Lei 9.430/96 art. 68).
+**Status**: SHIPPED. User authorized 2026-06-08. Fix added `belowMinimumThreshold` field + zeroed `darfDue` when net IR falls strictly between 0 and R$10. Downstream `recompute-month.ts` (PROTECTED) was NOT modified — its existing "exempt when `darfDue === 0`" status derivation now fires correctly for sub-threshold months automatically.
+**Tests**: 8 new threshold cases in `src/__tests__/lib/tax/darf-calculator.test.ts` (boundary at 999/1000/1001 cents, IRRF-induced sub-threshold, prop account passthrough, loss month). Total 100 tax tests pass.
+**Known simplification**: art. 68 §1° deferral (accumulating sub-threshold amounts to next month) NOT implemented — see `docs/backlog.md` "DARF sub-threshold deferral". Practical impact is small (sub-R$10 cases rare) and skews under-tax (never over-files).
 
 ---
 
