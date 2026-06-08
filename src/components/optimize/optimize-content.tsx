@@ -178,7 +178,13 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	// backtest page's typical entry point. Users can still switch to ORB or
 	// user_catalog via the Strategy selector in Setup.
 	const [recipe, setRecipe] = useState<StrategyRecipe>(hawksV0)
-	const [selectedSourceIndex, setSelectedSourceIndex] = useState(0)
+	// Initial recipe defaults to Hawks — auto-route to the first hawk_5m_win
+	// source so the wizard produces real trades on first load. Mirrors the
+	// auto-route in handleStrategyChange for the reactive case.
+	const [selectedSourceIndex, setSelectedSourceIndex] = useState(() => {
+		const idx = dataSources.findIndex((s) => s.timeframeCode === "hawk_5m_win")
+		return idx >= 0 ? idx : 0
+	})
 	const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
 	const [quickRangeKey, setQuickRangeKey] = useState("")
 
@@ -461,14 +467,63 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 	}
 
 	const handleStrategyChange = (type: string) => {
-		if (type === "orb_breakout") {
-			setRecipe(orbPresets[0])
-		} else if (type === "hawks_triple_screen") {
-			setRecipe(hawksV0)
-		} else if (type === "user_catalog") {
-			setRecipe(hawksUserCatalog)
-		}
 		// `macd_wma_alignment` (DEZK) is archived — not selectable from UI.
+		let nextRecipe: StrategyRecipe | null = null
+		if (type === "orb_breakout") {
+			nextRecipe = orbPresets[0]
+		} else if (type === "hawks_triple_screen") {
+			nextRecipe = hawksV0
+		} else if (type === "user_catalog") {
+			nextRecipe = hawksUserCatalog
+		}
+		if (nextRecipe === null) {
+			return
+		}
+
+		// Hawks recipes (and user_catalog, which reuses Hawks data) need the
+		// hawk_5m_win projection columns (mme27_60m, mme55_60m, topos_fundos,
+		// etc). Those columns only exist on the materialized hawk_*_win Parquet
+		// files — not on R<n> or time-based sources. If the current source
+		// can't satisfy the recipe, auto-route to a hawk_5m_win source for the
+		// same asset so the wizard produces real trades instead of zero-trade
+		// runs. Skip when no compatible source exists for the asset.
+		const needsHawksSource =
+			type === "hawks_triple_screen" || type === "user_catalog"
+		const current = dataSources[selectedSourceIndex]
+		let nextIndex = selectedSourceIndex
+		if (needsHawksSource && current?.timeframeCode !== "hawk_5m_win") {
+			const fallback = dataSources.findIndex(
+				(s) =>
+					s.timeframeCode === "hawk_5m_win" &&
+					(!current || s.assetId === current.assetId)
+			)
+			if (fallback >= 0) {
+				nextIndex = fallback
+			}
+		}
+
+		// Recompute monetary_risk vpp against the target source — without
+		// this, the recipe carries stale valuePerPointCents from the previous
+		// preset and the sizing calc is off.
+		const targetSource = dataSources[nextIndex]
+		let recipeWithVpp = nextRecipe
+		if (targetSource && nextRecipe.sizing.type === "monetary_risk") {
+			const vpp = Math.round(
+				targetSource.assetTickValueCents / targetSource.assetTickSize
+			)
+			recipeWithVpp = {
+				...nextRecipe,
+				sizing: { ...nextRecipe.sizing, valuePerPointCents: vpp },
+			}
+		}
+
+		setRecipe(recipeWithVpp)
+		if (nextIndex !== selectedSourceIndex) {
+			setSelectedSourceIndex(nextIndex)
+			candlesRef.current = []
+			assetConfigRef.current = null
+			setCandleCount(0)
+		}
 		setActiveRanges([])
 		// Same reason as handlePresetChange — re-derive selections from the
 		// new strategy's recipe so the inline builder reflects the swap.
