@@ -89,6 +89,7 @@ const NATIVE_INDICATORS: { col: number; key: string }[] = [
 	{ col: 34, key: "volume_fin" },
 ]
 const CANDLE_INDEX_COL = 20 // contador
+const ANCHOR_INSERT_BATCH = 500
 
 // Per-day anchor columns: extracted once per (date) and written to
 // asset_session_anchors. Decoupled from per-brick JSONB to avoid
@@ -430,14 +431,13 @@ const run = async () => {
 	// ─── Bulk insert session anchors ──────────────────────────────────────
 	const anchorDates = [...anchorByDate.keys()].sort()
 	let anchorsInserted = 0
-	for (let i = 0; i < anchorDates.length; i += BATCH) {
-		const slice = anchorDates.slice(i, i + BATCH)
-		const dates = slice
+	for (let i = 0; i < anchorDates.length; i += ANCHOR_INSERT_BATCH) {
+		const slice = anchorDates.slice(i, i + ANCHOR_INSERT_BATCH)
 		const payloads = slice.map((d) => JSON.stringify(anchorByDate.get(d) ?? {}))
 		await sql`
 			INSERT INTO asset_session_anchors (asset_id, date, payload, source)
 			SELECT ${assetId}::uuid, d::date, p::jsonb, 'imported'
-			FROM unnest(${dates}::text[], ${payloads}::text[]) AS u(d, p)
+			FROM unnest(${slice}::text[], ${payloads}::text[]) AS u(d, p)
 		`
 		anchorsInserted += slice.length
 	}

@@ -280,17 +280,25 @@ const run = async () => {
 		`Discovered ${accounts.length} admin account(s) — will wire all to new timeframes`
 	)
 
-	// ─── Validate all CSV files exist ───────────────────────────────────
-	for (const spec of TIMEFRAMES) {
+	// ─── Filter to TIMEFRAMES with a source file present ────────────────
+	// Source CSVs come from ProfitChart exports; not every timeframe is
+	// always exported. Skip missing files instead of failing hard so a
+	// partial export still ingests cleanly.
+	const presentTimeframes = TIMEFRAMES.filter((spec) => {
 		const path = resolve(SOURCE_DIR, spec.file)
 		if (!existsSync(path)) {
-			throw new Error(`missing source file: ${path}`)
+			console.log(`  skip ${spec.file} (TF ${spec.code}) — not in source dir`)
+			return false
 		}
+		return true
+	})
+	if (presentTimeframes.length === 0) {
+		throw new Error(`no source CSVs found under ${SOURCE_DIR}`)
 	}
 
 	// ─── Seed/refresh each timeframe row ────────────────────────────────
 	const timeframeIdByCode = new Map<string, string>()
-	for (const spec of TIMEFRAMES) {
+	for (const spec of presentTimeframes) {
 		const sortOrder =
 			spec.unit === "months"
 				? 100_000
@@ -330,13 +338,15 @@ const run = async () => {
 			`
 		}
 	}
-	console.log(`Wired ${accounts.length} account(s) to all 11 new timeframes`)
+	console.log(
+		`Wired ${accounts.length} account(s) to ${timeframeIdByCode.size} time-based timeframe(s)`
+	)
 
 	// ─── Parse every CSV into memory ────────────────────────────────────
 	const parsedByCode = new Map<string, ParsedRow[]>()
 	const anchorByDate = new Map<string, Record<string, number>>()
 	let totalParsed = 0
-	for (const spec of TIMEFRAMES) {
+	for (const spec of presentTimeframes) {
 		const path = resolve(SOURCE_DIR, spec.file)
 		const text = readFileSync(path, "utf8")
 		const lines = text.split(/\r?\n/).filter(Boolean)
@@ -395,7 +405,7 @@ const run = async () => {
 	// combos without listing R2 objects.
 	let totalRows = 0
 	let totalBytes = 0
-	for (const spec of TIMEFRAMES) {
+	for (const spec of presentTimeframes) {
 		const rows = parsedByCode.get(spec.code) ?? []
 		if (rows.length === 0) {
 			continue
@@ -459,14 +469,14 @@ const run = async () => {
 	// ─── Anchor upsert (additive — does not wipe existing anchor rows) ──
 	const anchorDates = [...anchorByDate.keys()].sort()
 	let anchorsUpserted = 0
-	for (let i = 0; i < anchorDates.length; i += BATCH) {
-		const slice = anchorDates.slice(i, i + BATCH)
-		const dates = slice
+	const ANCHOR_INSERT_BATCH = 500
+	for (let i = 0; i < anchorDates.length; i += ANCHOR_INSERT_BATCH) {
+		const slice = anchorDates.slice(i, i + ANCHOR_INSERT_BATCH)
 		const payloads = slice.map((d) => JSON.stringify(anchorByDate.get(d) ?? {}))
 		await sql`
 			INSERT INTO asset_session_anchors (asset_id, date, payload, source)
 			SELECT ${assetId}::uuid, d::date, p::jsonb, 'imported'
-			FROM unnest(${dates}::text[], ${payloads}::text[]) AS u(d, p)
+			FROM unnest(${slice}::text[], ${payloads}::text[]) AS u(d, p)
 			ON CONFLICT (asset_id, date) DO UPDATE SET
 				payload = asset_session_anchors.payload || EXCLUDED.payload,
 				updated_at = NOW()
