@@ -67,6 +67,15 @@ const hawksV0: StrategyRecipe = {
 			// via structural analysis. The engine uses 2-brick confirmation on 5m.
 			startTime: 900,
 			endTime: 1730,
+			// Fire cooldown: minimum bricks between re-fires (hardware default 5).
+			// Set to 5 to match engine's hardcoded FIRE_COOLDOWN_BRICKS.
+			fireCooldownBricks: 5,
+			// Wave-1 minimum bricks: structural impulse leg must have at least this
+			// many bricks. Engine default is 4; we use the same.
+			wave1MinBricks: 4,
+			// Retracement minimum bricks: wave-2 bounce must be at least this long.
+			// Engine default is 2; we use the same.
+			retracementMinBricks: 2,
 			// Quality gates default OFF — the audit toggles them on per run.
 			// Enable per audit via `hawksV0WithHtfMaBlock` (see below) or via
 			// runtime override before calling runBacktest.

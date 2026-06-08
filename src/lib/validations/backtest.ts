@@ -75,6 +75,9 @@ const hawksTripleScreenConfigSchema = z.object({
 	brickSize5mPoints: z.number().positive().max(10000),
 	startTime: z.number().int().min(800).max(1200),
 	endTime: z.number().int().min(800).max(1800),
+	fireCooldownBricks: z.number().int().min(1).max(50).optional(),
+	wave1MinBricks: z.number().int().min(1).max(50).optional(),
+	retracementMinBricks: z.number().int().min(1).max(50).optional(),
 	qualityGates: qualityGatesConfigSchema.optional(),
 })
 
