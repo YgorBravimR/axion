@@ -104,6 +104,7 @@ import { dedupeRecipes } from "@/lib/optimize/recipe-dedup"
 import { buildKParentNeighborhood } from "@/lib/optimize/refine-neighborhood"
 import { mintJourneyId, backfillJourneyId } from "@/lib/optimize/journey"
 import { useHeroPresets } from "@/lib/optimize/use-hero-presets"
+import { DataSourceSelect } from "@/components/backtest/data-source-select"
 import { FreezeHeroModal } from "./freeze-hero-modal"
 import { LoserPatternInspector } from "./loser-pattern-inspector"
 import { SweepProgressBar } from "./sweep-progress-bar"
@@ -1158,27 +1159,12 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 								>
 									{tBacktest("config.asset")} / {tBacktest("config.timeframe")}
 								</label>
-								<Select
+								<DataSourceSelect
+									id="optimize-source"
+									dataSources={dataSources}
 									value={String(selectedSourceIndex)}
 									onValueChange={handleSourceChange}
-								>
-									<SelectTrigger id="optimize-source">
-										<SelectValue />
-									</SelectTrigger>
-									<SelectContent>
-										{dataSources.map((source, i) => (
-											<SelectItem
-												key={`${source.assetId}-${source.timeframeId}`}
-												value={String(i)}
-											>
-												{source.assetSymbol} — {source.timeframeCode}
-												{source.rowCount
-													? ` (${formatNumber(source.rowCount)})`
-													: ""}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
+								/>
 							</div>
 						)}
 

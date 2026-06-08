@@ -20,6 +20,7 @@ import { orbPresets } from "@/lib/backtest/presets/orb-presets"
 // DEZK strategy archived 2026-05-29 — see dezk-presets.ts header. Not in UI.
 import { hawksPresets } from "@/lib/backtest/presets/hawks-presets"
 import { formatLocalYMD, parseLocalYMD } from "@/lib/backtest/time-utils"
+import { DataSourceSelect } from "./data-source-select"
 import { OrbEntrySection } from "./sections/orb-entry-section"
 // DEZK entry section archived 2026-05-29 — see dezk-entry-section.tsx header.
 import { HawksEntrySection } from "./sections/hawks-entry-section"
@@ -67,7 +68,6 @@ import type {
 	BacktestTrade,
 	StrategyRecipe,
 } from "@/types/backtest"
-import { useFormatting } from "@/hooks/use-formatting"
 
 const ALL_PRESETS = [...orbPresets, ...hawksPresets]
 
@@ -77,7 +77,6 @@ interface BacktestContentProps {
 
 const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 	const t = useTranslations("backtest")
-	const { formatNumber } = useFormatting()
 	const { showToast } = useToast()
 	const { showLoading, hideLoading } = useLoadingOverlay()
 	const [isPending, startTransition] = useTransition()
@@ -483,27 +482,12 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 							>
 								{t("config.asset")} / {t("config.timeframe")}
 							</label>
-							<Select
+							<DataSourceSelect
+								id="backtest-source"
+								dataSources={dataSources}
 								value={String(selectedSourceIndex)}
 								onValueChange={handleSourceChange}
-							>
-								<SelectTrigger id="backtest-source">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{dataSources.map((source, i) => (
-										<SelectItem
-											key={`${source.assetId}-${source.timeframeId}`}
-											value={String(i)}
-										>
-											{source.assetSymbol} — {source.timeframeCode}
-											{source.rowCount
-												? ` (${formatNumber(source.rowCount)})`
-												: ""}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
+							/>
 						</div>
 					)}
 				</div>
