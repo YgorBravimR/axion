@@ -131,9 +131,9 @@ export const bucketTradesToDailyReturns = (
 	for (const trade of trades) {
 		let dateStr: string
 		if (trade.closedAt instanceof Date) {
-			dateStr = trade.closedAt.toISOString().split("T")[0]
+			dateStr = trade.closedAt.toISOString().slice(0, 10)
 		} else {
-			dateStr = String(trade.closedAt).split("T")[0]
+			dateStr = String(trade.closedAt).slice(0, 10)
 		}
 
 		if (!dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {

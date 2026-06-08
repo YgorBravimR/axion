@@ -163,9 +163,9 @@ describe("annualize", () => {
 			]
 			const result = bucketTradesToDailyReturns(trades, 1000000)
 
-			expect(result[0].date).toBe("2026-01-01")
-			expect(result[1].date).toBe("2026-01-02")
-			expect(result[2].date).toBe("2026-01-03")
+			expect(result[0]?.date).toBe("2026-01-01")
+			expect(result[1]?.date).toBe("2026-01-02")
+			expect(result[2]?.date).toBe("2026-01-03")
 		})
 
 		it("computes running equity-based returns", () => {
@@ -178,8 +178,8 @@ describe("annualize", () => {
 			]
 			const result = bucketTradesToDailyReturns(trades, 10000000)
 
-			expect(result[0].returnPct).toBeCloseTo(10, 1)
-			expect(result[1].returnPct).toBeCloseTo(-5, 1)
+			expect(result[0]?.returnPct).toBeCloseTo(10, 1)
+			expect(result[1]?.returnPct).toBeCloseTo(-5, 1)
 		})
 
 		it("returns empty array for invalid initialBalance", () => {
@@ -197,7 +197,7 @@ describe("annualize", () => {
 			const result = bucketTradesToDailyReturns(trades, 1000000)
 
 			expect(result).toHaveLength(1)
-			expect(result[0].date).toBe("2026-01-01")
+			expect(result[0]?.date).toBe("2026-01-01")
 		})
 	})
 

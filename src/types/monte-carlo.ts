@@ -75,8 +75,8 @@ export interface SimulationStatistics {
 	meanMaxRDrawdown: number
 	worstMaxRDrawdown: number
 	profitablePct: number // % of runs ending with positive R
-	rSharpe: number // per-trade R-Sharpe (diagnostic only; not annualized)
 	sharpeRatio: number // annualized Sharpe (canonical user-facing metric, from daily returns)
+	rSharpe?: number // per-trade R-Sharpe (diagnostic only; not annualized)
 	sortinoRatio: number
 	expectedRPerTrade: number // the edge
 	expectedMaxWinStreak: number
