@@ -187,3 +187,37 @@ The behavior + workaround for each is documented in **[`docs/gotchas.md`](gotcha
 - `.gitignore` excludes env files, build artifacts, OS junk.
 - **Never commit** `.env` or any credentials. Commit `.env.example` instead.
 - Code must run identically across environments — use env vars for environment-specific behavior.
+
+---
+
+## Financial math conventions
+
+These are the canonical conventions agreed during the 2026-06-08 calculations audit (`docs/scans/calculations-audit/MASTER.md`). New code that touches financial math must follow them.
+
+### Win rate denominator excludes breakeven trades
+
+A trade with `pnlCents === 0` (or exit reason `breakeven_stop`) is **neither a win nor a loss** for win-rate purposes. The canonical denominator is `wins + losses` (decisive trades), not `total trades`. `src/lib/calculations.ts` defines `calculateWinRate(wins, total)` where every live caller passes `wins + losses` as `total`. The signature is historical; treat it as a "decisive-trades-only" calculator.
+
+### Standard deviation uses sample variance (Bessel's correction)
+
+Every std-dev computation in math layer uses `sum_sq_diff / (n − 1)` (sample variance, the industry default per Sharpe 1994), not `/ n` (population variance). Use `sampleStdDev()` from `src/lib/finance/annualize.ts` for new code.
+
+### Sharpe / Sortino are annualized by default at the point of emission
+
+Every result-object field named `sharpeRatio` or `sortinoRatio` holds the **canonical annualized** value, computed as `(daily_mean / daily_std) × √252`. Per-trade R-Sharpe (the pre-2026-06-08 default) is now emitted as `rSharpe` — a diagnostic field, not user-facing as "Sharpe". `TRADING_DAYS_PER_YEAR = 252` (Brazil B3 + US NYSE/NASDAQ convention). Use the helpers in `src/lib/finance/annualize.ts`.
+
+### R-multiple risk denominator is immutable from entry
+
+`R = realizedPnL / initialRisk`. **`initialRisk` is set at trade entry from `|entry − stopLoss| × positionSize`** and does NOT change with breakeven activation, trailing-stop moves, or partial exits. The DB has both `stopLoss` (initial, immutable for R calculations) and `stopLossAtClose` (final, for execution-quality reporting). Mixing them inflates R after BE activation and is a known footgun.
+
+### Equity curve construction is arithmetic cumulative P&L
+
+Every site that builds an equity curve uses `equity[t] = initial + cumsum(PnL[1..t])` — arithmetic, additive. Compounding curves (geometric `prod(1 + r)`) are NOT used anywhere yet; if/when introduced, name the field `compoundEquity` to disambiguate. Drawdown computed against running HWM = `max(equity[..t])`.
+
+### Pareto 3D retention is heuristic, not Kung non-dominated sort
+
+`src/lib/optimize/pareto-retain.ts` uses a PF-first sweep + secondary-max tracking instead of a strict Kung et al. (1975) 3D non-dominated sort. Defensible at the sweep sizes we run (<10k results) and an explicit choice — not a bug. If sweep sizes grow >50k, revisit.
+
+### Account-equity field naming when no initial balance is set
+
+`src/lib/analytics-helpers.ts:computeEquityCurve()` defaults `accountEquity = cumulativePnL` when no initial balance is passed. Semantically identical to `cumulativePnL` in that case — the dual-naming is for downstream UI consumers that expect an `accountEquity` field regardless of whether a balance was supplied. Not a bug, but be aware: `accountEquity` does not always mean "absolute account value" — only when an initial balance is supplied.

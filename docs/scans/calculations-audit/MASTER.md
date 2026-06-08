@@ -50,11 +50,13 @@ System-wide. The same root cause manifests across **Zone 1** (risk-adjusted metr
 
 Note: `src/lib/backtest/metrics.ts:108` uses Welford's algorithm which produces **sample** std dev natively — so backtest Sharpe and Monte Carlo Sharpe disagree on this convention. Cross-surface inconsistency.
 
-### MAJOR 2 — Orphan `calculateWinRate()` with non-standard convention
+### MAJOR 2 — `calculateWinRate()` signature is misleading (CORRECTED from original Wave 1 finding)
 
-`src/lib/calculations.ts:7–10` defines `calculateWinRate(wins, total)` using **total trades** as denominator (includes breakevens). Backtest metrics and analytics-helpers correctly use only decisive trades (wins + losses). The orphan is not currently imported anywhere on a user-facing path, but its existence is a footgun — first caller will get a subtly wrong win rate.
+**Correction note (2026-06-08, post-Bundle B verification)**: The Wave 1 Zone 2 scan agent claimed this function was an "orphan with no live callers". That was **wrong**. Grep finds 10 live call sites in `src/app/actions/analytics.ts`. Every caller manually computes `wins + losses` and passes that as `total`, working around the misleading parameter name. The function is correct _in practice_ — but the signature `(wins, total)` suggests `total = all trades including BE`, which is exactly the wrong convention.
 
-**Fix**: either delete the function or align its denominator with `(wins + losses)` (excluding BE). Document the BE-handling convention in `docs/code-conventions.md`.
+**Original finding**: `src/lib/calculations.ts:7–10` defines `calculateWinRate(wins, total)`. A naive new caller might pass `total = totalTrades` (including breakevens) and get a subtly wrong win rate.
+
+**Fix applied** (Bundle B): JSDoc added at the function explaining the convention; codified in `docs/code-conventions.md` under "Financial math conventions". No behavior change.
 
 ### MINOR — Documentation / clarity
 
