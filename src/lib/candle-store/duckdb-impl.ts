@@ -125,6 +125,10 @@ const createDuckDbCandleStore = (
 	// extension load happens once on first query against an s3:// path.
 	let cachedSetup: Promise<DuckDBConnection> | null = null
 
+	// Memoize Parquet column names per file path. Files are immutable post-export,
+	// so the cache is safe for the lifetime of the connection.
+	const columnsByPath = new Map<string, Set<string>>()
+
 	const setupConnection = async (): Promise<DuckDBConnection> => {
 		const instance = await DuckDBInstance.create(":memory:")
 		const connection = await instance.connect()
@@ -201,8 +205,27 @@ const createDuckDbCandleStore = (
 	]
 	const BASE_COL_SET = new Set(BASE_COLS)
 
+	const getParquetColumns = async (
+		connection: DuckDBConnection,
+		filePath: string
+	): Promise<Set<string>> => {
+		if (columnsByPath.has(filePath)) {
+			return columnsByPath.get(filePath)!
+		}
+
+		// Query schema via DESCRIBE on read_parquet. Returns one row per column.
+		const reader = await connection.runAndReadAll(
+			`DESCRIBE SELECT * FROM read_parquet('${sqlEscape(filePath)}')`
+		)
+		const rows = reader.getRowObjects()
+		const cols = new Set(rows.map((row) => String(row.column_name)))
+		columnsByPath.set(filePath, cols)
+		return cols
+	}
+
 	const buildSelectColumns = (
-		indicatorKeys: string[] | "*" | undefined
+		indicatorKeys: string[] | "*" | undefined,
+		availableColumns: Set<string>
 	): string => {
 		if (indicatorKeys === "*") {
 			// Read everything — base + every indicator column in the file.
@@ -211,10 +234,18 @@ const createDuckDbCandleStore = (
 		if (!indicatorKeys || indicatorKeys.length === 0) {
 			return BASE_COLS.join(", ")
 		}
-		// Unknown columns in a Parquet file return NULL — graceful for
-		// recipes that ask for indicators a file hasn't been ingested with.
-		const ind = indicatorKeys.map((k) => `"${k.replace(/"/g, '""')}"`)
-		return [...BASE_COLS, ...ind].join(", ")
+		// Build list of base cols + indicators. For missing indicators,
+		// project NULL AS "key" to maintain row-shape contract.
+		const cols = [...BASE_COLS]
+		for (const key of indicatorKeys) {
+			const safeName = key.replace(/"/g, '""')
+			if (availableColumns.has(key)) {
+				cols.push(`"${safeName}"`)
+			} else {
+				cols.push(`NULL AS "${safeName}"`)
+			}
+		}
+		return cols.join(", ")
 	}
 
 	return {
@@ -231,11 +262,16 @@ const createDuckDbCandleStore = (
 				)
 			}
 
-			const columns = buildSelectColumns(params.indicatorKeys)
+			const connection = await getConnection()
+
+			// Probe Parquet schema to handle recipes requesting indicators
+			// that the file doesn't have. Missing indicators are aliased to NULL.
+			const availableColumns = await getParquetColumns(connection, filePath)
+			const columns = buildSelectColumns(params.indicatorKeys, availableColumns)
+
 			const fromIso = params.from.toISOString()
 			const toIso = params.to.toISOString()
 
-			const connection = await getConnection()
 			const reader = await connection.runAndReadAll(
 				`SELECT ${columns} FROM read_parquet('${sqlEscape(filePath)}')
 				 WHERE timestamp >= TIMESTAMP '${fromIso}'
