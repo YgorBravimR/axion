@@ -145,8 +145,6 @@ Tunable via `keltnerNearBricks` (default 2).
 
 **Skipped**: probe at thresholds 2/3/4/5/7 showed selectivity ≈ 1.0× for both sign alignment and slope streaks. Redundant with HTF EMA gate (which pre-filters for sign alignment). The against-streak signal showed weak reversed polarity (catalog fires INTO falling MACD = "fade-the-move"), but absolute differences too small to ship.
 
-Probe lives at `scripts/probe-macd-alignment.ts`. Re-run when catalog grows.
-
 ### Group D — Aggression balance
 
 | Indicator            | Role                         | Config flag                                         | Default | Probe finding                      |
@@ -161,7 +159,7 @@ Probe lives at `scripts/probe-macd-alignment.ts`. Re-run when catalog grows.
 
 Recommended setting when enabling: `"reversed"`. But combined with other rules, ORIGINAL produced the strongest AAA tier separation (12 vs 5).
 
-Sign convention: positive `aggression_balance` = buy aggression (verified by `scripts/peek-aggression-sign.ts`, 6.39× agree/disagree ratio with brick direction). Tunable via `aggressionThreshold` (default 15000).
+Sign convention: positive `aggression_balance` = buy aggression (verified empirically against the catalog, 6.39× agree/disagree ratio with brick direction). Tunable via `aggressionThreshold` (default 15000).
 
 ### Group E — Volume vs running EMA
 
@@ -238,19 +236,9 @@ CLI flags toggle quality rules without touching the preset:
 --volume                volume FAVOR
 ```
 
-### Selectivity probes (one per indicator class)
+### Selectivity probes (retired 2026-06-08)
 
-| Script                        | What it probes                     | Parametric on                 |
-| ----------------------------- | ---------------------------------- | ----------------------------- |
-| `probe-level-zones.ts`        | BLOCK/FAVOR/NEUTRAL for S/R levels | direction-aware delta         |
-| `probe-keltner-exhaustion.ts` | NEAR/PAST 125/165 zones            | `--near-bricks`               |
-| `probe-macd-alignment.ts`     | Sign alignment + slope streak      | `--streak-threshold`          |
-| `probe-aggression-balance.ts` | ALIGNED/ANTI/NEUTRAL               | `--threshold`                 |
-| `probe-volume-vs-ema.ts`      | ABOVE/AT-OR-BELOW EMA              | `--ema-period`, 30-day warmup |
-| `inspect-indicator-keys.ts`   | DB coverage scan                   | —                             |
-| `peek-aggression-sign.ts`     | Verify sign convention             | —                             |
-
-Each probe is independent of engine changes and can be re-run as catalog grows. **Magic numbers stay tunable**.
+The original per-indicator probes (`probe-level-zones`, `probe-keltner-exhaustion`, `probe-macd-alignment`, `probe-aggression-balance`, `probe-volume-vs-ema`, `inspect-indicator-keys`, `peek-aggression-sign`) ran against the pre-Parquet `price_candles` table and are deleted. The findings they produced (selectivity tables above, default thresholds, polarity decisions) remain the source of truth for current defaults. If a quality rule needs re-tuning as the catalog grows, write a fresh probe against the candle-store (`@/lib/candle-store`) instead of resurrecting these.
 
 ---
 

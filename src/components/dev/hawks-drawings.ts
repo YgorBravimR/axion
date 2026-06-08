@@ -42,7 +42,7 @@ interface ProjectedDrawings {
 }
 
 // Largest index whose times[i] <= target. Returns -1 if target precedes all
-// bricks. Mirrors `findFloorIndex` in scripts/load-hawks-candles.ts.
+// bricks.
 const floorBrickIdx = (
 	times: ReadonlyArray<number>,
 	targetMs: number

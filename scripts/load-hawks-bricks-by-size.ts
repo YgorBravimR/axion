@@ -1,15 +1,15 @@
 /**
  * load-hawks-bricks-by-size.ts
  *
- * Per-brick-size Hawks candle loader. Replaces the legacy single-file-per-TF
- * loader (`load-hawks-candles.ts`). The 2026 export model is one CSV per
+ * Per-brick-size Hawks candle loader. The 2026 export model is one CSV per
  * Renko brick size — `15R.csv`, `17R.csv`, …, `123R.csv` — under
  * `${HAWKS_SOURCE_DIR}` (default `/Users/ygorbravim/Downloads/axion/WIN`).
  *
  * For each CSV we:
  *   1. Ensure a `timeframes` row with code `R<n>` exists.
- *   2. Wipe price_candles for (asset=WIN, timeframe=R<n>).
- *   3. Parse rows, store all numeric indicator cols verbatim in JSONB.
+ *   2. Parse rows, then write a Parquet file per (asset=WIN, timeframe=R<n>)
+ *      to local disk + R2 via `writeCandleParquet`.
+ *   3. Upsert `price_data_versions` so the UI catalog picks up the dataset.
  *
  * This script ONLY ingests raw R<n> source data. The per-week role
  * assignment (which R<n> is "5m" / "15m" / "60m" for each week) and
@@ -395,13 +395,25 @@ const run = async () => {
 		// (asset, timeframe) dataset. Candle bytes live in R2; the metadata
 		// pointer stays on Postgres for transactional joins with trades.
 		const tfId = timeframeIdBySize.get(entry.size)!
+		let firstAt: Date | null = null
+		let lastAt: Date | null = null
+		for (const r of rows) {
+			if (!firstAt || r.timestamp < firstAt) {
+				firstAt = r.timestamp
+			}
+			if (!lastAt || r.timestamp > lastAt) {
+				lastAt = r.timestamp
+			}
+		}
 		await sql`
-			INSERT INTO price_data_versions (asset_id, timeframe_id, version, row_count, last_imported_at, updated_at)
-			VALUES (${assetId}, ${tfId}, 1, ${result.rowCount}, NOW(), NOW())
+			INSERT INTO price_data_versions (asset_id, timeframe_id, version, row_count, last_imported_at, first_candle_at, last_candle_at, updated_at)
+			VALUES (${assetId}, ${tfId}, 1, ${result.rowCount}, NOW(), ${firstAt ?? null}, ${lastAt ?? null}, NOW())
 			ON CONFLICT (asset_id, timeframe_id) DO UPDATE SET
 				version = price_data_versions.version + 1,
 				row_count = EXCLUDED.row_count,
 				last_imported_at = EXCLUDED.last_imported_at,
+				first_candle_at = EXCLUDED.first_candle_at,
+				last_candle_at = EXCLUDED.last_candle_at,
 				updated_at = EXCLUDED.updated_at
 		`
 

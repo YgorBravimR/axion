@@ -43,47 +43,6 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Backtest / Inspector
 
-### Migrate `price_candles` from Neon Postgres to R2 + DuckDB/Parquet
-
-- **Priority**: P1
-- **Effort**: M (~3 focused days, ~5 small commits, one PR)
-- **Source**: 2026-06-08 — Neon free tier (512 MB) currently at **~400 MB** with +30 indicators wave incoming. Flattening JSONB → typed columns inside Postgres buys 3-5× compression — not enough to absorb a 2× key-count expansion on a row-count that keeps growing. Probes (2026-06-08) verified: (a) R2 is already wired via `src/lib/storage.ts` reusing `@aws-sdk/client-s3` v3.1058.0 + six `S3_*` env vars in `.env`; (b) `@duckdb/node-bindings-linux-x64` is 70.7 MB unpacked — fits in Vercel's 250 MB function cap with 60-100 MB headroom after Next.js + Drizzle + auth deps.
-- **What + Why**: `price_candles` + `price_data_versions` are the storage hogs (~95% of current Neon footprint). They are also (a) read-only after ingest, (b) never joined transactionally with the rest of the schema, (c) consumed by analytical range scans where columnar Parquet outperforms row-oriented JSONB by 10-20× on storage and ~3-5× on query latency. Moving them off Postgres entirely frees ~450 MB on Neon permanently (no Scale-tier upgrade ever needed) AND removes the per-row JSONB key-count limit that's currently capping the indicator surface. Everything else (`trades`, `accounts`, `plans`, `asset_session_anchors`, `account_timeframes`) stays on Neon because it's tiny and plays to Postgres's strengths (joins, FK cascades, Drizzle type-safety).
-- **Architecture decisions (locked, 2026-06-08)**:
-  - **Storage**: Cloudflare R2, **same bucket as images**, new `candles/` prefix. Reuse existing `S3_*` env vars and `src/lib/storage.ts` client. No new vendor, no new bucket.
-  - **Query engine**: DuckDB native binding (`@duckdb/node-api`). WASM fallback (`@duckdb/duckdb-wasm`, ~10 MB) is the safety valve if Vercel function-size headroom ever tightens.
-  - **File layout**: `s3://<bucket>/candles/<timeframe-code>/<asset-symbol>.parquet` — one file per (timeframe, asset). E.g. `candles/hawk_5m_win/WIN.parquet`, `candles/15/WIN.parquet`. Replaces the current `(asset_id, timeframe_id)` partitioning in Postgres with the same shape at the filesystem level.
-  - **Source of truth**: CSVs remain authoritative (downloaded manually from ProfitChart). Parquet files are derived snapshots, same model as `materialize-hawks-timeframes.ts` today. No mutability story to design — re-ingest re-writes the relevant file.
-  - **Schema-on-write for indicators**: each Parquet file carries whatever indicator columns exist at write time. New indicator = new column on next ingest. Old files without the column return `NULL` for that key — no `ALTER TABLE` ritual, no backfill.
-  - **PR strategy**: many small commits, one big PR at the end (solo dev, single reviewer).
-  - **Branch**: separate off `main`, NOT mixed into the current `feat/optimize-phase-1-trust-foundations`. Migration touches `backtest.ts`, `inspector-data.ts`, multiple scripts, drops two tables — deserves its own diff and revert path.
-- **Fix shape — 5 phases**:
-  1. **Foundation** (half day) — add `@duckdb/node-api` dep. New `src/lib/candle-store/` with `interface.ts` (`fetchCandles({ assetId, timeframeCode, from, to, columns? }) → CandleRow[]`), `duckdb-parquet.ts`, `drizzle-postgres.ts`. DuckDB impl reads local files first; R2 wiring comes in phase 2.
-  2. **R2 wiring** (half day) — configure DuckDB's `httpfs` extension to read from R2 using the same `S3_*` creds as `src/lib/storage.ts`. Probe-test with a hand-uploaded sample Parquet file. Verify query latency in a serverless function vs. local (R2 cold-read ~200-500ms, warm ~50ms).
-  3. **One-shot export** (half day) — `scripts/export-candles-to-parquet.ts` reads `price_candles` per `(timeframe_id, asset_id)`, writes Parquet locally, uploads to R2 under the agreed prefix. Idempotent (re-run overwrites). One file per (timeframe, asset) — ~30-40 files total at current ingestion.
-  4. **Cutover + verification** (1 day) — flip every reader through `candle-store`: `src/app/actions/backtest.ts`, `src/app/actions/inspector-data.ts`, `src/app/actions/hawks-audit-debug.ts`, plus the live scripts `run-user-catalog-backtest.ts`, `materialize-hawks-timeframes.ts`, `import-hawks-catalog-as-trades.ts`, `verify-csv-brick-closes.ts`. Run a full catalog backtest twice (Drizzle backend + DuckDB backend), diff every trade-by-trade output. If bit-identical: `DROP TABLE price_candles, price_data_versions` from Postgres. Frees ~450 MB.
-  5. **Loader rewrite** (1 day) — `load-hawks-bricks-by-size.ts`, `load-win-time-based-candles.ts`, `materialize-hawks-timeframes.ts` write Parquet directly (local first, upload to R2 after). The CSV → Parquet path replaces CSV → Postgres entirely for candle data. `asset_session_anchors` stays on Postgres (tiny, joined with other tables).
-- **What stays on Postgres**: `trades`, `accounts`, `plans`, `asset_session_anchors`, `account_timeframes`, `users`, `assets`, `timeframes` (the catalog table — without the candle rows), `hawks_renko_sizes`, `price_data_versions` if we want to keep ingest provenance (decide in phase 4 — could move to a small `candles_meta.parquet` or stay on PG). Post-migration Neon footprint: estimated <30 MB. Permanent runway for app growth.
-- **Risks + mitigations**:
-  1. **Vercel function size**: 70 MB DuckDB binary fits in 250 MB cap with margin, but tightens. Mitigation: WASM fallback ready. Probe the actual deployed function size after phase 1 (`vercel build` locally + inspect `.vercel/output/functions/*.func`).
-  2. **Verification step is load-bearing**: trade-by-trade equality is what makes the cutover safe. Budget the day fully. If diffs appear, ROOT-CAUSE them — don't paper over with tolerances.
-  3. **R2 cold reads have network latency**: ~200-500ms first hit per file in a warm function instance. Backtests over many days hit multiple files. DuckDB caches aggressively in-process; subsequent reads are fast. If inspector latency suffers, consider a small in-memory LRU cache in the candle-store layer (skip until measured).
-  4. **Loaders need network upload on every ingest now**: ~50-100 MB Parquet per ingest wave uploaded to R2. Slower than the current Postgres write, but R2 PUT is free up to 1M/month — way above our usage.
-- **Out of scope**:
-  - Live-feed ingestion (ProfitChart API at R$4k/month — explicitly deferred).
-  - In-memory candle cache (defer until measured latency suffers).
-  - Lifecycle policies on the R2 bucket (revisit if storage cost ever appears, which on free tier means never).
-  - Migrating `asset_session_anchors` to Parquet — stays on Postgres for transactional consistency with other tables.
-- **Done when**:
-  1. Every reader of candle data goes through `src/lib/candle-store/`.
-  2. `pnpm tsx scripts/export-candles-to-parquet.ts` produces a complete snapshot in R2 under `candles/<tf>/<asset>.parquet`.
-  3. Catalog backtest run produces bit-identical trade output between Drizzle and DuckDB backends.
-  4. `price_candles` + `price_data_versions` dropped from Neon. `pg_database_size` reports <50 MB.
-  5. Loaders write Parquet, not Postgres, for candle data.
-  6. `pnpm lint` + `pnpm typecheck` green. Catalog tests pass. Inspector and backtest pages work end-to-end in production deploy.
-  7. Vercel function size for the candle-touching routes verified under 250 MB.
-- **Date filed**: 2026-06-08.
-
 ### Hawks catalog import: replace formulaic exit math with brick-walk simulation
 
 - **Priority**: P2
@@ -93,43 +52,6 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Fix shape**: For each trade, iterate hawk_5m_win bricks ordered by timestamp for the same BRT day starting at the entry brick + 1. For SHORT: ST if brick.high >= stop, GA if brick.low <= target, BE if MFE crossed +1R then price returned to entry. Mirror for LONG. Use that brick's close + timestamp.
 - **Done when**: A `--mode=walk` flag on the importer toggles between formulaic and walk-simulated exits. A separate audit script flags catalog rows whose labeled outcome disagrees with the simulated outcome.
 - **Date filed**: 2026-06-05.
-
-### Delete dead probe scripts from the old data-verification 7-step plan
-
-- **Priority**: P3
-- **Effort**: S
-- **Source**: 2026-06-07 — `scripts/` housekeeping pass after Phase 6 legacy-timeframe cleanup. The current pipeline (per-brick-size `load-hawks-bricks-by-size.ts` + `materialize-hawks-timeframes.ts` + asset_session_anchors + user-catalog mode) superseded the original 7-step "verify the data layer one column at a time" plan. Two dozen `check-*` / `diff-*` / `probe-*` / `sweep-*` scripts remain in `scripts/` as relic harnesses that were spec'd in `/Users/ygorbravim/.claude/plans/temporal-swimming-gem.md` (steps 1–6 probes) and the OPTIMIZE dead-axes investigation. They run against legacy timeframe codes (`"5m"/"15m"/"1h"` — now deleted) or stale CSV layouts (single `/Users/ygorbravim/Downloads/axion/data/hawks/candles/*.csv` paths that no longer exist).
-- **What + Why**: 51 files in `scripts/` is hard to navigate. Keeping known-broken probes encourages cargo-cult re-runs ("did anyone try `check-htf-emas.ts`?") instead of writing a fresh probe against the current pipeline. Deleting them shrinks the surface and makes the live runners (`audit-catalog-results`, `audit-parallel`, `trace-hawks`, `verify-csv-brick-closes`, `import-hawks-catalog-as-trades`, `load-hawks-bricks-by-size`, `materialize-hawks-timeframes`, `load-win-time-based-candles`, `run-user-catalog-backtest`) easier to spot.
-- **Two tiers — safe vs. needs investigation**:
-
-  **Tier A — safe to delete (0–1 external refs, doc-only references only):**
-  - `scripts/check-5m-indicators.ts` (step 4 probe)
-  - `scripts/check-days.ts`
-  - `scripts/check-htf-emas.ts` (step 6 probe)
-  - `scripts/check-htf-pivots.ts` (step 5 probe)
-  - `scripts/check-pivots.ts` (step 2 probe)
-  - `scripts/check-row-spacing.ts` (step 1 probe)
-  - `scripts/diff-5m-vs-csv.ts` (step 1 probe)
-  - `scripts/diff-pivots-vs-csv.ts`
-  - `scripts/diff-projection.ts` (step 3 probe)
-  - `scripts/probe-aggression-balance.ts`
-  - `scripts/probe-catalog-coverage.ts`
-  - `scripts/probe-dual-mode-effect.ts`
-  - `scripts/probe-keltner-exhaustion.ts`
-  - `scripts/probe-volume-vs-ema.ts`
-  - `scripts/bench-refine-cap.ts`
-
-  **Tier B — needs investigation first (referenced from production code, not just docs):**
-  - `scripts/load-hawks-candles.ts` — old monolithic loader; superseded by `load-hawks-bricks-by-size.ts`. Referenced from `src/components/dev/hawks-drawings.ts` and `scripts/seed-hawks-indicators.ts`. Verify whether those are comment-only references (likely) or live imports (would break).
-  - `scripts/sweep-validate.ts`, `scripts/sweep-detective.ts`, `scripts/check-dead-axes.ts` — referenced from `src/lib/backtest/presets/hawks-axis-roles.ts`. Likely doc-comment "to investigate further, run `pnpm tsx scripts/X.ts`" — but confirm before deletion.
-  - `scripts/sweep-monotonicity.ts`, `scripts/probe-macd-alignment.ts`, `scripts/probe-level-zones.ts`, `scripts/inspect-indicator-keys.ts`, `scripts/peek-aggression-sign.ts` — referenced from `docs/hawks-strategy/*.md`. Decide: either delete and remove the doc mention, or keep and document them as canonical diagnostic harnesses.
-
-- **Fix shape**:
-  1. Delete all 15 Tier A files in one commit. Run `pnpm lint` + `pnpm typecheck` — should be no-op since none are imported.
-  2. For each Tier B file: read the referencing file, decide if the reference is a live import (rare) vs. a code comment (likely). If comment-only, delete the script AND scrub the comment. If live import, leave a `// TODO(backlog): migrate to current pipeline` note and skip deletion for that file.
-  3. Update `docs/postMorten/backend.md`, `docs/gotchas.md`, `docs/hawks-strategy/*.md`, `docs/sweep-validate-catalog.md` to remove stale "run `scripts/X.ts`" prose for anything deleted.
-- **Done when**: `scripts/` count drops by ≥15 files. `pnpm lint` + `pnpm typecheck` green. No broken doc links to deleted scripts.
-- **Date filed**: 2026-06-07.
 
 ### Hawks catalog tags: replace uninformative topos_fundos dimension
 
