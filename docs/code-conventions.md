@@ -221,3 +221,7 @@ Every site that builds an equity curve uses `equity[t] = initial + cumsum(PnL[1.
 ### Account-equity field naming when no initial balance is set
 
 `src/lib/analytics-helpers.ts:computeEquityCurve()` defaults `accountEquity = cumulativePnL` when no initial balance is passed. Semantically identical to `cumulativePnL` in that case — the dual-naming is for downstream UI consumers that expect an `accountEquity` field regardless of whether a balance was supplied. Not a bug, but be aware: `accountEquity` does not always mean "absolute account value" — only when an initial balance is supplied.
+
+### Tier clamping convention
+
+When capital exceeds the top ladder tier in `src/lib/fractal-plan/capital-ladder.ts`, the resolver returns the **top tier** rather than throwing or returning null. This is an explicit design choice (not a bug): users with capital above the top tier are still on a valid progression, the top tier's risk/sizing parameters remain the safest available bounds. Code reading the resolver's output must not interpret "top tier returned" as "user has exactly top-tier capital" — check the actual `currentCapitalCents` separately if needed.

@@ -35,7 +35,8 @@ interface AnnualRollupRow {
 	novoAporte: number
 	retirada: number
 	capitalInvestido: number | null
-	patrimonio: number | null
+	/** Balance at end of period (stock, not a flow — do not sum across periods) */
+	patrimonioFinal: number | null
 	hasTrades: boolean
 }
 
@@ -52,7 +53,8 @@ interface AnnualRollupTotals {
 	novoAporte: number
 	retirada: number
 	capitalInvestido: number
-	patrimonio: number | null
+	/** Balance at end of period (stock, not a flow — do not sum across periods) */
+	patrimonioFinal: number | null
 }
 
 interface AnnualRollupData {
@@ -63,4 +65,10 @@ interface AnnualRollupData {
 	withdrawalTargetPercent: number | null
 }
 
-export type { WeeklyMetaRow, WeeklyMetaVsRealData, AnnualRollupRow, AnnualRollupTotals, AnnualRollupData }
+export type {
+	WeeklyMetaRow,
+	WeeklyMetaVsRealData,
+	AnnualRollupRow,
+	AnnualRollupTotals,
+	AnnualRollupData,
+}

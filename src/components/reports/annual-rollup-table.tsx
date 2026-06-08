@@ -111,7 +111,7 @@ const RowData = ({
 			<CellBRL value={row.novoAporte} format={formatBRL} />
 			<CellBRL value={row.retirada} format={formatBRL} />
 			<CellBRL value={row.capitalInvestido} format={formatBRL} />
-			<CellBRL value={row.patrimonio} format={formatBRL} />
+			<CellBRL value={row.patrimonioFinal} format={formatBRL} />
 			<CellNum value={row.diasGain} />
 			<CellNum value={row.diasLoss} />
 		</TableRow>
@@ -268,7 +268,7 @@ const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
 							<TableCell className="text-txt-300 text-tiny px-s-300 py-s-200 text-right font-mono">
 								—
 							</TableCell>
-							<CellBRL value={totals.patrimonio} format={formatBRL} />
+							<CellBRL value={totals.patrimonioFinal} format={formatBRL} />
 							<CellNum value={totals.diasGain} />
 							<CellNum value={totals.diasLoss} />
 						</TableRow>

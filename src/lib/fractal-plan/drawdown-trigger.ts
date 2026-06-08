@@ -46,7 +46,7 @@ const checkDrawdownTrigger = async (
 		maxCapitalCents: number
 		oneRCents: number
 	}>
-	const thresholdR = parseFloat(
+	let thresholdR = parseFloat(
 		String(
 			(
 				yearRow as typeof yearRow & {
@@ -55,6 +55,20 @@ const checkDrawdownTrigger = async (
 			).drawdownTriggerThresholdR ?? "2.00"
 		)
 	)
+
+	// Bounds check: clamp threshold to safe range [0.5R, 5R]
+	const MIN_THRESHOLD_R = 0.5
+	const MAX_THRESHOLD_R = 5
+	if (thresholdR < MIN_THRESHOLD_R || thresholdR > MAX_THRESHOLD_R) {
+		const originalThreshold = thresholdR
+		thresholdR = Math.max(
+			MIN_THRESHOLD_R,
+			Math.min(MAX_THRESHOLD_R, thresholdR)
+		)
+		console.warn(
+			`[drawdown-trigger] threshold ${originalThreshold}R clamped to [${MIN_THRESHOLD_R}, ${MAX_THRESHOLD_R}] range. Clamped value: ${thresholdR}R`
+		)
+	}
 
 	const newSnapshot = evaluateDrawdownTrigger({
 		currentCapitalCents: input.currentCapitalCents,

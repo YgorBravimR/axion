@@ -10,6 +10,19 @@ interface AssertivityResult {
 	hasEnoughData: boolean
 }
 
+/**
+ * Computes historical daily assertivity (win days / total trading days).
+ *
+ * **Important semantic**: This is day-level assertivity, NOT trade-level. A day with
+ * `dayPnl > 0` counts as a win, even if multiple trades occurred on that day (some winning,
+ * some losing). Use this metric to measure frequency of profitable days, not win rate per trade.
+ *
+ * UI consumers should label this as "Daily Assertivity (%)" to disambiguate from trade-level
+ * win rate. Default recommendation: only display if `hasEnoughData` is true (≥20 trading days).
+ *
+ * @param accountId - Account ID to analyze
+ * @returns Assertivity percentage (0–100), trading day count, and data sufficiency flag
+ */
 const getHistoricalAssertivity = async (
 	accountId: string
 ): Promise<AssertivityResult> => {

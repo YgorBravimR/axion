@@ -15,34 +15,7 @@ import { fromCents } from "@/lib/money"
 import { formatDateKey } from "@/lib/dates"
 import { calculateReportSummary } from "../../_lib/report-summary"
 import { getDayTradeIrRate } from "@/lib/tax/legal-rates"
-
-const calculatePropProfit = (
-	grossProfit: number,
-	isPropAccount: boolean,
-	profitSharePercent: number,
-	dayTradeTaxRate: number,
-	showTaxEstimates: boolean
-) => {
-	if (grossProfit <= 0) {
-		return {
-			grossProfit,
-			propFirmShare: 0,
-			traderShare: grossProfit,
-			estimatedTax: 0,
-			netProfit: grossProfit,
-		}
-	}
-
-	const sharePercent = isPropAccount ? profitSharePercent : 100
-	const traderShare = grossProfit * (sharePercent / 100)
-	const propFirmShare = grossProfit - traderShare
-	const estimatedTax = showTaxEstimates
-		? traderShare * (dayTradeTaxRate / 100)
-		: 0
-	const netProfit = traderShare - estimatedTax
-
-	return { grossProfit, propFirmShare, traderShare, estimatedTax, netProfit }
-}
+import { calculatePropProfit } from "@/lib/reports/calculate-prop-profit"
 
 const GET = async (request: NextRequest) => {
 	const authResult = await archAuth(request)
@@ -177,13 +150,12 @@ const GET = async (request: NextRequest) => {
 		const dayTradeTaxRate = getDayTradeIrRate(monthStart.getUTCFullYear()) * 100
 		const showTaxEstimates = account.showTaxEstimates ?? false
 
-		const prop = calculatePropProfit(
-			summary.netPnl,
+		const prop = calculatePropProfit(summary.netPnl, {
 			isPropAccount,
 			profitSharePercentage,
 			dayTradeTaxRate,
-			showTaxEstimates
-		)
+			showTaxEstimates,
+		})
 
 		return archSuccess("Monthly results with prop calculations retrieved", {
 			monthStart: formatDateKey(monthStart),
