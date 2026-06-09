@@ -215,7 +215,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 	// Account selection step
 	if (step === "account-selection") {
 		return (
-			<div className="space-y-m-600 w-full max-w-sm md:max-w-md">
+			<div className="space-y-m-600 w-full max-w-sm md:max-w-md lg:max-w-lg">
 				{/* Logo */}
 				<div className="flex justify-center">
 					<Image

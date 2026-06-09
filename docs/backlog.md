@@ -398,26 +398,6 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Layout & Theming (from 2026-06-09 scan)
 
-### Cluster A polish — non-blocking shell + auth items lost in mid-scan state incident
-
-- **What**: 12 findings from the responsive-drift scan's Cluster A diagnose report (A5-A16) that were not re-applied after the 2026-06-09 state-loss incident. None are responsive-blockers; all are polish or perf-adjacent.
-  - A5: sidebar tablet collapse — add tooltips on icon-only nav items (`src/components/layout/sidebar.tsx`)
-  - A6: sidebar group indent — flatten on mobile: `ml-0 md:ml-m-400`
-  - A7: account-switcher create-account Dialog — add `max-w-[calc(100vw-2rem)] sm:max-w-md`
-  - A8: login-form account-selection step — add `lg:max-w-lg` parity with main auth widen
-  - A9: user-menu expanded variant trigger — add `aria-label={t("userMenu")}` (collapsed variant already has it)
-  - A10: verify `Button size="sm"` variant exists in `src/components/ui/button.tsx`
-  - A11: sidebar collapse-toggle icon — add `aria-hidden="true"` to `<PanelLeftOpen>`
-  - A12: account-switcher font scale drift — confirm `text-small` vs `text-tiny` intent
-  - A13: user-menu `t("reportBug")` namespace verification (auth.accountSwitcher namespace)
-  - A14: sidebar `initialGroupState` over-recalculation — wrap in `useMemo` or lazy initializer
-  - A15: copyright year DRY — extract `src/lib/copyright-year.ts` and use in auth layout + sidebar
-  - A16: sidebar logo crossfade — stack both `<Image>` absolutely so opacity overlap prevents flash
-- **Fix shape**: one `general-purpose` subagent with the same instructions used for cluster fix-agents. Each finding is a small targeted edit; estimated ~30 lines across ~6 files.
-- **Done when**: all 12 items applied, `pnpm exec tsc --noEmit` and `pnpm lint` green.
-- **Date filed**: 2026-06-09.
-- **Source**: `docs/scans/2026-06-09-responsive-layout-drift.md` § Still armed.
-
 ### Server-action unreachable i18n fallback class — 41 caller sites (continues 2026-06-02 sweep)
 
 - **What**: The `result.message ?? t("fallback")` / `result.message || t(...)` pattern in client components is dead code — server actions return truthy English strings, so the `??`/`||` never fire. The 2026-06-02 i18n deep-sweep enumerated ~41 caller sites; the 2026-06-09 scan found 9 still-live instances in Cluster F (settings, reports) alone. The fix is server-side: wrap action error messages with `getTranslations()` and return translated strings; the client-side `??` then becomes correct defense-in-depth.

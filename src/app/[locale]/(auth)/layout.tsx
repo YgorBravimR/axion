@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import { connection } from "next/server"
+import { getCopyrightYear } from "@/lib/copyright-year"
 
 interface AuthLayoutProps {
 	children: ReactNode
@@ -23,7 +24,7 @@ const AuthLayout = async ({ children }: AuthLayoutProps) => {
 			</main>
 			<footer className="py-s-300 fixed right-0 bottom-0 left-0 flex items-center justify-center gap-1.5">
 				<span className="text-micro text-txt-placeholder tracking-wide">
-					© {new Date().getFullYear()} Axion
+					© {getCopyrightYear()} Axion
 				</span>
 				<span className="text-micro text-txt-placeholder">·</span>
 				<span className="text-micro text-txt-placeholder tracking-wide">
