@@ -4,16 +4,22 @@
  * Resets module-level mutable state (like the trade factory counter)
  * to prevent ID accumulation across tests within the same worker process.
  *
- * Timezone: All tests run with TZ pinned to America/Sao_Paulo (BRT, UTC-3) to ensure
- * date and timezone operations are consistent regardless of the CI runner's environment.
+ * Timezone: All tests run with TZ pinned to UTC for determinism. ISO 8601 week
+ * math (src/lib/calendar/iso-week.ts) is UTC-naive — pinning to a non-UTC zone
+ * shifts calendar boundaries and breaks the iso-week test fixtures (see commit
+ * ce89ff8a for the original UTC lock rationale). Production code that needs BRT
+ * extraction must use `Intl.DateTimeFormat({ timeZone: APP_TIMEZONE, ... })` or
+ * the helpers in `src/lib/dates.ts` — never rely on the env TZ for BRT semantics.
  */
 
 import { beforeEach, vi } from "vitest"
 import { resetTradeIdCounter } from "./lib/fixtures/trade-factory"
 import { loadEnvFile } from "process"
 
-// Pin timezone to America/Sao_Paulo (BRT, UTC-3) before any imports that might use Date
-process.env.TZ = "America/Sao_Paulo"
+// Pin timezone to UTC before any imports that might use Date.
+// Rationale above — UTC keeps ISO-week math deterministic; BRT semantics live
+// in explicit Intl-based helpers, not env TZ.
+process.env.TZ = "UTC"
 
 // Load .env file for tests that need DB access
 loadEnvFile(".env")

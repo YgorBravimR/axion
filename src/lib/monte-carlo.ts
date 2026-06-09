@@ -419,13 +419,18 @@ export const generateAnalysisInsights = (
 		| "good"
 		| "moderate"
 		| "concerning" => {
-		if (stats.sharpeRatio >= 0.5 && stats.medianMaxRDrawdown <= 3) {
+		// Thresholds calibrated for ANNUALIZED Sharpe (post-Bundle A, multiplied
+		// by √252). Pre-Bundle A these were 0.5 / 0.3 / 0.1 — raw per-period
+		// values that became wildly over-permissive once `stats.sharpeRatio`
+		// started carrying the annualized value. Industry convention (Sharpe
+		// 1994): annualized >= 2 excellent, >= 1.5 good, >= 1 moderate.
+		if (stats.sharpeRatio >= 2 && stats.medianMaxRDrawdown <= 3) {
 			return "excellent"
 		}
-		if (stats.sharpeRatio >= 0.3 && stats.medianMaxRDrawdown <= 5) {
+		if (stats.sharpeRatio >= 1.5 && stats.medianMaxRDrawdown <= 5) {
 			return "good"
 		}
-		if (stats.sharpeRatio >= 0.1 && stats.medianMaxRDrawdown <= 8) {
+		if (stats.sharpeRatio >= 1 && stats.medianMaxRDrawdown <= 8) {
 			return "moderate"
 		}
 		return "concerning"
