@@ -114,7 +114,7 @@ const AppShell = ({
 									<SheetContent
 										id="mobile-sidebar-sheet"
 										side="left"
-										className="w-64 p-0"
+										className="w-full max-w-[16rem] p-0"
 									>
 										<SheetTitle className="sr-only">
 											{tCommon("openMenu")}
@@ -157,7 +157,10 @@ const AppShell = ({
 							</header>
 
 							{/* Mobile main content */}
-							<main id="main-content" className="min-h-dvh pt-14">
+							<main
+								id="main-content"
+								className="min-h-dvh pt-[var(--app-header-height)]"
+							>
 								{children}
 							</main>
 						</>
@@ -221,7 +224,7 @@ const AppShell = ({
 								</div>
 
 								{/* Scrollable main area */}
-								<div className="h-[calc(100dvh-3.5rem)] overflow-y-auto md:h-[calc(100dvh-3rem)]">
+								<div className="h-[calc(100dvh-var(--app-header-height))] overflow-y-auto">
 									<main id="main-content">{children}</main>
 								</div>
 							</div>

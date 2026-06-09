@@ -233,7 +233,7 @@ const MonthCard = ({
 			<Link
 				href={href}
 				className={cn(
-					"gap-s-300 bg-bg-200 p-m-400 flex h-full flex-col rounded-md border transition-colors",
+					"gap-s-300 bg-bg-200 p-m-400 flex h-full flex-col overflow-hidden rounded-md border transition-colors",
 					"focus-visible:ring-acc-100 focus-visible:ring-offset-bg-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 					state === "current" &&
 						"border-l-acc-100 border-y-bg-300 border-r-bg-300 hover:border-r-acc-100/40 border-l-4",
@@ -305,7 +305,10 @@ const MonthCard = ({
 				</div>
 
 				{bars.length > 0 && (
-					<div className="gap-s-100 flex flex-1 items-end" aria-hidden="true">
+					<div
+						className="gap-s-100 flex min-h-0 flex-1 items-end"
+						aria-hidden="true"
+					>
 						{bars.map((b) => {
 							const heightPct =
 								maxAbsR > 0

@@ -242,7 +242,7 @@ export const ExecutionForm = ({
 					</div>
 
 					{/* Date and Time */}
-					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2">
+					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
 						<div className="space-y-s-200">
 							<Label
 								id="label-execution-date"
@@ -286,7 +286,7 @@ export const ExecutionForm = ({
 					</div>
 
 					{/* Price and Quantity */}
-					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2">
+					<div className="gap-m-400 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
 						<div className="space-y-s-200">
 							<Label
 								id="label-execution-price"

@@ -149,14 +149,15 @@
 	--text-tiny: 0.75rem;
 	--text-micro: 0.625rem;
 
-	/* Chart heights — physical pixel sizes that recharts needs. Use as
-	   h-chart-xs / h-chart-sm / h-chart-md / h-chart-lg; pair with sm: variants
-	   for responsive growth (e.g. h-chart-sm sm:h-chart-md). */
-	--height-chart-xs: 120px;
-	--height-chart-sm: 160px;
-	--height-chart-md: 200px;
-	--height-chart-lg: 250px;
-	--height-chart-xl: 300px;
+	/* App header height — responsive token for header padding/calc compensation */
+	--app-header-height: 3.5rem;
+
+	/* Chart heights — fluid scaling via clamp() for smooth responsive growth */
+	--height-chart-xs: clamp(96px, 22vw, 120px);
+	--height-chart-sm: clamp(128px, 30vw, 160px);
+	--height-chart-md: clamp(160px, 38vw, 200px);
+	--height-chart-lg: clamp(200px, 47vw, 250px);
+	--height-chart-xl: clamp(240px, 56vw, 300px);
 
 	/* Empty-state placeholder heights — for "no data" divs in charts.
 	   Distinct from chart heights because they're semantic fallback containers,
@@ -284,6 +285,13 @@
 	--color-sidebar-accent-foreground: var(--color-txt-100);
 	--color-sidebar-border: var(--color-bg-300);
 	--color-sidebar-ring: var(--color-acc-100);
+}
+
+/* Responsive header height override for tablet+ */
+@media (min-width: 768px) {
+	:root {
+		--app-header-height: 3rem;
+	}
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

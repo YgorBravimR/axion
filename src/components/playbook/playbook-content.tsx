@@ -121,7 +121,7 @@ export const PlaybookContent = ({
 						</Button>
 					</div>
 				) : (
-					<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
+					<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3">
 						{strategies.map((strategy) => (
 							<StrategyCard
 								key={strategy.id}

@@ -142,7 +142,7 @@ const CommandCenterContent = ({
 	}, [refreshCompletions])
 
 	return (
-		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-7xl">
+		<div className="px-s-200 sm:px-m-400 space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-7xl">
 			{/* Date Navigator */}
 			<DateNavigator currentDate={viewDate} isToday={isToday} />
 

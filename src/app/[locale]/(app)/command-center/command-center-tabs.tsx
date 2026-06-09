@@ -56,6 +56,7 @@ const CommandCenterTabs = ({
 	strategies,
 	assetSettings,
 	initialLiveTradingStatus = null,
+	// Pass all command center initialization props directly to content
 	...commandCenterProps
 }: CommandCenterTabsProps) => {
 	const defaultAssetId = account?.defaultAssetId ?? undefined
@@ -72,40 +73,48 @@ const CommandCenterTabs = ({
 			onValueChange={setActiveTab}
 			className="flex h-full flex-col"
 		>
-			<TabsList
-				variant="line"
-				className="border-bg-300 px-s-200 sm:px-s-200 snap-x snap-mandatory overflow-x-auto border-b whitespace-nowrap"
-				aria-label={t("tabs.navigation")}
-			>
-				{showCommandTab && (
-					<TabsTrigger
-						value="command-center"
-						className="text-txt-200 data-[state=active]:text-txt-100 gap-s-100 sm:gap-s-200 snap-start"
-						aria-label={t("tabs.commandCenter")}
-					>
-						<Target className="h-4 w-4" />
-						<span className="hidden sm:inline">{t("tabs.commandCenter")}</span>
-					</TabsTrigger>
-				)}
-				{showMonitorTab && (
-					<TabsTrigger
-						value="monitor"
-						className="text-txt-200 data-[state=active]:text-txt-100 gap-s-100 sm:gap-s-200 snap-start"
-						aria-label={t("tabs.monitor")}
-					>
-						<Activity className="h-4 w-4" />
-						<span className="hidden sm:inline">{t("tabs.monitor")}</span>
-					</TabsTrigger>
-				)}
-				<TabsTrigger
-					value="calculator"
-					className="text-txt-200 data-[state=active]:text-txt-100 gap-s-100 sm:gap-s-200 snap-start"
-					aria-label={t("tabs.calculator")}
+			<div className="relative">
+				<TabsList
+					variant="line"
+					className="border-bg-300 px-s-100 sm:px-s-200 snap-x snap-mandatory overflow-x-auto border-b whitespace-nowrap"
+					aria-label={t("tabs.navigation")}
 				>
-					<Calculator className="h-4 w-4" />
-					<span className="hidden sm:inline">{t("tabs.calculator")}</span>
-				</TabsTrigger>
-			</TabsList>
+					{showCommandTab && (
+						<TabsTrigger
+							value="command-center"
+							className="text-txt-200 data-[state=active]:text-txt-100 gap-s-100 sm:gap-s-200 snap-start"
+							aria-label={t("tabs.commandCenter")}
+						>
+							<Target className="h-4 w-4" />
+							<span className="hidden sm:inline">
+								{t("tabs.commandCenter")}
+							</span>
+						</TabsTrigger>
+					)}
+					{showMonitorTab && (
+						<TabsTrigger
+							value="monitor"
+							className="text-txt-200 data-[state=active]:text-txt-100 gap-s-100 sm:gap-s-200 snap-start"
+							aria-label={t("tabs.monitor")}
+						>
+							<Activity className="h-4 w-4" />
+							<span className="hidden sm:inline">{t("tabs.monitor")}</span>
+						</TabsTrigger>
+					)}
+					<TabsTrigger
+						value="calculator"
+						className="text-txt-200 data-[state=active]:text-txt-100 gap-s-100 sm:gap-s-200 snap-start"
+						aria-label={t("tabs.calculator")}
+					>
+						<Calculator className="h-4 w-4" />
+						<span className="hidden sm:inline">{t("tabs.calculator")}</span>
+					</TabsTrigger>
+				</TabsList>
+				<div
+					aria-hidden="true"
+					className="from-bg-100 pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l to-transparent md:hidden"
+				/>
+			</div>
 
 			{showCommandTab && (
 				<AnimatedTabsContent

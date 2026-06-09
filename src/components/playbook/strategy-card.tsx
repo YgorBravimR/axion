@@ -90,7 +90,7 @@ const StrategyCardBase = ({
 					<DropdownMenuContent
 						id="strategy-menu-content"
 						align="end"
-						className="w-40"
+						className="w-40 max-w-[calc(100vw-2rem)]"
 					>
 						<DropdownMenuItem asChild>
 							<Link href={`/playbook/${strategy.id}`}>
@@ -119,7 +119,7 @@ const StrategyCardBase = ({
 			</div>
 
 			{/* Stats Grid */}
-			<div className="mt-s-300 sm:mt-m-400 gap-s-200 sm:gap-s-300 grid grid-cols-2 sm:grid-cols-4 [&_p]:truncate [&>div]:min-w-0">
+			<div className="mt-s-300 sm:mt-m-400 gap-s-200 sm:gap-s-300 grid grid-cols-2 sm:grid-cols-4 [&>div]:min-w-0 [&>div>p]:truncate">
 				<div className="bg-bg-100 p-s-300 rounded-lg text-center">
 					<p className="text-tiny text-txt-300">{t("strategy.trades")}</p>
 					<p className="text-body text-txt-100 mt-s-100 font-bold tabular-nums">

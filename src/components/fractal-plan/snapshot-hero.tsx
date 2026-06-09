@@ -1,6 +1,7 @@
 "use client"
 
 import { useTranslations } from "next-intl"
+import { useFormatting } from "@/hooks/use-formatting"
 
 interface SnapshotHeroProps {
 	tierIndex: number
@@ -25,6 +26,7 @@ const SnapshotHero = ({
 	reason,
 }: SnapshotHeroProps) => {
 	const t = useTranslations("plan")
+	const { formatDateTime } = useFormatting()
 	return (
 		<div className="border-acc-100/30 from-acc-100/5 p-m-500 rounded-lg border bg-gradient-to-br to-transparent">
 			<div className="mb-s-300 flex items-baseline justify-between">
@@ -58,7 +60,7 @@ const SnapshotHero = ({
 			<p className="mt-s-300 text-tiny text-txt-300">
 				{t("snapshotHero.computedAt")}{" "}
 				<time dateTime={computedAt.toISOString()}>
-					{computedAt.toLocaleString("pt-BR")}
+					{formatDateTime(computedAt)}
 				</time>
 			</p>
 		</div>

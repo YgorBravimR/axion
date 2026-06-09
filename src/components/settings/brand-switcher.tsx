@@ -12,7 +12,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select"
 
-/** Color swatches for each brand to give visual preview */
+/** Color swatches for each brand to give visual preview. These hex values are preview swatches that match the brand theme selectors in globals.css (.brand-axion, .brand-default, etc.). */
 const brandColors: Record<Brand, { primary: string; bg: string }> = {
 	axion: { primary: "#8B5CF6", bg: "#08090A" },
 	default: { primary: "#8080ff", bg: "#151C2C" },

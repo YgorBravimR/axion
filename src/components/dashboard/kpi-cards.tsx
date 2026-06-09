@@ -1,3 +1,4 @@
+import { memo } from "react"
 import type { OverallStats, DisciplineData, EquityPoint } from "@/types"
 import {
 	PnlCard,
@@ -35,7 +36,7 @@ interface KpiCardsProps {
  * Capital (current with initial sub) + 4 secondary KPIs. No hero card,
  * no full-width spans — every slot earns its width.
  */
-const KpiCards = ({
+const KpiCardsImpl = ({
 	stats,
 	discipline,
 	initialCapitalCents,
@@ -45,7 +46,7 @@ const KpiCards = ({
 	const currentCapitalCents =
 		initialCapitalCents + Math.round(allTimeNetPnl * 100)
 	return (
-		<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 [&>*]:min-w-0">
+		<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 [&>*]:min-w-0">
 			<PnlCard grossPnl={stats?.grossPnl ?? null} equityCurve={equityCurve} />
 			<CapitalCard
 				initialCapitalCents={initialCapitalCents}
@@ -67,5 +68,7 @@ const KpiCards = ({
 		</div>
 	)
 }
+
+const KpiCards = memo(KpiCardsImpl)
 
 export { KpiCards }

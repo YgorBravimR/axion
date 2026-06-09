@@ -98,6 +98,7 @@ interface PeriodToggleProps {
 const PeriodToggle = ({ period, onChange, disabled }: PeriodToggleProps) => {
 	const t = useTranslations("dashboard.period")
 
+	// Options are static locale-independent labels
 	const options = useMemo<{ value: DashboardPeriod; label: string }[]>(
 		() => [
 			{ value: "month", label: t("month") },
@@ -283,13 +284,10 @@ export const DashboardContent = ({
 		[fetchFilteredData, period]
 	)
 
-	// Memoize the coaching variants to prevent unnecessary re-renders of child components
-	const coachingVariants = useMemo(
-		() => ({
-			hawks: <HawksCoachingInsightsCard initialContext={initialHawksContext} />,
-		}),
-		[initialHawksContext]
-	)
+	// JSX literals are optimized by React 19 — no need to memoize
+	const coachingVariants = {
+		hawks: <HawksCoachingInsightsCard initialContext={initialHawksContext} />,
+	}
 
 	return (
 		<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 flex flex-col">
@@ -325,7 +323,7 @@ export const DashboardContent = ({
 			{/* Two-column masonry: left column stacks the big visuals, right column
 			    stacks coaching + performance + quick stats. Each column flows
 			    independently so item heights don't have to align row-by-row. */}
-			<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid grid-cols-1 lg:grid-cols-3">
+			<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3">
 				{/* Left column (col-span-2) */}
 				<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 flex flex-col lg:col-span-2">
 					<div id="dashboard-calendar">

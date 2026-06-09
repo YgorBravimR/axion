@@ -539,6 +539,17 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: 2026-05-15 parallel-wave (commit `6a7e986` over-swept; recovered via `560310e` follow-up).
 - **Date logged**: 2026-05-15.
 
+### `/scan` fix-agents can silently revert sibling cluster work + delete untracked drafts
+
+- **What**: During a multi-cluster `/scan` (sequential fix-agents per cluster), state-loss occurred between Cluster B's completion and Cluster C's launch — Cluster A's working-tree edits across ~6 files (`auth/layout`, `app-shell`, `sidebar`, `login-form`, `account-switcher`, `user-menu`, new `src/lib/copyright-year.ts`) reverted to baseline, and untracked draft reports in `docs/scans/_drafts/2026-06-09-responsive/` were deleted. Cluster B's working-tree edits (10 files) survived. `git reflog` showed a single `558a7697 HEAD@{0}: reset: moving to HEAD` entry but no `--hard` evidence. The survival pattern (one cluster's edits intact, the prior cluster's gone, untracked files removed) is consistent with `git clean -fd` followed by `git checkout HEAD -- <pathspec>` — root cause unconfirmed.
+- **What to do**:
+  - **Forbid destructive git commands in every fix-agent prompt** explicitly: `"DO NOT run \`git reset\`, \`git clean\`, \`git checkout --\` or any destructive git command. Read-only inspection only (\`git status\`, \`git diff\`). If your edits create a problem, fix it forward — never roll back the working tree."`
+  - **Prefer inline findings over disk-based draft reports** in fix-agent prompts. The 2026-06-09 incident was recoverable only because the orchestrator had read the draft reports into its conversation context before they were deleted. If you must use disk artifacts, accept that they are vulnerable.
+  - **`git diff --stat` spot-check after every fix-agent** before launching the next sibling. Don't trust an agent's self-reported "all green tsc + lint" — verify the files it claims to have modified are actually modified, and that no prior-cluster files reverted. Three lines of orchestrator-side bash beats a 90-minute recovery.
+  - **Consider `isolation: "worktree"`** if you don't need the fix-agent's edits to be visible to subsequent siblings. Trade-off: extra merge cost vs zero blast radius.
+- **Source**: 2026-06-09 `/scan for layout drifts on responsiveness`. Full incident report: `docs/scans/2026-06-09-responsive-layout-drift.md` § Incident.
+- **Date logged**: 2026-06-09.
+
 ---
 
 ## E2E / Playwright config

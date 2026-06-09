@@ -33,20 +33,12 @@ const PlanVsReality = ({
 	irTaxRate,
 }: PlanVsRealityProps) => {
 	const t = useTranslations("plan.planVsReality")
-	const { locale } = useFormatting()
+	const { formatCurrency } = useFormatting()
 
-	const formatBRL = (cents: number): string =>
-		(cents / 100).toLocaleString(locale === "pt-BR" ? "pt-BR" : "en-US", {
-			style: "currency",
-			currency: locale === "pt-BR" ? "BRL" : "USD",
-			maximumFractionDigits: 0,
-		})
+	const formatBRL = (cents: number): string => formatCurrency(cents / 100)
 
 	const formatBRLPrecise = (cents: number): string =>
-		(cents / 100).toLocaleString(locale === "pt-BR" ? "pt-BR" : "en-US", {
-			style: "currency",
-			currency: locale === "pt-BR" ? "BRL" : "USD",
-		})
+		formatCurrency(cents / 100)
 	const planSet = planGoalCents !== null && planGoalCents > 0
 	const dailyPlanCents =
 		planSet && totalTradingDays > 0

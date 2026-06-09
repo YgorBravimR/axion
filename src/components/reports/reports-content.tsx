@@ -123,7 +123,7 @@ export const ReportsContent = ({
 			/>
 
 			{/* Weekly and Monthly side by side on larger screens */}
-			<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid md:grid-cols-2 lg:grid-cols-2">
+			<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid lg:grid-cols-2">
 				<WeeklyReportCard initialReport={weeklyReport} />
 				<MonthlyReportCard initialReport={monthlyReport} />
 			</div>

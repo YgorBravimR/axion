@@ -24,10 +24,10 @@ const sizeClasses = {
 		subValue: "text-tiny",
 	},
 	md: {
-		container: "p-s-300 sm:p-m-400 lg:p-m-500",
-		label: "text-tiny",
-		value: "text-h3",
-		subValue: "text-tiny",
+		container: "p-s-200 sm:p-s-300",
+		label: "text-tiny sm:text-small",
+		value: "text-small sm:text-h3",
+		subValue: "text-tiny sm:text-small",
 	},
 	lg: {
 		container: "p-m-400 sm:p-m-500 lg:p-m-600",
@@ -92,6 +92,7 @@ const StatCard = memo(
 			<dl className="min-w-0">
 				<dt
 					id={labelId}
+					title={label}
 					className={cn(
 						"text-txt-300 truncate font-medium tracking-wide uppercase",
 						sizes.label

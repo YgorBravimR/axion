@@ -188,6 +188,11 @@ const JournalContent = () => {
 		(k) => k !== "_qf"
 	).length
 
+	const dateRange = useMemo(
+		() => getDateRange(period, effectiveDate, customDateRange),
+		[period, effectiveDate, customDateRange]
+	)
+
 	const handleFiltersChange = useCallback(
 		(filters: Record<string, string | string[]>) => {
 			// Write to URL params
@@ -234,7 +239,7 @@ const JournalContent = () => {
 		const fetchTrades = async () => {
 			const requestId = ++latestRequestRef.current
 			setIsLoading(true)
-			const { from, to } = getDateRange(period, effectiveDate, customDateRange)
+			const { from, to } = dateRange
 
 			// Build extended filter params for the server action
 			const ext =

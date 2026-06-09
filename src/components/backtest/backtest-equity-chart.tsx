@@ -82,7 +82,11 @@ const BacktestEquityChart = ({ equityCurve }: BacktestEquityChartProps) => {
 			<h3 className="text-h3 text-txt-100 mb-m-400 font-semibold">
 				{t("equityCurve")}
 			</h3>
-			<ChartContainer id="backtest-equity" className="h-72">
+			<ChartContainer
+				id="backtest-equity"
+				className="h-72"
+				aria-label={t("equityCurve")}
+			>
 				<AreaChart data={chartData} margin={CHART_MARGIN}>
 					<defs>
 						<linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">

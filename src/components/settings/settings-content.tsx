@@ -114,7 +114,7 @@ export const SettingsContent = ({
 			<div id="settings-tabs" className="mb-m-400 sm:mb-m-500 relative">
 				<TabsList
 					variant="line"
-					className="w-full scrollbar-none overflow-x-auto scroll-smooth"
+					className="w-full scrollbar-none overflow-x-auto scroll-smooth md:flex-wrap md:overflow-visible"
 				>
 					<TabsTrigger value="profile" className="gap-s-200 shrink-0">
 						<User className="h-4 w-4" aria-hidden="true" />

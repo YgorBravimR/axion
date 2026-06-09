@@ -73,7 +73,7 @@ export const NewTradeTabs = ({
 		<div className="mx-auto max-w-5xl">
 			{/* Tab Buttons */}
 			<div
-				className="mb-m-400 sm:mb-m-500 lg:mb-m-600 gap-s-100 sm:gap-s-200 border-bg-300 flex overflow-x-auto border-b"
+				className="mb-m-400 sm:mb-m-500 lg:mb-m-600 gap-s-100 sm:gap-s-200 border-bg-300 flex min-w-0 overflow-x-auto border-b"
 				role="tablist"
 			>
 				<button

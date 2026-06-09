@@ -241,7 +241,7 @@ export const TradingCalendar = memo(
 
 				<div
 					className={cn(
-						"mt-s-300 sm:mt-m-400 transition-opacity duration-200",
+						"mt-s-300 sm:mt-m-400 overflow-x-auto transition-opacity duration-200 md:overflow-visible",
 						isLoading && "opacity-50"
 					)}
 					aria-busy={isLoading || undefined}

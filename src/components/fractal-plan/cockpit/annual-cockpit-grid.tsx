@@ -218,7 +218,7 @@ const AnnualCockpitGrid = ({
 	return (
 		<section
 			aria-label={`Grade anual de planos para ${year}`}
-			className="gap-m-400 grid auto-rows-fr grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+			className="gap-s-300 sm:gap-s-300 lg:gap-m-400 grid auto-rows-fr grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
 		>
 			{cards.map((c) => {
 				const anchorKey = c.state === "muted" ? null : c.state

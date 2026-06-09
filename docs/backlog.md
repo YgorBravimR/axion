@@ -396,4 +396,54 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Done when**: heatmaps with 1000+ cells render in <16ms; existing interactivity preserved or explicitly migrated.
 - **Date filed**: 2026-06-02.
 
+## Layout & Theming (from 2026-06-09 scan)
+
+### Cluster A polish — non-blocking shell + auth items lost in mid-scan state incident
+
+- **What**: 12 findings from the responsive-drift scan's Cluster A diagnose report (A5-A16) that were not re-applied after the 2026-06-09 state-loss incident. None are responsive-blockers; all are polish or perf-adjacent.
+  - A5: sidebar tablet collapse — add tooltips on icon-only nav items (`src/components/layout/sidebar.tsx`)
+  - A6: sidebar group indent — flatten on mobile: `ml-0 md:ml-m-400`
+  - A7: account-switcher create-account Dialog — add `max-w-[calc(100vw-2rem)] sm:max-w-md`
+  - A8: login-form account-selection step — add `lg:max-w-lg` parity with main auth widen
+  - A9: user-menu expanded variant trigger — add `aria-label={t("userMenu")}` (collapsed variant already has it)
+  - A10: verify `Button size="sm"` variant exists in `src/components/ui/button.tsx`
+  - A11: sidebar collapse-toggle icon — add `aria-hidden="true"` to `<PanelLeftOpen>`
+  - A12: account-switcher font scale drift — confirm `text-small` vs `text-tiny` intent
+  - A13: user-menu `t("reportBug")` namespace verification (auth.accountSwitcher namespace)
+  - A14: sidebar `initialGroupState` over-recalculation — wrap in `useMemo` or lazy initializer
+  - A15: copyright year DRY — extract `src/lib/copyright-year.ts` and use in auth layout + sidebar
+  - A16: sidebar logo crossfade — stack both `<Image>` absolutely so opacity overlap prevents flash
+- **Fix shape**: one `general-purpose` subagent with the same instructions used for cluster fix-agents. Each finding is a small targeted edit; estimated ~30 lines across ~6 files.
+- **Done when**: all 12 items applied, `pnpm exec tsc --noEmit` and `pnpm lint` green.
+- **Date filed**: 2026-06-09.
+- **Source**: `docs/scans/2026-06-09-responsive-layout-drift.md` § Still armed.
+
+### Server-action unreachable i18n fallback class — 41 caller sites (continues 2026-06-02 sweep)
+
+- **What**: The `result.message ?? t("fallback")` / `result.message || t(...)` pattern in client components is dead code — server actions return truthy English strings, so the `??`/`||` never fire. The 2026-06-02 i18n deep-sweep enumerated ~41 caller sites; the 2026-06-09 scan found 9 still-live instances in Cluster F (settings, reports) alone. The fix is server-side: wrap action error messages with `getTranslations()` and return translated strings; the client-side `??` then becomes correct defense-in-depth.
+- **Why it's deferred from 2026-06-09 scan**: requires coordinated server-action audit across many `src/app/actions/*.ts` files; cleanly out of scope for a responsive-drift pass; risks colliding with the 2026-06-02 sweep's tracked work if done piecemeal.
+- **Fix shape**:
+  1. Read `docs/scans/2026-06-02-i18n-action-errors.md` for the full caller catalog.
+  2. For each affected server action: import `getTranslations` from `next-intl/server`, wrap each English error-return message with `t("namespace.errors.<key>")`, add the key to both `messages/en.json` and `messages/pt-BR.json` in lockstep.
+  3. After all actions are migrated, audit client components for now-dead `??`/`||` fallbacks — keep or remove based on aesthetic preference.
+  4. Validate with `pnpm i18n:check`.
+- **Known live caller sites (post 2026-06-09 scan)**: `recalculate-button.tsx:28-34`, `recalculate-pnl-button.tsx:28-34`, `capital-event-log.tsx:67`, `withdrawal-calculator.tsx:55`, `general-settings.tsx:70`, `trading-account-settings.tsx:95`, `user-profile-settings.tsx:107`, `hawks-settings.tsx:~170-180`, `tag-list.tsx:~300+`, `user-list.tsx:~400+`, plus the broader 41 sites enumerated 2026-06-02.
+- **Done when**: `rg 'result\.(message|error)\s*(\?\?|\|\|)' src/components/` returns empty (or only intentional defense-in-depth where server is already translated).
+- **Date filed**: 2026-06-09.
+- **Source**: `docs/scans/2026-06-09-responsive-layout-drift.md` § RC4, § Still armed.
+
+### Backtest trades table — mobile card-layout alternative
+
+- **What**: `src/components/backtest/backtest-trades-table.tsx` uses `hidden md:table-cell` to drop columns on mobile, plus `overflow-x-auto` was added in the 2026-06-09 pass. There is still no mobile-optimized card layout — on a 375px viewport users either scroll horizontally or see a heavily-reduced column set. A vertical card mode (one row → one card with stacked fields) would be the canonical fix.
+- **Done when**: at `<sm:` breakpoint, the table renders as vertical cards; at `>=sm:` it renders as the existing table.
+- **Date filed**: 2026-06-09.
+- **Source**: `docs/scans/2026-06-09-responsive-layout-drift.md` § E8.
+
+### Trading-calendar mobile alt view
+
+- **What**: `src/components/dashboard/trading-calendar.tsx` renders 7-column or 5-column day grids. The 2026-06-09 pass added `overflow-x-auto md:overflow-visible` to the wrapper so it scrolls instead of squashing — but at 375px each cell is still ~53px and day-number text remains tight. A numeric-list alternative mobile view (list of days with P&L badges, no grid) may serve mobile users better.
+- **Done when**: gather feedback after shipping the overflow-fix; if mobile users report calendar discomfort, build the list-view alt.
+- **Date filed**: 2026-06-09.
+- **Source**: `docs/scans/2026-06-09-responsive-layout-drift.md` § B10.
+
 ## Tax & Compliance

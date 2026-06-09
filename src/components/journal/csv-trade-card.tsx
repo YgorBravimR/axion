@@ -368,7 +368,7 @@ const CsvTradeCard = memo(
 								value="basic"
 								className="space-y-s-300 sm:space-y-m-400"
 							>
-								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 md:grid-cols-4">
+								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
 									{/* Date */}
 									<div>
 										<Label
@@ -464,7 +464,7 @@ const CsvTradeCard = memo(
 								</div>
 
 								{/* Prices (readonly) */}
-								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 md:grid-cols-4">
+								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
 									<div>
 										<Label
 											id="label-csv-entry-price"
@@ -519,7 +519,7 @@ const CsvTradeCard = memo(
 								value="risk"
 								className="space-y-s-300 sm:space-y-m-400"
 							>
-								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 md:grid-cols-4">
+								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
 									<div>
 										<Label
 											id={`label-csv-sl-${trade.id}`}

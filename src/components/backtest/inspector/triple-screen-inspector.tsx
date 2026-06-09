@@ -249,7 +249,7 @@ const HawksTripleScreenInspector = ({
 					{trade.dayKey} · {assetSymbol} · {sizesLabel}
 				</span>
 			</div>
-			<div className="gap-s-300 grid h-[640px] grid-cols-[3fr_2fr]">
+			<div className="gap-s-300 grid h-96 grid-cols-1 md:h-[640px] md:grid-cols-[3fr_2fr]">
 				<RenkoPane
 					label="5m Renko"
 					subLabel={`size ${windowData?.sizes.size5m ?? "—"} pts`}

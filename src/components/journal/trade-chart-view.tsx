@@ -179,8 +179,8 @@ const TradeChartView = ({
 		}
 
 		const theme = themeRef.current
-		const entryColor = theme?.actionBuy ?? "rgb(100, 180, 255)"
-		const exitColor = theme?.actionSell ?? "rgb(255, 140, 100)"
+		const entryColor = theme?.actionBuy ?? "var(--color-action-buy)"
+		const exitColor = theme?.actionSell ?? "var(--color-action-sell)"
 		const lastIdx = candles.length - 1
 
 		// Build execution list

@@ -139,14 +139,14 @@ export const QuickStats = ({ streakData, stats }: QuickStatsProps) => {
 					label={t("totalTrades")}
 					value={stats?.totalTrades.toString() || "--"}
 				/>
-				<div className="mt-m-500 gap-s-300 pt-m-400 grid grid-cols-2">
-					<div className="bg-bg-100 p-s-300 min-w-0 rounded-md text-center">
+				<div className="mt-m-500 gap-s-300 pt-m-400 grid grid-cols-1 sm:grid-cols-2">
+					<div className="bg-bg-100 p-s-200 sm:p-s-300 min-w-0 rounded-md text-center">
 						<p className="text-tiny text-txt-300 truncate">{t("longestWin")}</p>
 						<p className="mt-s-100 text-body text-trade-buy font-semibold">
 							{streakData?.longestWinStreak || 0}
 						</p>
 					</div>
-					<div className="bg-bg-100 p-s-300 min-w-0 rounded-md text-center">
+					<div className="bg-bg-100 p-s-200 sm:p-s-300 min-w-0 rounded-md text-center">
 						<p className="text-tiny text-txt-300 truncate">
 							{t("longestLoss")}
 						</p>
