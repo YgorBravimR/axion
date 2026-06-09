@@ -415,6 +415,37 @@ const RiskParamsForm = ({
 						prefix="BRL"
 						locked={isLocked}
 					/>
+					<div className="gap-s-100 flex flex-col">
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<label className="text-tiny text-txt-300 gap-s-100 flex cursor-help items-center">
+									{t("originalCapital")}
+									<Info
+										className="text-txt-300 h-3.5 w-3.5 shrink-0"
+										aria-hidden="true"
+									/>
+								</label>
+							</TooltipTrigger>
+							<TooltipContent id="tooltip-original-capital-advanced">
+								{t("originalCapitalInfo")}
+							</TooltipContent>
+						</Tooltip>
+						<CurrencyField
+							label=""
+							valueCents={
+								params.originalCapitalCents ?? params.accountBalanceCents
+							}
+							onChange={(val) =>
+								onChange({
+									...params,
+									originalCapitalCents: val
+										? Math.round(parseFloat(val || "0") * 100)
+										: undefined,
+								})
+							}
+							prefix="BRL"
+						/>
+					</div>
 				</div>
 			</div>
 		)
