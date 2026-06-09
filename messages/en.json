@@ -2602,6 +2602,12 @@
 			"last4WeeksAvg": "Last 4 weeks avg: {pct}%",
 			"emptyState": "Not enough trades to draw a trend yet.",
 			"tooltipFormat": "Week of {week}: {compliance}% ({followed}/{tracked} trades)"
+		},
+		"messages": {
+			"conditionCreatedSuccessfully": "Condition created successfully",
+			"conditionUpdatedSuccessfully": "Condition updated successfully",
+			"conditionsRetrievedSuccessfully": "Conditions retrieved successfully",
+			"conditionDeletedSuccessfully": "Condition deleted successfully"
 		}
 	},
 	"reports": {
@@ -2822,7 +2828,10 @@
 		"withdrawalAmountAriaLabel": "Amount in BRL",
 		"withdrawalDateAriaLabel": "Withdrawal date",
 		"withdrawalEnterValidAmount": "Enter a valid amount greater than zero",
-		"withdrawalFailedToLog": "Failed to log withdrawal"
+		"withdrawalFailedToLog": "Failed to log withdrawal",
+		"messages": {
+			"accountNotFound": "Account not found"
+		}
 	},
 	"settings": {
 		"title": "Settings",
@@ -4248,6 +4257,21 @@
 		"success": {
 			"imported": "Successfully imported {count} trades from {broker}",
 			"csvImported": "Successfully imported {count, plural, =1 {1 trade} other {# trades}}."
+		},
+		"messages": {
+			"tradeImportedWithExecutions": "Trade imported successfully with {count} executions",
+			"validationFailed": "Validation failed",
+			"failedToImportTradeFromOcr": "Failed to import trade from OCR data",
+			"assetFound": "Asset found",
+			"assetNotFound": "Asset not found",
+			"failedToValidateAsset": "Failed to validate asset",
+			"aiVisionAvailable": "AI Vision available",
+			"noAiVisionUsingTesseract": "No AI Vision - will use Tesseract",
+			"aiExtractionFailedFallingBackToTesseract": "AI extraction failed, falling back to Tesseract",
+			"extractedTradesViaCascade": "Extracted {count} trade(s) via {provider} with {confidence}% confidence",
+			"failedToExtractTradesFromImage": "Failed to extract trades from image",
+			"noExitPricePnlCannotBeCalculated": "No exit price - P&L cannot be calculated",
+			"validatedTrades": "Validated {count} trades"
 		}
 	},
 	"notaImport": {
@@ -5694,7 +5718,19 @@
 			"invalidInput": "Invalid input.",
 			"invalidMonthFormat": "Invalid month format.",
 			"monthInProgress": "Month still in progress — DARF can only be marked after the last day of the month.",
-			"ledgerRowNotFoundForMonth": "Ledger row not found for month."
+			"ledgerRowNotFoundForMonth": "Ledger row not found for month.",
+			"ledgerRowRetrieved": "Ledger row retrieved.",
+			"carryoverStateRetrieved": "Carryover state retrieved.",
+			"noLedgerRowsToRecompute": "No ledger rows to recompute.",
+			"ledgerRecomputedMonths": "Recomputed {months} month(s).",
+			"yearTaxSummaryRetrieved": "Year tax summary retrieved.",
+			"noTaxableGainThisMonth": "No taxable gain this month.",
+			"effectiveTaxRateRetrieved": "Effective tax rate retrieved.",
+			"darfMarkedAsPaid": "DARF marked as paid.",
+			"feeRatesRetrieved": "Fee rates retrieved.",
+			"feeRatesListRetrieved": "Fee rates list retrieved.",
+			"feeRatesSaved": "Fee rates saved.",
+			"feeRatesOverrideRemoved": "Fee rates override removed."
 		},
 		"annualSummary": {
 			"title": "Annual Summary {year}",
@@ -5848,6 +5884,20 @@
 				"overdue": "Overdue"
 			},
 			"noDarfLines": "No DARF rows for {year}. Click \"Recompute year\" after recording trades."
+		},
+		"messages": {
+			"ledgerRowRetrieved": "Ledger row retrieved.",
+			"carryoverStateRetrieved": "Carryover state retrieved.",
+			"noLedgerRowsToRecompute": "No ledger rows to recompute.",
+			"ledgerRecomputedMonths": "Recomputed {months} month(s).",
+			"yearTaxSummaryRetrieved": "Year tax summary retrieved.",
+			"noTaxableGainThisMonth": "No taxable gain this month.",
+			"effectiveTaxRateRetrieved": "Effective tax rate retrieved.",
+			"darfMarkedAsPaid": "DARF marked as paid.",
+			"feeRatesRetrieved": "Fee rates retrieved.",
+			"feeRatesListRetrieved": "Fee rates list retrieved.",
+			"feeRatesSaved": "Fee rates saved.",
+			"feeRatesOverrideRemoved": "Fee rates override removed."
 		}
 	},
 	"plan": {

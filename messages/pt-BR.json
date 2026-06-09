@@ -2602,6 +2602,12 @@
 			"last4WeeksAvg": "Média últimas 4 semanas: {pct}%",
 			"emptyState": "Trades insuficientes para traçar a tendência.",
 			"tooltipFormat": "Semana de {week}: {compliance}% ({followed}/{tracked} trades)"
+		},
+		"messages": {
+			"conditionCreatedSuccessfully": "Condição criada com sucesso",
+			"conditionUpdatedSuccessfully": "Condição atualizada com sucesso",
+			"conditionsRetrievedSuccessfully": "Condições recuperadas com sucesso",
+			"conditionDeletedSuccessfully": "Condição excluída com sucesso"
 		}
 	},
 	"reports": {
@@ -2822,7 +2828,10 @@
 		"withdrawalAmountAriaLabel": "Valor em reais",
 		"withdrawalDateAriaLabel": "Data da retirada",
 		"withdrawalEnterValidAmount": "Digite um valor válido maior que zero",
-		"withdrawalFailedToLog": "Falha ao registrar retirada"
+		"withdrawalFailedToLog": "Falha ao registrar retirada",
+		"messages": {
+			"accountNotFound": "Conta não encontrada"
+		}
 	},
 	"settings": {
 		"title": "Configurações",
@@ -4248,6 +4257,21 @@
 		"success": {
 			"imported": "{count} operações importadas com sucesso de {broker}",
 			"csvImported": "{count, plural, =1 {1 trade importado} other {# trades importados}} com sucesso."
+		},
+		"messages": {
+			"tradeImportedWithExecutions": "Trade importado com sucesso com {count} execuções",
+			"validationFailed": "Validação falhou",
+			"failedToImportTradeFromOcr": "Falha ao importar trade dos dados de OCR",
+			"assetFound": "Ativo encontrado",
+			"assetNotFound": "Ativo não encontrado",
+			"failedToValidateAsset": "Falha ao validar ativo",
+			"aiVisionAvailable": "IA Vision disponível",
+			"noAiVisionUsingTesseract": "Sem IA Vision - usando Tesseract",
+			"aiExtractionFailedFallingBackToTesseract": "Extração de IA falhou, retornando ao Tesseract",
+			"extractedTradesViaCascade": "Extraído(s) {count} trade(s) via {provider} com {confidence}% de confiança",
+			"failedToExtractTradesFromImage": "Falha ao extrair trades da imagem",
+			"noExitPricePnlCannotBeCalculated": "Sem preço de saída - P&L não pode ser calculado",
+			"validatedTrades": "Validado(s) {count} trades"
 		}
 	},
 	"notaImport": {
@@ -5694,7 +5718,19 @@
 			"invalidInput": "Entrada inválida.",
 			"invalidMonthFormat": "Formato de mês inválido.",
 			"monthInProgress": "Mês ainda em curso — DARF só pode ser marcada após o último dia do mês.",
-			"ledgerRowNotFoundForMonth": "Linha do ledger não encontrada para este mês."
+			"ledgerRowNotFoundForMonth": "Linha do ledger não encontrada para este mês.",
+			"ledgerRowRetrieved": "Linha de ledger recuperada.",
+			"carryoverStateRetrieved": "Estado de carryover recuperado.",
+			"noLedgerRowsToRecompute": "Nenhuma linha de ledger para recalcular.",
+			"ledgerRecomputedMonths": "Recalculado(s) {months} mês(es).",
+			"yearTaxSummaryRetrieved": "Resumo fiscal anual recuperado.",
+			"noTaxableGainThisMonth": "Nenhum ganho tributável este mês.",
+			"effectiveTaxRateRetrieved": "Alíquota fiscal efetiva recuperada.",
+			"darfMarkedAsPaid": "DARF marcado como pago.",
+			"feeRatesRetrieved": "Alíquotas de taxa recuperadas.",
+			"feeRatesListRetrieved": "Lista de alíquotas de taxa recuperada.",
+			"feeRatesSaved": "Alíquotas de taxa salvas.",
+			"feeRatesOverrideRemoved": "Sobreposição de alíquota de taxa removida."
 		},
 		"annualSummary": {
 			"title": "Resumo Anual {year}",
@@ -5848,6 +5884,20 @@
 				"overdue": "Vencido"
 			},
 			"noDarfLines": "Nenhuma linha de DARF para {year}. Clique em \"Recalcular ano\" após registrar trades."
+		},
+		"messages": {
+			"ledgerRowRetrieved": "Linha de ledger recuperada.",
+			"carryoverStateRetrieved": "Estado de carryover recuperado.",
+			"noLedgerRowsToRecompute": "Nenhuma linha de ledger para recalcular.",
+			"ledgerRecomputedMonths": "Recalculado(s) {months} mês(es).",
+			"yearTaxSummaryRetrieved": "Resumo fiscal anual recuperado.",
+			"noTaxableGainThisMonth": "Nenhum ganho tributável este mês.",
+			"effectiveTaxRateRetrieved": "Alíquota fiscal efetiva recuperada.",
+			"darfMarkedAsPaid": "DARF marcado como pago.",
+			"feeRatesRetrieved": "Alíquotas de taxa recuperadas.",
+			"feeRatesListRetrieved": "Lista de alíquotas de taxa recuperada.",
+			"feeRatesSaved": "Alíquotas de taxa salvas.",
+			"feeRatesOverrideRemoved": "Sobreposição de alíquota de taxa removida."
 		}
 	},
 	"plan": {

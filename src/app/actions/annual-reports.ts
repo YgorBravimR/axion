@@ -173,6 +173,7 @@ export const getWeeklyMetaVsReal = async (
 	year: number
 ): Promise<ActionResult<WeeklyMetaVsRealData>> => {
 	const { accountId } = await requireAuth()
+	const t = await getTranslations("reports.messages")
 
 	const accountRows = await db
 		.select({
@@ -186,7 +187,7 @@ export const getWeeklyMetaVsReal = async (
 
 	const account = accountRows[0]
 	if (!account) {
-		return { status: "error", message: "Account not found" }
+		return { status: "error", message: t("accountNotFound") }
 	}
 
 	const withdrawalTarget = account.withdrawalTargetPercent
@@ -294,6 +295,7 @@ export const getAnnualRollup = async (
 	year: number
 ): Promise<ActionResult<AnnualRollupData>> => {
 	const { accountId } = await requireAuth()
+	const t = await getTranslations("reports.messages")
 
 	const accountRows = await db
 		.select({
@@ -308,7 +310,7 @@ export const getAnnualRollup = async (
 
 	const account = accountRows[0]
 	if (!account) {
-		return { status: "error", message: "Account not found" }
+		return { status: "error", message: t("accountNotFound") }
 	}
 
 	const withdrawalTarget = account.withdrawalTargetPercent

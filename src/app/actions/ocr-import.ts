@@ -282,6 +282,7 @@ const processOcrTrade = async (
 export const createTradeFromOcr = async (
 	input: z.input<typeof ocrImportSchema>
 ): Promise<ActionResponse<OcrImportResult>> => {
+	const tImports = await getTranslations("imports.messages")
 	try {
 		const { accountId, userId } = await requireAuth()
 		const validated = ocrImportSchema.parse(input)
@@ -298,14 +299,16 @@ export const createTradeFromOcr = async (
 
 		return {
 			status: "success",
-			message: `Trade imported successfully with ${result.executions.length} executions`,
+			message: tImports("tradeImportedWithExecutions", {
+				count: result.executions.length,
+			}),
 			data: result,
 		}
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return {
 				status: "error",
-				message: "Validation failed",
+				message: tImports("validationFailed"),
 				errors: error.issues.map((e) => ({
 					code: "VALIDATION_ERROR",
 					detail: `${e.path.join(".")}: ${e.message}`,
@@ -315,7 +318,7 @@ export const createTradeFromOcr = async (
 
 		return {
 			status: "error",
-			message: "Failed to import trade from OCR data",
+			message: tImports("failedToImportTradeFromOcr"),
 			errors: [
 				{
 					code: "IMPORT_FAILED",
@@ -410,6 +413,7 @@ export const validateAsset = async (
 ): Promise<
 	ActionResponse<{ exists: boolean; asset: typeof assets.$inferSelect | null }>
 > => {
+	const tImports = await getTranslations("imports.messages")
 	try {
 		await requireAuth()
 
@@ -419,7 +423,7 @@ export const validateAsset = async (
 
 		return {
 			status: "success",
-			message: asset ? "Asset found" : "Asset not found",
+			message: asset ? tImports("assetFound") : tImports("assetNotFound"),
 			data: {
 				exists: !!asset,
 				asset: asset ?? null,
@@ -428,7 +432,7 @@ export const validateAsset = async (
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to validate asset",
+			message: tImports("failedToValidateAsset"),
 			errors: [
 				{
 					code: "VALIDATION_FAILED",
@@ -465,14 +469,15 @@ import type {
 export const getVisionProvidersStatus = async (): Promise<
 	ActionResponse<{ providers: ProviderStatus[]; hasAI: boolean }>
 > => {
+	const tImports = await getTranslations("imports.messages")
 	const providers = getProvidersStatus()
 	const hasAI = hasAIVisionProvider()
 
 	return {
 		status: "success",
 		message: hasAI
-			? "AI Vision available"
-			: "No AI Vision configured - using Tesseract",
+			? tImports("aiVisionAvailable")
+			: tImports("noAiVisionUsingTesseract"),
 		data: { providers, hasAI },
 	}
 }
@@ -483,12 +488,13 @@ export const getVisionProvidersStatus = async (): Promise<
 export const checkVisionAvailability = async (): Promise<
 	ActionResponse<{ available: boolean }>
 > => {
+	const tImports = await getTranslations("imports.messages")
 	const hasAI = hasAIVisionProvider()
 	return {
 		status: "success",
 		message: hasAI
-			? "AI Vision available"
-			: "No AI Vision - will use Tesseract",
+			? tImports("aiVisionAvailable")
+			: tImports("noAiVisionUsingTesseract"),
 		data: { available: hasAI },
 	}
 }
@@ -575,6 +581,7 @@ export const extractTradesWithVision = async (
 	imageBase64: string,
 	mimeType: string = "image/png"
 ): Promise<ActionResponse<OcrParseResult & { provider: string }>> => {
+	const tImports = await getTranslations("imports.messages")
 	try {
 		await requireAuth()
 
@@ -597,7 +604,7 @@ export const extractTradesWithVision = async (
 		if (result.trades.length === 0 && result.provider === "tesseract") {
 			return {
 				status: "error",
-				message: "AI extraction failed, falling back to Tesseract",
+				message: tImports("aiExtractionFailedFallingBackToTesseract"),
 				errors: [
 					{ code: "AI_EXTRACTION_FAILED", detail: "All AI providers failed" },
 				],
@@ -608,13 +615,17 @@ export const extractTradesWithVision = async (
 
 		return {
 			status: "success",
-			message: `Extracted ${result.trades.length} trade(s) via ${result.provider} with ${result.confidence.toFixed(0)}% confidence`,
+			message: tImports("extractedTradesViaCascade", {
+				count: result.trades.length,
+				provider: result.provider,
+				confidence: result.confidence.toFixed(0),
+			}),
 			data: { ...parseResult, provider: result.provider },
 		}
 	} catch (error) {
 		return {
 			status: "error",
-			message: "Failed to extract trades from image",
+			message: tImports("failedToExtractTradesFromImage"),
 			errors: [
 				{
 					code: "VISION_FAILED",
