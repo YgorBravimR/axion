@@ -1,6 +1,7 @@
 "use server"
 
 import { z } from "zod"
+import { getTranslations } from "next-intl/server"
 import { and, eq } from "drizzle-orm"
 import { db } from "@/db/drizzle"
 import { yearlyPlans } from "@/db/schema"
@@ -36,6 +37,7 @@ export const createYearlyPlanV2 = async (
 	input: z.infer<typeof createYearlyPlanInputSchema>
 ): Promise<ActionResponse<CreateYearlyPlanResult>> => {
 	try {
+		const t = await getTranslations("fractalPlan.yearly")
 		const parsed = createYearlyPlanInputSchema.parse(input)
 		const { accountId } = await requireAuth()
 
@@ -45,8 +47,7 @@ export const createYearlyPlanV2 = async (
 			if (account?.startingBalanceCents == null) {
 				return {
 					status: "error",
-					message:
-						"Set the account starting balance in Settings → Annual Reporting before seeding a yearly plan.",
+					message: t("errors.missingStartingBalance"),
 					errors: [
 						{
 							code: "MISSING_STARTING_BALANCE",
@@ -78,7 +79,7 @@ export const createYearlyPlanV2 = async (
 
 		return {
 			status: "success",
-			message: "Yearly plan created with seeded fractal tree",
+			message: t("success.createdWithSeed"),
 			data: result,
 		}
 	} catch (err) {
@@ -112,6 +113,7 @@ export const updateYearlyPlan = async (
 	input: z.infer<typeof updateYearlyPlanInputSchema>
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
+		const t = await getTranslations("fractalPlan.yearly.errors")
 		const parsed = updateYearlyPlanInputSchema.parse(input)
 		const { accountId } = await requireAuth()
 
@@ -124,7 +126,7 @@ export const updateYearlyPlan = async (
 		if (!existing) {
 			return {
 				status: "error",
-				message: "Yearly plan not found for this year",
+				message: t("notFoundForYear"),
 				errors: [{ code: "NOT_FOUND", detail: `year=${parsed.year}` }],
 			}
 		}

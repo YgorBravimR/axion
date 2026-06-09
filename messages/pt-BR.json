@@ -6487,5 +6487,40 @@
 			"badge": "{ordinal} de {cap} trades hoje",
 			"atCap": "Limite diário atingido"
 		}
+	},
+	"fractalPlan": {
+		"daily": {
+			"success": {
+				"updated": "Plano diário atualizado",
+				"overrideReset": "Override redefinido",
+				"created": "Plano diário criado",
+				"fetched": "Carregado"
+			},
+			"errors": {
+				"alreadyExists": "Plano diário já existe",
+				"noActiveAccount": "Sem conta ativa",
+				"noYearlyPlan": "Sem plano anual",
+				"incompleteCascade": "Cascata incompleta"
+			}
+		},
+		"monthly": {
+			"success": {
+				"updated": "Plano mensal atualizado",
+				"overrideReset": "Override redefinido"
+			},
+			"errors": {
+				"notFound": "Plano mensal não encontrado.",
+				"forbiddenWrongAccount": "Proibido — plano mensal pertence a outra conta."
+			}
+		},
+		"yearly": {
+			"success": {
+				"createdWithSeed": "Plano anual criado com árvore fractal semeada"
+			},
+			"errors": {
+				"missingStartingBalance": "Defina o saldo inicial da conta em Configurações → Relatório Anual antes de criar um plano anual.",
+				"notFoundForYear": "Plano anual não encontrado para este ano"
+			}
+		}
 	}
 }

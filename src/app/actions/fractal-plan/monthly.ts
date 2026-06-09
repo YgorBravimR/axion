@@ -1,6 +1,7 @@
 "use server"
 
 import { z } from "zod"
+import { getTranslations } from "next-intl/server"
 import { db } from "@/db/drizzle"
 import { dbWs } from "@/db/drizzle-ws"
 import { monthlyPlan, quarterlyPlan } from "@/db/schema"
@@ -31,6 +32,7 @@ export const upsertMonthlyPlan = async (
 	input: z.infer<typeof upsertSchema>
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
+		const t = await getTranslations("fractalPlan.monthly.success")
 		const parsed = upsertSchema.parse(input)
 		await requireAuth()
 		const updates: Record<string, unknown> = { updatedAt: new Date() }
@@ -68,7 +70,7 @@ export const upsertMonthlyPlan = async (
 			.where(eq(monthlyPlan.id, parsed.monthlyPlanId))
 		return {
 			status: "success",
-			message: "Monthly plan updated",
+			message: t("updated"),
 			data: { id: parsed.monthlyPlanId },
 		}
 	} catch (err) {
@@ -98,6 +100,7 @@ export const resetMonthlyOverride = async (
 	input: z.infer<typeof resetSchema>
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
+		const t = await getTranslations("fractalPlan.monthly.success")
 		const parsed = resetSchema.parse(input)
 		await requireAuth()
 		await db
@@ -106,7 +109,7 @@ export const resetMonthlyOverride = async (
 			.where(eq(monthlyPlan.id, parsed.monthlyPlanId))
 		return {
 			status: "success",
-			message: "Override reset",
+			message: t("overrideReset"),
 			data: { id: parsed.monthlyPlanId },
 		}
 	} catch (err) {
@@ -130,6 +133,7 @@ export const setMonthlyCapital = async (
 	input: z.infer<typeof setMonthlyCapitalSchema>
 ): Promise<ActionResponse<SetMonthlyCapitalResult>> => {
 	try {
+		const t = await getTranslations("fractalPlan.monthly.errors")
 		const parsed = setMonthlyCapitalSchema.parse(input)
 		const { accountId } = await requireAuth()
 
@@ -142,14 +146,14 @@ export const setMonthlyCapital = async (
 		if (!target) {
 			return {
 				status: "error",
-				message: "Monthly plan not found.",
+				message: t("notFound"),
 				errors: [{ code: "NOT_FOUND", detail: parsed.monthlyPlanId }],
 			}
 		}
 		if (target.quarterlyPlan.yearlyPlan.accountId !== accountId) {
 			return {
 				status: "error",
-				message: "Forbidden — monthly plan belongs to another account.",
+				message: t("forbiddenWrongAccount"),
 				errors: [{ code: "FORBIDDEN", detail: "account mismatch" }],
 			}
 		}

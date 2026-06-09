@@ -6487,5 +6487,40 @@
 			"badge": "{ordinal} of {cap} trades today",
 			"atCap": "Daily cap reached"
 		}
+	},
+	"fractalPlan": {
+		"daily": {
+			"success": {
+				"updated": "Daily plan updated",
+				"overrideReset": "Override reset",
+				"created": "Daily plan created",
+				"fetched": "Fetched"
+			},
+			"errors": {
+				"alreadyExists": "Daily plan exists",
+				"noActiveAccount": "No active account",
+				"noYearlyPlan": "No yearly plan",
+				"incompleteCascade": "Incomplete cascade"
+			}
+		},
+		"monthly": {
+			"success": {
+				"updated": "Monthly plan updated",
+				"overrideReset": "Override reset"
+			},
+			"errors": {
+				"notFound": "Monthly plan not found.",
+				"forbiddenWrongAccount": "Forbidden — monthly plan belongs to another account."
+			}
+		},
+		"yearly": {
+			"success": {
+				"createdWithSeed": "Yearly plan created with seeded fractal tree"
+			},
+			"errors": {
+				"missingStartingBalance": "Set the account starting balance in Settings → Annual Reporting before seeding a yearly plan.",
+				"notFoundForYear": "Yearly plan not found for this year"
+			}
+		}
 	}
 }
