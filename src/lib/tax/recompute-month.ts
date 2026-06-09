@@ -2,6 +2,7 @@
 import { db } from "@/db/drizzle"
 import { trades, accountFeeRates, monthlyTaxLedger } from "@/db/schema"
 import { eq, and, gte, lte, sql } from "drizzle-orm"
+import { getBrtDateParts } from "@/lib/dates"
 import { computeDayFees } from "./fee-allocator"
 import { accumulateIrrf } from "./irrf-accumulator"
 import { computeDarf } from "./darf-calculator"
@@ -120,14 +121,16 @@ const recomputeAccountMonth = async (
 			continue
 		}
 
-		// Skip swing trades — entry and exit must be on the same calendar day.
-		// Use year/month/date components to avoid toISOString() timezone drift.
+		// Skip swing trades — entry and exit must be on the same calendar day in BRT.
+		// Tax rule (Lei 11.033/2004) defines day-trades by BRT calendar day, not UTC.
 		const entry = trade.entryDate
 		const exit = trade.exitDate
+		const entryBrt = getBrtDateParts(entry)
+		const exitBrt = getBrtDateParts(exit)
 		const sameDay =
-			entry.getFullYear() === exit.getFullYear() &&
-			entry.getMonth() === exit.getMonth() &&
-			entry.getDate() === exit.getDate()
+			entryBrt.year === exitBrt.year &&
+			entryBrt.month === exitBrt.month &&
+			entryBrt.day === exitBrt.day
 		if (!sameDay) {
 			continue
 		}

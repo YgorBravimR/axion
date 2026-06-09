@@ -190,3 +190,156 @@ describe("tax-engine server actions — import", () => {
 		expect(true).toBe(true)
 	})
 })
+
+describe("recomputeAccountMonth — BRT day-boundary regression (Zone 16-1)", () => {
+	beforeEach(() => {
+		vi.clearAllMocks()
+	})
+
+	it("classifies same-day trades by BRT calendar day, not UTC", async () => {
+		// Test case 1: Trade entered 22:30 BRT (01:30 UTC next day) and exited 23:45 BRT
+		// same BRT day (02:45 UTC same UTC day as entry's UTC day).
+		// Entry: 2026-06-08T22:30:00-03:00 = 2026-06-09T01:30:00Z
+		// Exit:  2026-06-08T23:45:00-03:00 = 2026-06-09T02:45:00Z
+		// Both are June 8 in BRT, but straddle UTC midnight on different UTC days (if naive).
+		// Must classify as same-day BRT.
+
+		const { db } = await import("@/db/drizzle")
+		const mockSelect = db.select as Mock
+		const mockInsert = db.insert as Mock
+
+		// Convert BRT time strings to Date objects
+		// 2026-06-08T22:30:00-03:00 = 2026-06-09T01:30:00Z
+		const entryBrt = new Date("2026-06-09T01:30:00Z")
+		// 2026-06-08T23:45:00-03:00 = 2026-06-09T02:45:00Z
+		const exitBrt = new Date("2026-06-09T02:45:00Z")
+
+		const feeRatesWhere = Promise.resolve([
+			{
+				assetSymbol: null,
+				txCorretagemCents: 5,
+				txRegistroCents: 74,
+				emolumentosCents: 40,
+				issRatePercent: "5.00",
+				irrfRateBps: 100,
+				irRateBps: 2000,
+				subjectToPersonalIr: true,
+			},
+		])
+
+		const tradesOrderBy = Promise.resolve([
+			{
+				id: "t-tz-1",
+				asset: "WDO",
+				entryDate: entryBrt,
+				exitDate: exitBrt,
+				pnl: "5000", // +R$50
+				contractsExecuted: 2,
+			},
+		])
+
+		mockSelect
+			.mockReturnValueOnce({
+				from: vi.fn().mockReturnValue({
+					where: vi.fn().mockReturnValue(feeRatesWhere),
+				}),
+			})
+			.mockReturnValueOnce({
+				from: vi.fn().mockReturnValue({
+					where: vi.fn().mockReturnValue({
+						orderBy: vi.fn().mockReturnValue(tradesOrderBy),
+					}),
+				}),
+			})
+
+		mockInsert.mockReturnValue({
+			values: vi.fn().mockReturnValue({
+				onConflictDoUpdate: vi.fn().mockResolvedValue([]),
+			}),
+		})
+
+		const result = await recomputeAccountMonth({
+			accountId: "acc-tz-1",
+			year: 2026,
+			month: 6,
+			carryoverInCents: 0,
+		})
+
+		// Trade should be classified as day-trade (tradeCount = 1)
+		// If day-detection were using UTC instead of BRT, might fail or exclude it
+		expect(result.tradeCount).toBe(1)
+		expect(result.grossGainCents).toBe(5000)
+	})
+
+	it("rejects trades across BRT midnight as swing trades (not same-day)", async () => {
+		// Test case 2: Trade entered 23:30 BRT (02:30 UTC next day) and exited 00:30 BRT
+		// next BRT day (03:30 UTC same UTC day as entry's UTC day).
+		// Entry: 2026-06-08T23:30:00-03:00 = 2026-06-09T02:30:00Z
+		// Exit:  2026-06-09T00:30:00-03:00 = 2026-06-09T03:30:00Z
+		// BRT midnight crossed (June 8 → June 9), UTC midnight not crossed.
+		// Must NOT classify as same-day.
+
+		const { db } = await import("@/db/drizzle")
+		const mockSelect = db.select as Mock
+		const mockInsert = db.insert as Mock
+
+		const entryBrtMidnight = new Date("2026-06-09T02:30:00Z")
+		const exitBrtMidnight = new Date("2026-06-09T03:30:00Z")
+
+		const feeRatesWhere = Promise.resolve([
+			{
+				assetSymbol: null,
+				txCorretagemCents: 5,
+				txRegistroCents: 74,
+				emolumentosCents: 40,
+				issRatePercent: "5.00",
+				irrfRateBps: 100,
+				irRateBps: 2000,
+				subjectToPersonalIr: true,
+			},
+		])
+
+		const tradesOrderBy = Promise.resolve([
+			{
+				id: "t-tz-2",
+				asset: "WDO",
+				entryDate: entryBrtMidnight,
+				exitDate: exitBrtMidnight,
+				pnl: "3000", // +R$30
+				contractsExecuted: 1,
+			},
+		])
+
+		mockSelect
+			.mockReturnValueOnce({
+				from: vi.fn().mockReturnValue({
+					where: vi.fn().mockReturnValue(feeRatesWhere),
+				}),
+			})
+			.mockReturnValueOnce({
+				from: vi.fn().mockReturnValue({
+					where: vi.fn().mockReturnValue({
+						orderBy: vi.fn().mockReturnValue(tradesOrderBy),
+					}),
+				}),
+			})
+
+		mockInsert.mockReturnValue({
+			values: vi.fn().mockReturnValue({
+				onConflictDoUpdate: vi.fn().mockResolvedValue([]),
+			}),
+		})
+
+		const result = await recomputeAccountMonth({
+			accountId: "acc-tz-2",
+			year: 2026,
+			month: 6,
+			carryoverInCents: 0,
+		})
+
+		// Trade should be rejected as swing trade (tradeCount = 0) because BRT midnight
+		// crossed even though UTC midnight didn't.
+		expect(result.tradeCount).toBe(0)
+		expect(result.grossGainCents).toBe(0)
+	})
+})

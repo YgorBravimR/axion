@@ -28,7 +28,7 @@ const pad2 = (n: number): string => String(n).padStart(2, "0")
  * Extract year/month/day components as they appear in São Paulo timezone.
  * Useful for constructing BRT-aware date boundaries.
  */
-const getBrtDateParts = (
+export const getBrtDateParts = (
 	date: Date
 ): { year: number; month: number; day: number } => {
 	const parts = new Intl.DateTimeFormat("en-US", {
