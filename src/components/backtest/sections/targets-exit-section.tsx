@@ -276,7 +276,9 @@ const TargetsExitSection = memo(
 				{/* EOD Exit */}
 				<div className="gap-m-400 grid grid-cols-2 sm:grid-cols-4">
 					<div className="space-y-s-200">
-						<Label id="label-eod">{t("eodTime")}</Label>
+						<Label id="label-eod" htmlFor="eod-time">
+							{t("eodTime")}
+						</Label>
 						<Input
 							id="eod-time"
 							type="time"

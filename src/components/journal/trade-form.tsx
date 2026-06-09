@@ -1262,9 +1262,9 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							{/* Risk Amount (always calculated from entry, stop loss, and position size) */}
 							<div id="new-trade-planned-risk" className="space-y-s-200">
 								<div className="gap-s-200 flex items-center">
-									<Label id="label-trade-planned-risk">
+									<span>
 										{t("plannedRisk")} ({selectedAsset?.currency ?? "$"})
-									</Label>
+									</span>
 									<Tooltip>
 										<TooltipTrigger asChild>
 											<Info
@@ -1301,9 +1301,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 
 							{/* Planned R-Multiple (calculated from TP/SL) */}
 							<div id="new-trade-planned-r" className="space-y-s-200">
-								<Label id="label-trade-planned-r-target">
-									{t("plannedRTarget")}
-								</Label>
+								<span>{t("plannedRTarget")}</span>
 								<div className="border-bg-300 bg-bg-100 px-s-300 flex h-10 items-center rounded-md border">
 									{calculatedPlannedR !== null ? (
 										<span className="text-small text-txt-100 font-medium">
@@ -1689,9 +1687,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 										className="text-txt-300 h-4 w-4"
 										aria-hidden="true"
 									/>
-									<Label id="label-trade-screenshot">
-										{t("tradeScreenshot")}
-									</Label>
+									<span>{t("tradeScreenshot")}</span>
 								</div>
 								<p className="text-tiny text-txt-300">
 									{t("tradeScreenshotHint")}
@@ -1715,7 +1711,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							{/* Setup Tags */}
 							{setupTags.length > 0 && (
 								<div className="space-y-s-200">
-									<Label id="label-trade-setup-type">{t("setupType")}</Label>
+									<span>{t("setupType")}</span>
 									<div className="gap-s-200 flex flex-wrap">
 										{setupTags.map((tag) => (
 											<button
@@ -1741,7 +1737,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							{/* Mistake Tags */}
 							{mistakeTags.length > 0 && (
 								<div className="space-y-s-200">
-									<Label id="label-trade-mistakes">{t("mistakes")}</Label>
+									<span>{t("mistakes")}</span>
 									<div className="gap-s-200 flex flex-wrap">
 										{mistakeTags.map((tag) => (
 											<button
@@ -1767,9 +1763,7 @@ const TradeForm = forwardRef<TradeFormRef, TradeFormProps>(
 							{/* General Tags */}
 							{generalTags.length > 0 && (
 								<div className="space-y-s-200">
-									<Label id="label-trade-general-tags">
-										{t("generalTags")}
-									</Label>
+									<span>{t("generalTags")}</span>
 									<div className="gap-s-200 flex flex-wrap">
 										{generalTags.map((tag) => (
 											<button

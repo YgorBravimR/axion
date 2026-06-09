@@ -264,7 +264,7 @@ const Sidebar = ({
 									onClick={() => toggleGroup(entry.groupKey)}
 									aria-expanded={open}
 									className={cn(
-										"text-small gap-s-300 px-s-300 py-s-200 flex h-10 w-full items-center rounded-md transition-colors",
+										"text-small gap-s-300 px-s-300 py-s-200 focus-visible:ring-acc-100 flex h-10 w-full items-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 										hasActive
 											? "text-txt-100"
 											: "text-txt-200 hover:bg-bg-300 hover:text-txt-100"

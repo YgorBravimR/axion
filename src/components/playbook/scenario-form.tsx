@@ -257,7 +257,7 @@ const ScenarioForm = ({
 
 					{/* Images */}
 					<div className="space-y-s-200">
-						<Label id="label-scenario-images">{t("images")}</Label>
+						<span>{t("images")}</span>
 						<p className="text-tiny text-txt-300">{t("imagesHint")}</p>
 						<ImageUpload
 							persistedImages={persistedImages}

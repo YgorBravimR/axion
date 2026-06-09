@@ -194,7 +194,7 @@ const AppShell = ({
 										variant="outline"
 										size="sm"
 										onClick={handleSearchClick}
-										className="gap-s-200 px-s-300 py-s-100 text-tiny text-txt-placeholder hidden cursor-pointer items-center lg:flex lg:w-64 xl:w-80"
+										className="gap-s-200 px-s-300 py-s-100 text-tiny text-txt-200 hidden cursor-pointer items-center lg:flex lg:w-64 xl:w-80"
 										aria-label={tCommon("searchPlaceholder")}
 									>
 										<Search className="h-3.5 w-3.5 shrink-0" />

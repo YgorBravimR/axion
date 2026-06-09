@@ -214,6 +214,7 @@ export const ExecutionForm = ({
 						</Label>
 						<RadioGroup
 							id="execution-type-group"
+							aria-labelledby="label-execution-type"
 							value={formData.executionType}
 							onValueChange={(value) => handleChange("executionType", value)}
 							className="gap-m-400 flex"

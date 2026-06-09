@@ -371,12 +371,7 @@ const CsvTradeCard = memo(
 								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
 									{/* Date */}
 									<div>
-										<Label
-											id="label-csv-date"
-											className="text-tiny text-txt-300"
-										>
-											{t("date")}
-										</Label>
+										<span className="text-tiny text-txt-300">{t("date")}</span>
 										<div className="mt-s-100 text-small text-txt-100">
 											{formatDate(trade.originalData.entryDate)}
 										</div>
@@ -384,12 +379,9 @@ const CsvTradeCard = memo(
 
 									{/* Direction (readonly) */}
 									<div>
-										<Label
-											id="label-csv-direction"
-											className="text-tiny text-txt-300"
-										>
+										<span className="text-tiny text-txt-300">
 											{t("direction")}
-										</Label>
+										</span>
 										<div
 											className={cn(
 												"mt-s-100 text-small font-medium",
@@ -406,6 +398,7 @@ const CsvTradeCard = memo(
 									<div>
 										<Label
 											id="label-csv-strategy"
+											htmlFor="csv-trade-strategy"
 											className="text-tiny text-txt-300"
 										>
 											{t("strategy")}
@@ -436,6 +429,7 @@ const CsvTradeCard = memo(
 									<div>
 										<Label
 											id="label-csv-timeframe"
+											htmlFor="csv-trade-timeframe"
 											className="text-tiny text-txt-300"
 										>
 											{t("timeframe")}
@@ -466,45 +460,33 @@ const CsvTradeCard = memo(
 								{/* Prices (readonly) */}
 								<div className="gap-s-300 sm:gap-m-400 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
 									<div>
-										<Label
-											id="label-csv-entry-price"
-											className="text-tiny text-txt-300"
-										>
+										<span className="text-tiny text-txt-300">
 											{t("entryPrice")}
-										</Label>
+										</span>
 										<div className="mt-s-100 text-small text-txt-100">
 											{formatPrice(trade.originalData.entryPrice)}
 										</div>
 									</div>
 									<div>
-										<Label
-											id="label-csv-exit-price"
-											className="text-tiny text-txt-300"
-										>
+										<span className="text-tiny text-txt-300">
 											{t("exitPrice")}
-										</Label>
+										</span>
 										<div className="mt-s-100 text-small text-txt-100">
 											{formatPrice(trade.originalData.exitPrice)}
 										</div>
 									</div>
 									<div>
-										<Label
-											id="label-csv-position-size"
-											className="text-tiny text-txt-300"
-										>
+										<span className="text-tiny text-txt-300">
 											{t("positionSize")}
-										</Label>
+										</span>
 										<div className="mt-s-100 text-small text-txt-100">
 											{trade.originalData.positionSize}
 										</div>
 									</div>
 									<div>
-										<Label
-											id="label-csv-pnl"
-											className="text-tiny text-txt-300"
-										>
+										<span className="text-tiny text-txt-300">
 											{t("pnlFromCsv")}
-										</Label>
+										</span>
 										<div className="mt-s-100 text-small text-txt-100">
 											{trade.originalData.pnl
 												? formatCurrency(Number(trade.originalData.pnl))
@@ -567,12 +549,9 @@ const CsvTradeCard = memo(
 										/>
 									</div>
 									<div>
-										<Label
-											id="label-csv-mfe"
-											className="text-tiny text-txt-300"
-										>
+										<span className="text-tiny text-txt-300">
 											{t("mfeFromCsv")}
-										</Label>
+										</span>
 										<div className="mt-s-100 text-small text-txt-100">
 											{trade.originalData.mfe
 												? formatCurrency(Number(trade.originalData.mfe))
@@ -580,12 +559,9 @@ const CsvTradeCard = memo(
 										</div>
 									</div>
 									<div>
-										<Label
-											id="label-csv-mae"
-											className="text-tiny text-txt-300"
-										>
+										<span className="text-tiny text-txt-300">
 											{t("maeFromCsv")}
-										</Label>
+										</span>
 										<div className="mt-s-100 text-small text-txt-100">
 											{trade.originalData.mae
 												? formatCurrency(-Number(trade.originalData.mae))
@@ -659,12 +635,9 @@ const CsvTradeCard = memo(
 
 								{/* Follow Plan */}
 								<div className="gap-m-400 flex items-center">
-									<Label
-										id="label-csv-followed-plan"
-										className="text-tiny text-txt-300"
-									>
+									<span className="text-tiny text-txt-300">
 										{t("followedPlan")}
-									</Label>
+									</span>
 									<div className="gap-s-200 flex">
 										<button
 											type="button"
@@ -724,12 +697,9 @@ const CsvTradeCard = memo(
 								{/* Setup Tags */}
 								{setupTags.length > 0 && (
 									<div>
-										<Label
-											id="label-csv-setup-type"
-											className="text-tiny text-txt-300"
-										>
+										<span className="text-tiny text-txt-300">
 											{t("setupType")}
-										</Label>
+										</span>
 										<div className="mt-s-200 gap-s-200 flex flex-wrap">
 											{setupTags.map((tag) => (
 												<button
@@ -758,12 +728,9 @@ const CsvTradeCard = memo(
 								{/* Mistake Tags */}
 								{mistakeTags.length > 0 && (
 									<div>
-										<Label
-											id="label-csv-mistakes"
-											className="text-tiny text-txt-300"
-										>
+										<span className="text-tiny text-txt-300">
 											{t("mistakes")}
-										</Label>
+										</span>
 										<div className="mt-s-200 gap-s-200 flex flex-wrap">
 											{mistakeTags.map((tag) => (
 												<button
@@ -787,12 +754,9 @@ const CsvTradeCard = memo(
 								{/* General Tags */}
 								{generalTags.length > 0 && (
 									<div>
-										<Label
-											id="label-csv-general-tags"
-											className="text-tiny text-txt-300"
-										>
+										<span className="text-tiny text-txt-300">
 											{t("generalTags")}
-										</Label>
+										</span>
 										<div className="mt-s-200 gap-s-200 flex flex-wrap">
 											{generalTags.map((tag) => (
 												<button
