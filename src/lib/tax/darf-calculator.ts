@@ -1,3 +1,5 @@
+import { fromBasisPoints } from "./rate-conversion"
+
 // Lei 9.430/96 art. 68: DARF is only required when monthly IR owed is ≥ R$10.00.
 // Amounts strictly below this threshold are treated as exempt this month.
 // NOTE: art. 68 §1° actually requires deferring sub-threshold amounts to be summed
@@ -74,7 +76,7 @@ const computeDarf = (input: DarfInput): DarfOutput => {
 	const carryoverOut = input.carryoverInCents - carryoverConsumed
 	const taxableGain = netGainBeforeCarryover - carryoverConsumed
 
-	const irGross = Math.round((taxableGain * input.irRateBps) / 10000)
+	const irGross = Math.round(taxableGain * fromBasisPoints(input.irRateBps))
 	// IRRF already paid at source deducts from IR owed; never negative
 	const irNetOfIrrf = Math.max(0, irGross - input.irrfCents)
 	// Lei 9.430/96 art. 68: floor sub-R$10 amounts to 0 (no DARF filing required)
