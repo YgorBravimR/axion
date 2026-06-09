@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
+import { formatFinite } from "@/lib/formatting"
 import { useFormatting } from "@/hooks/use-formatting"
 import { getWeeklyReport } from "@/app/actions/reports"
 import type { WeeklyReport } from "@/app/actions/reports.types"
@@ -196,7 +197,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 							<p className="text-h3 text-txt-100 font-bold">
 								{summary.profitFactor === Infinity
 									? "∞"
-									: summary.profitFactor.toFixed(2)}
+									: formatFinite(summary.profitFactor, 2)}
 							</p>
 						</div>
 					</div>

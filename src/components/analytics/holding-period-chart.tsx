@@ -4,7 +4,11 @@ import { memo, useMemo } from "react"
 import { useTranslations, useLocale } from "next-intl"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
-import { formatCompactCurrencyWithSign, formatR } from "@/lib/formatting"
+import {
+	formatCompactCurrencyWithSign,
+	formatFinite,
+	formatR,
+} from "@/lib/formatting"
 import { useChartConfig } from "@/hooks/use-chart-config"
 import { cn } from "@/lib/utils"
 import type { HoldingPeriodBucket } from "@/types"
@@ -92,7 +96,7 @@ const CustomTooltip = ({ active, payload, labels }: CustomTooltipProps) => {
 				<p className="text-tiny">
 					<span className="text-txt-300">{labels.profitFactor}:</span>{" "}
 					<span className="text-txt-100 font-medium">
-						{data.profitFactor.toFixed(2)}
+						{formatFinite(data.profitFactor, 2)}
 					</span>
 				</p>
 			</div>

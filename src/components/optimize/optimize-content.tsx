@@ -44,6 +44,7 @@ import {
 	Download,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { formatFinite } from "@/lib/formatting"
 import { fetchBacktestData } from "@/app/actions/backtest"
 import { runBacktest, getEngineVersionForRecipe } from "@/lib/backtest/engine"
 import { orbPresets } from "@/lib/backtest/presets/orb-presets"
@@ -1517,7 +1518,10 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 											<p className="text-tiny text-txt-300">
 												{t("postRefineHint.body", {
 													best: bestRefineRun.label,
-													pf: bestRefineRun.summary.profitFactor.toFixed(2),
+													pf: formatFinite(
+														bestRefineRun.summary.profitFactor,
+														2
+													),
 												})}
 											</p>
 										</div>

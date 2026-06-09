@@ -4,6 +4,7 @@
  * Phase 2: will send to Claude API and return natural language coaching.
  */
 
+import { formatFinite } from "@/lib/formatting"
 import type { CoachingInsight } from "./pattern-detector"
 import type { OverallStats } from "@/types"
 
@@ -118,7 +119,7 @@ const buildDataSummary = ({
 		`- Account type: ${accountType}`,
 		`- Period: ${periodDays} days, ${tradeCount} trades`,
 		`- Win rate: ${stats.winRate.toFixed(1)}%`,
-		`- Profit factor: ${stats.profitFactor.toFixed(2)}`,
+		`- Profit factor: ${formatFinite(stats.profitFactor, 2)}`,
 		`- Average R: ${stats.averageR >= 0 ? "+" : ""}${stats.averageR.toFixed(2)}R`,
 		`- Gross P&L: ${stats.grossPnl >= 0 ? "+" : ""}${stats.grossPnl.toFixed(2)}`,
 	]
