@@ -168,13 +168,6 @@ export const formatCurrencyFromCents = (
 }
 
 /**
- * Format percentage value
- */
-export const formatPercent = (value: number, decimals = 1): string => {
-	return `${value.toFixed(decimals)}%`
-}
-
-/**
  * Format R-Multiple value
  */
 export const formatRMultiple = (value: number): string => {

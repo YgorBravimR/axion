@@ -21,7 +21,12 @@ type StrategyPresetId =
 
 interface AssetConfig {
 	tickSize: number // minimum price increment (e.g., 5 for WINFUT)
-	tickValueCents: number // cents per tick (e.g., 100 for WINFUT = R$1.00/tick)
+	/**
+	 * Value per POINT in cents (not per tick). For WIN: 100 cents = R$1.00/point.
+	 * Tick size is 5 points; one tick of value = 5 × 100 = 500 cents = R$5.00.
+	 * The field name is historical; field semantics is "value per point".
+	 */
+	tickValueCents: number
 	currency: string // "BRL"
 }
 

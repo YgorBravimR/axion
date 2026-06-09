@@ -1,8 +1,9 @@
 import type { CandleRow } from "@/types/candle"
 import type { DayContext } from "@/types/backtest"
+import { SESSION_BOUNDARIES } from "@/lib/dates"
 
-const TRADING_START_HHMM = 900
-const TRADING_END_HHMM = 1800
+const TRADING_START_HHMM = SESSION_BOUNDARIES.startHhmm
+const TRADING_END_HHMM = SESSION_BOUNDARIES.endHhmm
 
 /** BRT is fixed UTC-3 (Brazil abolished DST in 2019) */
 const BRT_OFFSET_MS = -3 * 60 * 60 * 1000

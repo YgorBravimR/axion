@@ -1,4 +1,5 @@
 "use client"
+import { formatFinite } from "@/lib/formatting"
 
 import { useMemo, memo } from "react"
 import { useTranslations } from "next-intl"

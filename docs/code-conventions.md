@@ -231,3 +231,15 @@ When capital exceeds the top ladder tier in `src/lib/fractal-plan/capital-ladder
 `src/lib/tax/darf-calculator.ts` zeroes `darfDue` and sets `belowMinimumThreshold = true` whenever the IR owed net of IRRF is strictly between 0 and R$10.00 (1000 cents). This matches Receita Federal's rule that no DARF need be filed below the floor. Downstream consumers should treat `belowMinimumThreshold === true` as a "exempt this month" signal distinct from "no tax owed at all" (which produces `darfDue = 0` AND `belowMinimumThreshold = false`).
 
 Known simplification: art. 68 §1° actually requires sub-threshold amounts to be **deferred** and summed with the next month's IR until the cumulative figure crosses R$10. Our current implementation does NOT defer — see `docs/backlog.md` "DARF sub-threshold deferral" for the production-filing-grade upgrade. Practical user-facing impact is small (sub-R$10 months are rare in day-trade) and skews under-tax (never over-files).
+
+### Display percent formatter convention
+
+User-facing percentage values are stored on the **0-100 scale** (e.g., a 60% win rate is `60`, not `0.6`). The canonical formatter is `formatPercent(value, locale, decimals)` exported from `src/lib/formatting.ts` (and via `useFormatting()` hook). It internally divides by 100 because `Intl.NumberFormat`'s `style: "percent"` multiplies back by 100 — the round-trip is intentional. Never bypass this with raw `.toFixed()` for user-facing percentages; `.toFixed()` is acceptable only for chart labels and PDF static renders where the rounding difference (halfExpand vs banker's) is invisible.
+
+### Date string parsing convention
+
+`new Date("YYYY-MM-DD")` (string form) parses as **UTC midnight**, NOT local midnight. `new Date(year, month-1, day)` (constructor form) parses as **local midnight**. These are silently 3 hours apart in BRT. Use `getBrtDateParts()` / `getStartOfDay()` / `getEndOfDay()` from `src/lib/dates.ts` for all date math — never construct day-boundary Date objects ad-hoc.
+
+### IEEE 754 special-value display guard
+
+User-facing metric displays must guard against `Infinity`, `-Infinity`, and `NaN` before calling `.toFixed()`. The string `"Infinity"` (or `"NaN"`) leaking to a metric card breaks visual trust. Use `formatFinite(value, decimals, fallback)` from `src/lib/formatting.ts`. Common sources of non-finite values: profit factor with zero losses (Infinity), Sharpe/Sortino with zero-variance returns (NaN), CAGR with zero initial equity (Infinity).

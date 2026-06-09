@@ -3,6 +3,7 @@
 import { useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { useFormatting } from "@/hooks/use-formatting"
+import { formatFinite } from "@/lib/formatting"
 import { StatCard } from "@/components/shared"
 import { getThresholdColorClass } from "./helpers"
 
@@ -41,7 +42,7 @@ const ProfitFactorCard = ({
 	return (
 		<StatCard
 			label={t("profitFactor")}
-			value={hasData ? profitFactor.toFixed(2) : "--"}
+			value={hasData ? formatFinite(profitFactor, 2, "--") : "--"}
 			valueColorClass={colorClass}
 			subValue={subValue}
 		/>

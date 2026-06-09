@@ -71,7 +71,22 @@ export const formatNumber = (
 }
 
 /**
- * Format percentage according to locale
+ * Format a percentage according to the supplied locale.
+ *
+ * **Input convention**: 0-100 scale (e.g., 60 → "60.0%"), NOT 0-1 decimal.
+ * Callers compute percentages as `(part / whole) * 100` upstream; the formatter
+ * then divides by 100 once internally because `Intl.NumberFormat` with
+ * `style: "percent"` multiplies by 100 — the divide-then-multiply round-trip
+ * is intentional, do not "simplify" it away.
+ *
+ * Rounding: `Intl.NumberFormat` halfExpand (half away from zero) — differs from
+ * `.toFixed()` (banker's rounding). Stay on this formatter for user-facing
+ * percentages; `.toFixed()` is acceptable only for chart labels and PDF static
+ * renders.
+ *
+ * @param value - percentage on 0-100 scale
+ * @param locale - locale for number formatting
+ * @param decimals - decimal places (default 1)
  */
 export const formatPercent = (
 	value: number,
@@ -314,6 +329,21 @@ export const formatRatio = (value: number): string => {
 	}
 	return value.toFixed(2)
 }
+
+/**
+ * Returns `value.toFixed(decimals)` for finite numbers, otherwise the fallback
+ * string. Guards against IEEE 754 Infinity / -Infinity / NaN leaking into
+ * user-facing display (e.g., profit factor with zero losses → Infinity).
+ *
+ * @param value - numeric value to format
+ * @param decimals - decimal places (default 2)
+ * @param fallback - string to render when value is not finite (default "—")
+ */
+export const formatFinite = (
+	value: number,
+	decimals = 2,
+	fallback = "—"
+): string => (Number.isFinite(value) ? value.toFixed(decimals) : fallback)
 
 /**
  * Format currency with sign prefix (e.g., +R$ 1.234,56 or -$ 500,00)

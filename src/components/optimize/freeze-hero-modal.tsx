@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, memo } from "react"
 import { useTranslations } from "next-intl"
 import { Info } from "lucide-react"
+import { formatFinite } from "@/lib/formatting"
 import {
 	Dialog,
 	DialogContent,
@@ -65,7 +66,7 @@ const GatesSummary = memo(({ run, t }: GatesSummaryProps) => (
 				<span className="text-txt-300">
 					{t("ruleMinPF", {
 						min: HERO_WIN_RULES.minProfitFactor,
-						actual: run.summary.profitFactor.toFixed(2),
+						actual: formatFinite(run.summary.profitFactor, 2),
 					})}
 				</span>
 			</li>
@@ -126,12 +127,12 @@ const MetricsDisplay = memo(({ run, t, tWalkForward }: MetricsDisplayProps) => (
 		<dl className="text-tiny grid grid-cols-2 gap-x-3 gap-y-1">
 			<dt className="text-txt-300">{t("metricPF")}</dt>
 			<dd className="text-txt-100 font-mono">
-				{run.summary.profitFactor.toFixed(2)}
+				{formatFinite(run.summary.profitFactor, 2)}
 				{run.summaryOOS && (
 					<>
 						{" / "}
 						<span className="gap-s-100 inline-flex items-center">
-							{run.summaryOOS.profitFactor.toFixed(2)}
+							{formatFinite(run.summaryOOS.profitFactor, 2)}
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<span className="text-txt-300 hover:text-txt-200 border-bg-300 px-s-100 text-micro inline-flex cursor-help items-center rounded-full border py-[1px] font-medium">

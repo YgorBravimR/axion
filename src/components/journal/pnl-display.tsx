@@ -1,5 +1,7 @@
+"use client"
+
 import { cn } from "@/lib/utils"
-import { formatCurrency, formatPercent } from "@/lib/calculations"
+import { useFormatting } from "@/hooks/use-formatting"
 
 interface PnLDisplayProps {
 	value: number
@@ -25,6 +27,7 @@ export const PnLDisplay = ({
 	percentValue,
 	className,
 }: PnLDisplayProps) => {
+	const { formatCurrency, formatPercent } = useFormatting()
 	const isPositive = value > 0
 	const isNegative = value < 0
 

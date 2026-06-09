@@ -1320,11 +1320,9 @@ export const getDaySummary = async (
 			? inArray(trades.accountId, authContext.allAccountIds)
 			: eq(trades.accountId, authContext.accountId)
 
-		// Get start and end of the day
-		const startOfDay = new Date(date)
-		startOfDay.setHours(0, 0, 0, 0)
-		const endOfDay = new Date(date)
-		endOfDay.setHours(23, 59, 59, 999)
+		// Get start and end of the day (BRT-aware boundaries)
+		const startOfDay = getStartOfDay(date)
+		const endOfDay = getEndOfDay(date)
 
 		const result = await db.query.trades.findMany({
 			where: and(

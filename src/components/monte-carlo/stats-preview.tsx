@@ -9,7 +9,7 @@ const formatDate = (date: Date | string) => {
 }
 import { Button } from "@/components/ui/button"
 import { LoadingSpinner } from "@/components/shared"
-import { formatR } from "@/lib/formatting"
+import { formatR, formatFinite } from "@/lib/formatting"
 import type { SourceStats } from "@/types/monte-carlo"
 
 interface StatsPreviewProps {
@@ -79,9 +79,7 @@ export const StatsPreview = ({
 				<div className="bg-bg-100 p-s-300 rounded-md text-center">
 					<p className="text-tiny text-txt-300">{t("profitFactor")}</p>
 					<p className="text-body text-txt-100 font-semibold">
-						{stats.profitFactor === Infinity
-							? "∞"
-							: stats.profitFactor.toFixed(2)}
+						{formatFinite(stats.profitFactor, 2, "∞")}
 					</p>
 				</div>
 			</div>

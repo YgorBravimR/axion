@@ -11,6 +11,16 @@ export const APP_TIMEZONE = "America/Sao_Paulo"
  */
 export const BRT_OFFSET = "-03:00"
 
+/**
+ * Bovespa regular trading session boundaries in BRT (UTC-3).
+ * Used uniformly across day-grouper, backtest range construction, and any
+ * future trading-session filter. If session hours ever change, edit here only.
+ */
+export const SESSION_BOUNDARIES = {
+	startHhmm: 900, // 09:00 BRT
+	endHhmm: 1800, // 18:00 BRT
+} as const
+
 /** Pad a number to 2 digits */
 const pad2 = (n: number): string => String(n).padStart(2, "0")
 
@@ -41,7 +51,11 @@ const toDateString = (year: number, month: number, day: number): string =>
 
 /**
  * Get start and end dates for the week containing the given date
- * Week starts on Sunday. All boundaries are in BRT.
+ * Week starts on Sunday (not ISO 8601 Monday-start). All boundaries are in BRT.
+ *
+ * Week-start convention: SUNDAY (Sunday=0 per JS Date.getDay()), NOT ISO 8601
+ * Monday-start. If reporting layer ever adds ISO week numbers, build a separate
+ * `getIsoWeekBoundaries` helper — do not change this function's convention.
  */
 export const getWeekBoundaries = (date: Date): { start: Date; end: Date } => {
 	const { year, month, day } = getBrtDateParts(date)
