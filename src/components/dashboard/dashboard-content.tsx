@@ -284,10 +284,13 @@ export const DashboardContent = ({
 		[fetchFilteredData, period]
 	)
 
-	// JSX literals are optimized by React 19 — no need to memoize
-	const coachingVariants = {
-		hawks: <HawksCoachingInsightsCard initialContext={initialHawksContext} />,
-	}
+	// Memoize coaching variants to avoid re-creating JSX elements on every render
+	const coachingVariants = useMemo(
+		() => ({
+			hawks: <HawksCoachingInsightsCard initialContext={initialHawksContext} />,
+		}),
+		[initialHawksContext]
+	)
 
 	return (
 		<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 flex flex-col">
