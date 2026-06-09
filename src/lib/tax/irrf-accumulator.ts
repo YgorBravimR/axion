@@ -1,4 +1,4 @@
-import { fromBasisPoints } from "./rate-conversion"
+import { fromBasisPoints, type BasisPoints } from "./rate-conversion"
 
 interface DailyResult {
 	date: Date
@@ -21,12 +21,12 @@ interface IrrfResult {
  * Only days with positive gross P&L contribute.
  *
  * @param days - array of daily results (date + grossPnlCents)
- * @param irrfRateBps - withholding rate in basis points (default 100 = 1%)
+ * @param irrfRateBps - withholding rate in basis points (default asBasisPoints(100) = 1%)
  * @returns totalIrrfCents and per-day breakdown
  */
 const accumulateIrrf = (
 	days: DailyResult[],
-	irrfRateBps: number
+	irrfRateBps: BasisPoints
 ): IrrfResult => {
 	const irrfByDay = days.map((day) => ({
 		date: day.date,

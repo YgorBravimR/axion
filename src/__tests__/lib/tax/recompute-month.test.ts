@@ -14,6 +14,7 @@ vi.mock("@/db/drizzle", () => ({
 }))
 
 import { recomputeAccountMonth } from "@/lib/tax/recompute-month"
+import { asBasisPoints } from "@/lib/tax/rate-conversion"
 
 describe("recomputeAccountMonth", () => {
 	beforeEach(() => {
@@ -93,8 +94,8 @@ describe("recomputeAccountMonth — per-asset fee rates", () => {
 				txRegistroCents: 74,
 				emolumentosCents: 40,
 				issRatePercent: "5.00",
-				irrfRateBps: 100,
-				irRateBps: 2000,
+				irrfRateBps: asBasisPoints(100),
+				irRateBps: asBasisPoints(2000),
 				subjectToPersonalIr: true,
 			},
 			{
@@ -103,8 +104,8 @@ describe("recomputeAccountMonth — per-asset fee rates", () => {
 				txRegistroCents: 74,
 				emolumentosCents: 40,
 				issRatePercent: "5.00",
-				irrfRateBps: 100,
-				irRateBps: 2000,
+				irrfRateBps: asBasisPoints(100),
+				irRateBps: asBasisPoints(2000),
 				subjectToPersonalIr: true,
 			},
 			{
@@ -113,8 +114,8 @@ describe("recomputeAccountMonth — per-asset fee rates", () => {
 				txRegistroCents: 43,
 				emolumentosCents: 7,
 				issRatePercent: "5.00",
-				irrfRateBps: 100,
-				irRateBps: 2000,
+				irrfRateBps: asBasisPoints(100),
+				irRateBps: asBasisPoints(2000),
 				subjectToPersonalIr: true,
 			},
 		])
@@ -221,8 +222,8 @@ describe("recomputeAccountMonth — BRT day-boundary regression (Zone 16-1)", ()
 				txRegistroCents: 74,
 				emolumentosCents: 40,
 				issRatePercent: "5.00",
-				irrfRateBps: 100,
-				irRateBps: 2000,
+				irrfRateBps: asBasisPoints(100),
+				irRateBps: asBasisPoints(2000),
 				subjectToPersonalIr: true,
 			},
 		])
@@ -293,8 +294,8 @@ describe("recomputeAccountMonth — BRT day-boundary regression (Zone 16-1)", ()
 				txRegistroCents: 74,
 				emolumentosCents: 40,
 				issRatePercent: "5.00",
-				irrfRateBps: 100,
-				irRateBps: 2000,
+				irrfRateBps: asBasisPoints(100),
+				irRateBps: asBasisPoints(2000),
 				subjectToPersonalIr: true,
 			},
 		])

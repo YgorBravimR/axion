@@ -3,6 +3,7 @@ import {
 	computeDarf,
 	DARF_MINIMUM_FILING_CENTS,
 } from "@/lib/tax/darf-calculator"
+import { asBasisPoints } from "@/lib/tax/rate-conversion"
 
 // Hand-computed fixtures (planilha validation):
 //
@@ -33,7 +34,7 @@ const BASE_INPUT = {
 	totalFeesCents: 20000,
 	irrfCents: 3000,
 	carryoverInCents: 0,
-	irRateBps: 2000,
+	irRateBps: asBasisPoints(2000),
 	subjectToPersonalIr: true,
 }
 
@@ -92,7 +93,7 @@ describe("computeDarf", () => {
 			grossGainCents: 600,
 			totalFeesCents: 100,
 			irrfCents: 50,
-			irRateBps: 2000,
+			irRateBps: asBasisPoints(2000),
 		})
 		expect(result.darfDue).toBe(0)
 		expect(result.belowMinimumThreshold).toBe(true)

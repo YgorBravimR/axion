@@ -6,6 +6,7 @@ import { getBrtDateParts } from "@/lib/dates"
 import { computeDayFees } from "./fee-allocator"
 import { accumulateIrrf } from "./irrf-accumulator"
 import { computeDarf } from "./darf-calculator"
+import { asBasisPoints } from "./rate-conversion"
 
 interface RecomputeInput {
 	accountId: string
@@ -202,14 +203,17 @@ const recomputeAccountMonth = async (
 		totalEmolumentosCents +
 		totalIssCents
 
-	const irrfResult = accumulateIrrf(dailyResults, defaultFeeRates.irrfRateBps)
+	const irrfResult = accumulateIrrf(
+		dailyResults,
+		asBasisPoints(defaultFeeRates.irrfRateBps)
+	)
 
 	const darf = computeDarf({
 		grossGainCents,
 		totalFeesCents,
 		irrfCents: irrfResult.totalIrrfCents,
 		carryoverInCents,
-		irRateBps: defaultFeeRates.irRateBps,
+		irRateBps: asBasisPoints(defaultFeeRates.irRateBps),
 		subjectToPersonalIr: defaultFeeRates.subjectToPersonalIr,
 	})
 

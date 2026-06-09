@@ -1,4 +1,4 @@
-import { fromBasisPoints } from "./rate-conversion"
+import { fromBasisPoints, type BasisPoints } from "./rate-conversion"
 
 // Lei 9.430/96 art. 68: DARF is only required when monthly IR owed is ≥ R$10.00.
 // Amounts strictly below this threshold are treated as exempt this month.
@@ -14,7 +14,7 @@ interface DarfInput {
 	totalFeesCents: number // sum of all fees: corretagem + registro + emolumentos + ISS
 	irrfCents: number // already-withheld 1% IRRF sum for the month
 	carryoverInCents: number // accumulated loss at start of month (positive = loss owed)
-	irRateBps: number // e.g. 2000 = 20.00%
+	irRateBps: BasisPoints // e.g. asBasisPoints(2000) = 20.00%
 	subjectToPersonalIr: boolean // false for prop accounts
 }
 

@@ -6,8 +6,53 @@
  * decimals at storage and config layer. The /10000 conversion is applied here,
  * in one place, so callers can never silently forget it.
  *
- * Example: `Math.round(taxableGain * fromBasisPoints(2000))` applies 20% IR.
+ * Example: `Math.round(taxableGain * fromBasisPoints(asBasisPoints(2000)))` applies 20% IR.
  */
+
+declare const __basisPointsBrand: unique symbol
+
+/**
+ * Branded type for basis-points values.
+ *
+ * A `BasisPoints` is a number that has been validated to be in the 0–10000 range
+ * (e.g., 2000 = 20%, 100 = 1%). The brand prevents accidental mixing of basis-points
+ * values with raw percent values (e.g., passing 20 when 2000 was required).
+ *
+ * Use the `asBasisPoints()` helper to brand a raw number at boundary layers
+ * (DB queries, test fixtures) where a number enters the tax system.
+ */
+export type BasisPoints = number & { readonly [__basisPointsBrand]: true }
+
+/**
+ * Tags a numeric value as `BasisPoints` (0–10000 scale, e.g., 2000 = 20%).
+ *
+ * Use at boundaries where a raw `number` enters the tax layer — typically
+ * DB query results (where Drizzle returns `number`) or test fixtures.
+ * Production code that operates on already-branded `BasisPoints` values
+ * should NOT need to call this helper.
+ *
+ * In dev, throws if the value is outside 0–10000 (invalid basis points).
+ * In production, the validation runs but always returns the branded value.
+ *
+ * @param value - numeric value to brand
+ * @returns the same number, typed as `BasisPoints`
+ *
+ * @example
+ * // At DB boundary: convert raw number to BasisPoints
+ * const irRate = asBasisPoints(rates.irRateBps) // rates.irRateBps was `number` from DB
+ * const tax = Math.round(income * fromBasisPoints(irRate))
+ */
+const asBasisPoints = (value: number): BasisPoints => {
+	if (process.env.NODE_ENV !== "production") {
+		if (!Number.isFinite(value) || value < 0 || value > 10000) {
+			throw new Error(
+				`asBasisPoints: ${value} is outside the 0–10000 range. ` +
+					`Did you pass a percent (e.g., 20) where basis points (2000) were expected?`
+			)
+		}
+	}
+	return value as BasisPoints
+}
 
 /**
  * Converts a basis-points value (0–10000 scale, e.g., 2000 = 20%) to its
@@ -22,14 +67,14 @@
  * Used for Brazilian tax rates: day-trade IR (normally 2000 bps = 20%) and
  * IRRF withholding (normally 100 bps = 1%).
  *
- * @param bps - basis-points value (0–10000 range expected for percent rates)
+ * @param bps - basis-points value (already branded with `BasisPoints` type)
  * @returns decimal multiplier (e.g., 2000 bps → 0.2)
  *
  * @example
- * const irRate = 2000 // 20% in basis points
+ * const irRate = asBasisPoints(2000) // 20% in basis points
  * const tax = Math.round(income * fromBasisPoints(irRate)) // 20% of income
  */
-const fromBasisPoints = (bps: number): number => bps / 10000
+const fromBasisPoints = (bps: BasisPoints): number => bps / 10000
 
 /**
  * Parses a percent-as-string value (e.g., `"5.00"` for ISS municipal tax rate)
@@ -55,4 +100,4 @@ const fromPercentString = (percentString: string): number => {
 	return parsed / 100
 }
 
-export { fromBasisPoints, fromPercentString }
+export { asBasisPoints, fromBasisPoints, fromPercentString }
