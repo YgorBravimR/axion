@@ -13,8 +13,13 @@ export const BRT_OFFSET = "-03:00"
 
 /**
  * Bovespa regular trading session boundaries in BRT (UTC-3).
- * Used uniformly across day-grouper, backtest range construction, and any
- * future trading-session filter. If session hours ever change, edit here only.
+ *
+ * **Informational, not a filter.** As of Wave 3 Bundle L (2026-06-09), Axion's
+ * canonical "trading day" definition is the BRT calendar day (00:00–23:59),
+ * not the regular session window. Consumers should NOT drop candles outside
+ * these bounds from day buckets. Use this constant only for surfaces that
+ * label or annotate session-boundary context (e.g., "after-hours" badges,
+ * VWAP anchoring, session-specific analytics).
  */
 export const SESSION_BOUNDARIES = {
 	startHhmm: 900, // 09:00 BRT

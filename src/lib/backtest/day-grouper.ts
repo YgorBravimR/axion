@@ -1,9 +1,5 @@
 import type { CandleRow } from "@/types/candle"
 import type { DayContext } from "@/types/backtest"
-import { SESSION_BOUNDARIES } from "@/lib/dates"
-
-const TRADING_START_HHMM = SESSION_BOUNDARIES.startHhmm
-const TRADING_END_HHMM = SESSION_BOUNDARIES.endHhmm
 
 /** BRT is fixed UTC-3 (Brazil abolished DST in 2019) */
 const BRT_OFFSET_MS = -3 * 60 * 60 * 1000
@@ -32,10 +28,11 @@ const extractBrt = (timestampMs: number) => {
 }
 
 /**
- * Group candles by BRT trading day (09:00-18:00).
+ * Group candles by BRT calendar day (00:00-23:59).
  *
  * Performance: uses fast arithmetic BRT extraction instead of Intl.DateTimeFormat.
  * For 80K candles this is ~50x faster than the Intl-based approach.
+ * Every candle on a given BRT calendar day is included, regardless of time-of-day.
  */
 const groupCandlesByDay = (candles: CandleRow[]): Map<string, CandleRow[]> => {
 	const days = new Map<string, CandleRow[]>()
@@ -47,10 +44,6 @@ const groupCandlesByDay = (candles: CandleRow[]): Map<string, CandleRow[]> => {
 		const ms = Date.parse(candle.timestamp)
 		tsCache.set(candle.timestamp, ms)
 		const brt = extractBrt(ms)
-
-		if (brt.hhmm < TRADING_START_HHMM || brt.hhmm >= TRADING_END_HHMM) {
-			continue
-		}
 
 		const existing = days.get(brt.dayKey)
 		if (existing) {

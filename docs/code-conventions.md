@@ -243,3 +243,17 @@ User-facing percentage values are stored on the **0-100 scale** (e.g., a 60% win
 ### IEEE 754 special-value display guard
 
 User-facing metric displays must guard against `Infinity`, `-Infinity`, and `NaN` before calling `.toFixed()`. The string `"Infinity"` (or `"NaN"`) leaking to a metric card breaks visual trust. Use `formatFinite(value, decimals, fallback)` from `src/lib/formatting.ts`. Common sources of non-finite values: profit factor with zero losses (Infinity), Sharpe/Sortino with zero-variance returns (NaN), CAGR with zero initial equity (Infinity).
+
+### Rate conversion: always go through the helpers
+
+Brazilian tax rates use **basis-points** (0–10000 scale, e.g., `irRateBps = 2000` for 20%, `irrfRateBps = 100` for 1%) or **percent-as-string** (e.g., `issRatePercent = "5.00"` for 5% ISS). The conversion to a decimal multiplier (÷10000 for basis-points, parse and ÷100 for percent-string) lives in **one place**: `src/lib/tax/rate-conversion.ts`, exposing `fromBasisPoints(bps)` and `fromPercentString(s)`.
+
+Never write `bps / 10000` or `parseFloat(s) / 100` inline at a calculation site. The helper pattern is how we prevent the future "I forgot one of the /100" 100× under-tax bug (Z15-2 MAJOR finding, Wave 3 audit). JSDoc on each helper documents the legal basis (Lei 11.033/2004, Lei 9.430/96). Code review enforces no-inline-rate-conversion.
+
+### Trading day = BRT calendar day (00:00–23:59)
+
+Axion's canonical definition of a "trading day" is the **BRT calendar day**, NOT the regular Bovespa session (09:00–18:00 BRT). Every trade, candle, and indicator on a given BRT calendar day belongs to that day's bucket — whether it occurred during the regular session, the pre-market, the after-hours, or any extended window.
+
+This was chosen (Wave 3 Bundle L, 2026-06-09) to keep the journal/reports/backtest unified on a single grouping key. The opposing convention (session-only) would have unified everything on 09:00–18:00 BRT but required dropping every after-hours trade from reports, which contradicts the journal-completeness goal.
+
+`SESSION_BOUNDARIES` (in `src/lib/dates.ts`) remains as informational metadata for surfaces that need to label or annotate session-boundary context. It is NOT a filter. Code that uses it as a filter is a bug.
