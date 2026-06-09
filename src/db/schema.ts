@@ -17,6 +17,7 @@ import {
 	primaryKey,
 	date,
 	foreignKey,
+	check,
 } from "drizzle-orm/pg-core"
 import type { AnyPgColumn } from "drizzle-orm/pg-core"
 import { relations, sql } from "drizzle-orm"
@@ -1097,6 +1098,14 @@ export const accountFeeRates = pgTable(
 		uniqueIndex("account_fee_rates_account_asset_idx").on(
 			table.accountId,
 			table.assetSymbol
+		),
+		check(
+			"irrf_rate_bps_range",
+			sql`${table.irrfRateBps} >= 0 AND ${table.irrfRateBps} <= 10000`
+		),
+		check(
+			"ir_rate_bps_range",
+			sql`${table.irRateBps} >= 0 AND ${table.irRateBps} <= 10000`
 		),
 	]
 )

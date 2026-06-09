@@ -1,0 +1,2 @@
+ALTER TABLE "account_fee_rates" ADD CONSTRAINT "irrf_rate_bps_range" CHECK ("account_fee_rates"."irrf_rate_bps" >= 0 AND "account_fee_rates"."irrf_rate_bps" <= 10000);--> statement-breakpoint
+ALTER TABLE "account_fee_rates" ADD CONSTRAINT "ir_rate_bps_range" CHECK ("account_fee_rates"."ir_rate_bps" >= 0 AND "account_fee_rates"."ir_rate_bps" <= 10000);
