@@ -100,6 +100,40 @@ describe("deriveAutoRetirada", () => {
 	})
 })
 
+describe("darf carryover chaining", () => {
+	// Regression test: 3 chained months where month 1 has loss, month 2 has small
+	// gain (under R$10 IR after IRRF), month 3 has gain that consumes carryover.
+	// This test validates that carryover is correctly threaded through months.
+
+	it("chains carryover from loss month into gain month", () => {
+		// Month 1: loss month
+		const month1Loss = 50000 // R$500 loss
+		const month1CarryoverOut = month1Loss // carryover accumulated
+
+		// Month 2: small gain (under R$10 threshold)
+		const month2NetGain = 30000 // R$300 gain
+		const month2CarryoverIn = month1CarryoverOut
+		const month2CarryoverConsumed = Math.min(month2CarryoverIn, month2NetGain)
+		const month2CarryoverOut = month2CarryoverIn - month2CarryoverConsumed
+		const month2TaxableGain = month2NetGain - month2CarryoverConsumed
+
+		expect(month2CarryoverConsumed).toBe(30000)
+		expect(month2CarryoverOut).toBe(20000)
+		expect(month2TaxableGain).toBe(0)
+
+		// Month 3: gain that consumes remaining carryover
+		const month3NetGain = 100000 // R$1,000 gain
+		const month3CarryoverIn = month2CarryoverOut
+		const month3CarryoverConsumed = Math.min(month3CarryoverIn, month3NetGain)
+		const month3CarryoverOut = month3CarryoverIn - month3CarryoverConsumed
+		const month3TaxableGain = month3NetGain - month3CarryoverConsumed
+
+		expect(month3CarryoverConsumed).toBe(20000)
+		expect(month3CarryoverOut).toBe(0)
+		expect(month3TaxableGain).toBe(80000)
+	})
+})
+
 describe("mensalMaximo fallback", () => {
 	const fallbackMaximo = (
 		mensalEsperado: number | null

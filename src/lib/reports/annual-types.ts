@@ -25,7 +25,6 @@ interface AnnualRollupRow {
 	pontos: number | null
 	taxas: number | null
 	imposto: number | null
-	impostoEstimated: boolean
 	aporteInicial: number | null
 	mesAnterior: number | null
 	diasGain: number
@@ -61,7 +60,6 @@ interface AnnualRollupData {
 	year: number
 	rows: AnnualRollupRow[]
 	totals: AnnualRollupTotals
-	taxEstimated: boolean
 	withdrawalTargetPercent: number | null
 }
 

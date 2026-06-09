@@ -119,7 +119,7 @@ const RowData = ({
 }
 
 const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
-	const { rows, totals, taxEstimated } = data
+	const { rows, totals } = data
 	const { formatCurrency } = useFormatting()
 
 	const formatBRL = (cents: number): string =>
@@ -203,7 +203,7 @@ const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
 								scope="col"
 								className="text-txt-300 text-tiny px-s-300 py-s-200 text-right font-mono font-medium"
 							>
-								Imposto{taxEstimated ? "*" : ""}
+								DARF Devido
 							</TableHead>
 							{[
 								"Aporte Inicial",
@@ -275,13 +275,6 @@ const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
 					</TableFooter>
 				</Table>
 			</div>
-
-			{taxEstimated && (
-				<p className="text-txt-300 text-tiny mt-2">
-					* Imposto estimado com base na alíquota de IR configurada. Dados do
-					Tax Engine (quando disponível) substituirão esta estimativa.
-				</p>
-			)}
 		</div>
 	)
 }

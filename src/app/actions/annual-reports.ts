@@ -11,8 +11,9 @@ import {
 	getWeekAggregate,
 } from "@/lib/queries/period-queries"
 import { getWeeksInYear } from "@/lib/calendar/iso-week"
-import { getDayTradeIrRate } from "@/lib/tax/legal-rates"
 import { monthLabelPt } from "@/lib/fractal-plan/month-labels"
+import { recomputeAccountMonth } from "@/lib/tax/recompute-month"
+
 import type { CapitalEvent } from "@/types/integration"
 import type {
 	WeeklyMetaRow,
@@ -284,8 +285,6 @@ export const getAnnualRollup = async (
 		return { status: "error", message: "Account not found" }
 	}
 
-	const taxRate = getDayTradeIrRate(year)
-
 	const withdrawalTarget = account.withdrawalTargetPercent
 		? parseFloat(account.withdrawalTargetPercent.toString())
 		: null
@@ -333,6 +332,7 @@ export const getAnnualRollup = async (
 	>()
 
 	let runningPatrimonio: number | null = account.startingBalanceCents ?? null
+	let carryoverInCents: number = 0
 	const rows: AnnualRollupRow[] = []
 
 	for (let month = 1; month <= 12; month++) {
@@ -351,7 +351,6 @@ export const getAnnualRollup = async (
 				pontos: null,
 				taxas: null,
 				imposto: null,
-				impostoEstimated: false,
 				aporteInicial: null,
 				mesAnterior: null,
 				diasGain: 0,
@@ -379,9 +378,17 @@ export const getAnnualRollup = async (
 			: null
 		const { value: mensalMaximo } = getMensalMaximo({ mensalEsperado })
 
-		// Tax estimation (preview only) — does not apply DARF rigor (no R$10 floor, no carryover).
-		// Used for annual-report estimates; not a filing document.
-		const imposto = agg.netCents > 0 ? Math.round(agg.netCents * taxRate) : 0
+		// Compute DARF-grade tax using the canonical tax engine for filing-grade rigor.
+		// This includes R$10 floor per Lei 9.430/96 art. 68 and loss carryover chaining.
+		// eslint-disable-next-line no-await-in-loop -- carryoverInCents chains sequentially; months must execute in order
+		const taxComputeResult = await recomputeAccountMonth({
+			accountId,
+			year,
+			month,
+			carryoverInCents,
+		})
+		carryoverInCents = taxComputeResult.carryoverOutCents
+		const imposto = taxComputeResult.darfDueCents
 		const taxas = agg.grossCents - agg.netCents
 
 		const capitalInvestido =
@@ -406,7 +413,6 @@ export const getAnnualRollup = async (
 			pontos: agg.points,
 			taxas,
 			imposto,
-			impostoEstimated: true,
 			aporteInicial,
 			mesAnterior,
 			diasGain: agg.gainDays,
@@ -450,7 +456,6 @@ export const getAnnualRollup = async (
 			year,
 			rows,
 			totals,
-			taxEstimated: true,
 			withdrawalTargetPercent: effectiveWithdrawal,
 		},
 	}
