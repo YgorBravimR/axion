@@ -1,0 +1,1 @@
+ALTER TABLE "monthly_tax_ledger" ADD COLUMN "deferred_ir_cents" bigint DEFAULT 0 NOT NULL;

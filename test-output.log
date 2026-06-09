@@ -1,0 +1,15 @@
+PASS (2091) FAIL (1)
+
+1. server action files contain no top-level type/interface/enum declarations src/app/actions/renko-pipeline.ts has no top-level type/interface/enum
+   AssertionError: Move top-level type declarations from src/app/actions/renko-pipeline.ts to a sibling .types.ts file: expected [ 'interface RegenerateResult {' ] to deeply equal []
+       at /Users/ygorbravim/personal/projects/bravo/axion/src/__tests__/actions/no-server-action-type-leak.test.ts:54:6
+       at file:///Users/ygorbravim/personal/projects/bravo/axion/node_modules/.pnpm/@vitest+runner@4.1.8/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+       at file:///Users/ygorbravim/personal/projects/bravo/axion/node_modules/.pnpm/@vitest+runner@4.1.8/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+       at file:///Users/ygorbravim/personal/projects/bravo/axion/node_modules/.pnpm/@vitest+runner@4.1.8/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+       at new Promise (<anonymous>)
+       at runWithCancel (file:///Users/ygorbravim/personal/projects/bravo/axion/node_modules/.pnpm/@vitest+runner@4.1.8/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+       at file:///Users/ygorbravim/personal/projects/bravo/axion/node_modules/.pnpm/@vitest+runner@4.1.8/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+       at new Promise (<anonymous>)
+       at runWithTimeout (file:///Users/ygorbravim/personal/projects/bravo/axion/node_modules/.pnpm/@vitest+runner@4.1.8/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+       at file:///Users/ygorbravim/personal/projects/bravo/axion/node_modules/.pnpm/@vitest+runner@4.1.8/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+[full output: ~/Library/Application Support/rtk/tee/1780991616_vitest_run.log]

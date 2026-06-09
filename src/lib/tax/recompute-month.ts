@@ -31,6 +31,7 @@ interface RecomputeOutput {
 	taxableGainCents: number
 	irGrossCents: number
 	darfDueCents: number
+	deferredIrCents: number
 	netLiquidCents: number
 	tradeCount: number
 	isDirty: false
@@ -87,6 +88,31 @@ const recomputeAccountMonth = async (
 	const defaultFeeRates = feeRatesByAsset.get(null) ?? DEFAULT_FEES
 	const resolveFeeRates = (assetSymbol: string) =>
 		feeRatesByAsset.get(assetSymbol) ?? defaultFeeRates
+
+	// Fetch previous month's deferred IR balance (if it exists).
+	// For the first month with no prior row, start with deferredIrInCents = 0.
+	const priorMonthStart = new Date(Date.UTC(year, month - 2, 1, 0, 0, 0, 0))
+	const priorMonthEnd = new Date(Date.UTC(year, month - 1, 0, 23, 59, 59, 999))
+	let deferredIrInCents = 0
+
+	if (month > 1) {
+		// Prior month exists within the same year
+		const priorRows = await db
+			.select({ deferredIrCents: monthlyTaxLedger.deferredIrCents })
+			.from(monthlyTaxLedger)
+			.where(
+				and(
+					eq(monthlyTaxLedger.accountId, accountId),
+					gte(monthlyTaxLedger.month, priorMonthStart),
+					lte(monthlyTaxLedger.month, priorMonthEnd)
+				)
+			)
+			.limit(1)
+
+		if (priorRows.length > 0 && priorRows[0]) {
+			deferredIrInCents = Number(priorRows[0].deferredIrCents) || 0
+		}
+	}
 
 	// Fetch all closed trades in the month window
 	const rawTrades = await db
@@ -213,6 +239,7 @@ const recomputeAccountMonth = async (
 		totalFeesCents,
 		irrfCents: irrfResult.totalIrrfCents,
 		carryoverInCents,
+		deferredIrInCents,
 		irRateBps: asBasisPoints(defaultFeeRates.irRateBps),
 		subjectToPersonalIr: defaultFeeRates.subjectToPersonalIr,
 	})
@@ -237,6 +264,7 @@ const recomputeAccountMonth = async (
 		taxableGainCents: darf.taxableGain,
 		irGrossCents: darf.irGross,
 		darfDueCents: darf.darfDue,
+		deferredIrCents: darf.deferredIrOutCents,
 		netLiquidCents,
 		tradeCount,
 		isDirty: false,

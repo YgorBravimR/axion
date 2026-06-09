@@ -30,20 +30,58 @@ describe("recomputeAccountMonth", () => {
 		// Full DB integration tested in e2e
 		const { db } = await import("@/db/drizzle")
 		const mockSelect = db.select as Mock
-		// Simulate: no existing trades → all-zero ledger.
-		// where() chain serves three call sites:
-		//   1. tradingAccounts lookup (uses .then)
-		//   2. accountFeeRates lookup (awaited directly = thenable)
-		//   3. trades query (uses .orderBy)
-		const whereChain = {
-			orderBy: vi.fn().mockResolvedValue([]),
-			then: (resolve: (_v: unknown[]) => unknown) =>
-				Promise.resolve([]).then(resolve),
+
+		// Build proper mock responses for each query:
+		// 1. Prior month deferred IR query (returns array via .limit)
+		const priorMonthChain = {
+			limit: vi.fn().mockResolvedValue([]),
 		}
-		mockSelect.mockReturnValue({
-			from: vi.fn().mockReturnValue({
-				where: vi.fn().mockReturnValue(whereChain),
-			}),
+
+		// 2. Account fee rates — no .select() param, so .where() is awaitable
+		const feeRatesChain = Promise.resolve([
+			{
+				assetSymbol: null,
+				txCorretagemCents: 5,
+				txRegistroCents: 74,
+				emolumentosCents: 40,
+				issRatePercent: "5.00",
+				irrfRateBps: 100,
+				irRateBps: 2000,
+				subjectToPersonalIr: true,
+			},
+		])
+
+		// 3. Trades query — uses .orderBy()
+		const tradesChain = {
+			orderBy: vi.fn().mockResolvedValue([]),
+		}
+
+		let selectCallCount = 0
+		mockSelect.mockImplementation(() => {
+			selectCallCount++
+			return {
+				from: vi.fn().mockImplementation(() => {
+					// Call 1: prior month (with projection)
+					if (selectCallCount === 1) {
+						return {
+							where: vi.fn().mockReturnValue(priorMonthChain),
+						}
+					}
+					// Call 2: fee rates (no projection)
+					if (selectCallCount === 2) {
+						return {
+							where: vi.fn().mockReturnValue(feeRatesChain),
+						}
+					}
+					// Call 3: trades (with projection)
+					if (selectCallCount === 3) {
+						return {
+							where: vi.fn().mockReturnValue(tradesChain),
+						}
+					}
+					return {}
+				}),
+			}
 		})
 
 		const mockInsert = db.insert as Mock
@@ -140,7 +178,16 @@ describe("recomputeAccountMonth — per-asset fee rates", () => {
 			},
 		])
 
+		const priorMonthWhere = {
+			limit: vi.fn().mockResolvedValue([]),
+		}
+
 		mockSelect
+			.mockReturnValueOnce({
+				from: vi.fn().mockReturnValue({
+					where: vi.fn().mockReturnValue(priorMonthWhere),
+				}),
+			})
 			.mockReturnValueOnce({
 				from: vi.fn().mockReturnValue({
 					where: vi.fn().mockReturnValue(feeRatesWhere),
@@ -239,7 +286,17 @@ describe("recomputeAccountMonth — BRT day-boundary regression (Zone 16-1)", ()
 			},
 		])
 
+		// Prior month query (deferredIr lookup)
+		const priorMonthWhere = {
+			limit: vi.fn().mockResolvedValue([]),
+		}
+
 		mockSelect
+			.mockReturnValueOnce({
+				from: vi.fn().mockReturnValue({
+					where: vi.fn().mockReturnValue(priorMonthWhere),
+				}),
+			})
 			.mockReturnValueOnce({
 				from: vi.fn().mockReturnValue({
 					where: vi.fn().mockReturnValue(feeRatesWhere),
@@ -311,7 +368,17 @@ describe("recomputeAccountMonth — BRT day-boundary regression (Zone 16-1)", ()
 			},
 		])
 
+		// Prior month query (deferredIr lookup)
+		const priorMonthWhere = {
+			limit: vi.fn().mockResolvedValue([]),
+		}
+
 		mockSelect
+			.mockReturnValueOnce({
+				from: vi.fn().mockReturnValue({
+					where: vi.fn().mockReturnValue(priorMonthWhere),
+				}),
+			})
 			.mockReturnValueOnce({
 				from: vi.fn().mockReturnValue({
 					where: vi.fn().mockReturnValue(feeRatesWhere),

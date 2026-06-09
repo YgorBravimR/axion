@@ -1198,6 +1198,13 @@ export const monthlyTaxLedger = pgTable(
 			.default(0)
 			.notNull(),
 
+		// ── IR Deferral (Lei 9.430/96 art. 68 §1°) ────────────────────────────────
+		// Sub-threshold IR (0 < amount < R$10) carried to next month. Once cumulative
+		// crosses R$10, the full deferred balance is owed in the next eligible month.
+		deferredIrCents: bigint("deferred_ir_cents", { mode: "number" })
+			.default(0)
+			.notNull(),
+
 		// ── DARF status ───────────────────────────────────────────────────────────
 		darfStatus: darfStatusEnum("darf_status").default("pending").notNull(),
 		darfDueDate: timestamp("darf_due_date", { withTimezone: true }),

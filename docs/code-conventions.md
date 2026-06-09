@@ -226,11 +226,9 @@ Every site that builds an equity curve uses `equity[t] = initial + cumsum(PnL[1.
 
 When capital exceeds the top ladder tier in `src/lib/fractal-plan/capital-ladder.ts`, the resolver returns the **top tier** rather than throwing or returning null. This is an explicit design choice (not a bug): users with capital above the top tier are still on a valid progression, the top tier's risk/sizing parameters remain the safest available bounds. Code reading the resolver's output must not interpret "top tier returned" as "user has exactly top-tier capital" — check the actual `currentCapitalCents` separately if needed.
 
-### R$10 DARF minimum filing floor (Lei 9.430/96 art. 68)
+### R$10 DARF minimum filing floor (Lei 9.430/96 art. 68 §1°)
 
-`src/lib/tax/darf-calculator.ts` zeroes `darfDue` and sets `belowMinimumThreshold = true` whenever the IR owed net of IRRF is strictly between 0 and R$10.00 (1000 cents). This matches Receita Federal's rule that no DARF need be filed below the floor. Downstream consumers should treat `belowMinimumThreshold === true` as a "exempt this month" signal distinct from "no tax owed at all" (which produces `darfDue = 0` AND `belowMinimumThreshold = false`).
-
-Known simplification: art. 68 §1° actually requires sub-threshold amounts to be **deferred** and summed with the next month's IR until the cumulative figure crosses R$10. Our current implementation does NOT defer — see `docs/backlog.md` "DARF sub-threshold deferral" for the production-filing-grade upgrade. Practical user-facing impact is small (sub-R$10 months are rare in day-trade) and skews under-tax (never over-files).
+`src/lib/tax/darf-calculator.ts` implements strict art. 68 §1° compliance: sub-threshold IR amounts (0 < amount < R$10) are deferred to the next month and summed with future IR until the cumulative figure crosses R$10, at which point the full deferred balance is owed. The calculator accepts `deferredIrInCents` as input and returns `deferredIrOutCents` for persistence. `src/lib/tax/recompute-month.ts` reads the prior month's deferred balance from the DB and passes it to `computeDarf()`, then persists the current month's deferred balance. This ensures zero under-taxation and matches the statutory requirement: _"Os valores não pagos, em razão do disposto neste artigo, serão adicionados ao imposto devido no período subseqüente, em que se atinja o valor mínimo."_
 
 ### Display percent formatter convention
 

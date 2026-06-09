@@ -34,6 +34,7 @@ const BASE_INPUT = {
 	totalFeesCents: 20000,
 	irrfCents: 3000,
 	carryoverInCents: 0,
+	deferredIrInCents: 0,
 	irRateBps: asBasisPoints(2000),
 	subjectToPersonalIr: true,
 }
@@ -212,6 +213,128 @@ describe("computeDarf", () => {
 		it("loss month stays exempt regardless of threshold", () => {
 			const result = computeDarf({ ...BASE_INPUT, grossGainCents: -500000 })
 			expect(result.belowMinimumThreshold).toBe(false)
+		})
+	})
+
+	describe("IR deferral (Lei 9.430/96 art. 68 §1°)", () => {
+		it("single month with sub-R$10 IR → deferred forward", () => {
+			// taxableGain that yields irGross=800, irrf=0 → net=800 (below R$10)
+			// 800 / 0.2 = 4000 cents taxable gain needed
+			const result = computeDarf({
+				...BASE_INPUT,
+				grossGainCents: 4000 + 20000,
+				totalFeesCents: 20000,
+				irrfCents: 0,
+				deferredIrInCents: 0,
+			})
+			expect(result.irGross).toBe(800)
+			expect(result.darfDue).toBe(0)
+			expect(result.belowMinimumThreshold).toBe(true)
+			expect(result.deferredIrOutCents).toBe(800)
+		})
+
+		it("two months chained: M1 defers 600, M2 has 800 → cumulative 1400 → DARF emitted", () => {
+			// Month 1: yields irGross=600 (sub-R$10) → deferredOut=600
+			// Month 2: yields irGross=800, deferredIn=600 → cumulative=1400 → crosses R$10 → emit DARF
+			const m1 = computeDarf({
+				...BASE_INPUT,
+				grossGainCents: 3000 + 20000,
+				totalFeesCents: 20000,
+				irrfCents: 0,
+				deferredIrInCents: 0,
+			})
+			expect(m1.irGross).toBe(600)
+			expect(m1.darfDue).toBe(0)
+			expect(m1.deferredIrOutCents).toBe(600)
+
+			const m2 = computeDarf({
+				...BASE_INPUT,
+				grossGainCents: 4000 + 20000,
+				totalFeesCents: 20000,
+				irrfCents: 0,
+				deferredIrInCents: m1.deferredIrOutCents,
+			})
+			expect(m2.irGross).toBe(800)
+			expect(m2.darfDue).toBe(1400) // full cumulative (600+800)
+			expect(m2.belowMinimumThreshold).toBe(false)
+			expect(m2.deferredIrOutCents).toBe(0)
+		})
+
+		it("three months chained: M1=400, M2=300, M3=500 → M3 cumulative=1200 → DARF emitted", () => {
+			// M1: 400 deferred
+			const m1 = computeDarf({
+				...BASE_INPUT,
+				grossGainCents: 2000 + 20000,
+				totalFeesCents: 20000,
+				irrfCents: 0,
+				deferredIrInCents: 0,
+			})
+			expect(m1.irGross).toBe(400)
+			expect(m1.darfDue).toBe(0)
+			expect(m1.deferredIrOutCents).toBe(400)
+
+			// M2: 300 + prior 400 = 700, still sub-R$10, defer all
+			const m2 = computeDarf({
+				...BASE_INPUT,
+				grossGainCents: 1500 + 20000,
+				totalFeesCents: 20000,
+				irrfCents: 0,
+				deferredIrInCents: m1.deferredIrOutCents,
+			})
+			expect(m2.irGross).toBe(300)
+			expect(m2.darfDue).toBe(0)
+			expect(m2.belowMinimumThreshold).toBe(true)
+			expect(m2.deferredIrOutCents).toBe(700)
+
+			// M3: 500 + prior 700 = 1200, crosses R$10, emit DARF
+			const m3 = computeDarf({
+				...BASE_INPUT,
+				grossGainCents: 2500 + 20000,
+				totalFeesCents: 20000,
+				irrfCents: 0,
+				deferredIrInCents: m2.deferredIrOutCents,
+			})
+			expect(m3.irGross).toBe(500)
+			expect(m3.darfDue).toBe(1200)
+			expect(m3.belowMinimumThreshold).toBe(false)
+			expect(m3.deferredIrOutCents).toBe(0)
+		})
+
+		it("loss month preserves deferred balance (pass-through)", () => {
+			const result = computeDarf({
+				...BASE_INPUT,
+				grossGainCents: -500000,
+				totalFeesCents: 10000,
+				irrfCents: 0,
+				deferredIrInCents: 600,
+			})
+			expect(result.darfDue).toBe(0)
+			expect(result.deferredIrOutCents).toBe(600)
+		})
+
+		it("prop account preserves deferred balance (pass-through)", () => {
+			const result = computeDarf({
+				...BASE_INPUT,
+				subjectToPersonalIr: false,
+				deferredIrInCents: 600,
+			})
+			expect(result.darfDue).toBe(0)
+			expect(result.deferredIrOutCents).toBe(600)
+		})
+
+		it("cumulative exactly at R$10 (1000 cents) → DARF emitted, not floored", () => {
+			// deferredIn=500, current=500 → cumulative=1000 → at threshold
+			const result = computeDarf({
+				...BASE_INPUT,
+				grossGainCents: 2500 + 20000,
+				totalFeesCents: 20000,
+				irrfCents: 0,
+				deferredIrInCents: 500,
+			})
+			expect(result.irGross).toBe(500)
+			expect(result.darfDue).toBe(1000)
+			expect(result.belowMinimumThreshold).toBe(false)
+			expect(result.deferredIrOutCents).toBe(0)
 		})
 	})
 })
