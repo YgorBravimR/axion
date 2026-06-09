@@ -17,6 +17,7 @@ import { fromCents } from "@/lib/money"
 import { getPnlSignClass } from "@/lib/formatting"
 import { useFormatting } from "@/hooks/use-formatting"
 import { MetricCell } from "./metric-cell"
+import { DailyRiskGauge } from "./daily-risk-gauge"
 
 type CircuitBreakerState =
 	| "clear"
@@ -267,6 +268,15 @@ export const CircuitBreakerPanel = ({ status }: CircuitBreakerPanelProps) => {
 						)}
 				</div>
 			)}
+
+			{/* Risk-remaining gauge — glanceable "where am I on the daily budget"
+			    visualization. Topstep / Apex pattern. Renders only when at least
+			    one boundary is configured; the gauge component handles the bail. */}
+			<DailyRiskGauge
+				dailyPnL={status.dailyPnL}
+				lossLimit={lossLimit}
+				profitTarget={profitTarget}
+			/>
 
 			{/* Row 1: Daily metrics (3 columns) */}
 			<div className="gap-s-300 sm:gap-m-400 divide-bg-300 grid grid-cols-1 divide-y sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-3">

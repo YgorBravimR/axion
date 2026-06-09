@@ -32,13 +32,23 @@ const TRADING_HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17]
  * @param data - Array of heatmap cells with performance data per time slot
  * @param expectancyMode - Whether to color/sort by R-multiples or $ P&L
  */
+type HeatmapMetric = "pnl" | "avgR" | "winRate" | "trades"
+
 const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 	const t = useTranslations("analytics")
 	const tDays = useTranslations("analytics.time.heatmapDays")
 	const tDayNames = useTranslations("analytics.time.dayNames")
 	const [hoveredCell, setHoveredCell] = useState<TimeHeatmapCell | null>(null)
 
-	const isRMode = expectancyMode === "edge"
+	// Heatmap-local metric switcher. Defaults to whatever the page-level
+	// expectancy toggle is set to (R → avgR, $ → pnl) so the first paint
+	// matches the rest of the page; the trader can then drill into win-rate
+	// or trade-count without changing the global mode for sibling charts.
+	const [metric, setMetric] = useState<HeatmapMetric>(
+		expectancyMode === "edge" ? "avgR" : "pnl"
+	)
+
+	const isRMode = metric === "avgR"
 
 	const days = useMemo(
 		() => ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
@@ -69,8 +79,74 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 		return dayMap[dayName] || dayName.slice(0, 3)
 	}
 
-	const formatMetric = (value: number): string =>
-		isRMode ? formatR(value) : formatBrlCompactWithSign(value)
+	// Metric-aware value extraction. Each metric defines (a) the signed value
+	// used for sorting / display, (b) the magnitude used for intensity, and
+	// (c) the direction (buy/sell color) — winRate's neutral line is 50%,
+	// trade-count has no negative direction.
+	const valueOf = (cell: {
+		totalPnl: number
+		avgR: number
+		winRate: number
+		totalTrades: number
+	}): number => {
+		switch (metric) {
+			case "pnl":
+				return cell.totalPnl
+			case "avgR":
+				return cell.avgR
+			case "winRate":
+				return cell.winRate
+			case "trades":
+				return cell.totalTrades
+		}
+	}
+	const magnitudeOf = (cell: {
+		totalPnl: number
+		avgR: number
+		winRate: number
+		totalTrades: number
+	}): number => {
+		switch (metric) {
+			case "pnl":
+				return Math.abs(cell.totalPnl)
+			case "avgR":
+				return Math.abs(cell.avgR)
+			case "winRate":
+				return Math.abs(cell.winRate - 50)
+			case "trades":
+				return cell.totalTrades
+		}
+	}
+	const directionOf = (cell: {
+		totalPnl: number
+		avgR: number
+		winRate: number
+		totalTrades: number
+	}): "buy" | "sell" => {
+		switch (metric) {
+			case "pnl":
+				return cell.totalPnl >= 0 ? "buy" : "sell"
+			case "avgR":
+				return cell.avgR >= 0 ? "buy" : "sell"
+			case "winRate":
+				return cell.winRate >= 50 ? "buy" : "sell"
+			case "trades":
+				return "buy"
+		}
+	}
+
+	const formatMetric = (value: number): string => {
+		switch (metric) {
+			case "pnl":
+				return formatBrlCompactWithSign(value)
+			case "avgR":
+				return formatR(value)
+			case "winRate":
+				return `${value.toFixed(0)}%`
+			case "trades":
+				return String(Math.round(value))
+		}
+	}
 
 	const {
 		cellMap,
@@ -89,16 +165,13 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 		}
 
 		const withTrades = data.filter((c) => c.totalTrades > 0)
-		const maxAbs = withTrades.reduce((max, cell) => {
-			const value = isRMode ? Math.abs(cell.avgR) : Math.abs(cell.totalPnl)
-			return Math.max(max, value)
-		}, 0)
-
-		const getMetric = (cell: TimeHeatmapCell): number =>
-			isRMode ? cell.avgR : cell.totalPnl
+		const maxAbs = withTrades.reduce(
+			(max, cell) => Math.max(max, magnitudeOf(cell)),
+			0
+		)
 
 		const sortedByMetric = withTrades.toSorted(
-			(a, b) => getMetric(b) - getMetric(a)
+			(a, b) => valueOf(b) - valueOf(a)
 		)
 
 		const hourAggregates = TRADING_HOURS.map((hour) => {
@@ -124,8 +197,8 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 			}
 		}).filter((h) => h.totalTrades > 0)
 
-		const sortedHours = hourAggregates.toSorted((a, b) =>
-			isRMode ? b.avgR - a.avgR : b.totalPnl - a.totalPnl
+		const sortedHours = hourAggregates.toSorted(
+			(a, b) => valueOf(b) - valueOf(a)
 		)
 
 		const dayAggregates = days
@@ -154,9 +227,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 			})
 			.filter((d) => d.totalTrades > 0)
 
-		const sortedDays = dayAggregates.toSorted((a, b) =>
-			isRMode ? b.avgR - a.avgR : b.totalPnl - a.totalPnl
-		)
+		const sortedDays = dayAggregates.toSorted((a, b) => valueOf(b) - valueOf(a))
 
 		return {
 			cellMap: map,
@@ -169,22 +240,23 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 			bestDay: sortedDays[0],
 			worstDay: sortedDays[sortedDays.length - 1],
 		}
-	}, [data, isRMode, days, dayLabels])
+		// `isRMode` is intentionally NOT a dep — the helpers `valueOf` /
+		// `magnitudeOf` close over `metric` directly and recompute when it
+		// changes via the surrounding `metric` state.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [data, metric, days, dayLabels])
 
-	const getMetricValue = (cell: TimeHeatmapCell): number =>
-		isRMode ? cell.avgR : cell.totalPnl
+	const getMetricValue = (cell: TimeHeatmapCell): number => valueOf(cell)
 
-	// Get cell color with intensity scaled relative to max value
+	// Get cell color with intensity scaled relative to max magnitude. For
+	// winRate the "buy" cutoff is 50%; for trade-count there is no negative
+	// half, so the ramp is always gold→full-buy.
 	const getCellStyle = (cell: TimeHeatmapCell | undefined): string => {
 		if (!cell || cell.totalTrades === 0) {
 			return "bg-bg-300/30"
 		}
-
-		const metricValue = isRMode ? cell.avgR : cell.totalPnl
-		const absValue = isRMode ? Math.abs(cell.avgR) : Math.abs(cell.totalPnl)
-		const intensity = maxAbsValue > 0 ? absValue / maxAbsValue : 0.5
-		const base = metricValue > 0 ? "bg-trade-buy" : "bg-trade-sell"
-
+		const intensity = maxAbsValue > 0 ? magnitudeOf(cell) / maxAbsValue : 0.5
+		const base = directionOf(cell) === "buy" ? "bg-trade-buy" : "bg-trade-sell"
 		if (intensity > 0.7) {
 			return base
 		}
@@ -200,8 +272,9 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 	const formatAggregateMetric = (agg: {
 		totalPnl: number
 		avgR: number
-	}): string =>
-		isRMode ? formatR(agg.avgR) : formatBrlCompactWithSign(agg.totalPnl)
+		winRate: number
+		totalTrades: number
+	}): string => formatMetric(valueOf(agg))
 
 	if (data.length === 0) {
 		return (
@@ -224,14 +297,38 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 			id="analytics-heatmap"
 			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
 		>
-			{/* Header */}
-			<div className="mb-s-300 sm:mb-m-400">
-				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
-					{t("time.heatmapTitle")}
-				</h3>
-				<p className="text-tiny text-txt-300 mt-s-100">
-					{t("time.heatmapSubtitle")}
-				</p>
+			{/* Header + metric switcher */}
+			<div className="mb-s-300 sm:mb-m-400 gap-s-300 sm:gap-m-400 flex flex-col sm:flex-row sm:items-start sm:justify-between">
+				<div>
+					<h3 className="text-small sm:text-body text-txt-100 font-semibold">
+						{t("time.heatmapTitle")}
+					</h3>
+					<p className="text-tiny text-txt-300 mt-s-100">
+						{t("time.heatmapSubtitle")}
+					</p>
+				</div>
+				<div
+					className="border-bg-300 bg-bg-100 flex shrink-0 self-start rounded-md border"
+					role="group"
+					aria-label={t("time.heatmapMetricLabel")}
+				>
+					{(["pnl", "avgR", "winRate", "trades"] as const).map((m) => (
+						<button
+							key={m}
+							type="button"
+							onClick={() => setMetric(m)}
+							className={cn(
+								"px-s-300 py-s-100 text-tiny transition-colors first:rounded-l-md last:rounded-r-md",
+								metric === m
+									? "bg-acc-100 text-bg-100"
+									: "text-txt-300 hover:text-txt-100"
+							)}
+							aria-pressed={metric === m}
+						>
+							{t(`time.heatmapMetric.${m}`)}
+						</button>
+					))}
+				</div>
 			</div>
 
 			{/* Heatmap Grid */}

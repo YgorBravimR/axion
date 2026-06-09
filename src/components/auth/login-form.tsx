@@ -19,6 +19,80 @@ interface AccountPickerItem {
 	name: string
 	accountType: string
 	isDefault: boolean
+	todayPnl: number | null
+	sparkline: number[] | null
+}
+
+const PICKER_SPARK_WIDTH = 80
+const PICKER_SPARK_HEIGHT = 24
+
+interface PickerSparklineProps {
+	points: number[]
+}
+
+/**
+ * Tiny pre-session sparkline rendered inside each account-picker row.
+ * Tone follows the slope of the last vs first sample so the user reads
+ * "trending up" / "trending down" without needing numeric annotations.
+ */
+const PickerSparkline = ({ points }: PickerSparklineProps) => {
+	if (points.length < 2) {
+		return null
+	}
+	const min = Math.min(...points)
+	const max = Math.max(...points)
+	const range = max - min || 1
+	const innerW = PICKER_SPARK_WIDTH - 2
+	const innerH = PICKER_SPARK_HEIGHT - 2
+	const xy = points.map((v, i) => {
+		const x = 1 + (i / (points.length - 1)) * innerW
+		const y = 1 + innerH - ((v - min) / range) * innerH
+		return { x, y }
+	})
+	const path = xy
+		.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
+		.join(" ")
+	const lastPoint = points[points.length - 1] ?? 0
+	const firstPoint = points[0] ?? 0
+	const toneClass =
+		lastPoint > firstPoint
+			? "text-trade-buy"
+			: lastPoint < firstPoint
+				? "text-trade-sell"
+				: "text-txt-300"
+	return (
+		<svg
+			viewBox={`0 0 ${PICKER_SPARK_WIDTH} ${PICKER_SPARK_HEIGHT}`}
+			width={PICKER_SPARK_WIDTH}
+			height={PICKER_SPARK_HEIGHT}
+			className={cn("shrink-0", toneClass)}
+			aria-hidden="true"
+			preserveAspectRatio="none"
+		>
+			<path
+				d={path}
+				fill="none"
+				stroke="currentColor"
+				strokeWidth={1.5}
+				strokeLinejoin="round"
+				strokeLinecap="round"
+				vectorEffect="non-scaling-stroke"
+			/>
+		</svg>
+	)
+}
+
+const formatCompactBrlSigned = (value: number): string => {
+	const abs = Math.abs(value)
+	const fmt =
+		abs >= 1000 ? `R$ ${(abs / 1000).toFixed(1)}K` : `R$ ${abs.toFixed(0)}`
+	if (value > 0) {
+		return `+${fmt}`
+	}
+	if (value < 0) {
+		return `-${fmt}`
+	}
+	return fmt
 }
 
 interface LoginFormProps {
@@ -222,12 +296,40 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 											</span>
 										)}
 									</div>
-									{!nameContainsType && (
-										<p className="text-tiny text-txt-300 capitalize">
-											{typeLabel}
-										</p>
-									)}
+									<div className="gap-s-200 mt-s-100 flex items-center">
+										{!nameContainsType && (
+											<span className="text-tiny text-txt-300 shrink-0 capitalize">
+												{typeLabel}
+											</span>
+										)}
+										{account.todayPnl !== null && (
+											<>
+												{!nameContainsType && (
+													<span aria-hidden="true" className="text-txt-300">
+														·
+													</span>
+												)}
+												<span
+													className={cn(
+														"text-tiny shrink-0 font-medium tabular-nums",
+														account.todayPnl > 0 && "text-trade-buy",
+														account.todayPnl < 0 && "text-trade-sell",
+														account.todayPnl === 0 && "text-txt-300"
+													)}
+												>
+													{tSelect("todayLabel")}{" "}
+													{formatCompactBrlSigned(account.todayPnl)}
+												</span>
+											</>
+										)}
+									</div>
 								</div>
+
+								{account.sparkline && account.sparkline.length >= 2 && (
+									<div className="hidden shrink-0 sm:block">
+										<PickerSparkline points={account.sparkline} />
+									</div>
+								)}
 
 								<div
 									className={cn(

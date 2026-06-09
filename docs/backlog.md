@@ -267,52 +267,6 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ---
 
-## Dashboards & Reports — Wave 4 pattern adoption (from 2026-06-09 visual review)
-
-### Risk-remaining gauge in Command Center (Topstep pattern)
-
-- **Priority**: P2
-- **Effort**: M
-- **Source**: `docs/scans/2026-06-09-dashboards-reports-visual-review.md` — Wave 4 item 1.
-- **What + Why**: A hero "R remaining today" arc gauge at the top of Command Center that visualizes daily risk budget consumed (sum of risk on open + closed trades vs the daily R cap from `circuitBreaker.maxTrades × per-trade R`). Pattern is core to Topstep / Apex prop UIs because it's the single most-checked metric during the session. Today the circuit-breaker numbers exist but render as a tabular panel — promote one to a glanceable visual.
-- **Dependencies**: requires the live daily R-spent value; circuit-breaker currently exposes maxTrades and P&L, not R-units consumed. May need a derived selector.
-- **Date filed**: 2026-06-09.
-
-### Calendar daily P&L overlay on Painel calendar (Tradezella pattern)
-
-- **Priority**: P2
-- **Effort**: S
-- **Source**: `docs/scans/2026-06-09-dashboards-reports-visual-review.md` — Wave 4 item 2.
-- **What + Why**: `src/components/dashboard/trading-calendar.tsx` already renders a month grid with day cells. Tint each cell's background by the day's net P&L (green saturation = magnitude, red = loss) so the month reads as a heat-map at a glance, with the numeric overlay still on top. Tradezella's exec UX hinges on this. Existing day-aggregate data per cell is likely already passed in — verify before estimating.
-- **Date filed**: 2026-06-09.
-
-### Heatmap metric switcher on Analytics Hora × Dia (Tradezella pattern)
-
-- **Priority**: P3
-- **Effort**: S
-- **Source**: `docs/scans/2026-06-09-dashboards-reports-visual-review.md` — Wave 4 item 3.
-- **What + Why**: The Hora × Dia heatmap (`src/components/analytics/time-heatmap.tsx`) already has an `expectancyMode` toggle (R vs $). Tradezella's equivalent grid also lets the trader switch the intensity encoding to win-rate, trade count, or avg R. Add a 3- or 4-way toggle above the grid that swaps the metric, leaves the cell tooltips intact. The new intensity-ramp legend from the 2026-06-09 PR already reads the current metric, so it inherits the switcher for free.
-- **Date filed**: 2026-06-09.
-
-### Market-status pill in global header (TradingView pattern)
-
-- **Priority**: P3
-- **Effort**: S
-- **Source**: `docs/scans/2026-06-09-dashboards-reports-visual-review.md` — Wave 4 item 4.
-- **What + Why**: A small "B3 Open · closes in 02h 14m" / "B3 Closed · opens Mon 09:55" pill in the global app-shell header. Logic already exists inside `src/components/market/market-status-panel.tsx` / `src/components/market/b3-trading-calendar.tsx`; lift the next-event computation into a shared hook + render a compact `Badge` in `src/components/layout/app-shell.tsx` next to PageBreadcrumb. Costs almost nothing once the hook is factored out.
-- **Date filed**: 2026-06-09.
-
-## Login flow
-
-### Enrich account-selector rows with day P&L + 7-day sparkline
-
-- **Priority**: P3
-- **Effort**: M
-- **Source**: `docs/scans/2026-06-09-dashboards-reports-visual-review.md` — C7 (Wave 4 pattern adoption).
-- **What + Why**: The audit asked for "name + ticker emoji + day P&L + 7-day sparkline" on each account row in the post-credentials picker. The 2026-06-09 PR landed the visual de-duplication (drop "Personal / personal", default badge, truncation guard) but skipped the data-rich half — adding day P&L + sparkline requires the login flow's `loginUser` action (or a sibling action) to fan out per-account aggregates before any session is established, plus a per-account equity series shaped for a 7-day window. That's a non-trivial auth-path data fetch we don't want to add without measuring its impact on login TTI.
-- **Reference**: Topstep / Apex switchers show day P&L + risk used right on each account card.
-- **Date filed**: 2026-06-09.
-
 ## Layout & Theming (from 2026-05-29 scan)
 
 ### Verify HAWKS `DailyBiasPanel` uses `FeatureStamp` for band header (Wave 9 convention)

@@ -614,6 +614,16 @@
 			"approachingLossLimit": "Aproximando do limite de perda diário",
 			"targetReached": "ALVO ATINGIDO"
 		},
+		"dailyRiskGauge": {
+			"title": "Faixa de Risco Diária",
+			"ariaLabel": "Posição do P&L diário na faixa de risco configurada",
+			"inLoss": "No Prejuízo",
+			"nearLimit": "Perto do Limite",
+			"limitHit": "Limite Atingido",
+			"inProfit": "No Lucro",
+			"nearTarget": "Perto do Alvo",
+			"targetHit": "Alvo Atingido"
+		},
 		"liveStatus": {
 			"title": "Status ao Vivo",
 			"loading": "Carregando status...",
@@ -2036,6 +2046,13 @@
 			"windowDay": "Dia",
 			"totalTrades": "{count} trades",
 			"heatmapSubtitle": "Identifique suas janelas de operação mais e menos lucrativas",
+			"heatmapMetricLabel": "Métrica do mapa de calor",
+			"heatmapMetric": {
+				"pnl": "P&L",
+				"avgR": "R",
+				"winRate": "Acerto %",
+				"trades": "Trades"
+			},
 			"heatmapDays": {
 				"mon": "Seg",
 				"tue": "Ter",
@@ -3783,7 +3800,8 @@
 			"signInAgain": "Para selecionar sua conta de trading, faça login novamente.",
 			"backToLoginButton": "Voltar para Login",
 			"selectAccountLabel": "Selecionar conta",
-			"defaultBadge": "Padrão"
+			"defaultBadge": "Padrão",
+			"todayLabel": "Hoje"
 		},
 		"errors": {
 			"emailExists": "Uma conta com este e-mail já existe",

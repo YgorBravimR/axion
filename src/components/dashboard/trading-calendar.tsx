@@ -56,6 +56,50 @@ export const TradingCalendar = memo(
 			return map
 		}, [data])
 
+		// Largest absolute P&L *within the current month view* — used to scale
+		// each cell's tint by magnitude rather than just sign. Restricting the
+		// max to the visible month means a single outlier day (e.g. a payout in
+		// June) doesn't flatten every other month's contrast.
+		const maxAbsMonthPnl = useMemo(() => {
+			let max = 0
+			for (const day of data) {
+				const parts = day.date.split("-")
+				if (parts.length !== 3) {
+					continue
+				}
+				const y = Number(parts[0])
+				const m = Number(parts[1])
+				if (y !== year || m !== monthIndex + 1) {
+					continue
+				}
+				const abs = Math.abs(day.pnl)
+				if (abs > max) {
+					max = abs
+				}
+			}
+			return max
+		}, [data, year, monthIndex])
+
+		// Maps a day's P&L to one of four opacity tiers, matching the heatmap
+		// encoding so the visual vocabulary stays consistent across the app.
+		const pnlBgClass = (pnl: number): string => {
+			if (pnl === 0 || maxAbsMonthPnl === 0) {
+				return "bg-bg-300"
+			}
+			const base = pnl > 0 ? "bg-trade-buy" : "bg-trade-sell"
+			const intensity = Math.abs(pnl) / maxAbsMonthPnl
+			if (intensity > 0.7) {
+				return `${base}/40`
+			}
+			if (intensity > 0.4) {
+				return `${base}/25`
+			}
+			if (intensity > 0.15) {
+				return `${base}/15`
+			}
+			return `${base}/10`
+		}
+
 		// B3 is closed on Saturday and Sunday, so the calendar collapses to a
 		// 5-column Mon–Fri view by default. The hidden columns reappear the moment
 		// a trade is recorded on a weekend (e.g. crypto, FX, manual entry), so the
@@ -242,11 +286,7 @@ export const TradingCalendar = memo(
 								dayData.date.toDateString() === effectiveDate.toDateString()
 
 							const bgClass = dailyData
-								? dailyData.pnl > 0
-									? "bg-trade-buy-muted"
-									: dailyData.pnl < 0
-										? "bg-trade-sell-muted"
-										: "bg-bg-300"
+								? pnlBgClass(dailyData.pnl)
 								: "bg-bg-100"
 
 							const textClass = dailyData

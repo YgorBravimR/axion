@@ -614,6 +614,16 @@
 			"approachingLossLimit": "Approaching daily loss limit",
 			"targetReached": "TARGET REACHED"
 		},
+		"dailyRiskGauge": {
+			"title": "Daily Risk Band",
+			"ariaLabel": "Daily P&L position on configured risk band",
+			"inLoss": "In Loss",
+			"nearLimit": "Near Limit",
+			"limitHit": "Limit Hit",
+			"inProfit": "In Profit",
+			"nearTarget": "Near Target",
+			"targetHit": "Target Hit"
+		},
 		"liveStatus": {
 			"title": "Live Trading Status",
 			"loading": "Loading status...",
@@ -2036,6 +2046,13 @@
 			"windowDay": "Day",
 			"totalTrades": "{count} trades",
 			"heatmapSubtitle": "Identify your most and least profitable trading windows",
+			"heatmapMetricLabel": "Heatmap metric",
+			"heatmapMetric": {
+				"pnl": "P&L",
+				"avgR": "R",
+				"winRate": "Win %",
+				"trades": "Count"
+			},
 			"heatmapDays": {
 				"mon": "Mon",
 				"tue": "Tue",
@@ -3783,7 +3800,8 @@
 			"signInAgain": "To select your trading account, please sign in again.",
 			"backToLoginButton": "Back to Login",
 			"selectAccountLabel": "Select account",
-			"defaultBadge": "Default"
+			"defaultBadge": "Default",
+			"todayLabel": "Today"
 		},
 		"errors": {
 			"emailExists": "An account with this email already exists",
