@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
+import { useFormatting } from "@/hooks/use-formatting"
 import { DarfStatusDot } from "@/components/ui/darf-status-dot"
 import type { DarfStatus } from "@/components/ui/darf-status-dot"
 
@@ -34,11 +35,11 @@ const MONTH_ABBR_PT = [
 	"dez",
 ]
 
-const formatBRL = (cents: number): string =>
-	(cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-
 const DarfStrip = ({ chips, onChipClick }: DarfStripProps) => {
 	const t = useTranslations("plan.darfStrip")
+	const { formatCurrency } = useFormatting()
+
+	const formatBRL = (cents: number): string => formatCurrency(cents / 100)
 	const byIndex = new Map(chips.map((c) => [c.monthIndex, c]))
 	const interactive = typeof onChipClick === "function"
 	return (

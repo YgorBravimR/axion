@@ -12,6 +12,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
+import { useFormatting } from "@/hooks/use-formatting"
 import { calculateTickBasedPositionSize } from "@/lib/calculations"
 
 interface AssetOption {
@@ -26,11 +27,11 @@ interface WhatIfCalculatorProps {
 	assets: readonly AssetOption[]
 }
 
-const formatBRL = (cents: number): string =>
-	(cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-
 const WhatIfCalculator = ({ oneRCents, assets }: WhatIfCalculatorProps) => {
 	const t = useTranslations("plan.whatIf")
+	const { formatCurrency } = useFormatting()
+
+	const formatBRL = (cents: number): string => formatCurrency(cents / 100)
 	const [symbol, setSymbol] = useState<string>(assets[0]?.symbol ?? "")
 	const [stopTicks, setStopTicks] = useState<string>("10")
 

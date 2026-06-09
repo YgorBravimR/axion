@@ -9,6 +9,7 @@ import { CurrencyInput } from "@/components/ui/currency-input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/toast"
 import { DarfStatusDot } from "@/components/ui/darf-status-dot"
+import { useFormatting } from "@/hooks/use-formatting"
 import { markDarfPaid } from "@/app/actions/tax-engine"
 
 type DarfStatus = "pending" | "paid" | "exempt" | "overdue"
@@ -26,9 +27,6 @@ interface MonthDarfRowProps {
 	isFinal: boolean
 }
 
-const formatBRL = (cents: number): string =>
-	(cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-
 const MonthDarfRow = ({
 	accountId,
 	year,
@@ -41,9 +39,12 @@ const MonthDarfRow = ({
 	isFinal,
 }: MonthDarfRowProps) => {
 	const t = useTranslations("plan.month.darf")
+	const { formatCurrency, formatDate } = useFormatting()
 	const uiStatus: UiDarfStatus = isFinal ? darfStatus : "in_progress"
 	const router = useRouter()
 	const { showToast } = useToast()
+
+	const formatBRL = (cents: number): string => formatCurrency(cents / 100)
 	const [isPending, startTransition] = useTransition()
 	const [isPrompting, setPrompting] = useState(false)
 	const [paidInputCents, setPaidInputCents] = useState<number | null>(
@@ -73,13 +74,13 @@ const MonthDarfRow = ({
 	}
 
 	const dueDateLabel = darfDueDate
-		? new Date(darfDueDate).toLocaleDateString("pt-BR", {
+		? formatDate(new Date(darfDueDate), {
 				day: "2-digit",
 				month: "2-digit",
 			})
 		: null
 	const paidAtLabel = darfPaidAt
-		? new Date(darfPaidAt).toLocaleDateString("pt-BR", {
+		? formatDate(new Date(darfPaidAt), {
 				day: "2-digit",
 				month: "2-digit",
 			})

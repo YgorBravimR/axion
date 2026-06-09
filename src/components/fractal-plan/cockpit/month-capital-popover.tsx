@@ -13,6 +13,7 @@ import { CurrencyInput } from "@/components/ui/currency-input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/components/ui/toast"
+import { useFormatting } from "@/hooks/use-formatting"
 import { setMonthlyCapital } from "@/app/actions/fractal-plan/monthly"
 
 interface MonthCapitalPopoverProps {
@@ -22,9 +23,6 @@ interface MonthCapitalPopoverProps {
 	prevMonthEndCents: number | null
 }
 
-const formatBRL = (cents: number): string =>
-	(cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-
 const MonthCapitalPopover = ({
 	monthlyPlanId,
 	monthLabel,
@@ -33,6 +31,8 @@ const MonthCapitalPopover = ({
 }: MonthCapitalPopoverProps) => {
 	const router = useRouter()
 	const { showToast } = useToast()
+	const { formatCurrency } = useFormatting()
+	const formatBRL = (cents: number): string => formatCurrency(cents / 100)
 	const [open, setOpen] = useState(false)
 	const [isPending, startTransition] = useTransition()
 	const [valueCents, setValueCents] = useState<number | null>(

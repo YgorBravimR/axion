@@ -4,6 +4,7 @@ import { useMemo } from "react"
 import { CheckCircle2, XCircle, AlertTriangle, TrendingUp } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
+import { useFormatting } from "@/hooks/use-formatting"
 import { Checkbox } from "@/components/ui/checkbox"
 import type { ProcessedCsvTrade } from "@/app/actions/csv-import.types"
 
@@ -30,6 +31,7 @@ export const CsvImportSummary = ({
 }: CsvImportSummaryProps) => {
 	const t = useTranslations("journal.csv")
 	const tCommon = useTranslations("common")
+	const { locale } = useFormatting()
 
 	// C3: Single pass computes all 6 values instead of 3× .filter() + 3× .reduce()
 	const {
@@ -69,11 +71,14 @@ export const CsvImportSummary = ({
 	}, [trades])
 
 	const formatCurrency = (value: number) => {
-		const formatted = new Intl.NumberFormat("pt-BR", {
-			style: "currency",
-			currency: "BRL",
-			minimumFractionDigits: 2,
-		}).format(value)
+		const formatted = new Intl.NumberFormat(
+			locale === "pt-BR" ? "pt-BR" : "en-US",
+			{
+				style: "currency",
+				currency: locale === "pt-BR" ? "BRL" : "USD",
+				minimumFractionDigits: 2,
+			}
+		).format(value)
 		return value >= 0 ? `+${formatted}` : formatted
 	}
 
