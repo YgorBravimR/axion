@@ -112,6 +112,9 @@ const getNestedStringValue = (obj: unknown, path: string): string => {
  * Auto-detect which recipe params vary across a set of runs.
  * Only considers runs of the same strategy type as the first run.
  * Detects both numeric and enum (categorical) variation.
+ *
+ * Algorithm: single pass over runs, accumulating value sets per param.
+ * Then filter to params with size > 1. O(n × m) where n=runs, m=catalog.
  */
 const getVaryingParams = (runs: OptimizationRun[]): VaryingParam[] => {
 	const [firstRun] = runs
@@ -130,19 +133,64 @@ const getVaryingParams = (runs: OptimizationRun[]): VaryingParam[] => {
 
 	const catalog = getSweepableParams(pivot.recipe)
 
-	const varying: VaryingParam[] = []
+	// Single-pass accumulation: for each param, maintain a Set of observed values
+	const enumValuesByPath = new Map<string, Set<string>>()
+	const numericValuesByPath = new Map<string, Set<number>>()
+	const paramMetadataByPath = new Map<
+		string,
+		{
+			kind: "enum" | "numeric"
+			labelKey: string
+			options?: Array<{ value: string; labelKey: string }>
+			getCurrentValue?: (_recipe: StrategyRecipe) => string
+		}
+	>()
+
+	// First pass: initialize metadata for all catalog params
 	for (const param of catalog) {
 		if (param.kind === "enum") {
-			// Canonical reader — the catalog knows how to project the recipe's
-			// internal representation (boolean, string, enum) onto its
-			// `opt.value` domain ("on"/"off", "pct_range"/"full_range", ...).
-			// Using `getNestedStringValue` here would yield `"true"`/`"false"`
-			// for boolean-backed toggles and mismatch `opt.value = "on"|"off"`.
-			const valuesSet = new Set<string>()
-			for (const run of sameStrategyRuns) {
-				valuesSet.add(param.getCurrentValue(run.recipe))
+			enumValuesByPath.set(param.path, new Set())
+			paramMetadataByPath.set(param.path, {
+				kind: "enum",
+				labelKey: param.labelKey,
+				options: param.options,
+				getCurrentValue: param.getCurrentValue,
+			})
+		} else {
+			numericValuesByPath.set(param.path, new Set())
+			paramMetadataByPath.set(param.path, {
+				kind: "numeric",
+				labelKey: param.labelKey,
+			})
+		}
+	}
+
+	// Second pass: accumulate values from all runs
+	for (const run of sameStrategyRuns) {
+		// Enum params: use canonical reader
+		for (const [path, valuesSet] of enumValuesByPath) {
+			const metadata = paramMetadataByPath.get(path)
+			if (metadata?.kind === "enum" && metadata.getCurrentValue) {
+				valuesSet.add(metadata.getCurrentValue(run.recipe))
 			}
-			if (valuesSet.size > 1) {
+		}
+
+		// Numeric params: use getNestedValue, filter NaN
+		for (const [path, valuesSet] of numericValuesByPath) {
+			const v = getNestedValue(run.recipe, path)
+			if (Number.isFinite(v)) {
+				valuesSet.add(v)
+			}
+		}
+	}
+
+	// Final pass: build output only for varying params (size > 1)
+	const varying: VaryingParam[] = []
+
+	for (const param of catalog) {
+		if (param.kind === "enum") {
+			const valuesSet = enumValuesByPath.get(param.path)
+			if (valuesSet && valuesSet.size > 1) {
 				// Build value → labelKey map from the catalog options
 				const optionLabelKeys: Record<string, string> = {}
 				for (const opt of param.options) {
@@ -158,19 +206,8 @@ const getVaryingParams = (runs: OptimizationRun[]): VaryingParam[] => {
 				})
 			}
 		} else {
-			// Existing numeric detection. We tolerate runs where the path is
-			// absent (recipe has `stop.breakeven = undefined`, etc.) by
-			// filtering NaN out — a parameter that's *present-vs-absent* across
-			// runs isn't a numeric sweep axis, it's a structural difference and
-			// shouldn't appear in the heatmap.
-			const valuesSet = new Set<number>()
-			for (const run of sameStrategyRuns) {
-				const v = getNestedValue(run.recipe, param.path)
-				if (Number.isFinite(v)) {
-					valuesSet.add(v)
-				}
-			}
-			if (valuesSet.size > 1) {
+			const valuesSet = numericValuesByPath.get(param.path)
+			if (valuesSet && valuesSet.size > 1) {
 				varying.push({
 					kind: "numeric",
 					path: param.path,

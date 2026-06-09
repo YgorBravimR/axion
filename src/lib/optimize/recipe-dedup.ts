@@ -15,12 +15,19 @@
 
 import type { StrategyRecipe } from "@/types/backtest"
 
+// Module-level WeakMap cache for canonical forms — keeps recipes immutable
+const canonicalCache = new WeakMap<
+	StrategyRecipe & { __canonical?: string },
+	string
+>()
+
 const canonicalize = (
 	recipe: StrategyRecipe & { __canonical?: string }
 ): string => {
-	// Return cached canonical form if available (recipes are immutable in practice)
-	if (recipe.__canonical !== undefined) {
-		return recipe.__canonical
+	// Return cached canonical form if available
+	const cached = canonicalCache.get(recipe)
+	if (cached !== undefined) {
+		return cached
 	}
 
 	const result = JSON.stringify(recipe, (key, value: unknown) => {
@@ -31,15 +38,8 @@ const canonicalize = (
 	})
 	const canonical = result ?? ""
 
-	// Cache the canonical form on the recipe object
-	if (Object.isExtensible(recipe)) {
-		Object.defineProperty(recipe, "__canonical", {
-			value: canonical,
-			writable: false,
-			enumerable: false,
-			configurable: false,
-		})
-	}
+	// Cache in WeakMap (non-mutating)
+	canonicalCache.set(recipe, canonical)
 
 	return canonical
 }

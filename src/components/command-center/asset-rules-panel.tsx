@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, memo } from "react"
 import { useRouter } from "next/navigation"
 import {
 	Settings2,
@@ -55,6 +55,216 @@ interface EditingState {
 	maxPositionSize: string
 	notes: string
 }
+
+interface AssetRuleRowProps {
+	setting: AssetSettingWithAsset
+	isEditing: boolean
+	isSaving: boolean
+	isDeleting: boolean
+	editing: EditingState | null
+	onStartEdit: (setting: AssetSettingWithAsset) => void
+	onSaveEdit: () => Promise<void>
+	onCancelEdit: () => void
+	onBiasChange: (assetId: string, bias: BiasType | null) => Promise<void>
+	onDelete: (assetId: string) => Promise<void>
+	onAddTrade: (assetId: string) => void
+	onEditChange: (state: EditingState) => void
+	t: (key: string) => string
+}
+
+const AssetRuleRow = memo(
+	({
+		setting,
+		isEditing,
+		isSaving,
+		isDeleting,
+		editing,
+		onStartEdit,
+		onSaveEdit,
+		onCancelEdit,
+		onBiasChange,
+		onDelete,
+		onAddTrade,
+		onEditChange,
+		t,
+	}: AssetRuleRowProps) => {
+		return (
+			<TableRow
+				key={setting.id}
+				className="border-bg-300 border-b last:border-0"
+			>
+				<TableCell className="py-s-300 pr-m-400">
+					<span className="text-small text-txt-100 font-medium">
+						{setting.asset.symbol}
+					</span>
+				</TableCell>
+				<TableCell className="py-s-300 pr-m-400">
+					{isEditing ? (
+						<BiasSelector
+							value={editing!.bias}
+							onChange={(value) => onEditChange({ ...editing!, bias: value })}
+							compact
+						/>
+					) : (
+						<BiasSelector
+							value={(setting.bias as BiasType) || null}
+							onChange={(value) => onBiasChange(setting.assetId, value)}
+							disabled={isSaving}
+							compact
+						/>
+					)}
+				</TableCell>
+				<TableCell className="py-s-300 pr-m-400">
+					{isEditing ? (
+						<Input
+							id={`asset-rules-max-daily-trades-${setting.assetId}`}
+							type="number"
+							step="1"
+							min="0"
+							value={editing!.maxDailyTrades}
+							onChange={(e) =>
+								onEditChange({
+									...editing!,
+									maxDailyTrades: e.target.value,
+								})
+							}
+							className="h-8 w-full sm:w-20"
+						/>
+					) : (
+						<span className="text-small text-txt-200">
+							{setting.maxDailyTrades || "-"}
+						</span>
+					)}
+				</TableCell>
+				<TableCell className="py-s-300 pr-m-400">
+					{isEditing ? (
+						<Input
+							id={`asset-rules-max-position-size-${setting.assetId}`}
+							type="number"
+							step="1"
+							min="0"
+							value={editing!.maxPositionSize}
+							onChange={(e) =>
+								onEditChange({
+									...editing!,
+									maxPositionSize: e.target.value,
+								})
+							}
+							className="h-8 w-full sm:w-20"
+						/>
+					) : (
+						<span className="text-small text-txt-200">
+							{setting.maxPositionSize || "-"}
+						</span>
+					)}
+				</TableCell>
+				<TableCell className="py-s-300 pr-m-400">
+					{isEditing ? (
+						<Input
+							id={`asset-rules-notes-${setting.assetId}`}
+							value={editing!.notes}
+							onChange={(e) =>
+								onEditChange({ ...editing!, notes: e.target.value })
+							}
+							className="h-8"
+							placeholder={t("notesPlaceholder")}
+						/>
+					) : (
+						<span className="text-small text-txt-300">
+							{setting.notes || "-"}
+						</span>
+					)}
+				</TableCell>
+				<TableCell className="py-s-300">
+					<div className="gap-s-100 flex items-center">
+						{isEditing ? (
+							<>
+								<Button
+									id={`asset-rules-save-${setting.assetId}`}
+									variant="ghost"
+									size="sm"
+									onClick={onSaveEdit}
+									disabled={isSaving}
+									className="h-8 w-8 p-0"
+									aria-label={t("save")}
+								>
+									{isSaving ? (
+										<Loader2
+											className="h-4 w-4 animate-spin motion-reduce:animate-none"
+											aria-hidden="true"
+										/>
+									) : (
+										<Save
+											className="text-trade-buy h-4 w-4"
+											aria-hidden="true"
+										/>
+									)}
+								</Button>
+								<Button
+									id={`asset-rules-cancel-edit-${setting.assetId}`}
+									variant="ghost"
+									size="sm"
+									onClick={onCancelEdit}
+									className="text-txt-300 h-8 w-8 p-0"
+									aria-label={t("cancel")}
+								>
+									<X className="h-4 w-4" aria-hidden="true" />
+								</Button>
+							</>
+						) : (
+							<>
+								<Button
+									id={`asset-rules-add-trade-${setting.assetId}`}
+									variant="ghost"
+									size="sm"
+									onClick={() => onAddTrade(setting.assetId)}
+									className="text-acc-100 hover:text-acc-100/80 h-8 w-8 p-0"
+									aria-label={t("addTrade")}
+								>
+									<PlusCircle className="h-4 w-4" aria-hidden="true" />
+								</Button>
+								<Button
+									id={`asset-rules-edit-${setting.assetId}`}
+									variant="ghost"
+									size="sm"
+									onClick={() => onStartEdit(setting)}
+									className="text-txt-300 hover:text-txt-100 h-8 w-8 p-0"
+									aria-label={t("edit")}
+								>
+									<Settings2 className="h-4 w-4" aria-hidden="true" />
+								</Button>
+								<Button
+									id={`asset-rules-delete-${setting.assetId}`}
+									variant="ghost"
+									size="sm"
+									onClick={() => onDelete(setting.assetId)}
+									disabled={isDeleting}
+									className={cn(
+										"h-8 w-8 p-0",
+										isDeleting
+											? "text-txt-placeholder"
+											: "text-txt-300 hover:text-fb-error"
+									)}
+									aria-label={t("delete")}
+								>
+									{isDeleting ? (
+										<Loader2
+											className="h-4 w-4 animate-spin motion-reduce:animate-none"
+											aria-hidden="true"
+										/>
+									) : (
+										<Trash2 className="h-4 w-4" aria-hidden="true" />
+									)}
+								</Button>
+							</>
+						)}
+					</div>
+				</TableCell>
+			</TableRow>
+		)
+	}
+)
+AssetRuleRow.displayName = "AssetRuleRow"
 
 export const AssetRulesPanel = ({
 	settings,
@@ -311,185 +521,22 @@ export const AssetRulesPanel = ({
 							const isDeleting = deleting === setting.assetId
 
 							return (
-								<TableRow
+								<AssetRuleRow
 									key={setting.id}
-									className="border-bg-300 border-b last:border-0"
-								>
-									<TableCell className="py-s-300 pr-m-400">
-										<span className="text-small text-txt-100 font-medium">
-											{setting.asset.symbol}
-										</span>
-									</TableCell>
-									<TableCell className="py-s-300 pr-m-400">
-										{isEditing ? (
-											<BiasSelector
-												value={editing.bias}
-												onChange={(value) =>
-													setEditing({ ...editing, bias: value })
-												}
-												compact
-											/>
-										) : (
-											<BiasSelector
-												value={(setting.bias as BiasType) || null}
-												onChange={(value) =>
-													handleBiasChange(setting.assetId, value)
-												}
-												disabled={isSaving}
-												compact
-											/>
-										)}
-									</TableCell>
-									<TableCell className="py-s-300 pr-m-400">
-										{isEditing ? (
-											<Input
-												id={`asset-rules-max-daily-trades-${setting.assetId}`}
-												type="number"
-												step="1"
-												min="0"
-												value={editing.maxDailyTrades}
-												onChange={(e) =>
-													setEditing({
-														...editing,
-														maxDailyTrades: e.target.value,
-													})
-												}
-												className="h-8 w-full sm:w-20"
-											/>
-										) : (
-											<span className="text-small text-txt-200">
-												{setting.maxDailyTrades || "-"}
-											</span>
-										)}
-									</TableCell>
-									<TableCell className="py-s-300 pr-m-400">
-										{isEditing ? (
-											<Input
-												id={`asset-rules-max-position-size-${setting.assetId}`}
-												type="number"
-												step="1"
-												min="0"
-												value={editing.maxPositionSize}
-												onChange={(e) =>
-													setEditing({
-														...editing,
-														maxPositionSize: e.target.value,
-													})
-												}
-												className="h-8 w-full sm:w-20"
-											/>
-										) : (
-											<span className="text-small text-txt-200">
-												{setting.maxPositionSize || "-"}
-											</span>
-										)}
-									</TableCell>
-									<TableCell className="py-s-300 pr-m-400">
-										{isEditing ? (
-											<Input
-												id={`asset-rules-notes-${setting.assetId}`}
-												value={editing.notes}
-												onChange={(e) =>
-													setEditing({ ...editing, notes: e.target.value })
-												}
-												className="h-8"
-												placeholder={t("notesPlaceholder")}
-											/>
-										) : (
-											<span className="text-small text-txt-300">
-												{setting.notes || "-"}
-											</span>
-										)}
-									</TableCell>
-									<TableCell className="py-s-300">
-										<div className="gap-s-100 flex items-center">
-											{isEditing ? (
-												<>
-													<Button
-														id={`asset-rules-save-${setting.assetId}`}
-														variant="ghost"
-														size="sm"
-														onClick={handleSaveEdit}
-														disabled={isSaving}
-														className="h-8 w-8 p-0"
-														aria-label={t("save")}
-													>
-														{isSaving ? (
-															<Loader2
-																className="h-4 w-4 animate-spin motion-reduce:animate-none"
-																aria-hidden="true"
-															/>
-														) : (
-															<Save
-																className="text-trade-buy h-4 w-4"
-																aria-hidden="true"
-															/>
-														)}
-													</Button>
-													<Button
-														id={`asset-rules-cancel-edit-${setting.assetId}`}
-														variant="ghost"
-														size="sm"
-														onClick={() => setEditing(null)}
-														className="text-txt-300 h-8 w-8 p-0"
-														aria-label={t("cancel")}
-													>
-														<X className="h-4 w-4" aria-hidden="true" />
-													</Button>
-												</>
-											) : (
-												<>
-													<Button
-														id={`asset-rules-add-trade-${setting.assetId}`}
-														variant="ghost"
-														size="sm"
-														onClick={() => handleAddTrade(setting.assetId)}
-														className="text-acc-100 hover:text-acc-100/80 h-8 w-8 p-0"
-														aria-label={t("addTrade")}
-													>
-														<PlusCircle
-															className="h-4 w-4"
-															aria-hidden="true"
-														/>
-													</Button>
-													<Button
-														id={`asset-rules-edit-${setting.assetId}`}
-														variant="ghost"
-														size="sm"
-														onClick={() => handleStartEdit(setting)}
-														className="text-txt-300 hover:text-txt-100 h-8 w-8 p-0"
-														aria-label={t("edit")}
-													>
-														<Settings2 className="h-4 w-4" aria-hidden="true" />
-													</Button>
-													<Button
-														id={`asset-rules-delete-${setting.assetId}`}
-														variant="ghost"
-														size="sm"
-														onClick={() => handleDelete(setting.assetId)}
-														disabled={isDeleting}
-														className={cn(
-															"h-8 w-8 p-0",
-															isDeleting
-																? "text-txt-placeholder"
-																: "text-txt-300 hover:text-fb-error"
-														)}
-														aria-label={t("delete")}
-													>
-														{isDeleting ? (
-															<Loader2
-																className="h-4 w-4 animate-spin motion-reduce:animate-none"
-																aria-hidden="true"
-															/>
-														) : (
-															<Trash2 className="h-4 w-4" aria-hidden="true" />
-														)}
-													</Button>
-												</>
-											)}
-										</div>
-									</TableCell>
-								</TableRow>
+									setting={setting}
+									isEditing={isEditing}
+									isSaving={isSaving}
+									isDeleting={isDeleting}
+									editing={editing}
+									onStartEdit={handleStartEdit}
+									onSaveEdit={handleSaveEdit}
+									onCancelEdit={() => setEditing(null)}
+									onBiasChange={handleBiasChange}
+									onDelete={handleDelete}
+									onAddTrade={handleAddTrade}
+									onEditChange={setEditing}
+									t={t}
+								/>
 							)
 						})}
 					</TableBody>

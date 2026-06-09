@@ -52,10 +52,12 @@ const GET = async (request: NextRequest) => {
 					})
 				: []
 
-		// Map completions to checklists
+		// Build O(1) completion map by checklistId
+		const completionMap = new Map(completions.map((c) => [c.checklistId, c]))
+
+		// Map completions to checklists using O(1) lookup
 		const checklistsWithCompletions = checklists.map((checklist) => {
-			const completion =
-				completions.find((c) => c.checklistId === checklist.id) ?? null
+			const completion = completionMap.get(checklist.id) ?? null
 			const completedItemIds: string[] = completion
 				? ((
 						JSON.parse(completion.completedItems) as unknown[] | undefined
