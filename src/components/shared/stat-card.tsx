@@ -97,7 +97,6 @@ const StatCard = memo(
 						"text-txt-300 truncate font-medium tracking-wide uppercase",
 						sizes.label
 					)}
-					title={label}
 				>
 					{label}
 				</dt>
