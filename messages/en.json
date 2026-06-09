@@ -2180,6 +2180,7 @@
 			"systemHasPositiveEdgeR": "Your strategy has a <positive>positive edge</positive> of <amount></amount> per trade. This measures strategy quality independent of position sizing.",
 			"systemHasNegativeEdgeR": "Your strategy currently has a <negative>negative edge</negative> of <amount></amount> per trade. Review entry/exit criteria."
 		},
+		"cumulativePnLTitle": "Cumulative P&L",
 		"rDistribution": {
 			"title": "R-Multiple Distribution",
 			"noData": "No R-multiple data available. Add planned risk to your trades to see distribution.",
@@ -2594,6 +2595,14 @@
 		"weeklyMetaTitle": "Weekly Meta vs Real",
 		"annualRollupTitle": "Annual Rollup",
 		"yearTaxTitle": "Year Tax & Carryover — {year}",
+		"rDistributionTitle": "R Distribution — {year}",
+		"rDistributionBins": {
+			"lt_neg1": "< -1R",
+			"neg1_to_0": "-1R to 0",
+			"0_to_1": "0 to 1R",
+			"1_to_2": "1R to 2R",
+			"ge_2": "≥ 2R"
+		},
 		"carryoverTitle": "Loss Carryover",
 		"monthClosing": {
 			"title": "Month Closing — {month}",
@@ -3216,7 +3225,13 @@
 		},
 		"trading": {
 			"propFirms": {
-				"other": "Other"
+				"other": "Other",
+				"atom": "Atom",
+				"raise": "Raise",
+				"solotrader": "SoloTrader",
+				"apex": "Apex Trader Funding",
+				"topstep": "Topstep",
+				"ftmo": "FTMO"
 			}
 		},
 		"indicators": {
@@ -5115,6 +5130,10 @@
 			"overviewTitle": "Trade Overview",
 			"overviewHint": "{count} trades — click a marker to inspect",
 			"failedToLoad": "Failed to load"
+		},
+		"renko": {
+			"entry": "entry",
+			"exit": "exit"
 		}
 	},
 	"optimize": {

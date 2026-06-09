@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { Panel } from "@/components/ui/panel"
 import { useFormatting } from "@/hooks/use-formatting"
+import { getPnlSignClass } from "@/lib/formatting"
 import type { DailySummary } from "@/app/actions/command-center.types"
 
 interface DailySummaryCardProps {
@@ -49,7 +50,7 @@ export const DailySummaryCard = ({ summary }: DailySummaryCardProps) => {
 						<p
 							className={cn(
 								"mt-s-100 text-h2 font-bold",
-								summary.totalPnL >= 0 ? "text-trade-buy" : "text-trade-sell"
+								getPnlSignClass(summary.totalPnL)
 							)}
 						>
 							{formatCurrencyWithSign(summary.totalPnL)}

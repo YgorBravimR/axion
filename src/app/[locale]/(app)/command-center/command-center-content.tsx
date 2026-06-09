@@ -156,57 +156,71 @@ const CommandCenterContent = ({
 				<DailyBiasForm tradingDay={viewDate} initialBias={initialHawksBias} />
 			)}
 
-			{/* Hawks daily trade counter — compact badge visible when Hawks is active today */}
-			{isHawksActive && isToday && (
-				<div
-					className={cn(
-						"p-s-300 gap-s-300 flex items-center rounded-lg border",
-						hawksDailyOrdinal >= 3
-							? "border-destructive/30 bg-destructive/5"
-							: hawksDailyOrdinal >= 2
-								? "border-warning/30 bg-warning/5"
-								: "border-bg-300 bg-bg-200"
-					)}
-				>
-					<Crosshair
-						className={cn(
-							"h-4 w-4 shrink-0",
-							hawksDailyOrdinal >= 3
-								? "text-destructive"
-								: hawksDailyOrdinal >= 2
-									? "text-warning"
-									: "text-acc-100"
-						)}
-						aria-hidden="true"
-					/>
-					<span
-						className={cn(
-							"text-small font-medium",
-							hawksDailyOrdinal >= 3
-								? "text-destructive"
-								: hawksDailyOrdinal >= 2
-									? "text-warning"
-									: "text-txt-100"
-						)}
-					>
-						{hawksDailyOrdinal >= 3
-							? tHawks("atCap")
-							: tHawks("badge", { ordinal: hawksDailyOrdinal, cap: 3 })}
-					</span>
-					<span
-						className={cn(
-							"text-micro ml-auto shrink-0 rounded-sm px-1.5 py-0.5 font-medium tabular-nums",
-							hawksDailyOrdinal >= 3
-								? "bg-destructive/20 text-destructive"
-								: hawksDailyOrdinal >= 2
-									? "bg-warning/20 text-warning"
-									: "bg-acc-100/10 text-acc-100"
-						)}
-					>
-						{hawksDailyOrdinal}/3
-					</span>
-				</div>
-			)}
+			{/* Hawks daily trade counter — compact badge visible when Hawks is active today.
+			    The cap mirrors the Circuit Breaker's resolved maxTrades (from the active
+			    monthly plan) so both surfaces always show the same N. Falls back to the
+			    Hawks ritual default of 3 if no plan is linked. */}
+			{isHawksActive &&
+				isToday &&
+				(() => {
+					const dailyCap = circuitBreaker?.maxTrades ?? 3
+					const atCap = hawksDailyOrdinal >= dailyCap
+					const nearCap =
+						!atCap && dailyCap > 1 && hawksDailyOrdinal >= dailyCap - 1
+					return (
+						<div
+							className={cn(
+								"p-s-300 gap-s-300 flex items-center rounded-lg border",
+								atCap
+									? "border-destructive/30 bg-destructive/5"
+									: nearCap
+										? "border-warning/30 bg-warning/5"
+										: "border-bg-300 bg-bg-200"
+							)}
+						>
+							<Crosshair
+								className={cn(
+									"h-4 w-4 shrink-0",
+									atCap
+										? "text-destructive"
+										: nearCap
+											? "text-warning"
+											: "text-acc-100"
+								)}
+								aria-hidden="true"
+							/>
+							<span
+								className={cn(
+									"text-small font-medium",
+									atCap
+										? "text-destructive"
+										: nearCap
+											? "text-warning"
+											: "text-txt-100"
+								)}
+							>
+								{atCap
+									? tHawks("atCap")
+									: tHawks("badge", {
+											ordinal: hawksDailyOrdinal,
+											cap: dailyCap,
+										})}
+							</span>
+							<span
+								className={cn(
+									"text-micro ml-auto shrink-0 rounded-sm px-1.5 py-0.5 font-medium tabular-nums",
+									atCap
+										? "bg-destructive/20 text-destructive"
+										: nearCap
+											? "bg-warning/20 text-warning"
+											: "bg-acc-100/10 text-acc-100"
+								)}
+							>
+								{hawksDailyOrdinal}/{dailyCap}
+							</span>
+						</div>
+					)
+				})()}
 
 			{/* Circuit Breaker Panel - Full Width */}
 			<CircuitBreakerPanel status={circuitBreaker} />

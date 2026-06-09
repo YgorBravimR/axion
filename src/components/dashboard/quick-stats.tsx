@@ -5,7 +5,7 @@ import { Flame, TrendingUp, AlertTriangle, Activity } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import type { StreakData, OverallStats } from "@/types"
 import { cn } from "@/lib/utils"
-import { formatDateLocale } from "@/lib/formatting"
+import { formatDateLocale, getPnlSignClass } from "@/lib/formatting"
 import { useFormatting } from "@/hooks/use-formatting"
 import { Panel } from "@/components/ui/panel"
 import type { Locale } from "@/i18n/config"
@@ -129,9 +129,9 @@ export const QuickStats = ({ streakData, stats }: QuickStatsProps) => {
 							: undefined
 					}
 					valueClass={
-						streakData?.worstDay && streakData.worstDay.pnl >= 0
-							? "text-trade-buy"
-							: "text-trade-sell"
+						streakData?.worstDay
+							? getPnlSignClass(streakData.worstDay.pnl)
+							: "text-txt-200"
 					}
 				/>
 				<StatRow

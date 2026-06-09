@@ -388,6 +388,31 @@ export const formatFinite = (
 ): string => (Number.isFinite(value) ? value.toFixed(decimals) : fallback)
 
 /**
+ * Tailwind class for P&L coloring. Zero is neutral — never green.
+ * Use this anywhere a monetary delta is shown with a sign-driven color
+ * (Circuit Breaker, KPI cards, summary tables, calendar tiles).
+ *
+ * Returns:
+ *   value > 0  → text-trade-buy   (green)
+ *   value < 0  → text-trade-sell  (red)
+ *   value === 0 → text-txt-200    (neutral; matches the surrounding label)
+ *
+ * Treat NaN / null / undefined as neutral.
+ */
+export const getPnlSignClass = (value: number | null | undefined): string => {
+	if (value === null || value === undefined || Number.isNaN(value)) {
+		return "text-txt-200"
+	}
+	if (value > 0) {
+		return "text-trade-buy"
+	}
+	if (value < 0) {
+		return "text-trade-sell"
+	}
+	return "text-txt-200"
+}
+
+/**
  * Format currency with sign prefix (e.g., +R$ 1.234,56 or -$ 500,00)
  * Used in journal and analytics components for P&L display
  * @param value - numeric value to format

@@ -2180,6 +2180,7 @@
 			"systemHasPositiveEdgeR": "Sua estratégia tem uma <positive>edge positiva</positive> de <amount></amount> por trade. Isso mede a qualidade da estratégia independente do tamanho da posição.",
 			"systemHasNegativeEdgeR": "Sua estratégia atualmente tem uma <negative>edge negativa</negative> de <amount></amount> por trade. Revise os critérios de entrada/saída."
 		},
+		"cumulativePnLTitle": "P&L Acumulado",
 		"rDistribution": {
 			"title": "Distribuição de R",
 			"noData": "Nenhum dado de R disponível. Adicione risco planejado aos seus trades para ver a distribuição.",
@@ -2594,6 +2595,14 @@
 		"weeklyMetaTitle": "Meta Semanal vs Real",
 		"annualRollupTitle": "Consolidado Anual",
 		"yearTaxTitle": "Imposto e Prejuízo Acumulado — {year}",
+		"rDistributionTitle": "Distribuição de R — {year}",
+		"rDistributionBins": {
+			"lt_neg1": "< -1R",
+			"neg1_to_0": "-1R a 0",
+			"0_to_1": "0 a 1R",
+			"1_to_2": "1R a 2R",
+			"ge_2": "≥ 2R"
+		},
 		"carryoverTitle": "Prejuízo a Compensar",
 		"monthClosing": {
 			"title": "Fechamento do Mês — {month}",
@@ -3216,7 +3225,13 @@
 		},
 		"trading": {
 			"propFirms": {
-				"other": "Outro"
+				"other": "Outro",
+				"atom": "Atom",
+				"raise": "Raise",
+				"solotrader": "SoloTrader",
+				"apex": "Apex Trader Funding",
+				"topstep": "Topstep",
+				"ftmo": "FTMO"
 			}
 		},
 		"indicators": {
@@ -5115,6 +5130,10 @@
 			"overviewTitle": "Visão Geral dos Trades",
 			"overviewHint": "{count} trades — clique em um marcador para inspecionar",
 			"failedToLoad": "Falha ao carregar"
+		},
+		"renko": {
+			"entry": "entrada",
+			"exit": "saída"
 		}
 	},
 	"optimize": {

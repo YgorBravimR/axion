@@ -277,7 +277,7 @@ const AnalyticsContent = ({
 				className="border-bg-300 bg-bg-200 p-m-500 sm:p-l-700 lg:p-l-800 rounded-lg border"
 			>
 				<h2 className="text-h2 sm:text-h1 text-txt-100 font-semibold">
-					Cumulative P&L
+					{t("cumulativePnLTitle")}
 				</h2>
 				<div className="mt-m-500 sm:mt-l-700">
 					<CumulativePnlChart data={equityCurve} />

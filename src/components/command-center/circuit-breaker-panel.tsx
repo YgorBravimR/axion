@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils"
 import { Panel } from "@/components/ui/panel"
 import type { CircuitBreakerStatus } from "@/lib/validations/command-center"
 import { fromCents } from "@/lib/money"
+import { getPnlSignClass } from "@/lib/formatting"
 import { useFormatting } from "@/hooks/use-formatting"
 import { MetricCell } from "./metric-cell"
 
@@ -272,9 +273,7 @@ export const CircuitBreakerPanel = ({ status }: CircuitBreakerPanelProps) => {
 				<MetricCell
 					label={t("dailyPnL")}
 					value={formatCurrency(status.dailyPnL)}
-					valueClassName={
-						status.dailyPnL >= 0 ? "text-trade-buy" : "text-trade-sell"
-					}
+					valueClassName={getPnlSignClass(status.dailyPnL)}
 					subLabel={dailyPnLSubLabel}
 				/>
 				<MetricCell
@@ -306,9 +305,7 @@ export const CircuitBreakerPanel = ({ status }: CircuitBreakerPanelProps) => {
 				<MetricCell
 					label={t("monthlyPnL")}
 					value={formatCurrency(status.monthlyPnL)}
-					valueClassName={
-						status.monthlyPnL >= 0 ? "text-trade-buy" : "text-trade-sell"
-					}
+					valueClassName={getPnlSignClass(status.monthlyPnL)}
 					subLabel={
 						monthlyLossLimit
 							? `${t("monthlyLimit")}: ${formatCurrency(monthlyLossLimit)}`

@@ -1668,11 +1668,16 @@ export const getRadarChartData = async (
 		// Calculate average R
 		const avgR = rCount > 0 ? totalR / rCount : 0
 
-		// Calculate profit factor (cap at 5 for visualization)
-		const profitFactor = Math.min(
-			calculateProfitFactor(grossProfit, grossLoss),
-			5
-		)
+		// Profit factor: keep the raw value for display (the pill below the
+		// radar reads this directly) but cap at 5 when normalizing for the
+		// 0..100 radar polygon so a 12.0 PF doesn't blow out the polygon.
+		// Infinity (no losing trades) collapses to 99.99 for safe JSON
+		// transit — Infinity becomes null over the wire and breaks tooltips.
+		const profitFactorRaw = calculateProfitFactor(grossProfit, grossLoss)
+		const profitFactor = Number.isFinite(profitFactorRaw)
+			? profitFactorRaw
+			: 99.99
+		const profitFactorNormalized = Math.min(profitFactor, 5)
 
 		// Calculate discipline score (0-100)
 		const disciplineScore =
@@ -1709,8 +1714,8 @@ export const getRadarChartData = async (
 				metric: "Profit Factor",
 				metricKey: "profitFactor",
 				value: profitFactor,
-				// Normalize profit factor: 0-5 mapped to 0-100
-				normalized: (profitFactor / 5) * 100,
+				// Normalize profit factor: 0-5 mapped to 0-100 (cap applied here only)
+				normalized: (profitFactorNormalized / 5) * 100,
 			},
 			{
 				metric: "Drawdown",

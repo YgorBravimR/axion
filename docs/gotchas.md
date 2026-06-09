@@ -122,6 +122,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 
 ## Next.js / App Router
 
+### Turbopack static-analyzes every `require()` even when the package is in `serverExternalPackages` — DuckDB binding-shim fails on a fresh Apple Silicon worktree
+
+- **What**: `@duckdb/node-bindings/duckdb.js` contains an unguarded `switch (process.arch)` with a `require()` per platform (`darwin-arm64`, `darwin-x64`, `linux-x64`, `linux-arm64`, `win32-x64`, `win32-arm64`, plus `-musl` variants). Turbopack walks **every** branch at build time regardless of runtime reachability. pnpm only installs the host-arch optional binding by default, so the cross-arch `require()` calls fail to resolve → `Module not found: Can't resolve '@duckdb/node-bindings-darwin-x64/duckdb.node'` and the dev server overlay blocks every route, not just `/backtest/optimize`. Listing `@duckdb/node-api` + `@duckdb/node-bindings` in `next.config.ts` → `serverExternalPackages` is **not enough** in Next.js 16.x + Turbopack — externalization does not stop the static walk of internal `require()`s.
+- **What to do**: Install the cross-arch bindings as `devDependencies` (already done on 2026-06-09): `@duckdb/node-bindings-darwin-x64`, `@duckdb/node-bindings-linux-x64`, `@duckdb/node-bindings-linux-x64-musl`, `@duckdb/node-bindings-linux-arm64`, `@duckdb/node-bindings-linux-arm64-musl`, `@duckdb/node-bindings-win32-x64`, `@duckdb/node-bindings-win32-arm64`. Costs ~50MB in `node_modules` but unblocks dev on any host. Long-term: file a Next.js issue or upstream a `await import()` shim in DuckDB so the require is lazy and not visible to static analysis.
+- **Symptom that mimics this**: Build overlay shows ONE missing arch (the first one Turbopack hit) — fixing only that arch shifts the error to the next one. Always install all of them at once.
+- **Source**: 2026-06-09 visual-review session; `next.config.ts` already lists both DuckDB packages but the static walk happens anyway. Affects `darwin-arm64` (Apple Silicon) hosts most visibly because pnpm doesn't fetch cross-arch optional deps for any platform.
+
 ### `cookies()` / `headers()` / `draftMode()` are banned in pages
 
 - **What**: Calling these from `next/headers` inside `page.tsx`/`layout.tsx`/`template.tsx` forces full dynamic rendering implicitly and breaks static analysis.
