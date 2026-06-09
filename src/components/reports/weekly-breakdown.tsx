@@ -98,12 +98,12 @@ export const WeeklyBreakdown = ({ weeks }: WeeklyBreakdownProps) => {
 							<div className="bg-bg-100 relative h-3 w-full overflow-hidden rounded-full">
 								<div
 									className={cn(
-										"h-full rounded-full transition-[width]",
+										"h-full origin-left rounded-full transition-transform",
 										isPositive && "bg-trade-buy/50",
 										!isPositive && week.pnl < 0 && "bg-trade-sell/50",
 										week.pnl === 0 && "bg-bg-300"
 									)}
-									style={{ width: `${barWidth}%` }}
+									style={{ transform: `scaleX(${barWidth / 100})` }}
 								/>
 								{pnlContribution !== 0 && (
 									<span

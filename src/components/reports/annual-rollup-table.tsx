@@ -71,7 +71,7 @@ const RowData = ({
 			<TableRow className="opacity-30">
 				<TableHead
 					scope="row"
-					className="bg-bg-200 text-txt-200 text-tiny px-s-300 py-s-200 sticky left-0 min-w-[80px] text-left font-medium"
+					className="bg-bg-200 text-txt-200 text-tiny px-s-300 py-s-200 min-w-[80px] text-left font-medium"
 				>
 					{row.monthName.slice(0, 3)}
 				</TableHead>
@@ -97,7 +97,7 @@ const RowData = ({
 		>
 			<TableHead
 				scope="row"
-				className="bg-bg-200 text-txt-100 text-tiny px-s-300 py-s-200 sticky left-0 min-w-[80px] text-left font-medium"
+				className="bg-bg-200 text-txt-100 text-tiny px-s-300 py-s-200 min-w-[80px] text-left font-medium"
 			>
 				{row.monthName.slice(0, 3)}
 			</TableHead>
@@ -182,7 +182,7 @@ const AnnualRollupTable = ({ data, className }: AnnualRollupTableProps) => {
 						<TableRow className="bg-bg-300/30">
 							<TableHead
 								scope="col"
-								className="bg-bg-300/30 px-s-300 py-s-200 sticky left-0"
+								className="bg-bg-300/30 px-s-300 py-s-200"
 							/>
 							{["Bruto", "Líquido", "Pontos"].map((h) => (
 								<TableHead

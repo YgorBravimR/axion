@@ -1,5 +1,12 @@
+import { cache } from "react"
 import { auth } from "@/auth"
 import { hasAccess, type UserRole } from "@/lib/feature-access"
+
+/**
+ * Cached session getter — deduplicates auth() calls within a single request.
+ * Multiple role checks share one JWT decode.
+ */
+const getCachedSession = cache(async () => auth())
 
 /**
  * Centralized role-based authorization for server actions.
@@ -8,7 +15,7 @@ import { hasAccess, type UserRole } from "@/lib/feature-access"
  * @returns The authenticated user's ID
  */
 const requireRole = async (minimumRole: UserRole): Promise<string> => {
-	const session = await auth()
+	const session = await getCachedSession()
 	if (!session?.user?.id) {
 		throw new Error("Unauthorized")
 	}
@@ -18,4 +25,4 @@ const requireRole = async (minimumRole: UserRole): Promise<string> => {
 	return session.user.id
 }
 
-export { requireRole }
+export { requireRole, getCachedSession }

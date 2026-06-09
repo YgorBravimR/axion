@@ -1,8 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { getRDistribution } from "@/app/actions/fractal-plan/reports"
-
 const LABELS: Record<string, string> = {
 	"lt_neg1": "< -1R",
 	"neg1_to_0": "-1R to 0",
@@ -12,26 +9,10 @@ const LABELS: Record<string, string> = {
 }
 
 interface Props {
-	from: Date
-	to: Date
+	rows: { bucket: string; count: number }[]
 }
 
-const RDistributionTab = ({ from, to }: Props) => {
-	const [rows, setRows] = useState<{ bucket: string; count: number }[] | null>(
-		null
-	)
-
-	useEffect(() => {
-		void getRDistribution({ from, to }).then((res) => {
-			if (res.status === "success" && res.data) {
-				setRows(res.data)
-			}
-		})
-	}, [from, to])
-
-	if (rows === null) {
-		return <p className="text-txt-200">Loading…</p>
-	}
+const RDistributionTab = ({ rows }: Props) => {
 	const max = Math.max(...rows.map((r) => r.count), 1)
 
 	return (

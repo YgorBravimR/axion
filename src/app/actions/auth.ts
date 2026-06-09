@@ -270,7 +270,11 @@ export const logoutUser = async (): Promise<void> => {
 // SESSION HELPERS
 // ==========================================
 
-export const getCurrentUser = async (): Promise<SafeUser | null> => {
+/**
+ * Cached helper for loading current user from session.
+ * Deduplicates user row fetches within a single request.
+ */
+const getCachedCurrentUser = cache(async (): Promise<SafeUser | null> => {
 	const session = await auth()
 	if (!session) {
 		return null
@@ -301,6 +305,10 @@ export const getCurrentUser = async (): Promise<SafeUser | null> => {
 	}
 
 	return user
+})
+
+export const getCurrentUser = async (): Promise<SafeUser | null> => {
+	return getCachedCurrentUser()
 }
 
 export const getCurrentAccount = async (): Promise<TradingAccount | null> => {
@@ -342,7 +350,7 @@ export const getUserAccounts = async (): Promise<TradingAccount[]> => {
 /**
  * Cached auth context provider - deduplicates auth checks within a single request.
  * When multiple server actions call requireAuth() in parallel (e.g., dashboard fetching 6 data sources),
- * this ensures auth is only checked once per request instead of 6 times.
+ * this ensures auth is only checked once per request and queries are parallelized.
  *
  * @see React.cache() docs: https://react.dev/reference/react/cache
  */
@@ -356,51 +364,53 @@ export const requireAuth = cache(async (): Promise<AuthContext> => {
 		redirect("/login")
 	}
 
-	// Verify user still exists in the database (handles deleted users)
-	const dbUser = await db.query.users.findFirst({
-		where: eq(users.id, session.user.id),
-		columns: { id: true },
-	})
+	const userId = session.user.id
+	const accountId = session.user.accountId
 
-	if (!dbUser) {
-		// User was deleted — delegate to route handler to clear session and redirect
-		redirect("/api/auth/force-signout")
-	}
-
-	// Verify the current account still exists and belongs to this user
-	const currentAccount = await db.query.tradingAccounts.findFirst({
-		where: and(
-			eq(tradingAccounts.id, session.user.accountId),
-			eq(tradingAccounts.userId, session.user.id)
-		),
-		columns: { id: true },
-	})
-
-	if (!currentAccount) {
-		// Account was deleted — delegate to route handler to clear session.
-		// On re-login, the authorize flow auto-selects the default account.
-		redirect("/api/auth/force-signout")
-	}
-
-	// Get user settings for showAllAccounts preference
+	// Import userSettings schema once for reuse
 	const { userSettings } = await import("@/db/schema")
-	const settings = await db.query.userSettings.findFirst({
-		where: eq(userSettings.userId, session.user.id),
-	})
 
-	// Get all user's account IDs for "all accounts" mode
-	let allAccountIds: string[] = [session.user.accountId]
-	if (settings?.showAllAccounts) {
-		const accounts = await db.query.tradingAccounts.findMany({
-			where: eq(tradingAccounts.userId, session.user.id),
+	// Parallelize independent DB queries: user check, account check, settings, accounts-list
+	const [dbUser, currentAccount, settings, allAccounts] = await Promise.all([
+		db.query.users.findFirst({
+			where: eq(users.id, userId),
 			columns: { id: true },
-		})
-		allAccountIds = accounts.map((a) => a.id)
+		}),
+		db.query.tradingAccounts.findFirst({
+			where: and(
+				eq(tradingAccounts.id, accountId),
+				eq(tradingAccounts.userId, userId)
+			),
+			columns: { id: true },
+		}),
+		db.query.userSettings.findFirst({
+			where: eq(userSettings.userId, userId),
+		}),
+		db.query.tradingAccounts.findMany({
+			where: eq(tradingAccounts.userId, userId),
+			columns: { id: true },
+		}),
+	])
+
+	// User was deleted — delegate to route handler to clear session and redirect
+	if (!dbUser) {
+		redirect("/api/auth/force-signout")
 	}
+
+	// Account was deleted — delegate to route handler to clear session.
+	// On re-login, the authorize flow auto-selects the default account.
+	if (!currentAccount) {
+		redirect("/api/auth/force-signout")
+	}
+
+	// Build allAccountIds: use all accounts if showAllAccounts is enabled, else just current
+	const allAccountIds = settings?.showAllAccounts
+		? allAccounts.map((a) => a.id)
+		: [accountId]
 
 	return {
-		userId: session.user.id,
-		accountId: session.user.accountId,
+		userId,
+		accountId,
 		showAllAccounts: settings?.showAllAccounts ?? false,
 		allAccountIds,
 	}

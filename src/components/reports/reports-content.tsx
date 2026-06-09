@@ -12,7 +12,7 @@ import { WeeklyMetaChart } from "./weekly-meta-chart"
 import { AnnualRollupTable } from "./annual-rollup-table"
 import { CapitalEventLog } from "./capital-event-log"
 import { WithdrawalCalculator } from "./withdrawal-calculator"
-import { RDistributionTab } from "./r-distribution-tab"
+import { RDistributionServer } from "./r-distribution-server"
 import { MonthClosingSection, type AccountType } from "./month-closing-section"
 import type {
 	WeeklyReport,
@@ -244,7 +244,7 @@ export const ReportsContent = ({
 						R Distribution — {currentYear}
 					</h2>
 				</div>
-				<RDistributionTab
+				<RDistributionServer
 					from={new Date(currentYear, 0, 1)}
 					to={new Date(currentYear, 11, 31, 23, 59, 59)}
 				/>

@@ -2,8 +2,12 @@
 
 import { getTranslations } from "next-intl/server"
 import { db } from "@/db/drizzle"
-import { accountCapitalEvents, tradingAccounts } from "@/db/schema"
-import { eq, and, asc, gte, lte } from "drizzle-orm"
+import {
+	accountCapitalEvents,
+	tradingAccounts,
+	accountFeeRates,
+} from "@/db/schema"
+import { eq, and, asc, desc, gte, lte } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { invalidateAggregates } from "@/lib/aggregation/invalidate"
 import {
@@ -203,6 +207,13 @@ export const getWeeklyMetaVsReal = async (
 	const totalWeeks = getWeeksInYear(year)
 	const weeks: WeeklyMetaRow[] = []
 
+	const weekMetadata: Array<{
+		isoWeek: number
+		wStart: Date
+		wEnd: Date
+		isDisabled: boolean
+	}> = []
+
 	for (let isoWeek = 1; isoWeek <= totalWeeks; isoWeek++) {
 		const jan4Utc = new Date(Date.UTC(year, 0, 4))
 		const someDayInWeekUtc = new Date(jan4Utc)
@@ -217,12 +228,27 @@ export const getWeeklyMetaVsReal = async (
 
 		const isDisabled = accountStartUtc !== null && wStart < accountStartUtc
 
-		let resultado = 0
-		if (!isDisabled) {
-			// eslint-disable-next-line no-await-in-loop -- weeks loop is intentional sequential DB query to build ordered weekly metadata; parallelising would require restructuring the push/accumulate pattern
-			const agg = await getWeekAggregate(accountId, year, isoWeek)
-			resultado = agg.netCents
-		}
+		weekMetadata.push({
+			isoWeek,
+			wStart,
+			wEnd,
+			isDisabled,
+		})
+	}
+
+	const weekAggregatesPromises = weekMetadata.map((meta) =>
+		meta.isDisabled
+			? Promise.resolve<Awaited<ReturnType<typeof getWeekAggregate>> | null>(
+					null
+				)
+			: getWeekAggregate(accountId, year, meta.isoWeek)
+	)
+	const weekAggregates = await Promise.all(weekAggregatesPromises)
+
+	for (let i = 0; i < weekMetadata.length; i++) {
+		const meta = weekMetadata[i]!
+		const agg = weekAggregates[i]
+		const resultado = agg?.netCents ?? 0
 
 		const autoRetirada =
 			effectiveWithdrawal && resultado > 0
@@ -230,14 +256,14 @@ export const getWeeklyMetaVsReal = async (
 				: 0
 
 		weeks.push({
-			isoWeek,
-			weekStart: wStart.toISOString().slice(0, 10),
-			weekEnd: wEnd.toISOString().slice(0, 10),
+			isoWeek: meta.isoWeek,
+			weekStart: meta.wStart.toISOString().slice(0, 10),
+			weekEnd: meta.wEnd.toISOString().slice(0, 10),
 			metaBruto: null,
 			metaLiquido: null,
 			resultado,
 			autoRetirada,
-			disabled: isDisabled,
+			disabled: meta.isDisabled,
 		})
 	}
 
@@ -294,6 +320,12 @@ export const getAnnualRollup = async (
 	const startYear = account.accountStartYear ?? null
 	const startMonth = account.accountStartMonth ?? null
 
+	// Fetch fee rates once for the entire year
+	const feeRatesRows = await db
+		.select()
+		.from(accountFeeRates)
+		.where(eq(accountFeeRates.accountId, accountId))
+
 	const capitalEventsRows = await db
 		.select()
 		.from(accountCapitalEvents)
@@ -304,7 +336,8 @@ export const getAnnualRollup = async (
 				lte(accountCapitalEvents.eventDate, `${year}-12-31`)
 			)
 		)
-		.orderBy(asc(accountCapitalEvents.eventDate))
+		.orderBy(desc(accountCapitalEvents.eventDate))
+		.limit(500)
 
 	const depositsByMonth = new Map<number, number>()
 	const withdrawalsByMonth = new Map<number, number>()
@@ -333,6 +366,7 @@ export const getAnnualRollup = async (
 
 	let runningPatrimonio: number | null = account.startingBalanceCents ?? null
 	let carryoverInCents: number = 0
+	let priorMonthDeferredIr: number = 0
 	const rows: AnnualRollupRow[] = []
 
 	for (let month = 1; month <= 12; month++) {
@@ -380,14 +414,20 @@ export const getAnnualRollup = async (
 
 		// Compute DARF-grade tax using the canonical tax engine for filing-grade rigor.
 		// This includes R$10 floor per Lei 9.430/96 art. 68 and loss carryover chaining.
+		// Pass prefetched fee rates and prior month deferred IR to avoid redundant DB hits.
 		// eslint-disable-next-line no-await-in-loop -- carryoverInCents chains sequentially; months must execute in order
 		const taxComputeResult = await recomputeAccountMonth({
 			accountId,
 			year,
 			month,
 			carryoverInCents,
+			prefetchedData: {
+				feeRatesRows,
+				priorMonthDeferredIr: month === 1 ? 0 : priorMonthDeferredIr,
+			},
 		})
 		carryoverInCents = taxComputeResult.carryoverOutCents
+		priorMonthDeferredIr = taxComputeResult.deferredIrCents
 		const imposto = taxComputeResult.darfDueCents
 		const taxas = agg.grossCents - agg.netCents
 
