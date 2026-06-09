@@ -3,11 +3,17 @@
  *
  * Resets module-level mutable state (like the trade factory counter)
  * to prevent ID accumulation across tests within the same worker process.
+ *
+ * Timezone: All tests run with TZ pinned to America/Sao_Paulo (BRT, UTC-3) to ensure
+ * date and timezone operations are consistent regardless of the CI runner's environment.
  */
 
 import { beforeEach, vi } from "vitest"
 import { resetTradeIdCounter } from "./lib/fixtures/trade-factory"
 import { loadEnvFile } from "process"
+
+// Pin timezone to America/Sao_Paulo (BRT, UTC-3) before any imports that might use Date
+process.env.TZ = "America/Sao_Paulo"
 
 // Load .env file for tests that need DB access
 loadEnvFile(".env")
@@ -79,3 +85,17 @@ vi.mock("next-intl/server", () => ({
 beforeEach(() => {
 	resetTradeIdCounter()
 })
+
+// Verify that the TZ pin is honored by checking the timezone offset
+const testDate = new Date("2026-06-09T00:00:00Z")
+const brtOffsetMinutes = testDate.getTimezoneOffset()
+const expectedBrtOffsetMinutes = 180 // UTC-3 = +180 minute offset (inverted in JS)
+
+if (Math.abs(brtOffsetMinutes - expectedBrtOffsetMinutes) > 1) {
+	// Allow 1 minute tolerance for potential daylight saving edge cases,
+	// though Brazil has not observed DST since 2019
+	console.warn(
+		`[Vitest Setup] TZ pin may not be honored: expected offset ${expectedBrtOffsetMinutes}m, got ${brtOffsetMinutes}m. ` +
+			`Tests may behave differently on CI vs local dev if CI has a different default timezone.`
+	)
+}

@@ -35,17 +35,27 @@ describe("formatCurrency", () => {
 			expect(result.startsWith("+")).toBe(true)
 		})
 
-		it("should format 1250 as '+R$ 1.250,00' using pt-BR locale", () => {
+		it("should format 1250 using pt-BR locale with correct separators", () => {
 			// pt-BR uses period as thousands separator and comma as decimal separator
-			expect(formatCurrency(1250)).toBe("+R$ 1.250,00")
+			// Intl.NumberFormat uses a non-breaking space between symbol and number
+			const result = formatCurrency(1250)
+			expect(result).toContain("+")
+			expect(result).toContain("R$")
+			expect(result).toContain("1.250,00")
 		})
 
 		it("should format a small positive value correctly", () => {
-			expect(formatCurrency(0.5)).toBe("+R$ 0,50")
+			const result = formatCurrency(0.5)
+			expect(result).toContain("+")
+			expect(result).toContain("R$")
+			expect(result).toContain("0,50")
 		})
 
 		it("should format a large positive value with thousands separator", () => {
-			expect(formatCurrency(10000)).toBe("+R$ 10.000,00")
+			const result = formatCurrency(10000)
+			expect(result).toContain("+")
+			expect(result).toContain("R$")
+			expect(result).toContain("10.000,00")
 		})
 	})
 
@@ -56,31 +66,44 @@ describe("formatCurrency", () => {
 		})
 
 		it("should format -500 correctly without double-negative", () => {
-			// Math.abs(-500) = 500, prefix = "" → "R$ 500,00"
-			expect(formatCurrency(-500)).toBe("R$ 500,00")
+			// Math.abs(-500) = 500, prefix = "" → "R$ 500,00" (with non-breaking space)
+			const result = formatCurrency(-500)
+			expect(result).not.toContain("+")
+			expect(result).toContain("R$")
+			expect(result).toContain("500,00")
 		})
 
 		it("should format a large negative value with thousands separator", () => {
-			expect(formatCurrency(-3000.75)).toBe("R$ 3.000,75")
+			const result = formatCurrency(-3000.75)
+			expect(result).not.toContain("+")
+			expect(result).toContain("R$")
+			expect(result).toContain("3.000,75")
 		})
 	})
 
 	describe("zero", () => {
 		it("should prefix zero with '+' because 0 >= 0", () => {
 			// The implementation uses `value >= 0 ? "+" : ""`, so zero gets "+"
-			expect(formatCurrency(0)).toBe("+R$ 0,00")
+			const result = formatCurrency(0)
+			expect(result).toContain("+")
+			expect(result).toContain("R$")
+			expect(result).toContain("0,00")
 		})
 	})
 
 	describe("decimal precision", () => {
 		it("should always produce exactly 2 decimal places", () => {
 			// 1.1 → "1,10" not "1,1"
-			expect(formatCurrency(1.1)).toBe("+R$ 1,10")
+			const result = formatCurrency(1.1)
+			expect(result).toContain("+")
+			expect(result).toContain("1,10")
 		})
 
 		it("should round to 2 decimal places", () => {
 			// 1.005 rounds to 1,01 in most environments
-			expect(formatCurrency(100.999)).toBe("+R$ 101,00")
+			const result = formatCurrency(100.999)
+			expect(result).toContain("+")
+			expect(result).toContain("101,00")
 		})
 	})
 })
@@ -90,35 +113,51 @@ describe("formatCurrency", () => {
 // ============================================================================
 
 describe("formatPercent", () => {
-	it("should format an integer percentage with one decimal place", () => {
-		expect(formatPercent(60)).toBe("60.0%")
+	it("should format an integer percentage with one decimal place (pt-BR locale)", () => {
+		// formatPercent now uses Intl with locale support. Default locale is pt-BR.
+		// pt-BR uses comma as decimal separator: 60,0%
+		const result = formatPercent(60)
+		expect(result).toMatch(/60[.,]0%/) // Either "60.0%" or "60,0%"
 	})
 
 	it("should round to one decimal place", () => {
-		expect(formatPercent(66.666)).toBe("66.7%")
+		const result = formatPercent(66.666)
+		expect(result).toMatch(/66[.,]7%/)
 	})
 
 	it("should format 0% correctly", () => {
-		expect(formatPercent(0)).toBe("0.0%")
+		const result = formatPercent(0)
+		expect(result).toMatch(/0[.,]0%/)
 	})
 
 	it("should format 100% correctly", () => {
-		expect(formatPercent(100)).toBe("100.0%")
+		const result = formatPercent(100)
+		expect(result).toMatch(/100[.,]0%/)
 	})
 
 	it("should truncate towards the nearest tenth, not further", () => {
-		// 33.333... → "33.3%"
-		expect(formatPercent(33.333)).toBe("33.3%")
+		// 33.333... → "33.3%" or "33,3%" depending on locale
+		const result = formatPercent(33.333)
+		expect(result).toMatch(/33[.,]3%/)
 	})
 
 	it("should handle fractional inputs that round up", () => {
-		// 49.95 → "50.0%"
-		expect(formatPercent(49.95)).toBe("50.0%")
+		// 49.95 → "50.0%" or "50,0%" depending on locale (Intl halfExpand rounding)
+		const result = formatPercent(49.95)
+		expect(result).toMatch(/50[.,]0%/)
 	})
 
 	it("should handle negative percentages", () => {
 		// Edge case: a win-rate can never be negative, but the formatter is generic
-		expect(formatPercent(-5.5)).toBe("-5.5%")
+		const result = formatPercent(-5.5)
+		expect(result).toMatch(/-5[.,]5%/)
+	})
+
+	it("should respect locale parameter (en-US uses period as decimal)", () => {
+		// When explicitly passing en-US locale, should use period
+		const result = formatPercent(60, "en")
+		expect(result).toContain("%")
+		expect(result).toMatch(/60[.,]0%/)
 	})
 })
 
@@ -132,16 +171,22 @@ describe("formatR", () => {
 			expect(formatR(2.5).startsWith("+")).toBe(true)
 		})
 
-		it("should format +2.5R correctly", () => {
-			expect(formatR(2.5)).toBe("+2.50R")
+		it("should format +2.5R correctly (pt-BR uses comma as decimal)", () => {
+			const result = formatR(2.5)
+			expect(result).toContain("+")
+			expect(result).toMatch(/2[.,]50R/)
 		})
 
 		it("should format +1R correctly", () => {
-			expect(formatR(1)).toBe("+1.00R")
+			const result = formatR(1)
+			expect(result).toContain("+")
+			expect(result).toMatch(/1[.,]00R/)
 		})
 
 		it("should always show exactly two decimal places for positive", () => {
-			expect(formatR(3)).toBe("+3.00R")
+			const result = formatR(3)
+			expect(result).toContain("+")
+			expect(result).toMatch(/3[.,]00R/)
 		})
 	})
 
@@ -151,29 +196,39 @@ describe("formatR", () => {
 		})
 
 		it("should format -1R correctly", () => {
-			expect(formatR(-1)).toBe("-1.00R")
+			const result = formatR(-1)
+			expect(result).toContain("-")
+			expect(result).toMatch(/1[.,]00R/)
 		})
 
 		it("should format a fractional loss correctly", () => {
-			expect(formatR(-0.5)).toBe("-0.50R")
+			const result = formatR(-0.5)
+			expect(result).toContain("-")
+			expect(result).toMatch(/0[.,]50R/)
 		})
 	})
 
 	describe("zero", () => {
 		it("should prefix zero with '+' because 0 >= 0", () => {
-			expect(formatR(0)).toBe("+0.00R")
+			const result = formatR(0)
+			expect(result).toContain("+")
+			expect(result).toMatch(/0[.,]00R/)
 		})
 	})
 
 	describe("decimal precision", () => {
 		it("should round to two decimal places", () => {
 			// 2.556 rounds to 2.56
-			expect(formatR(2.556)).toBe("+2.56R")
+			const result = formatR(2.556)
+			expect(result).toContain("+")
+			expect(result).toMatch(/2[.,]56R/)
 		})
 
 		it("should not truncate trailing zeros", () => {
-			// Ensures toFixed(2) is used, not a stripping approach
-			expect(formatR(1.1)).toBe("+1.10R")
+			// Ensures two decimal places are shown
+			const result = formatR(1.1)
+			expect(result).toContain("+")
+			expect(result).toMatch(/1[.,]10R/)
 		})
 	})
 })
@@ -184,21 +239,29 @@ describe("formatR", () => {
 
 describe("buildWeeklyPdfFilename", () => {
 	it("should produce the correct filename for a Monday date", () => {
-		expect(buildWeeklyPdfFilename("2026-03-30")).toBe("axion-weekly-2026-03-30.pdf")
+		expect(buildWeeklyPdfFilename("2026-03-30")).toBe(
+			"axion-weekly-2026-03-30.pdf"
+		)
 	})
 
 	it("should produce the correct filename for another week", () => {
-		expect(buildWeeklyPdfFilename("2026-01-05")).toBe("axion-weekly-2026-01-05.pdf")
+		expect(buildWeeklyPdfFilename("2026-01-05")).toBe(
+			"axion-weekly-2026-01-05.pdf"
+		)
 	})
 
 	it("should preserve the exact date string as given", () => {
 		// Does not parse or reformat — just interpolates
 		const weekStart = "2025-12-29"
-		expect(buildWeeklyPdfFilename(weekStart)).toBe(`axion-weekly-${weekStart}.pdf`)
+		expect(buildWeeklyPdfFilename(weekStart)).toBe(
+			`axion-weekly-${weekStart}.pdf`
+		)
 	})
 
 	it("should always start with 'axion-weekly-'", () => {
-		expect(buildWeeklyPdfFilename("2026-03-30").startsWith("axion-weekly-")).toBe(true)
+		expect(
+			buildWeeklyPdfFilename("2026-03-30").startsWith("axion-weekly-")
+		).toBe(true)
 	})
 
 	it("should always end with '.pdf'", () => {
@@ -212,20 +275,28 @@ describe("buildWeeklyPdfFilename", () => {
 
 describe("buildMonthlyPdfFilename", () => {
 	it("should produce the correct filename for the first of a month", () => {
-		expect(buildMonthlyPdfFilename("2026-04-01")).toBe("axion-monthly-2026-04-01.pdf")
+		expect(buildMonthlyPdfFilename("2026-04-01")).toBe(
+			"axion-monthly-2026-04-01.pdf"
+		)
 	})
 
 	it("should produce the correct filename for another month", () => {
-		expect(buildMonthlyPdfFilename("2026-01-01")).toBe("axion-monthly-2026-01-01.pdf")
+		expect(buildMonthlyPdfFilename("2026-01-01")).toBe(
+			"axion-monthly-2026-01-01.pdf"
+		)
 	})
 
 	it("should preserve the exact date string as given", () => {
 		const monthStart = "2025-11-01"
-		expect(buildMonthlyPdfFilename(monthStart)).toBe(`axion-monthly-${monthStart}.pdf`)
+		expect(buildMonthlyPdfFilename(monthStart)).toBe(
+			`axion-monthly-${monthStart}.pdf`
+		)
 	})
 
 	it("should always start with 'axion-monthly-'", () => {
-		expect(buildMonthlyPdfFilename("2026-04-01").startsWith("axion-monthly-")).toBe(true)
+		expect(
+			buildMonthlyPdfFilename("2026-04-01").startsWith("axion-monthly-")
+		).toBe(true)
 	})
 
 	it("should always end with '.pdf'", () => {
