@@ -187,3 +187,71 @@ The behavior + workaround for each is documented in **[`docs/gotchas.md`](gotcha
 - `.gitignore` excludes env files, build artifacts, OS junk.
 - **Never commit** `.env` or any credentials. Commit `.env.example` instead.
 - Code must run identically across environments — use env vars for environment-specific behavior.
+
+---
+
+## Financial math conventions
+
+These are the canonical conventions agreed during the 2026-06-08 calculations audit (`docs/scans/calculations-audit/MASTER.md`). New code that touches financial math must follow them.
+
+### Win rate denominator excludes breakeven trades
+
+A trade with `pnlCents === 0` (or exit reason `breakeven_stop`) is **neither a win nor a loss** for win-rate purposes. The canonical denominator is `wins + losses` (decisive trades), not `total trades`. `src/lib/calculations.ts` defines `calculateWinRate(wins, total)` where every live caller passes `wins + losses` as `total`. The signature is historical; treat it as a "decisive-trades-only" calculator.
+
+### Standard deviation uses sample variance (Bessel's correction)
+
+Every std-dev computation in math layer uses `sum_sq_diff / (n − 1)` (sample variance, the industry default per Sharpe 1994), not `/ n` (population variance). Use `sampleStdDev()` from `src/lib/finance/annualize.ts` for new code.
+
+### Sharpe / Sortino are annualized by default at the point of emission
+
+Every result-object field named `sharpeRatio` or `sortinoRatio` holds the **canonical annualized** value, computed as `(daily_mean / daily_std) × √252`. Per-trade R-Sharpe (the pre-2026-06-08 default) is now emitted as `rSharpe` — a diagnostic field, not user-facing as "Sharpe". `TRADING_DAYS_PER_YEAR = 252` (Brazil B3 + US NYSE/NASDAQ convention). Use the helpers in `src/lib/finance/annualize.ts`.
+
+### R-multiple risk denominator is immutable from entry
+
+`R = realizedPnL / initialRisk`. **`initialRisk` is set at trade entry from `|entry − stopLoss| × positionSize`** and does NOT change with breakeven activation, trailing-stop moves, or partial exits. The DB has both `stopLoss` (initial, immutable for R calculations) and `stopLossAtClose` (final, for execution-quality reporting). Mixing them inflates R after BE activation and is a known footgun.
+
+### Equity curve construction is arithmetic cumulative P&L
+
+Every site that builds an equity curve uses `equity[t] = initial + cumsum(PnL[1..t])` — arithmetic, additive. Compounding curves (geometric `prod(1 + r)`) are NOT used anywhere yet; if/when introduced, name the field `compoundEquity` to disambiguate. Drawdown computed against running HWM = `max(equity[..t])`.
+
+### Pareto 3D retention is heuristic, not Kung non-dominated sort
+
+`src/lib/optimize/pareto-retain.ts` uses a PF-first sweep + secondary-max tracking instead of a strict Kung et al. (1975) 3D non-dominated sort. Defensible at the sweep sizes we run (<10k results) and an explicit choice — not a bug. If sweep sizes grow >50k, revisit.
+
+### Account-equity field naming when no initial balance is set
+
+`src/lib/analytics-helpers.ts:computeEquityCurve()` defaults `accountEquity = cumulativePnL` when no initial balance is passed. Semantically identical to `cumulativePnL` in that case — the dual-naming is for downstream UI consumers that expect an `accountEquity` field regardless of whether a balance was supplied. Not a bug, but be aware: `accountEquity` does not always mean "absolute account value" — only when an initial balance is supplied.
+
+### Tier clamping convention
+
+When capital exceeds the top ladder tier in `src/lib/fractal-plan/capital-ladder.ts`, the resolver returns the **top tier** rather than throwing or returning null. This is an explicit design choice (not a bug): users with capital above the top tier are still on a valid progression, the top tier's risk/sizing parameters remain the safest available bounds. Code reading the resolver's output must not interpret "top tier returned" as "user has exactly top-tier capital" — check the actual `currentCapitalCents` separately if needed.
+
+### R$10 DARF minimum filing floor (Lei 9.430/96 art. 68 §1°)
+
+`src/lib/tax/darf-calculator.ts` implements strict art. 68 §1° compliance: sub-threshold IR amounts (0 < amount < R$10) are deferred to the next month and summed with future IR until the cumulative figure crosses R$10, at which point the full deferred balance is owed. The calculator accepts `deferredIrInCents` as input and returns `deferredIrOutCents` for persistence. `src/lib/tax/recompute-month.ts` reads the prior month's deferred balance from the DB and passes it to `computeDarf()`, then persists the current month's deferred balance. This ensures zero under-taxation and matches the statutory requirement: _"Os valores não pagos, em razão do disposto neste artigo, serão adicionados ao imposto devido no período subseqüente, em que se atinja o valor mínimo."_
+
+### Display percent formatter convention
+
+User-facing percentage values are stored on the **0-100 scale** (e.g., a 60% win rate is `60`, not `0.6`). The canonical formatter is `formatPercent(value, locale, decimals)` exported from `src/lib/formatting.ts` (and via `useFormatting()` hook). It internally divides by 100 because `Intl.NumberFormat`'s `style: "percent"` multiplies back by 100 — the round-trip is intentional. Never bypass this with raw `.toFixed()` for user-facing percentages; `.toFixed()` is acceptable only for chart labels and PDF static renders where the rounding difference (halfExpand vs banker's) is invisible.
+
+### Date string parsing convention
+
+`new Date("YYYY-MM-DD")` (string form) parses as **UTC midnight**, NOT local midnight. `new Date(year, month-1, day)` (constructor form) parses as **local midnight**. These are silently 3 hours apart in BRT. Use `getBrtDateParts()` / `getStartOfDay()` / `getEndOfDay()` from `src/lib/dates.ts` for all date math — never construct day-boundary Date objects ad-hoc.
+
+### IEEE 754 special-value display guard
+
+User-facing metric displays must guard against `Infinity`, `-Infinity`, and `NaN` before calling `.toFixed()`. The string `"Infinity"` (or `"NaN"`) leaking to a metric card breaks visual trust. Use `formatFinite(value, decimals, fallback)` from `src/lib/formatting.ts`. Common sources of non-finite values: profit factor with zero losses (Infinity), Sharpe/Sortino with zero-variance returns (NaN), CAGR with zero initial equity (Infinity).
+
+### Rate conversion: always go through the helpers
+
+Brazilian tax rates use **basis-points** (0–10000 scale, e.g., `irRateBps = 2000` for 20%, `irrfRateBps = 100` for 1%) or **percent-as-string** (e.g., `issRatePercent = "5.00"` for 5% ISS). The conversion to a decimal multiplier (÷10000 for basis-points, parse and ÷100 for percent-string) lives in **one place**: `src/lib/tax/rate-conversion.ts`, exposing `fromBasisPoints(bps)` and `fromPercentString(s)`.
+
+Never write `bps / 10000` or `parseFloat(s) / 100` inline at a calculation site. The helper pattern is how we prevent the future "I forgot one of the /100" 100× under-tax bug (Z15-2 MAJOR finding, Wave 3 audit). JSDoc on each helper documents the legal basis (Lei 11.033/2004, Lei 9.430/96). Code review enforces no-inline-rate-conversion.
+
+### Trading day = BRT calendar day (00:00–23:59)
+
+Axion's canonical definition of a "trading day" is the **BRT calendar day**, NOT the regular Bovespa session (09:00–18:00 BRT). Every trade, candle, and indicator on a given BRT calendar day belongs to that day's bucket — whether it occurred during the regular session, the pre-market, the after-hours, or any extended window.
+
+This was chosen (Wave 3 Bundle L, 2026-06-09) to keep the journal/reports/backtest unified on a single grouping key. The opposing convention (session-only) would have unified everything on 09:00–18:00 BRT but required dropping every after-hours trade from reports, which contradicts the journal-completeness goal.
+
+`SESSION_BOUNDARIES` (in `src/lib/dates.ts`) remains as informational metadata for surfaces that need to label or annotate session-boundary context. It is NOT a filter. Code that uses it as a filter is a bug.

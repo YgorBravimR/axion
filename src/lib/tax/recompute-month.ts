@@ -2,9 +2,11 @@
 import { db } from "@/db/drizzle"
 import { trades, accountFeeRates, monthlyTaxLedger } from "@/db/schema"
 import { eq, and, gte, lte, sql } from "drizzle-orm"
+import { getBrtDateParts } from "@/lib/dates"
 import { computeDayFees } from "./fee-allocator"
 import { accumulateIrrf } from "./irrf-accumulator"
 import { computeDarf } from "./darf-calculator"
+import { asBasisPoints } from "./rate-conversion"
 
 interface RecomputeInput {
 	accountId: string
@@ -29,6 +31,7 @@ interface RecomputeOutput {
 	taxableGainCents: number
 	irGrossCents: number
 	darfDueCents: number
+	deferredIrCents: number
 	netLiquidCents: number
 	tradeCount: number
 	isDirty: false
@@ -86,6 +89,31 @@ const recomputeAccountMonth = async (
 	const resolveFeeRates = (assetSymbol: string) =>
 		feeRatesByAsset.get(assetSymbol) ?? defaultFeeRates
 
+	// Fetch previous month's deferred IR balance (if it exists).
+	// For the first month with no prior row, start with deferredIrInCents = 0.
+	const priorMonthStart = new Date(Date.UTC(year, month - 2, 1, 0, 0, 0, 0))
+	const priorMonthEnd = new Date(Date.UTC(year, month - 1, 0, 23, 59, 59, 999))
+	let deferredIrInCents = 0
+
+	if (month > 1) {
+		// Prior month exists within the same year
+		const priorRows = await db
+			.select({ deferredIrCents: monthlyTaxLedger.deferredIrCents })
+			.from(monthlyTaxLedger)
+			.where(
+				and(
+					eq(monthlyTaxLedger.accountId, accountId),
+					gte(monthlyTaxLedger.month, priorMonthStart),
+					lte(monthlyTaxLedger.month, priorMonthEnd)
+				)
+			)
+			.limit(1)
+
+		if (priorRows.length > 0 && priorRows[0]) {
+			deferredIrInCents = Number(priorRows[0].deferredIrCents) || 0
+		}
+	}
+
 	// Fetch all closed trades in the month window
 	const rawTrades = await db
 		.select({
@@ -120,14 +148,16 @@ const recomputeAccountMonth = async (
 			continue
 		}
 
-		// Skip swing trades — entry and exit must be on the same calendar day.
-		// Use year/month/date components to avoid toISOString() timezone drift.
+		// Skip swing trades — entry and exit must be on the same calendar day in BRT.
+		// Tax rule (Lei 11.033/2004) defines day-trades by BRT calendar day, not UTC.
 		const entry = trade.entryDate
 		const exit = trade.exitDate
+		const entryBrt = getBrtDateParts(entry)
+		const exitBrt = getBrtDateParts(exit)
 		const sameDay =
-			entry.getFullYear() === exit.getFullYear() &&
-			entry.getMonth() === exit.getMonth() &&
-			entry.getDate() === exit.getDate()
+			entryBrt.year === exitBrt.year &&
+			entryBrt.month === exitBrt.month &&
+			entryBrt.day === exitBrt.day
 		if (!sameDay) {
 			continue
 		}
@@ -199,14 +229,18 @@ const recomputeAccountMonth = async (
 		totalEmolumentosCents +
 		totalIssCents
 
-	const irrfResult = accumulateIrrf(dailyResults, defaultFeeRates.irrfRateBps)
+	const irrfResult = accumulateIrrf(
+		dailyResults,
+		asBasisPoints(defaultFeeRates.irrfRateBps)
+	)
 
 	const darf = computeDarf({
 		grossGainCents,
 		totalFeesCents,
 		irrfCents: irrfResult.totalIrrfCents,
 		carryoverInCents,
-		irRateBps: defaultFeeRates.irRateBps,
+		deferredIrInCents,
+		irRateBps: asBasisPoints(defaultFeeRates.irRateBps),
 		subjectToPersonalIr: defaultFeeRates.subjectToPersonalIr,
 	})
 
@@ -230,6 +264,7 @@ const recomputeAccountMonth = async (
 		taxableGainCents: darf.taxableGain,
 		irGrossCents: darf.irGross,
 		darfDueCents: darf.darfDue,
+		deferredIrCents: darf.deferredIrOutCents,
 		netLiquidCents,
 		tradeCount,
 		isDirty: false,

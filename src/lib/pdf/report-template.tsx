@@ -9,6 +9,7 @@ import type {
 	MonthlyReport,
 	CommissionFeeImpact,
 } from "@/app/actions/reports.types"
+import { formatFinite } from "@/lib/formatting"
 import { formatCurrency, formatPercent, formatR } from "./report-pdf-helpers"
 
 // ============================================================================
@@ -268,7 +269,7 @@ const WeeklyReportPdf = ({
 						<View style={styles.metricCard}>
 							<Text style={styles.metricLabel}>{labels.profitFactor}</Text>
 							<Text style={styles.metricValue}>
-								{summary.profitFactor.toFixed(2)}
+								{formatFinite(summary.profitFactor, 2)}
 							</Text>
 						</View>
 						<View style={styles.metricCard}>
@@ -509,7 +510,7 @@ const MonthlyReportPdf = ({
 						<View style={styles.metricCard}>
 							<Text style={styles.metricLabel}>{labels.profitFactor}</Text>
 							<Text style={styles.metricValue}>
-								{summary.profitFactor.toFixed(2)}
+								{formatFinite(summary.profitFactor, 2)}
 							</Text>
 						</View>
 						<View style={styles.metricCard}>

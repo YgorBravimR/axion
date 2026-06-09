@@ -3,6 +3,14 @@ import type {
 	BacktestSummary,
 	EquityCurvePoint,
 } from "@/types/backtest"
+import {
+	TRADING_DAYS_PER_YEAR,
+	annualizedSharpe,
+	annualizedVolatility,
+	cagr,
+	bucketTradesToDailyReturns,
+	sampleStdDev,
+} from "@/lib/finance/annualize"
 
 /**
  * Compute summary metrics from a list of completed trades.
@@ -27,10 +35,13 @@ const computeMetrics = (
 			maxDrawdownCents: 0,
 			maxConsecutiveLosses: 0,
 			maxConsecutiveWins: 0,
+			rSharpe: 0,
 			sharpeRatio: 0,
 			expectancy: 0,
 			totalDays,
 			tradingDays: 0,
+			cagr: null,
+			annualizedVolatility: 0,
 		}
 	}
 
@@ -105,9 +116,48 @@ const computeMetrics = (
 	const avgRMultiple = rSum / trades.length
 
 	// Sharpe ratio — variance computed via Welford's algorithm in single pass above
-	const variance = rM2 / Math.max(rCount, 1)
+	// Note: Welford's algorithm produces sample variance (n-1 divisor)
+	const variance = rM2 / Math.max(rCount - 1, 1)
 	const stdR = Math.sqrt(variance)
-	const sharpeRatio = stdR > 0 ? rMean / stdR : 0
+	const rSharpe = stdR > 0 ? rMean / stdR : 0 // Per-trade R-Sharpe (diagnostic)
+
+	// Compute daily-bucketed, annualized Sharpe ratio
+	// Convert PnL to daily returns and annualize
+	let sharpeRatio = 0
+	let annualizedVol = 0
+	let cagrValue: number | null = null
+
+	if (trades.length > 0) {
+		// Bucket trades by date and compute daily returns
+		const dailyBuckets = bucketTradesToDailyReturns(
+			trades.map((t) => ({
+				closedAt: t.dayKey,
+				pnlCents: t.netPnlCents,
+			})),
+			1 // Use 1 cent as baseline to compute returns as percentages
+		)
+
+		if (dailyBuckets.length >= 2) {
+			const dailyReturns = dailyBuckets.map((b) => b.returnPct / 100) // Convert % to decimal
+			const dailyMean =
+				dailyReturns.reduce((s, r) => s + r, 0) / dailyReturns.length
+			const dailyStd = sampleStdDev(dailyReturns)
+
+			// Annualize the Sharpe ratio
+			sharpeRatio = annualizedSharpe(dailyMean, dailyStd)
+			annualizedVol = annualizedVolatility(dailyStd)
+		}
+
+		// Compute CAGR if the backtest spans at least 1 month (roughly 21 trading days)
+		if (uniqueDays.size >= 21) {
+			const yearsSpan = uniqueDays.size / TRADING_DAYS_PER_YEAR
+			const endEquity = totalPnlCents
+			// For CAGR, we need a positive starting equity; use a nominal starting balance
+			// Since we don't have initial balance, we'll only compute CAGR if profit is significant
+			cagrValue =
+				endEquity > 0 ? cagr(1000000, 1000000 + endEquity, yearsSpan) : null
+		}
+	}
 
 	// True R-expectancy = winRate * avgWinR - lossRate * |avgLossR|
 	// avgLossRMultiple is already negative, so summation gives correct result
@@ -132,10 +182,13 @@ const computeMetrics = (
 		maxDrawdownCents,
 		maxConsecutiveLosses,
 		maxConsecutiveWins,
+		rSharpe,
 		sharpeRatio,
 		expectancy,
 		totalDays,
 		tradingDays: uniqueDays.size,
+		cagr: cagrValue,
+		annualizedVolatility: annualizedVol,
 	}
 }
 

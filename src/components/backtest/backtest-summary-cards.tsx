@@ -1,4 +1,5 @@
 "use client"
+import { formatFinite } from "@/lib/formatting"
 
 import { useMemo, memo } from "react"
 import { useTranslations } from "next-intl"
@@ -52,7 +53,7 @@ const BacktestSummaryCards = memo(
 					value:
 						summary.profitFactor === Infinity
 							? "∞"
-							: summary.profitFactor.toFixed(2),
+							: formatFinite(summary.profitFactor, 2),
 					tone: "neutral",
 				},
 				{
@@ -95,7 +96,7 @@ const BacktestSummaryCards = memo(
 				},
 				{
 					label: t("sharpe"),
-					value: summary.sharpeRatio.toFixed(2),
+					value: formatFinite(summary.sharpeRatio, 2),
 					tone: "neutral",
 				},
 				{

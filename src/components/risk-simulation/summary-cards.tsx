@@ -1,11 +1,10 @@
 "use client"
 
 import { useTranslations } from "next-intl"
+import { useFormatting } from "@/hooks/use-formatting"
 import { ColoredValue } from "@/components/shared/colored-value"
 import { fromCents } from "@/lib/money"
 import type { SimulationSummary } from "@/types/risk-simulation"
-
-const formatPercent = (value: number): string => `${value.toFixed(1)}%`
 
 const formatPf = (value: number): string =>
 	value >= 999 ? "∞" : value.toFixed(2)
@@ -44,6 +43,7 @@ const ComparisonRow = ({
 
 const SummaryCards = ({ summary }: SummaryCardsProps) => {
 	const t = useTranslations("riskSimulation.summary")
+	const { formatPercent } = useFormatting()
 
 	return (
 		<div className="space-y-s-300 sm:space-y-m-400">

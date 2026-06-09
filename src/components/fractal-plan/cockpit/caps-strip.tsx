@@ -1,4 +1,6 @@
-import { getTranslations } from "next-intl/server"
+import { getTranslations, getLocale } from "next-intl/server"
+import { formatCurrency } from "@/lib/formatting"
+import type { Locale } from "@/i18n/config"
 import { RCapOverridePopover } from "@/components/fractal-plan/r-cap-override-popover"
 import type { CascadeLevel } from "@/lib/fractal-plan/cascade-merge"
 
@@ -18,13 +20,6 @@ interface CapsStripProps {
 	monthlyLossR: ResolvedField
 }
 
-const formatBRL = (cents: number): string =>
-	(cents / 100).toLocaleString("pt-BR", {
-		style: "currency",
-		currency: "BRL",
-		maximumFractionDigits: 0,
-	})
-
 const CapsStrip = async ({
 	monthlyPlanId,
 	tierIndex,
@@ -36,6 +31,14 @@ const CapsStrip = async ({
 	monthlyLossR,
 }: CapsStripProps) => {
 	const t = await getTranslations("plan.capsStrip")
+	const locale = (await getLocale()) as Locale
+	const formatBRL = (cents: number): string =>
+		formatCurrency(
+			cents / 100,
+			locale,
+			locale === "pt-BR" ? "BRL" : "USD"
+		).replace(/[,.]\d{2}$/, "")
+
 	return (
 		<section
 			id="month-caps-strip"

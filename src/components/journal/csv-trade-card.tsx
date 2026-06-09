@@ -1,6 +1,6 @@
 "use client"
 
-import { memo, useState } from "react"
+import { memo, useState, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import {
 	ChevronDown,
@@ -29,56 +29,10 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useFormatting } from "@/hooks/use-formatting"
 import type { ProcessedCsvTrade } from "@/app/actions/csv-import.types"
 import { APP_TIMEZONE } from "@/lib/dates"
 import type { Strategy, Tag, Timeframe } from "@/db/schema"
-
-// Hoisted module-level formatters — created once, never recreated per render
-const currencyFormatter = new Intl.NumberFormat("pt-BR", {
-	style: "currency",
-	currency: "BRL",
-	minimumFractionDigits: 2,
-})
-
-const priceFormatter = new Intl.NumberFormat("pt-BR", {
-	minimumFractionDigits: 2,
-	maximumFractionDigits: 2,
-})
-
-const formatCurrency = (value: number | null): string => {
-	if (value === null) {
-		return "--"
-	}
-	const formatted = currencyFormatter.format(value)
-	return value >= 0 ? `+${formatted}` : formatted
-}
-
-const formatPrice = (value: number | string | undefined): string => {
-	if (!value) {
-		return "--"
-	}
-	return priceFormatter.format(Number(value))
-}
-
-const formatTime = (date: Date | string | number | undefined): string => {
-	if (!date) {
-		return "--"
-	}
-	const d = date instanceof Date ? date : new Date(date)
-	return d.toLocaleTimeString("pt-BR", {
-		hour: "2-digit",
-		minute: "2-digit",
-		timeZone: APP_TIMEZONE,
-	})
-}
-
-const formatDate = (date: Date | string | number | undefined): string => {
-	if (!date) {
-		return "--"
-	}
-	const d = date instanceof Date ? date : new Date(date)
-	return d.toLocaleDateString("pt-BR", { timeZone: APP_TIMEZONE })
-}
 
 interface CsvTradeCardProps {
 	trade: ProcessedCsvTrade
@@ -107,7 +61,65 @@ const CsvTradeCard = memo(
 		const t = useTranslations("journal.csvCard")
 		const tCommon = useTranslations("common")
 		const tForm = useTranslations("journal.form")
+		const { locale } = useFormatting()
 		const [activeTab, setActiveTab] = useState("basic")
+
+		// Memoized formatters that use locale
+		const currencyFormatter = useMemo(
+			() =>
+				new Intl.NumberFormat(locale === "pt-BR" ? "pt-BR" : "en-US", {
+					style: "currency",
+					currency: locale === "pt-BR" ? "BRL" : "USD",
+					minimumFractionDigits: 2,
+				}),
+			[locale]
+		)
+
+		const priceFormatter = useMemo(
+			() =>
+				new Intl.NumberFormat(locale === "pt-BR" ? "pt-BR" : "en-US", {
+					minimumFractionDigits: 2,
+					maximumFractionDigits: 2,
+				}),
+			[locale]
+		)
+
+		const formatCurrency = (value: number | null): string => {
+			if (value === null) {
+				return "--"
+			}
+			const formatted = currencyFormatter.format(value)
+			return value >= 0 ? `+${formatted}` : formatted
+		}
+
+		const formatPrice = (value: number | string | undefined): string => {
+			if (!value) {
+				return "--"
+			}
+			return priceFormatter.format(Number(value))
+		}
+
+		const formatTime = (date: Date | string | number | undefined): string => {
+			if (!date) {
+				return "--"
+			}
+			const d = date instanceof Date ? date : new Date(date)
+			return d.toLocaleTimeString(locale === "pt-BR" ? "pt-BR" : "en-US", {
+				hour: "2-digit",
+				minute: "2-digit",
+				timeZone: APP_TIMEZONE,
+			})
+		}
+
+		const formatDate = (date: Date | string | number | undefined): string => {
+			if (!date) {
+				return "--"
+			}
+			const d = date instanceof Date ? date : new Date(date)
+			return d.toLocaleDateString(locale === "pt-BR" ? "pt-BR" : "en-US", {
+				timeZone: APP_TIMEZONE,
+			})
+		}
 
 		const handleEditField = <K extends keyof ProcessedCsvTrade["edits"]>(
 			field: K,

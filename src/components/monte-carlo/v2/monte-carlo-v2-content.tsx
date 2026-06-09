@@ -21,6 +21,7 @@ import { buildProfileForSim } from "@/lib/risk-profile"
 import { useMCCalibrationDispatch } from "@/components/providers/mc-calibration-provider"
 import { buildCalibrationSnapshotV2 } from "@/lib/mc-calibration"
 import { toCents } from "@/lib/money"
+import { formatFinite } from "@/lib/formatting"
 import { cn } from "@/lib/utils"
 import type { RiskManagementProfile } from "@/types/risk-profile"
 import type {
@@ -125,10 +126,7 @@ const MonteCarloV2Content = ({
 		setForm((prev) => ({
 			...prev,
 			winRate: sourceStats.winRate.toFixed(1),
-			profitFactor:
-				sourceStats.profitFactor === Infinity
-					? ""
-					: sourceStats.profitFactor.toFixed(2),
+			profitFactor: formatFinite(sourceStats.profitFactor, 2, ""),
 			commissionPerTrade:
 				sourceStats.avgCommissionPerTradeCents?.toString() ?? "0",
 			breakevenRate: sourceStats.breakevenRate?.toFixed(1) ?? "0",

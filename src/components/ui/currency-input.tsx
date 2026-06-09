@@ -1,29 +1,16 @@
 "use client"
 
-import { forwardRef } from "react"
+import { forwardRef, useCallback } from "react"
 import type { ChangeEvent, ComponentProps, FocusEvent } from "react"
 
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { useFormatting } from "@/hooks/use-formatting"
 
 type Decimals = 0 | 2
 type Unit = "reais" | "cents"
 
 const stripDigits = (s: string): string => s.replace(/\D/g, "")
-
-const formatBR = (digits: string, decimals: Decimals): string => {
-	if (!digits) {
-		return ""
-	}
-	if (decimals === 0) {
-		return Number(digits).toLocaleString("pt-BR")
-	}
-	const padded = digits.padStart(3, "0")
-	const intPart = padded.slice(0, -2).replace(/^0+(?=\d)/, "")
-	const decPart = padded.slice(-2)
-	const intFormatted = Number(intPart || "0").toLocaleString("pt-BR")
-	return `${intFormatted},${decPart}`
-}
 
 const displayUnitsPerReais = (decimals: Decimals): number =>
 	decimals === 2 ? 100 : 1
@@ -88,6 +75,27 @@ const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
 		},
 		ref
 	) => {
+		const { locale } = useFormatting()
+
+		const formatBR = useCallback(
+			(digits: string, decs: Decimals): string => {
+				if (!digits) {
+					return ""
+				}
+				const localeCode = locale === "pt-BR" ? "pt-BR" : "en-US"
+				if (decs === 0) {
+					return Number(digits).toLocaleString(localeCode)
+				}
+				const padded = digits.padStart(3, "0")
+				const intPart = padded.slice(0, -2).replace(/^0+(?=\d)/, "")
+				const decPart = padded.slice(-2)
+				const intFormatted = Number(intPart || "0").toLocaleString(localeCode)
+				const decSep = locale === "pt-BR" ? "," : "."
+				return `${intFormatted}${decSep}${decPart}`
+			},
+			[locale]
+		)
+
 		const digits = valueToDigits(value, decimals, unit)
 		const display = formatBR(digits, decimals)
 

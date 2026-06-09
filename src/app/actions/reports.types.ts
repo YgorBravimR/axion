@@ -191,6 +191,12 @@ interface ReportSummaryBase {
 	avgR: number
 }
 
-type PropCalcSettings = UserSettingsData & { dayTradeTaxRate: number }
+// Settings required by prop-profit calculator (subset of UserSettingsData + runtime tax rate)
+interface PropCalcSettings {
+	isPropAccount: boolean
+	profitSharePercentage: number
+	showTaxEstimates: boolean
+	dayTradeTaxRate: number
+}
 
 export type { ReportSummaryBase, PropCalcSettings }

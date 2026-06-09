@@ -1,41 +1,81 @@
+import type { Locale } from "@/i18n/config"
+
 /**
  * Pure helper functions used by the React-PDF report templates.
  *
  * Extracted into their own module so they can be unit-tested independently
  * of the @react-pdf/renderer rendering environment.
+ *
+ * All formatters accept an optional `locale` parameter (defaults to "pt-BR")
+ * for locale-aware output. PDF generation calls should thread the user's
+ * locale from server-action input.
  */
 
 /**
- * Formats a monetary value with a "+" prefix for non-negative numbers and
- * the Brazilian Real locale (pt-BR).
- *
- * @param value - The numeric value in the same unit as the report (R$)
- * @returns A locale-formatted string, e.g. "+R$ 1.250,00" or "-R$ 300,00"
+ * Locale to BCP 47 language tag mapping (same as in formatting.ts)
  */
-const formatCurrency = (value: number): string => {
+const localeMap: Record<Locale, string> = {
+	"pt-BR": "pt-BR",
+	"en": "en-US",
+}
+
+/**
+ * Currency mapping for each locale (same as in formatting.ts)
+ */
+const localeCurrency: Record<Locale, string> = {
+	"pt-BR": "BRL",
+	"en": "USD",
+}
+
+/**
+ * Formats a monetary value with a "+" prefix for non-negative numbers.
+ *
+ * @param value - The numeric value in the same unit as the report
+ * @param locale - BCP 47 language tag; defaults to "pt-BR" (pt-BR → BRL, en → USD)
+ * @returns A locale-formatted string, e.g. "+R$ 1.250,00" or "-$1,300.00"
+ */
+const formatCurrency = (value: number, locale: Locale = "pt-BR"): string => {
 	const prefix = value >= 0 ? "+" : ""
-	return `${prefix}R$ ${Math.abs(value).toLocaleString("pt-BR", {
+	const currencyCode = localeCurrency[locale]
+	const formatted = new Intl.NumberFormat(localeMap[locale], {
+		style: "currency",
+		currency: currencyCode,
 		minimumFractionDigits: 2,
 		maximumFractionDigits: 2,
-	})}`
+	}).format(Math.abs(value))
+	return `${prefix}${formatted}`
 }
 
 /**
  * Formats a percentage value rounded to one decimal place.
  *
- * @param value - The raw percentage value (e.g. 66.666… → "66.7%")
+ * @param value - The raw percentage value on 0-100 scale (e.g. 66.666… → "66.7%")
+ * @param locale - BCP 47 language tag; defaults to "pt-BR" (affects decimal separator)
  * @returns A string with one decimal place and a "%" suffix
  */
-const formatPercent = (value: number): string => `${value.toFixed(1)}%`
+const formatPercent = (value: number, locale: Locale = "pt-BR"): string => {
+	return new Intl.NumberFormat(localeMap[locale], {
+		style: "percent",
+		minimumFractionDigits: 1,
+		maximumFractionDigits: 1,
+	}).format(value / 100)
+}
 
 /**
  * Formats an R-multiple value with a "+" prefix for non-negative numbers.
  *
  * @param value - The R-multiple (e.g. 2.5 → "+2.50R", -1 → "-1.00R")
+ * @param locale - BCP 47 language tag; defaults to "pt-BR" (affects decimal separator)
  * @returns A string with two decimal places and an "R" suffix
  */
-const formatR = (value: number): string =>
-	`${value >= 0 ? "+" : ""}${value.toFixed(2)}R`
+const formatR = (value: number, locale: Locale = "pt-BR"): string => {
+	const prefix = value >= 0 ? "+" : "-"
+	const formatted = new Intl.NumberFormat(localeMap[locale], {
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
+	}).format(Math.abs(value))
+	return `${prefix}${formatted}R`
+}
 
 /**
  * Builds the PDF download filename for a weekly report.
@@ -83,9 +123,8 @@ const parseOffsetParam = (raw: string | null): number =>
  * @param raw - The raw string value from `searchParams.get("type")`
  * @returns `true` when the value is a valid report type, `false` otherwise
  */
-const isValidReportType = (
-	raw: string | null
-): raw is "weekly" | "monthly" => raw === "weekly" || raw === "monthly"
+const isValidReportType = (raw: string | null): raw is "weekly" | "monthly" =>
+	raw === "weekly" || raw === "monthly"
 
 export {
 	formatCurrency,
@@ -95,4 +134,5 @@ export {
 	buildMonthlyPdfFilename,
 	parseOffsetParam,
 	isValidReportType,
+	type Locale,
 }

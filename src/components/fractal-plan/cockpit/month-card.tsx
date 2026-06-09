@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
+import { useFormatting } from "@/hooks/use-formatting"
 import { MonthCapitalPopover } from "./month-capital-popover"
 import type { ProjectMonthResult } from "@/lib/fractal-plan/projection"
 
@@ -53,17 +54,6 @@ interface MonthCardProps {
 	pace: PaceData | null
 	remainder: RemainderData | null
 	guideAnchor?: boolean
-}
-
-const formatBRL = (cents: number): string =>
-	(cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-
-const formatBRLCompact = (cents: number): string => {
-	const abs = Math.abs(cents / 100)
-	if (abs >= 1000) {
-		return `${cents < 0 ? "-" : ""}R$ ${(abs / 1000).toFixed(abs >= 10000 ? 0 : 1)}k`
-	}
-	return formatBRL(cents)
 }
 
 const formatPctSigned = (n: number): string =>
@@ -153,6 +143,17 @@ const MonthCard = ({
 	guideAnchor = false,
 }: MonthCardProps) => {
 	const t = useTranslations("plan.month")
+	const { formatCurrency } = useFormatting()
+
+	const formatBRL = (cents: number): string => formatCurrency(cents / 100)
+
+	const formatBRLCompact = (cents: number): string => {
+		const abs = Math.abs(cents / 100)
+		if (abs >= 1000) {
+			return `${cents < 0 ? "-" : ""}R$ ${(abs / 1000).toFixed(abs >= 10000 ? 0 : 1)}k`
+		}
+		return formatBRL(cents)
+	}
 	if (state === "muted") {
 		return (
 			<div

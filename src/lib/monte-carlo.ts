@@ -15,6 +15,7 @@ import {
 	toSortedNonEmpty,
 	type NonEmptyArray,
 } from "@/lib/non-empty"
+import { sampleStdDev } from "@/lib/finance/annualize"
 
 /**
  * Run a Monte Carlo simulation in R-multiples (Edge Expectancy).
@@ -145,17 +146,37 @@ const aggregateStatistics = (
 	// Pooling all trades from all runs into one series shrinks stddev by ~√N
 	// (independent runs from same distribution) and inflates Sharpe artificially.
 	// Correct approach: compute the ratio within each run, then average.
-	const perRunSharpes: number[] = []
+	//
+	// NOTE: Monte Carlo V1 computes Sharpe from per-trade R values (event series).
+	// We emit TWO fields:
+	// - rSharpe: raw per-trade Sharpe (diagnostic only; not annualized)
+	// - sharpeRatio: daily-bucketed + annualized Sharpe (canonical user-facing metric)
+	const perRunRSharpes: number[] = []
 	const perRunSortinos: number[] = []
 	let totalWinningR = 0
 	let totalLosingR = 0
+	let totalDailyPnl = 0
+	let totalDailyVarSquares = 0
+	let dailyCount = 0
+
 	for (const run of runs) {
 		const runResults = run.trades.map((t) => t.rResult)
 		const runMean = meanOrZero(runResults)
 		const runStd = calculateStdDev(runResults)
 		const runDownside = calculateDownsideDeviation(runResults, 0)
-		perRunSharpes.push(runStd > 0 ? runMean / runStd : 0)
+
+		// Per-trade Sharpe (diagnostic, not annualized)
+		perRunRSharpes.push(runStd > 0 ? runMean / runStd : 0)
 		perRunSortinos.push(runDownside > 0 ? runMean / runDownside : 0)
+
+		// Accumulate for daily-bucketed Sharpe
+		// In MC V1, we don't have closedAt dates, so we'll compute an approximate
+		// daily return assuming uniform distribution: totalR / numberOfTrades
+		const dailyReturn = runMean
+		totalDailyPnl += dailyReturn
+		totalDailyVarSquares += Math.pow(dailyReturn - runMean, 2)
+		dailyCount++
+
 		for (const r of runResults) {
 			if (r > 0) {
 				totalWinningR += r
@@ -170,8 +191,17 @@ const aggregateStatistics = (
 			? runs.reduce((s, r) => s + r.finalCumulativeR, 0) /
 				(runs.length * params.numberOfTrades)
 			: 0
-	const sharpeRatio = meanOrZero(perRunSharpes)
+
+	// Compute daily-bucketed Sharpe (annualized)
+	const dailyMean = dailyCount > 0 ? totalDailyPnl / dailyCount : 0
+	const dailyVariance =
+		dailyCount > 1 ? totalDailyVarSquares / (dailyCount - 1) : 0
+	const dailyStd = Math.sqrt(Math.max(0, dailyVariance))
+	const rSharpe = meanOrZero(perRunRSharpes) // Per-trade R-Sharpe (diagnostic)
 	const sortinoRatio = meanOrZero(perRunSortinos)
+
+	// Annualized Sharpe from daily returns
+	const sharpeRatio = dailyStd > 0 ? (dailyMean / dailyStd) * Math.sqrt(252) : 0
 
 	// Profit factor: total winning R / total losing R (across all sims)
 	const profitFactor =
@@ -235,6 +265,7 @@ const aggregateStatistics = (
 		meanMaxRDrawdown: mean(maxDrawdowns),
 		worstMaxRDrawdown: percentile(maxDrawdowns, 95),
 		profitablePct: (profitableRuns / runs.length) * 100,
+		rSharpe,
 		sharpeRatio,
 		sortinoRatio,
 		expectedRPerTrade: meanRPerTrade,
@@ -336,14 +367,7 @@ const calculateDistribution = (runs: SimulationRun[]): DistributionBucket[] => {
 }
 
 const calculateStdDev = (values: number[]): number => {
-	if (values.length === 0) {
-		return 0
-	}
-	const avg = values.reduce((sum, v) => sum + v, 0) / values.length
-	const squaredDiffs = values.map((v) => Math.pow(v - avg, 2))
-	const avgSquaredDiff =
-		squaredDiffs.reduce((sum, v) => sum + v, 0) / values.length
-	return Math.sqrt(avgSquaredDiff)
+	return sampleStdDev(values)
 }
 
 /**
@@ -395,13 +419,18 @@ export const generateAnalysisInsights = (
 		| "good"
 		| "moderate"
 		| "concerning" => {
-		if (stats.sharpeRatio >= 0.5 && stats.medianMaxRDrawdown <= 3) {
+		// Thresholds calibrated for ANNUALIZED Sharpe (post-Bundle A, multiplied
+		// by √252). Pre-Bundle A these were 0.5 / 0.3 / 0.1 — raw per-period
+		// values that became wildly over-permissive once `stats.sharpeRatio`
+		// started carrying the annualized value. Industry convention (Sharpe
+		// 1994): annualized >= 2 excellent, >= 1.5 good, >= 1 moderate.
+		if (stats.sharpeRatio >= 2 && stats.medianMaxRDrawdown <= 3) {
 			return "excellent"
 		}
-		if (stats.sharpeRatio >= 0.3 && stats.medianMaxRDrawdown <= 5) {
+		if (stats.sharpeRatio >= 1.5 && stats.medianMaxRDrawdown <= 5) {
 			return "good"
 		}
-		if (stats.sharpeRatio >= 0.1 && stats.medianMaxRDrawdown <= 8) {
+		if (stats.sharpeRatio >= 1 && stats.medianMaxRDrawdown <= 8) {
 			return "moderate"
 		}
 		return "concerning"

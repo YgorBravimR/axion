@@ -1,7 +1,9 @@
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
-import { getTranslations } from "next-intl/server"
+import { getTranslations, getLocale } from "next-intl/server"
 import { cn } from "@/lib/utils"
+import { formatCurrency } from "@/lib/formatting"
+import type { Locale } from "@/i18n/config"
 import { DarfStatusDot } from "@/components/ui/darf-status-dot"
 import type { DarfStatus } from "@/components/ui/darf-status-dot"
 
@@ -19,13 +21,6 @@ interface QuarterMonthCardProps {
 	darfDueCents: number
 }
 
-const formatBRL = (cents: number): string =>
-	(cents / 100).toLocaleString("pt-BR", {
-		style: "currency",
-		currency: "BRL",
-		maximumFractionDigits: 0,
-	})
-
 const QuarterMonthCard = async ({
 	href,
 	monthLabel,
@@ -40,6 +35,10 @@ const QuarterMonthCard = async ({
 	darfDueCents,
 }: QuarterMonthCardProps) => {
 	const t = await getTranslations("plan.quarter.monthCard")
+	const locale = (await getLocale()) as Locale
+	const formatBRL = (cents: number): string =>
+		formatCurrency(cents / 100, locale, locale === "pt-BR" ? "BRL" : "USD")
+
 	const realized = realizedNetCents ?? 0
 	const realizedTone =
 		realized > 0

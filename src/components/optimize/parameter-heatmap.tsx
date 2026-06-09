@@ -19,6 +19,7 @@ import {
 import { AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatCentsAsCurrency } from "@/lib/money"
+import { formatFinite } from "@/lib/formatting"
 import { getNestedValue } from "@/lib/optimize/parameter-grid"
 import {
 	getVaryingParams,
@@ -583,7 +584,7 @@ const HoveredCellDetail = ({ cell, metric, t }: HoveredCellDetailProps) => {
 			<div className="gap-m-500 flex items-center">
 				<MetricStat
 					label={t("heatmap.statPF")}
-					value={summary.profitFactor.toFixed(2)}
+					value={formatFinite(summary.profitFactor, 2)}
 					highlight={metric === "profitFactor"}
 				/>
 				<MetricStat
@@ -593,7 +594,7 @@ const HoveredCellDetail = ({ cell, metric, t }: HoveredCellDetailProps) => {
 				/>
 				<MetricStat
 					label={t("heatmap.statSharpe")}
-					value={summary.sharpeRatio.toFixed(2)}
+					value={formatFinite(summary.sharpeRatio, 2)}
 					highlight={metric === "sharpeRatio"}
 				/>
 				<MetricStat

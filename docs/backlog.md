@@ -395,3 +395,5 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
   5. DOM fallback for <500 cells.
 - **Done when**: heatmaps with 1000+ cells render in <16ms; existing interactivity preserved or explicitly migrated.
 - **Date filed**: 2026-06-02.
+
+## Tax & Compliance

@@ -134,6 +134,20 @@
 			"when": 1780909719123,
 			"tag": "0018_salty_norman_osborn",
 			"breakpoints": true
+		},
+		{
+			"idx": 19,
+			"version": "7",
+			"when": 1780991570955,
+			"tag": "0019_third_morg",
+			"breakpoints": true
+		},
+		{
+			"idx": 20,
+			"version": "7",
+			"when": 1780991903147,
+			"tag": "0020_hard_nitro",
+			"breakpoints": true
 		}
 	]
 }

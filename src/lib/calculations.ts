@@ -2,7 +2,12 @@ import type { TradeExecution } from "@/db/schema"
 import type { ExecutionSummary, PositionStatus } from "@/types"
 
 /**
- * Calculate win rate percentage
+ * Calculate win rate percentage from decisive trades only.
+ *
+ * **Convention** (see `docs/code-conventions.md` → "Win rate denominator excludes
+ * breakeven trades"): pass `total = wins + losses`, NOT `total trades`. Breakeven
+ * trades (`pnlCents === 0`) must be excluded from the denominator. Every live caller
+ * already follows this; the parameter is named `total` for historical reasons.
  */
 export const calculateWinRate = (wins: number, total: number): number => {
 	if (total === 0) {
@@ -160,13 +165,6 @@ export const formatCurrencyFromCents = (
 	currency = "USD"
 ): string => {
 	return formatCurrency(cents / 100, currency)
-}
-
-/**
- * Format percentage value
- */
-export const formatPercent = (value: number, decimals = 1): string => {
-	return `${value.toFixed(decimals)}%`
 }
 
 /**

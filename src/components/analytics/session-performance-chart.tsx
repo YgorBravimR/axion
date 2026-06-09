@@ -4,7 +4,11 @@ import { memo, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
-import { formatCompactCurrencyWithSign, formatR } from "@/lib/formatting"
+import {
+	formatCompactCurrencyWithSign,
+	formatFinite,
+	formatR,
+} from "@/lib/formatting"
 import { cn } from "@/lib/utils"
 import { TrendingUp, TrendingDown } from "lucide-react"
 import { useChartConfig } from "@/hooks/use-chart-config"
@@ -107,7 +111,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 							data.profitFactor >= 1 ? "text-trade-buy" : "text-trade-sell"
 						)}
 					>
-						{data.profitFactor.toFixed(2)}
+						{formatFinite(data.profitFactor, 2)}
 					</span>
 				</p>
 			</div>

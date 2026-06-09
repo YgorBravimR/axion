@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/toast"
 import { MonthlyDarfCard } from "@/components/tax/monthly-darf-card"
 import { markDarfPaid, recomputeLedger } from "@/app/actions/tax-engine"
 import { isMonthFinalized, isMonthCurrent } from "@/lib/tax/month-status"
+import { useFormatting } from "@/hooks/use-formatting"
 import {
 	DarfStrip,
 	type DarfStripChip,
@@ -26,6 +27,7 @@ interface TaxTabProps {
 const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 	const router = useRouter()
 	const t = useTranslations("tax.monthlyDarf")
+	const { formatCurrency, formatDate } = useFormatting()
 	const { showToast } = useToast()
 	const [isRecomputing, startRecompute] = useTransition()
 	const [activeMonth, setActiveMonth] = useState<number | null>(null)
@@ -139,17 +141,11 @@ const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 								id={`darf-trigger-${monthIndex}`}
 							>
 								<span className="text-small text-txt-200 font-mono uppercase">
-									{row.month.toLocaleDateString("pt-BR", {
-										month: "long",
-										year: "numeric",
-									})}
+									{formatDate(row.month, { month: "long", year: "numeric" })}
 								</span>
 								<span className="text-small text-txt-200 font-mono tabular-nums">
 									{isFinal ? t("darfLabel") : t("previewLabel")}:{" "}
-									{(row.darfDueCents / 100).toLocaleString("pt-BR", {
-										style: "currency",
-										currency: "BRL",
-									})}
+									{formatCurrency(row.darfDueCents / 100)}
 								</span>
 							</button>
 							{isOpen && (

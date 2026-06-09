@@ -5,10 +5,10 @@ export type DataSource =
 
 // V1: Edge Expectancy — simulates in R-multiples (strategy quality)
 export interface SimulationParams {
-	winRate: number              // 0-100
-	rewardRiskRatio: number      // e.g. 2.0 means wins pay +2R
+	winRate: number // 0-100
+	rewardRiskRatio: number // e.g. 2.0 means wins pay +2R
 	numberOfTrades: number
-	commissionImpactR: number    // commission as % of 1R (e.g. 2 = 2% of risk)
+	commissionImpactR: number // commission as % of 1R (e.g. 2 = 2% of risk)
 	simulationCount: number
 }
 
@@ -41,10 +41,10 @@ export interface SourceStats {
 export interface SimulatedTrade {
 	tradeNumber: number
 	isWin: boolean
-	rResult: number              // +R:R or -1R (after commission)
-	commission: number           // R units
-	cumulativeR: number          // running total
-	rDrawdown: number            // peak R - current R
+	rResult: number // +R:R or -1R (after commission)
+	commission: number // R units
+	cumulativeR: number // running total
+	rDrawdown: number // peak R - current R
 }
 
 export interface SimulationRun {
@@ -74,10 +74,11 @@ export interface SimulationStatistics {
 	medianMaxRDrawdown: number
 	meanMaxRDrawdown: number
 	worstMaxRDrawdown: number
-	profitablePct: number        // % of runs ending with positive R
-	sharpeRatio: number          // mean R per trade / std dev
+	profitablePct: number // % of runs ending with positive R
+	sharpeRatio: number // annualized Sharpe (canonical user-facing metric, from daily returns)
+	rSharpe?: number // per-trade R-Sharpe (diagnostic only; not annualized)
 	sortinoRatio: number
-	expectedRPerTrade: number    // the edge
+	expectedRPerTrade: number // the edge
 	expectedMaxWinStreak: number
 	expectedMaxLossStreak: number
 	avgWinStreak: number
@@ -87,7 +88,7 @@ export interface SimulationStatistics {
 	kellyQuarter: number
 	kellyRecommendation: string
 	kellyLevel: "aggressive" | "balanced" | "conservative"
-	profitFactor: number         // total winning R / total losing R
+	profitFactor: number // total winning R / total losing R
 	avgRecoveryTrades: number
 }
 
@@ -174,7 +175,11 @@ export interface RiskManagementProfileForSim {
 	commissionPerTradeCents: number
 
 	// Dynamic risk sizing (Phase 2)
-	riskSizingMode: "fixed" | "percentOfBalance" | "fixedRatio" | "kellyFractional"
+	riskSizingMode:
+		| "fixed"
+		| "percentOfBalance"
+		| "fixedRatio"
+		| "kellyFractional"
 	riskPercent: number | null // for percentOfBalance mode
 	fixedRatioDeltaCents: number | null // for fixedRatio mode
 	fixedRatioBaseContractRiskCents: number | null // for fixedRatio mode

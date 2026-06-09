@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Pencil } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
+import { useFormatting } from "@/hooks/use-formatting"
 import { YearlyPlanSlideover } from "./yearly-plan-slideover"
 import { WhatIfCalculator, type AssetOption } from "./what-if-calculator"
 import {
@@ -49,9 +50,6 @@ interface SetupSummaryCardProps {
 	activeTierIndex?: number | null
 }
 
-const formatBRL = (cents: number): string =>
-	(cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-
 const formatR = (r: number | null): string =>
 	r === null ? "—" : `${r.toFixed(2)}R`
 
@@ -77,6 +75,8 @@ const SetupSummaryCard = ({
 	activeTierIndex = null,
 }: SetupSummaryCardProps) => {
 	const t = useTranslations("plan.setup")
+	const { formatCurrency } = useFormatting()
+	const formatBRL = (cents: number): string => formatCurrency(cents / 100)
 	const [editing, setEditing] = useState(false)
 
 	useEffect(() => {

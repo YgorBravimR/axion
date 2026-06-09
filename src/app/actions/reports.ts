@@ -16,13 +16,13 @@ import {
 import { fromCents } from "@/lib/money"
 import { formatDateKey } from "@/lib/dates"
 import { getUserSettings } from "./settings"
+import { calculatePropProfit } from "@/lib/reports/calculate-prop-profit"
 import type {
 	DailyBreakdown,
 	WeeklyReport,
 	MonthlyReport,
 	CommissionFeeImpact,
 	MistakeCostAnalysis,
-	PropProfitCalculation,
 	MonthlyResultsWithProp,
 	MonthlyProjection,
 	MonthComparison,
@@ -531,40 +531,7 @@ export const getMistakeCostAnalysis = async (): Promise<{
 // ============================================================================
 
 // dayTradeTaxRate is transient (computed from legal-rates by year), not DB-backed.
-const calculatePropProfit = (
-	grossProfit: number,
-	settings: PropCalcSettings
-): PropProfitCalculation => {
-	// Only calculate shares if profitable
-	if (grossProfit <= 0) {
-		return {
-			grossProfit,
-			propFirmShare: 0,
-			traderShare: grossProfit, // Trader absorbs the loss
-			estimatedTax: 0, // No tax on losses
-			netProfit: grossProfit,
-		}
-	}
-
-	const profitSharePercent = settings.isPropAccount
-		? settings.profitSharePercentage
-		: 100
-
-	const traderShare = grossProfit * (profitSharePercent / 100)
-	const propFirmShare = grossProfit - traderShare
-	const estimatedTax = settings.showTaxEstimates
-		? traderShare * (settings.dayTradeTaxRate / 100)
-		: 0
-	const netProfit = traderShare - estimatedTax
-
-	return {
-		grossProfit,
-		propFirmShare,
-		traderShare,
-		estimatedTax,
-		netProfit,
-	}
-}
+// Canonical implementation lives at src/lib/reports/calculate-prop-profit.ts
 
 // Get business days in a month (excluding weekends)
 const getBusinessDaysInMonth = (date: Date): number => {
@@ -636,18 +603,16 @@ export const getMonthlyResultsWithProp = async (
 		const reportYear = Number(report.monthStart.slice(0, 4))
 		const dayTradeTaxRate = getDayTradeIrRate(reportYear) * 100
 
-		// Build settings object for calculation using account-specific values
-		const accountSettings: PropCalcSettings = {
-			...userSettings,
+		// Build settings object for prop calculator (only needs the specific fields)
+		const calcSettings: PropCalcSettings = {
 			isPropAccount,
-			propFirmName: decryptedAccount.propFirmName,
 			profitSharePercentage,
 			dayTradeTaxRate,
 			showTaxEstimates: decryptedAccount.showTaxEstimates,
 		}
 
 		// Calculate prop profit breakdown using account-specific settings
-		const prop = calculatePropProfit(report.summary.netPnl, accountSettings)
+		const prop = calculatePropProfit(report.summary.netPnl, calcSettings)
 
 		return {
 			status: "success",
@@ -737,10 +702,8 @@ export const getMonthlyProjection = async (): Promise<{
 		// Use account-specific settings for projection. IR rate from legal-rates
 		// table by year of the projected month (matches cockpit + recompute).
 		const projectionYear = monthStart.getUTCFullYear()
-		const accountSettings: PropCalcSettings = {
-			...userSettings,
+		const projectionSettings: PropCalcSettings = {
 			isPropAccount: decryptedAccount.accountType === "prop",
-			propFirmName: decryptedAccount.propFirmName,
 			profitSharePercentage: Number(decryptedAccount.profitSharePercentage),
 			dayTradeTaxRate: getDayTradeIrRate(projectionYear) * 100,
 			showTaxEstimates: decryptedAccount.showTaxEstimates,
@@ -749,7 +712,7 @@ export const getMonthlyProjection = async (): Promise<{
 		// Calculate projected prop values using account-specific settings
 		const projectedProp = calculatePropProfit(
 			projectedMonthlyProfit,
-			accountSettings
+			projectionSettings
 		)
 
 		return {

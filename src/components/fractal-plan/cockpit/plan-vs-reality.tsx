@@ -3,6 +3,7 @@
 import { Target, TrendingUp, Activity, Trophy } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
+import { useFormatting } from "@/hooks/use-formatting"
 
 type PlanGoalSource = "manual" | "weeks" | "default" | "none"
 
@@ -19,19 +20,6 @@ interface PlanVsRealityProps {
 	irTaxRate: number
 }
 
-const formatBRL = (cents: number): string =>
-	(cents / 100).toLocaleString("pt-BR", {
-		style: "currency",
-		currency: "BRL",
-		maximumFractionDigits: 0,
-	})
-
-const formatBRLPrecise = (cents: number): string =>
-	(cents / 100).toLocaleString("pt-BR", {
-		style: "currency",
-		currency: "BRL",
-	})
-
 const PlanVsReality = ({
 	monthLabel,
 	planGoalCents,
@@ -45,6 +33,20 @@ const PlanVsReality = ({
 	irTaxRate,
 }: PlanVsRealityProps) => {
 	const t = useTranslations("plan.planVsReality")
+	const { locale } = useFormatting()
+
+	const formatBRL = (cents: number): string =>
+		(cents / 100).toLocaleString(locale === "pt-BR" ? "pt-BR" : "en-US", {
+			style: "currency",
+			currency: locale === "pt-BR" ? "BRL" : "USD",
+			maximumFractionDigits: 0,
+		})
+
+	const formatBRLPrecise = (cents: number): string =>
+		(cents / 100).toLocaleString(locale === "pt-BR" ? "pt-BR" : "en-US", {
+			style: "currency",
+			currency: locale === "pt-BR" ? "BRL" : "USD",
+		})
 	const planSet = planGoalCents !== null && planGoalCents > 0
 	const dailyPlanCents =
 		planSet && totalTradingDays > 0

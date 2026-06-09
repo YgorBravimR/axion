@@ -12,7 +12,7 @@ import {
 	XCircle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { formatR } from "@/lib/formatting"
+import { formatFinite, formatR } from "@/lib/formatting"
 import { generateAnalysisInsights } from "@/lib/monte-carlo"
 import type { MonteCarloResult } from "@/types/monte-carlo"
 import { useFormatting } from "@/hooks/use-formatting"
@@ -210,12 +210,12 @@ export const StrategyAnalysis = memo(({ result }: StrategyAnalysisProps) => {
 						</li>
 						<li>
 							• <strong>{t("sharpeRatio")}:</strong>{" "}
-							{stats.sharpeRatio.toFixed(2)} -{" "}
+							{formatFinite(stats.sharpeRatio, 2)} -{" "}
 							{t(getSharpeLabelKey(stats.sharpeRatio))}
 						</li>
 						<li>
 							• <strong>{t("sortinoRatio")}:</strong>{" "}
-							{stats.sortinoRatio.toFixed(2)} -{" "}
+							{formatFinite(stats.sortinoRatio, 2)} -{" "}
 							{t(getSortinoLabelKey(stats.sortinoRatio))}
 						</li>
 					</ul>

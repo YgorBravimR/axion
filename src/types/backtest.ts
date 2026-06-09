@@ -21,7 +21,12 @@ type StrategyPresetId =
 
 interface AssetConfig {
 	tickSize: number // minimum price increment (e.g., 5 for WINFUT)
-	tickValueCents: number // cents per tick (e.g., 100 for WINFUT = R$1.00/tick)
+	/**
+	 * Value per POINT in cents (not per tick). For WIN: 100 cents = R$1.00/point.
+	 * Tick size is 5 points; one tick of value = 5 × 100 = 500 cents = R$5.00.
+	 * The field name is historical; field semantics is "value per point".
+	 */
+	tickValueCents: number
 	currency: string // "BRL"
 }
 
@@ -591,10 +596,13 @@ interface BacktestSummary {
 	maxDrawdownCents: number
 	maxConsecutiveLosses: number
 	maxConsecutiveWins: number
-	sharpeRatio: number
+	sharpeRatio: number // annualized Sharpe (canonical user-facing metric, from daily returns)
+	rSharpe?: number // per-trade R-Sharpe (diagnostic only; not annualized)
 	expectancy: number // avg R-multiple (same as avgRMultiple, kept for clarity)
 	totalDays: number
 	tradingDays: number // days with at least one trade
+	cagr?: number | null // compound annual growth rate (null if < 21 trading days)
+	annualizedVolatility?: number // annualized standard deviation of daily returns
 }
 
 interface DayBreakdown {

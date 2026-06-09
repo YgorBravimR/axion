@@ -11,8 +11,9 @@ import {
 	getWeekAggregate,
 } from "@/lib/queries/period-queries"
 import { getWeeksInYear } from "@/lib/calendar/iso-week"
-import { getDayTradeIrRate } from "@/lib/tax/legal-rates"
 import { monthLabelPt } from "@/lib/fractal-plan/month-labels"
+import { recomputeAccountMonth } from "@/lib/tax/recompute-month"
+
 import type { CapitalEvent } from "@/types/integration"
 import type {
 	WeeklyMetaRow,
@@ -284,8 +285,6 @@ export const getAnnualRollup = async (
 		return { status: "error", message: "Account not found" }
 	}
 
-	const taxRate = getDayTradeIrRate(year)
-
 	const withdrawalTarget = account.withdrawalTargetPercent
 		? parseFloat(account.withdrawalTargetPercent.toString())
 		: null
@@ -333,6 +332,7 @@ export const getAnnualRollup = async (
 	>()
 
 	let runningPatrimonio: number | null = account.startingBalanceCents ?? null
+	let carryoverInCents: number = 0
 	const rows: AnnualRollupRow[] = []
 
 	for (let month = 1; month <= 12; month++) {
@@ -351,7 +351,6 @@ export const getAnnualRollup = async (
 				pontos: null,
 				taxas: null,
 				imposto: null,
-				impostoEstimated: false,
 				aporteInicial: null,
 				mesAnterior: null,
 				diasGain: 0,
@@ -361,7 +360,7 @@ export const getAnnualRollup = async (
 				novoAporte: 0,
 				retirada: 0,
 				capitalInvestido: null,
-				patrimonio: null,
+				patrimonioFinal: null,
 				hasTrades: false,
 			})
 			continue
@@ -379,17 +378,26 @@ export const getAnnualRollup = async (
 			: null
 		const { value: mensalMaximo } = getMensalMaximo({ mensalEsperado })
 
-		// Tax estimation — Tax Engine sub-project not deployed; uses account's tax rate.
-		const imposto = agg.netCents > 0 ? Math.round(agg.netCents * taxRate) : 0
+		// Compute DARF-grade tax using the canonical tax engine for filing-grade rigor.
+		// This includes R$10 floor per Lei 9.430/96 art. 68 and loss carryover chaining.
+		// eslint-disable-next-line no-await-in-loop -- carryoverInCents chains sequentially; months must execute in order
+		const taxComputeResult = await recomputeAccountMonth({
+			accountId,
+			year,
+			month,
+			carryoverInCents,
+		})
+		carryoverInCents = taxComputeResult.carryoverOutCents
+		const imposto = taxComputeResult.darfDueCents
 		const taxas = agg.grossCents - agg.netCents
 
 		const capitalInvestido =
 			mesAnterior !== null ? mesAnterior + novoAporte : null
-		const patrimonio =
+		const patrimonioFinal =
 			capitalInvestido !== null
 				? capitalInvestido + agg.netCents - retirada
 				: null
-		runningPatrimonio = patrimonio
+		runningPatrimonio = patrimonioFinal
 
 		// monthlyRiskConfig.accountBalance is text-encrypted but plaintext while encryption disabled.
 		const aporteInicial = plan?.accountBalance
@@ -405,7 +413,6 @@ export const getAnnualRollup = async (
 			pontos: agg.points,
 			taxas,
 			imposto,
-			impostoEstimated: true,
 			aporteInicial,
 			mesAnterior,
 			diasGain: agg.gainDays,
@@ -415,7 +422,7 @@ export const getAnnualRollup = async (
 			novoAporte,
 			retirada,
 			capitalInvestido,
-			patrimonio,
+			patrimonioFinal,
 			hasTrades: agg.tradingDays > 0,
 		})
 	}
@@ -440,7 +447,7 @@ export const getAnnualRollup = async (
 			(s, r) => s + (r.capitalInvestido ?? 0),
 			0
 		),
-		patrimonio: activeRows[activeRows.length - 1]?.patrimonio ?? null,
+		patrimonioFinal: activeRows[activeRows.length - 1]?.patrimonioFinal ?? null,
 	}
 
 	return {
@@ -449,7 +456,6 @@ export const getAnnualRollup = async (
 			year,
 			rows,
 			totals,
-			taxEstimated: true,
 			withdrawalTargetPercent: effectiveWithdrawal,
 		},
 	}

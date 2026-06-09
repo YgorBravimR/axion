@@ -3,6 +3,7 @@
 import { Activity, Target, TrendingUp, Trophy } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
+import { useFormatting } from "@/hooks/use-formatting"
 
 interface QuarterPlanVsRealityProps {
 	quarterLabel: string
@@ -13,13 +14,6 @@ interface QuarterPlanVsRealityProps {
 	monthsTraded: number
 	totalMonths: number
 }
-
-const formatBRL = (cents: number): string =>
-	(cents / 100).toLocaleString("pt-BR", {
-		style: "currency",
-		currency: "BRL",
-		maximumFractionDigits: 0,
-	})
 
 const QuarterPlanVsReality = ({
 	quarterLabel,
@@ -32,6 +26,13 @@ const QuarterPlanVsReality = ({
 }: QuarterPlanVsRealityProps) => {
 	const t = useTranslations("plan.planVsReality")
 	const tQ = useTranslations("plan.quarter.planVsReality")
+	const { locale } = useFormatting()
+	const formatBRL = (cents: number): string =>
+		(cents / 100).toLocaleString(locale === "pt-BR" ? "pt-BR" : "en-US", {
+			style: "currency",
+			currency: locale === "pt-BR" ? "BRL" : "USD",
+			maximumFractionDigits: 0,
+		})
 	const planSet = planGoalCents !== null && planGoalCents > 0
 	const projection = projectedNetCents
 	const hitPctOfGoal = planSet ? (realizedNetCents / planGoalCents!) * 100 : 0

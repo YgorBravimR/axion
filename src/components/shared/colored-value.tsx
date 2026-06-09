@@ -1,5 +1,8 @@
+"use client"
+
 import { memo } from "react"
 import { cn } from "@/lib/utils"
+import { useFormatting } from "@/hooks/use-formatting"
 
 type ValueType = "currency" | "percent" | "r-multiple" | "number"
 
@@ -42,6 +45,7 @@ const ColoredValueInner = ({
 	formatFn,
 	neutralThreshold = 0,
 }: ColoredValueProps) => {
+	const { locale } = useFormatting()
 	const isPositive = value > neutralThreshold
 	const isNegative = value < -neutralThreshold
 	const isNeutral = !isPositive && !isNegative
@@ -70,7 +74,7 @@ const ColoredValueInner = ({
 				return `${sign}${absValue.toFixed(2)}R`
 			case "number":
 			default:
-				return `${sign}${absValue.toLocaleString("pt-BR")}`
+				return `${sign}${absValue.toLocaleString(locale === "pt-BR" ? "pt-BR" : "en-US")}`
 		}
 	}
 

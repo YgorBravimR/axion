@@ -1,3 +1,5 @@
+import { fromBasisPoints, type BasisPoints } from "./rate-conversion"
+
 interface DailyResult {
 	date: Date
 	grossPnlCents: number
@@ -19,15 +21,19 @@ interface IrrfResult {
  * Only days with positive gross P&L contribute.
  *
  * @param days - array of daily results (date + grossPnlCents)
- * @param irrfRateBps - withholding rate in basis points (default 100 = 1%)
+ * @param irrfRateBps - withholding rate in basis points (default asBasisPoints(100) = 1%)
  * @returns totalIrrfCents and per-day breakdown
  */
-const accumulateIrrf = (days: DailyResult[], irrfRateBps: number): IrrfResult => {
+const accumulateIrrf = (
+	days: DailyResult[],
+	irrfRateBps: BasisPoints
+): IrrfResult => {
 	const irrfByDay = days.map((day) => ({
 		date: day.date,
-		irrfCents: day.grossPnlCents > 0
-			? Math.round((day.grossPnlCents * irrfRateBps) / 10000)
-			: 0,
+		irrfCents:
+			day.grossPnlCents > 0
+				? Math.round(day.grossPnlCents * fromBasisPoints(irrfRateBps))
+				: 0,
 	}))
 
 	const totalIrrfCents = irrfByDay.reduce((sum, day) => sum + day.irrfCents, 0)

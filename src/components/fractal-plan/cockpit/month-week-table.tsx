@@ -3,6 +3,7 @@
 import { Calendar } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
+import { useFormatting } from "@/hooks/use-formatting"
 
 interface PlanWeek {
 	weeklyPlanId: string
@@ -26,9 +27,6 @@ interface MonthWeekTableProps {
 	oneRCents: number
 }
 
-const formatBRL = (cents: number): string =>
-	(cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-
 const formatDateRangePT = (startISO: string, endISO: string): string => {
 	const s = new Date(startISO)
 	const e = new Date(endISO)
@@ -50,6 +48,9 @@ const MonthWeekTable = ({
 	oneRCents,
 }: MonthWeekTableProps) => {
 	const t = useTranslations("plan.month")
+	const { formatCurrency } = useFormatting()
+
+	const formatBRL = (cents: number): string => formatCurrency(cents / 100)
 	const sortedPlan = [...planWeeks].sort((a, b) => a.isoWeek - b.isoWeek)
 	const maxAbsActualCents = Math.max(
 		0,

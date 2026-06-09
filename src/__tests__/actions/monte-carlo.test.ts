@@ -709,6 +709,7 @@ describe("runComparisonSimulation", () => {
 						worstMaxRDrawdown: -14,
 						profitablePct: 65,
 						sharpeRatio: 1.5,
+						rSharpe: 1.5,
 						sortinoRatio: 1.7,
 						expectedRPerTrade: 0.2,
 						expectedMaxWinStreak: 6,

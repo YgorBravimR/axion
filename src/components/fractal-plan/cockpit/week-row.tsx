@@ -1,4 +1,7 @@
+"use client"
+
 import { cn } from "@/lib/utils"
+import { useFormatting } from "@/hooks/use-formatting"
 
 interface WeekRowProps {
 	weekIndex: number
@@ -8,9 +11,6 @@ interface WeekRowProps {
 	isCurrent?: boolean
 	isPast?: boolean
 }
-
-const formatBRL = (cents: number): string =>
-	(cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
 
 const formatR = (r: number | null): string =>
 	r === null ? "—" : `${r >= 0 ? "+" : ""}${r.toFixed(1)}R`
@@ -23,6 +23,9 @@ const WeekRow = ({
 	isCurrent,
 	isPast,
 }: WeekRowProps) => {
+	const { formatCurrency } = useFormatting()
+	const formatBRL = (cents: number): string => formatCurrency(cents / 100)
+
 	const display = isPast && actualR !== null ? actualR : targetR
 	const tone =
 		display === null

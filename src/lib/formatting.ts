@@ -71,7 +71,22 @@ export const formatNumber = (
 }
 
 /**
- * Format percentage according to locale
+ * Format a percentage according to the supplied locale.
+ *
+ * **Input convention**: 0-100 scale (e.g., 60 → "60.0%"), NOT 0-1 decimal.
+ * Callers compute percentages as `(part / whole) * 100` upstream; the formatter
+ * then divides by 100 once internally because `Intl.NumberFormat` with
+ * `style: "percent"` multiplies by 100 — the divide-then-multiply round-trip
+ * is intentional, do not "simplify" it away.
+ *
+ * Rounding: `Intl.NumberFormat` halfExpand (half away from zero) — differs from
+ * `.toFixed()` (banker's rounding). Stay on this formatter for user-facing
+ * percentages; `.toFixed()` is acceptable only for chart labels and PDF static
+ * renders.
+ *
+ * @param value - percentage on 0-100 scale
+ * @param locale - locale for number formatting
+ * @param decimals - decimal places (default 1)
  */
 export const formatPercent = (
 	value: number,
@@ -255,18 +270,30 @@ export const formatHourOfDay = (hour: number, locale: Locale): string => {
 
 /**
  * Format currency in compact form for charts (e.g., $10K, $1.5M)
+ *
+ * **Locale note**: The `locale` parameter controls the output language/region, not the
+ * currency symbol. The `currency` code (BRL, USD, etc.) determines the symbol. However,
+ * for compact notation (K/M/B suffixes), only English-language locales have a standard
+ * convention. Portuguese locales do not have equivalent compact shorthand for large numbers.
+ * To maintain consistency across the product, this formatter defaults to "en-US" locale
+ * (English-centric K/M/B format) even in Portuguese UI. Callers CAN override by passing
+ * `locale` if they want alternative behavior, but "en-US" is the canonical choice.
+ *
  * @param value - numeric value to format
  * @param currency - currency code (e.g., "BRL", "USD"); defaults to "BRL"
+ * @param locale - BCP 47 language tag (e.g., "pt-BR", "en-US"); defaults to "en-US"
+ *                 (override only if a locale-specific compact convention exists)
  */
 export const formatCompactCurrency = (
 	value: number,
-	currency: string = "BRL"
+	currency: string = "BRL",
+	locale: string = "en-US"
 ): string => {
 	const absValue = Math.abs(value)
 	const sign = value < 0 ? "-" : ""
 
 	// Use Intl.NumberFormat for locale-aware compact formatting
-	const formatter = new Intl.NumberFormat("en-US", {
+	const formatter = new Intl.NumberFormat(locale, {
 		style: "currency",
 		currency,
 		notation: "compact",
@@ -282,12 +309,14 @@ export const formatCompactCurrency = (
  * Format currency with sign for charts (e.g., +$1.5K, -$500)
  * @param value - numeric value to format
  * @param currency - currency code (e.g., "BRL", "USD"); defaults to "BRL"
+ * @param locale - BCP 47 language tag (e.g., "pt-BR", "en-US"); defaults to "en-US"
  */
 export const formatCompactCurrencyWithSign = (
 	value: number,
-	currency: string = "BRL"
+	currency: string = "BRL",
+	locale: string = "en-US"
 ): string => {
-	const formatted = formatCompactCurrency(Math.abs(value), currency)
+	const formatted = formatCompactCurrency(Math.abs(value), currency, locale)
 	if (value > 0) {
 		return `+${formatted}`
 	}
@@ -299,21 +328,64 @@ export const formatCompactCurrencyWithSign = (
 
 /**
  * Format percentage for charts (e.g., +15.2%, -3.5%)
+ *
+ * **Input convention**: 0-100 scale (e.g., 60 → "+60.0%"), NOT 0-1 decimal.
+ * Uses `Intl.NumberFormat` with "halfExpand" rounding for consistency with `formatPercent`.
+ * Chart label context (not directly user-facing numbers) means the formatter prioritizes
+ * consistency over precision, so the Intl approach is preferred over `.toFixed()`.
+ *
+ * @param value - percentage on 0-100 scale
+ * @param showSign - whether to prefix positive values with "+" (default true)
  */
 export const formatChartPercent = (value: number, showSign = true): string => {
+	const absValue = Math.abs(value)
 	const sign = showSign && value > 0 ? "+" : ""
-	return `${sign}${value.toFixed(1)}%`
+	const formatted = new Intl.NumberFormat("en-US", {
+		style: "percent",
+		minimumFractionDigits: 1,
+		maximumFractionDigits: 1,
+	}).format(absValue / 100)
+	return `${sign}${formatted}`
 }
 
 /**
  * Format ratio for display (handles infinity)
+ *
+ * Guards against IEEE 754 Infinity / -Infinity / NaN by returning "∞" / "−∞" / "—"
+ * For finite values, uses `Intl.NumberFormat` for consistency with other formatters.
+ *
+ * @param value - numeric ratio
  */
 export const formatRatio = (value: number): string => {
-	if (!Number.isFinite(value)) {
+	if (value === Infinity) {
 		return "∞"
 	}
-	return value.toFixed(2)
+	if (value === -Infinity) {
+		return "−∞"
+	}
+	if (!Number.isFinite(value)) {
+		return "—"
+	}
+	return new Intl.NumberFormat("en-US", {
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
+	}).format(value)
 }
+
+/**
+ * Returns `value.toFixed(decimals)` for finite numbers, otherwise the fallback
+ * string. Guards against IEEE 754 Infinity / -Infinity / NaN leaking into
+ * user-facing display (e.g., profit factor with zero losses → Infinity).
+ *
+ * @param value - numeric value to format
+ * @param decimals - decimal places (default 2)
+ * @param fallback - string to render when value is not finite (default "—")
+ */
+export const formatFinite = (
+	value: number,
+	decimals = 2,
+	fallback = "—"
+): string => (Number.isFinite(value) ? value.toFixed(decimals) : fallback)
 
 /**
  * Format currency with sign prefix (e.g., +R$ 1.234,56 or -$ 500,00)
