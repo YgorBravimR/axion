@@ -8,11 +8,16 @@ import {
 	type ChangeEvent,
 } from "react"
 import { useTranslations } from "next-intl"
-import { Lock } from "lucide-react"
+import { Lock, Info } from "lucide-react"
 import { fromCents } from "@/lib/money"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+	Tooltip,
+	TooltipTrigger,
+	TooltipContent,
+} from "@/components/ui/tooltip"
 import type {
 	AdvancedSimulationParams,
 	RiskSimulationParams,
@@ -431,6 +436,36 @@ const RiskParamsForm = ({
 					}
 					prefix="BRL"
 				/>
+				<div className="gap-s-100 flex flex-col">
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<label className="text-tiny text-txt-300 gap-s-100 flex cursor-help items-center">
+								{t("originalCapital")}
+								<Info
+									className="text-txt-300 h-3.5 w-3.5 shrink-0"
+									aria-hidden="true"
+								/>
+							</label>
+						</TooltipTrigger>
+						<TooltipContent id="tooltip-original-capital">
+							{t("originalCapitalInfo")}
+						</TooltipContent>
+					</Tooltip>
+					<CurrencyField
+						label=""
+						valueCents={
+							params.originalCapitalCents ?? params.accountBalanceCents
+						}
+						onChange={(val) =>
+							updateSimple({
+								originalCapitalCents: val
+									? Math.round(parseFloat(val || "0") * 100)
+									: undefined,
+							})
+						}
+						prefix="BRL"
+					/>
+				</div>
 				<Field
 					label={t("riskPerTrade")}
 					value={params.riskPerTradePercent}

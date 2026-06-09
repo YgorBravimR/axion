@@ -10,6 +10,7 @@ import { useRegisterPageGuide } from "@/components/ui/page-guide"
 import { riskSimulationGuide } from "@/components/ui/page-guide/guide-configs/risk-simulation"
 import { SimulationConfigPanel } from "./simulation-config-panel"
 import { SummaryCards } from "./summary-cards"
+import { InsightsCallouts } from "./insights-callouts"
 import { EquityCurveOverlay } from "./equity-curve-overlay"
 import { TradeComparisonTable } from "./trade-comparison-table"
 import { SkippedTradesWarning } from "./skipped-trades-warning"
@@ -219,6 +220,8 @@ const RiskSimulationContent = ({
 			{result && (
 				<div className="space-y-m-400 sm:space-y-m-500">
 					<SummaryCards summary={result.summary} />
+
+					<InsightsCallouts summary={result.summary} />
 
 					<EquityCurveOverlay equityCurve={result.equityCurve} />
 

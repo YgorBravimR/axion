@@ -26,6 +26,7 @@ type SimulationMode = "simple" | "advanced"
 interface SimpleSimulationParams {
 	mode: "simple"
 	accountBalanceCents: number
+	originalCapitalCents?: number
 	riskPerTradePercent: number
 	dailyLossPercent: number
 	dailyProfitTargetPercent: number | null
@@ -44,6 +45,7 @@ interface SimpleSimulationParams {
 interface AdvancedSimulationParams {
 	mode: "advanced"
 	accountBalanceCents: number
+	originalCapitalCents?: number
 	decisionTree: DecisionTreeConfig
 	dailyLossCents: number
 	dailyProfitTargetCents: number | null
@@ -188,6 +190,14 @@ interface SimulationSummary {
 	pnlDeltaCents: number
 	daysHitDailyLimit: number
 	daysHitDailyTarget: number
+
+	// Capital and return % info
+	originalCapitalCents: number
+	simulatedCapitalCents: number
+	originalReturnPercent: number
+	simulatedReturnPercent: number
+	returnPercentDelta: number
+	totalTradingDays: number
 }
 
 // ==========================================

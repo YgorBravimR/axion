@@ -3893,7 +3893,9 @@
 			"profitReinvestmentPercent": "Reinvestment %",
 			"dailyLoss": "Daily Loss Limit",
 			"monthlyLoss": "Monthly Loss Limit",
-			"baseRisk": "Base Risk (from profile)"
+			"baseRisk": "Base Risk (from profile)",
+			"originalCapital": "Original Capital (historical period)",
+			"originalCapitalInfo": "Enter the actual capital you had during the original trading period. We use this to compute your return rate (% of capital), which is the apples-to-apples way to compare two strategies operating at different account sizes. Multiplying R$ values across different capitals would assume you'd have scaled risk proportionally — which most traders don't."
 		},
 		"preview": {
 			"loading": "Loading trade preview...",
@@ -3922,7 +3924,15 @@
 			"executed": "Executed",
 			"skipped": "Skipped",
 			"daysHitLimit": "Days Hit Loss Limit",
-			"daysHitTarget": "Days Hit Profit Target"
+			"daysHitTarget": "Days Hit Profit Target",
+			"returnOf": "+{percent}% of R${capital}",
+			"pp": "{delta}pp return",
+			"tooltips": {
+				"winRate": "Win-rate of EXECUTED trades only. If sim shows a drop, it often reflects the cap mechanic biasing the executed pool toward losers (cap fires after losses, removing recovery winners that come after).",
+				"profitFactor": "Gross profit / gross loss across executed trades. Position-size scaling preserves this ratio in theory; deltas come from cap-filtered subset bias.",
+				"avgR": "Average R-multiple across executed trades. Should be stable across position sizes — drops indicate selection bias from the cap filter.",
+				"maxDrawdown": "Peak-to-trough equity decline. Scales roughly linearly with position size at the same per-trade risk %. Bigger size = bigger drawdown in R$ AND in % if capital didn't scale equivalently."
+			}
 		},
 		"chart": {
 			"title": "Equity Curve: Original vs Simulated",
@@ -3991,6 +4001,24 @@
 			"failedToRunSimulation": "Failed to run simulation",
 			"tradeYearsRetrieved": "Trade years retrieved",
 			"failedToGetTradeYears": "Failed to get trade years"
+		},
+		"insights": {
+			"capSelectionBias": {
+				"title": "Cap selection bias",
+				"body": "You discarded {skipPct}% of trades. Daily/monthly limits cut the day after losses, removing recovery wins that would come later. The win-rate of the executed sample underrepresents the real strategy."
+			},
+			"sameEdge": {
+				"title": "Same edge, different size",
+				"body": "Return % is nearly identical ({origPct}% vs {simPct}%). The R$ difference comes from account size, not strategy quality."
+			},
+			"drawdownTradeoff": {
+				"title": "Amplified drawdown",
+				"body": "Bigger positions increased P&L but max drawdown grew from {origDd}% to {simDd}%. Return scales linearly; risk scales too."
+			},
+			"capTooTight": {
+				"title": "Daily cap too tight",
+				"body": "On {capPct}% of days the daily limit was hit. Consider loosening it — may unlock more of your strategy's edge (at the cost of bigger drawdowns)."
+			}
 		}
 	},
 	"equityShield": {
