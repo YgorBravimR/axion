@@ -75,14 +75,10 @@ const CommissionFeeImpactCardAsync = async () => {
 
 interface AnnualReportSectionAsyncProps {
 	currentYear: number
-	currentMonth: number
-	currentAccountId: string
 }
 
 const AnnualReportSectionAsync = async ({
 	currentYear,
-	currentMonth,
-	currentAccountId,
 }: AnnualReportSectionAsyncProps) => {
 	const [annualRollupResult, weeklyMetaResult, capitalSnapshotResult] =
 		await Promise.all([
@@ -189,7 +185,6 @@ const TaxSectionAsync = async ({
 	currentYear,
 	currentAccountId,
 }: TaxSectionAsyncProps) => {
-	const currentMonth = new Date().getMonth() + 1
 	const [yearSummaryResult, carryoverResult] = await Promise.all([
 		cachedGetYearTaxSummary({
 			accountId: currentAccountId,

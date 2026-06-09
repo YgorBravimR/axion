@@ -610,7 +610,6 @@ const getMonthlyResultsWithPropInternal = async (
 			return { status: "error", message: t("actions.monthlyFetchFailed") }
 		}
 
-		const userSettings = settingsResult.data
 		const report = reportResult.data
 
 		// Account fields are plaintext
@@ -712,7 +711,6 @@ export const getMonthlyProjection = async (): Promise<{
 			return { status: "error", message: t("actions.settingsFetchFailed") }
 		}
 
-		const userSettings = settingsResult.data
 		const decryptedAccount = account
 		const totalTradingDays = getBusinessDaysInMonth(now)
 		const daysTraded = getUniqueTradingDays(monthTrades)

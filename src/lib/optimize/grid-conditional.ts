@@ -142,7 +142,6 @@ const generateConditionalGrid = (
 
 		for (const combo of combinations) {
 			let nextValue: PrimitiveValue | null = null
-			const shouldExpand = false
 
 			// 1. Owner lock takes precedence over everything else.
 			if (leaf.managedBy) {

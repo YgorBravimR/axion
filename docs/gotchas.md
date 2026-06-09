@@ -284,6 +284,34 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Date logged**: 2026-05-20.
 - **Source**: feat/hawks-mode-v0 pre-push failure during manifesto §6 backlog filing.
 
+### Refactor-leftover intermediate vars escape tsc but trip `no-unused-vars`
+
+- **What**: When refactoring a server action to "validate result then assign for use", it's idiomatic to write `if (settingsResult.status !== "success" || !settingsResult.data) return errorPath; const userSettings = settingsResult.data; const report = reportResult.data;` and then build downstream output using only `report`. Several scan-fix refactors (`T6` hoisting, `T3/T4` async-section splits) consistently left these intermediate `const X = result.data` assignments unread. tsc doesn't flag them (they're typed correctly), but ESLint `no-unused-vars` does. The fix is mechanical (delete the line) but the bug-class re-ships every refactor because the pattern reads like documentation of what the validated payload is.
+- **What to do**: After ANY refactor of a server action or async-section that changes which fetch results flow downstream, run `pnpm lint` immediately. The warnings will point at the dead intermediates. Delete the assignments; the validation check above them is the load-bearing part. If you keep it, prefix with `_` to make the intent explicit (e.g. `const _userSettings = ...` to flag "kept for future use"), but expect a reviewer to push back.
+- **Date logged**: 2026-06-09.
+- **Source**: `chore/perf-scan-2026-06-09` Tier-1 lint cleanup after the T6/T3/T4 perf refactors — `src/app/actions/reports.ts:613,715` and `src/components/reports/async-sections.tsx:192`.
+
+### Async server component props passed by the caller but unread by the body
+
+- **What**: When you split a heavy `page.tsx` into Suspense-streamed async server components (the canonical T3/T4 perf pattern), it's tempting to forward "everything the parent had" — `currentYear`, `currentMonth`, `currentAccountId` — to every section "in case the section needs it." Sections that only call `getAnnualRollup(year)` end up with two unread props. tsc accepts the unused props (they're valid in the type), `next dev` runs fine, but `pnpm lint` fires `no-unused-vars` on the destructure. Net effect: dead data flows through the RSC tree, the prop interface lies about what the section depends on, and any reader-side check ("what changes when `currentAccountId` changes?") returns a misleading answer.
+- **What to do**: When extracting a Suspense-wrapped section, slim the props to exactly what the body reads. The caller passes only what's needed — if a later requirement adds a dependency, add the prop then. Catch existing drift with: `rg -nU '^\s*[a-zA-Z]+,$' <async-section-file>` (look for destructured props), then for each one `rg -c <propName> <same-file>`; any prop that appears exactly once (the destructure) is dead.
+- **Date logged**: 2026-06-09.
+- **Source**: `chore/perf-scan-2026-06-09` — `AnnualReportSectionAsync` in `src/components/reports/async-sections.tsx` received `currentMonth` + `currentAccountId` from page.tsx but the body only used `currentYear`.
+
+### TS interface / type-alias arg names trigger `no-unused-vars` — prefix with `_`
+
+- **What**: ESLint's `@typescript-eslint/no-unused-vars` rule runs on **interface method signatures and type-alias function signatures**, not just on actual function declarations. So `interface Props { onStartEdit: (setting: Setting) => void }` warns because the arg name `setting` is "unused" inside the type itself. Same for `type Translator = (key: string, values?: ...) => string`. Axion's lint config has `argsIgnorePattern: "^_"` set, so the fix is to prefix arg names with underscore: `onStartEdit: (_setting: Setting) => void`. The arg names are documentation only in TS signatures — the underscore prefix preserves intent without firing the rule.
+- **What to do**: When defining callback prop types or function-type aliases, prefix every arg with `_` from the start: `(_event: MouseEvent) => void`. Existing convention in the codebase: `onOpenChange: (_open: boolean) => void`, `onFrozen?: (_preset: HeroWinPreset) => void`. Detector for drift: `rg -nU --multiline 'interface \w+ \{[^}]*: \([a-z]+:' src/components/ src/hooks/` (interface members with non-underscored arg names — manual triage; you want most to start with `_`).
+- **Date logged**: 2026-06-09.
+- **Source**: `chore/perf-scan-2026-06-09` Tier-1 lint cleanup — `src/components/command-center/asset-rules-panel.tsx:65-72` (7 sites) and `src/components/optimize/freeze-hero-modal.tsx:43,112` (4 sites).
+
+### Static skeleton lists still trip `no-array-index-key` — use a precomputed string-key tuple
+
+- **What**: Even when a list never reorders (the canonical skeleton case — N placeholder rows that mount once and unmount once), the pattern `Array.from({ length: N }).map((_, i) => <Skeleton key={i} />)` fires `@eslint-react/no-array-index-key` in Tier-2 strict. Existing gotcha "Tier-1 vs Tier-2 disable-comments are tier-asymmetric" rules out a `// eslint-disable-next-line` here (the rule is strict-only, so the disable comment would error in Tier-1). A `useMemo`-wrapped UUID array is overkill (turns RSC into client component just for keys).
+- **What to do**: Declare a module-level `as const` string array of stable keys keyed on length, then map over the string elements: `const KEYS_6 = ["a","b","c","d","e","f"] as const` then `{KEYS_6.map(key => <Skeleton key={key} />)}`. Stays RSC, lint-clean, zero runtime cost. Pattern landed in `src/components/reports/report-skeletons.tsx` 2026-06-09. Reuse the same const for any other skeleton needing the same row count.
+- **Date logged**: 2026-06-09.
+- **Source**: `chore/perf-scan-2026-06-09` Tier-2 lint cleanup — the new `report-skeletons.tsx` created during T3/T4 Suspense refactor had 9 array-index-key warnings.
+
 ---
 
 ## Accessibility

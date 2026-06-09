@@ -84,11 +84,7 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 							</>
 						}
 					>
-						<AnnualReportSectionAsync
-							currentYear={currentYear}
-							currentMonth={currentMonth}
-							currentAccountId={currentAccountId}
-						/>
+						<AnnualReportSectionAsync currentYear={currentYear} />
 					</Suspense>
 
 					{/* Tax Section */}

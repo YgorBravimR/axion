@@ -62,14 +62,14 @@ interface AssetRuleRowProps {
 	isSaving: boolean
 	isDeleting: boolean
 	editing: EditingState | null
-	onStartEdit: (setting: AssetSettingWithAsset) => void
+	onStartEdit: (_setting: AssetSettingWithAsset) => void
 	onSaveEdit: () => Promise<void>
 	onCancelEdit: () => void
-	onBiasChange: (assetId: string, bias: BiasType | null) => Promise<void>
-	onDelete: (assetId: string) => Promise<void>
-	onAddTrade: (assetId: string) => void
-	onEditChange: (state: EditingState) => void
-	t: (key: string) => string
+	onBiasChange: (_assetId: string, _bias: BiasType | null) => Promise<void>
+	onDelete: (_assetId: string) => Promise<void>
+	onAddTrade: (_assetId: string) => void
+	onEditChange: (_state: EditingState) => void
+	t: (_key: string) => string
 }
 
 const AssetRuleRow = memo(

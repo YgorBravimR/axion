@@ -63,7 +63,6 @@ const paretoRetain = (runs: OptimizationRun[]): OptimizationRun[] => {
 	let maxSharpeSeen = -Infinity
 
 	for (const run of sorted) {
-		const pf = run.summary.profitFactor ?? 0
 		const pnl = run.summary.totalPnlCents ?? 0
 		const sharpe = run.summary.sharpeRatio ?? 0
 
