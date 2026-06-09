@@ -231,45 +231,37 @@ const CommandCenterContent = ({
 				availableAssets={availableAssets}
 			/>
 
-			{/* Main Grid */}
-			<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid md:grid-cols-2">
-				{/* Left Column */}
-				<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 min-w-0">
-					{/* Daily Checklist — premium+ only */}
-					{isPremium && (
-						<DailyChecklist
-							checklists={completions}
-							onManageClick={handleManageChecklist}
-							onRefresh={refreshCompletions}
-							isReadOnly={isReadOnly}
-							isRefreshing={isCompletionsRefreshing}
-						/>
-					)}
+			{/* Main Grid — reflowed:
+			    • Daily Checklist gets its own full-width row.
+			    • Pre-Market & Post-Market notes sit side-by-side as a
+			      morning/evening pair, which mirrors the session arc
+			      and removes the "lonely card in a third row" gap. */}
+			{isPremium && (
+				<DailyChecklist
+					checklists={completions}
+					onManageClick={handleManageChecklist}
+					onRefresh={refreshCompletions}
+					isReadOnly={isReadOnly}
+					isRefreshing={isCompletionsRefreshing}
+				/>
+			)}
 
-					{/* Pre-Market Notes — premium+ only */}
-					{isPremium && (
-						<PreMarketNotes
-							dailyPlan={dailyPlan}
-							onRefresh={refreshDailyPlan}
-							isReadOnly={isReadOnly}
-							isRefreshing={isDailyPlanRefreshing}
-						/>
-					)}
+			{isPremium && (
+				<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid md:grid-cols-2">
+					<PreMarketNotes
+						dailyPlan={dailyPlan}
+						onRefresh={refreshDailyPlan}
+						isReadOnly={isReadOnly}
+						isRefreshing={isDailyPlanRefreshing}
+					/>
+					<PostMarketNotes
+						dailyPlan={dailyPlan}
+						onRefresh={refreshDailyPlan}
+						isReadOnly={isReadOnly}
+						isRefreshing={isDailyPlanRefreshing}
+					/>
 				</div>
-
-				{/* Right Column */}
-				<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 min-w-0">
-					{/* Post-Market Notes — premium+ only */}
-					{isPremium && (
-						<PostMarketNotes
-							dailyPlan={dailyPlan}
-							onRefresh={refreshDailyPlan}
-							isReadOnly={isReadOnly}
-							isRefreshing={isDailyPlanRefreshing}
-						/>
-					)}
-				</div>
-			</div>
+			)}
 
 			{/* Asset Rules — premium+ only */}
 			{isPremium && (

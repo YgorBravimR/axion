@@ -19,6 +19,10 @@ const AnnualTaxSummary = ({
 	locale = "pt-BR",
 }: AnnualTaxSummaryProps) => {
 	const t = useTranslations("tax.annualSummary")
+	// Negate a positive cents value into a "deduction" cell — but collapse a
+	// hard zero so the DARF table stops rendering "-R$ 0,00" on every empty
+	// line item (which read as a glitch).
+	const asDeduction = (cents: number): number => (cents === 0 ? 0 : -cents)
 	const fmt = (cents: number) => formatCurrency(cents / 100, locale, "BRL")
 
 	const rows: Array<{
@@ -28,20 +32,24 @@ const AnnualTaxSummary = ({
 		muted?: boolean
 	}> = [
 		{ label: t("rows.grossGain"), value: summary.grossGainCents },
-		{ label: t("rows.totalFees"), value: -summary.totalFeesCents, muted: true },
+		{
+			label: t("rows.totalFees"),
+			value: asDeduction(summary.totalFeesCents),
+			muted: true,
+		},
 		{
 			label: t("rows.irrfWithheld"),
-			value: -summary.totalIrrfCents,
+			value: asDeduction(summary.totalIrrfCents),
 			muted: true,
 		},
 		{
 			label: t("rows.darfPaid"),
-			value: -summary.totalDarfPaidCents,
+			value: asDeduction(summary.totalDarfPaidCents),
 			muted: true,
 		},
 		{
 			label: t("rows.darfPending"),
-			value: -summary.totalDarfPendingCents,
+			value: asDeduction(summary.totalDarfPendingCents),
 			muted: true,
 		},
 		{

@@ -93,9 +93,10 @@ const StatCard = memo(
 				<dt
 					id={labelId}
 					className={cn(
-						"text-txt-300 font-medium tracking-wide uppercase",
+						"text-txt-300 truncate font-medium tracking-wide uppercase",
 						sizes.label
 					)}
+					title={label}
 				>
 					{label}
 				</dt>

@@ -8,6 +8,7 @@ import {
 	formatCompactCurrencyWithSign,
 	formatFinite,
 	formatR,
+	computeChartDomain,
 } from "@/lib/formatting"
 import { useChartConfig } from "@/hooks/use-chart-config"
 import { cn } from "@/lib/utils"
@@ -147,14 +148,12 @@ const HoldingPeriodChart = memo(
 			)
 		}
 
-		// Domain with padding
-		const maxAbsMetric = Math.max(
-			...activeBuckets.map((d) => Math.abs(d[metricKey])),
+		// Data-driven domain — collapses the unused half when all buckets are
+		// one-sided (e.g. all winners during a hot streak).
+		const domain = computeChartDomain(
+			activeBuckets.map((d) => d[metricKey]),
 			isRMode ? 0.5 : 100
 		)
-		const domainMax = isRMode
-			? Math.ceil(maxAbsMetric * 1.2 * 100) / 100
-			: Math.ceil(maxAbsMetric * 1.1)
 
 		// Best and worst buckets (only show worst if different from best)
 		const sorted = activeBuckets.toSorted((a, b) => b[metricKey] - a[metricKey])
@@ -211,7 +210,7 @@ const HoldingPeriodChart = memo(
 							tickLine={false}
 							interval={0}
 							axisLine={false}
-							domain={[-domainMax, domainMax]}
+							domain={domain}
 							width={yAxisWidth}
 						/>
 						<ChartTooltip content={<CustomTooltip labels={tooltipLabels} />} />

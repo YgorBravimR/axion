@@ -420,15 +420,27 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 				)}
 			</div>
 
-			{/* Legend */}
-			<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-500 text-tiny text-txt-300 flex flex-wrap items-center justify-center">
+			{/* Legend — intensity ramp shows magnitude as well as direction,
+			    mirroring the opacity steps in getCellStyle (30/50/70/full). */}
+			<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 text-tiny text-txt-300 flex flex-wrap items-center justify-center">
 				<div className="gap-s-200 flex items-center">
-					<div className="bg-trade-buy/70 h-3 w-3 rounded-sm" />
-					<span>{t("time.profitable")}</span>
-				</div>
-				<div className="gap-s-200 flex items-center">
-					<div className="bg-trade-sell/70 h-3 w-3 rounded-sm" />
-					<span>{t("time.losing")}</span>
+					<span className="text-trade-sell font-medium tabular-nums">
+						{maxAbsValue > 0 ? `-${formatMetric(maxAbsValue)}` : "−"}
+					</span>
+					<div className="gap-s-100 flex items-center">
+						<div className="bg-trade-sell h-3 w-3 rounded-sm" />
+						<div className="bg-trade-sell/70 h-3 w-3 rounded-sm" />
+						<div className="bg-trade-sell/50 h-3 w-3 rounded-sm" />
+						<div className="bg-trade-sell/30 h-3 w-3 rounded-sm" />
+						<div className="bg-bg-300/30 h-3 w-3 rounded-sm" />
+						<div className="bg-trade-buy/30 h-3 w-3 rounded-sm" />
+						<div className="bg-trade-buy/50 h-3 w-3 rounded-sm" />
+						<div className="bg-trade-buy/70 h-3 w-3 rounded-sm" />
+						<div className="bg-trade-buy h-3 w-3 rounded-sm" />
+					</div>
+					<span className="text-trade-buy font-medium tabular-nums">
+						{maxAbsValue > 0 ? `+${formatMetric(maxAbsValue)}` : "+"}
+					</span>
 				</div>
 				<div className="gap-s-200 flex items-center">
 					<div className="bg-bg-300/30 h-3 w-3 rounded-sm" />

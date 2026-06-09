@@ -617,7 +617,7 @@
 		"liveStatus": {
 			"title": "Live Trading Status",
 			"loading": "Loading status...",
-			"noProfile": "No risk profile linked to your monthly plan. Link one in the Plan tab to see live trading guidance.",
+			"noProfile": "No risk profile linked to your monthly plan. Open your monthly plan to set one and unlock live trading guidance.",
 			"phase": {
 				"base": "Base",
 				"loss_recovery": "Recovery",
@@ -729,6 +729,8 @@
 			"maxTrades": "Max Trades",
 			"placeholder": "Write your thoughts, market outlook, focus goals...",
 			"postMarketPlaceholder": "How did the day go? What did you learn?",
+			"preMarketEmpty": "Capture your bias, key levels, and risk plan each morning. Create a monthly plan to enable.",
+			"postMarketEmpty": "Review what played out vs your plan after the close. Create a monthly plan to enable.",
 			"save": "Save",
 			"saving": "Saving...",
 			"moods": {
@@ -3780,7 +3782,8 @@
 			"backToLogin": "Back to login",
 			"signInAgain": "To select your trading account, please sign in again.",
 			"backToLoginButton": "Back to Login",
-			"selectAccountLabel": "Select account"
+			"selectAccountLabel": "Select account",
+			"defaultBadge": "Default"
 		},
 		"errors": {
 			"emailExists": "An account with this email already exists",

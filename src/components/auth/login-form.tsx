@@ -173,58 +173,79 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 				)}
 
 				<div className="space-y-s-300">
-					{accounts.map((account) => (
-						<button
-							key={account.id}
-							type="button"
-							onClick={() => setSelectedAccountId(account.id)}
-							disabled={isPending}
-							className={cn(
-								"gap-m-400 p-m-400 flex w-full items-center rounded-lg border text-left transition-colors",
-								selectedAccountId === account.id
-									? "border-acc-100 bg-acc-100/10"
-									: "border-bg-300 bg-bg-200 hover:border-bg-400",
-								isPending && "cursor-not-allowed opacity-50"
-							)}
-						>
-							<div
+					{accounts.map((account) => {
+						// "Personal personal" is visually redundant — when the row's
+						// display name already includes the accountType label
+						// (case-insensitive), suppress the type chip so the row reads
+						// as a single noun instead of a duplicated pair.
+						const typeLabel = account.accountType
+						const nameContainsType = account.name
+							.toLowerCase()
+							.includes(typeLabel.toLowerCase())
+						return (
+							<button
+								key={account.id}
+								type="button"
+								onClick={() => setSelectedAccountId(account.id)}
+								disabled={isPending}
 								className={cn(
-									"flex h-10 w-10 items-center justify-center rounded-lg",
-									account.accountType === "prop"
-										? "bg-acc-100/20 text-acc-100"
-										: "bg-txt-300/20 text-txt-200"
-								)}
-							>
-								{account.accountType === "prop" ? (
-									<Building2 className="h-5 w-5" aria-hidden="true" />
-								) : (
-									<User className="h-5 w-5" aria-hidden="true" />
-								)}
-							</div>
-
-							<div className="flex-1">
-								<p className="text-txt-100 font-medium">{account.name}</p>
-								<p className="text-tiny text-txt-300 capitalize">
-									{account.accountType}
-								</p>
-							</div>
-
-							<div
-								className={cn(
-									"h-5 w-5 rounded-full border-2 transition-colors",
+									"gap-m-400 p-m-400 flex w-full items-center rounded-lg border text-left transition-colors",
 									selectedAccountId === account.id
-										? "border-acc-100 bg-acc-100"
-										: "border-bg-400"
+										? "border-acc-100 bg-acc-100/10"
+										: "border-bg-300 bg-bg-200 hover:border-bg-400",
+									isPending && "cursor-not-allowed opacity-50"
 								)}
 							>
-								{selectedAccountId === account.id && (
-									<div className="flex h-full w-full items-center justify-center">
-										<div className="bg-bg-100 h-2 w-2 rounded-full" />
+								<div
+									className={cn(
+										"flex h-10 w-10 items-center justify-center rounded-lg",
+										account.accountType === "prop"
+											? "bg-acc-100/20 text-acc-100"
+											: "bg-txt-300/20 text-txt-200"
+									)}
+								>
+									{account.accountType === "prop" ? (
+										<Building2 className="h-5 w-5" aria-hidden="true" />
+									) : (
+										<User className="h-5 w-5" aria-hidden="true" />
+									)}
+								</div>
+
+								<div className="min-w-0 flex-1">
+									<div className="gap-s-200 flex items-center">
+										<p className="text-txt-100 truncate font-medium">
+											{account.name}
+										</p>
+										{account.isDefault && (
+											<span className="bg-acc-100/15 text-acc-100 text-micro px-s-200 shrink-0 rounded-full py-0.5 font-medium">
+												{tSelect("defaultBadge")}
+											</span>
+										)}
 									</div>
-								)}
-							</div>
-						</button>
-					))}
+									{!nameContainsType && (
+										<p className="text-tiny text-txt-300 capitalize">
+											{typeLabel}
+										</p>
+									)}
+								</div>
+
+								<div
+									className={cn(
+										"h-5 w-5 shrink-0 rounded-full border-2 transition-colors",
+										selectedAccountId === account.id
+											? "border-acc-100 bg-acc-100"
+											: "border-bg-400"
+									)}
+								>
+									{selectedAccountId === account.id && (
+										<div className="flex h-full w-full items-center justify-center">
+											<div className="bg-bg-100 h-2 w-2 rounded-full" />
+										</div>
+									)}
+								</div>
+							</button>
+						)
+					})}
 				</div>
 
 				<div className="space-y-s-300">

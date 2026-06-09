@@ -617,7 +617,7 @@
 		"liveStatus": {
 			"title": "Status ao Vivo",
 			"loading": "Carregando status...",
-			"noProfile": "Nenhum perfil de risco vinculado ao seu plano mensal. Vincule um na aba Plano para ver orientações em tempo real.",
+			"noProfile": "Nenhum perfil de risco vinculado ao seu plano mensal. Abra seu plano mensal para definir um e ativar a orientação ao vivo.",
 			"phase": {
 				"base": "Base",
 				"loss_recovery": "Recuperação",
@@ -729,6 +729,8 @@
 			"maxTrades": "Máx. Trades",
 			"placeholder": "Escreva seus pensamentos, visão de mercado, metas...",
 			"postMarketPlaceholder": "Como foi o dia? O que você aprendeu?",
+			"preMarketEmpty": "Registre seu viés, níveis-chave e plano de risco a cada manhã. Crie um plano mensal para habilitar.",
+			"postMarketEmpty": "Revise o que aconteceu vs seu plano após o fechamento. Crie um plano mensal para habilitar.",
 			"save": "Salvar",
 			"saving": "Salvando...",
 			"moods": {
@@ -3780,7 +3782,8 @@
 			"backToLogin": "Voltar ao login",
 			"signInAgain": "Para selecionar sua conta de trading, faça login novamente.",
 			"backToLoginButton": "Voltar para Login",
-			"selectAccountLabel": "Selecionar conta"
+			"selectAccountLabel": "Selecionar conta",
+			"defaultBadge": "Padrão"
 		},
 		"errors": {
 			"emailExists": "Uma conta com este e-mail já existe",

@@ -22,8 +22,6 @@ interface PreMarketNotesProps {
 	isRefreshing?: boolean
 }
 
-const NO_PLAN_HINT_KEY = "noPlanPrompt"
-
 export const PreMarketNotes = ({
 	dailyPlan,
 	onRefresh,
@@ -31,7 +29,6 @@ export const PreMarketNotes = ({
 	isRefreshing = false,
 }: PreMarketNotesProps) => {
 	const t = useTranslations("commandCenter.notes")
-	const tPlan = useTranslations("commandCenter.plan")
 	const { showToast } = useToast()
 
 	const [preMarketNotes, setPreMarketNotes] = useState("")
@@ -113,9 +110,7 @@ export const PreMarketNotes = ({
 						{t("preMarket")}
 					</h3>
 				</div>
-				<p className="mt-s-200 text-tiny text-txt-300">
-					{tPlan(NO_PLAN_HINT_KEY)}
-				</p>
+				<p className="mt-s-200 text-tiny text-txt-300">{t("preMarketEmpty")}</p>
 			</Panel>
 		)
 	}

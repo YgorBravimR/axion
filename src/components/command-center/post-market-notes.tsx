@@ -26,7 +26,6 @@ export const PostMarketNotes = ({
 	isRefreshing = false,
 }: PostMarketNotesProps) => {
 	const t = useTranslations("commandCenter.notes")
-	const tPlan = useTranslations("commandCenter.plan")
 	const { showToast } = useToast()
 
 	const [postMarketNotes, setPostMarketNotes] = useState("")
@@ -73,7 +72,7 @@ export const PostMarketNotes = ({
 					</h3>
 				</div>
 				<p className="mt-s-200 text-tiny text-txt-300">
-					{tPlan("noPlanPrompt")}
+					{t("postMarketEmpty")}
 				</p>
 			</Panel>
 		)

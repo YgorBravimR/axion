@@ -65,19 +65,19 @@ const WinRateCard = ({
 	const subValue = useMemo(
 		() =>
 			hasData ? (
-				<p className="flex gap-s-200">
+				<p className="gap-s-200 flex items-center">
 					<span className="text-trade-buy">
 						{winCount}
 						{t("w")}
 					</span>
-					{"/"}
+					<span aria-hidden="true">·</span>
 					<span className="text-trade-sell">
 						{lossCount}
 						{t("l")}
 					</span>
 					{(breakevenCount ?? 0) > 0 && (
 						<>
-							{"/"}
+							<span aria-hidden="true">·</span>
 							<span>
 								{breakevenCount}
 								{t("be")}

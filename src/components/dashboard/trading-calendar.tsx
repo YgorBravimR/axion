@@ -205,7 +205,7 @@ export const TradingCalendar = memo(
 					{/* Days of week header */}
 					<div
 						className={cn(
-							"sm:gap-s-100 grid gap-px",
+							"sm:gap-s-100 gap-s-100 grid",
 							hasWeekendTrades ? "grid-cols-7" : "grid-cols-5"
 						)}
 					>
@@ -222,7 +222,7 @@ export const TradingCalendar = memo(
 					{/* Calendar grid */}
 					<div
 						className={cn(
-							"sm:gap-s-100 grid gap-px",
+							"sm:gap-s-100 gap-s-100 grid",
 							hasWeekendTrades ? "grid-cols-7" : "grid-cols-5"
 						)}
 					>
