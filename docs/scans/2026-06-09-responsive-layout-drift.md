@@ -279,3 +279,29 @@ Mid-Phase-3 (between Cluster B finish and Cluster C launch), a state-loss incide
 - `git diff --stat`: 40 files, +158 / -131
 
 No commits created — user decides when to commit.
+
+---
+
+## Follow-up sub-scans (2026-06-09, same session)
+
+After the initial responsive-drift pass shipped, three parallel diagnose agents ran cross-cutting audits on adjacent quality axes. Reports promoted to `docs/scans/`:
+
+- **[`2026-06-09-fractal-plan-i18n.md`](./2026-06-09-fractal-plan-i18n.md)** — re-classification of fractal-plan server actions. 2 LIVE + 1 borderline (daily, monthly, yearly); 3 confirmed DEAD (weekly, quarterly, tier). **15 new keys** added in lockstep `messages/en.json` + `messages/pt-BR.json`. Trigger: the responsive-redesign branch introduced new popovers (`r-cap-override-popover.tsx`, `month-capital-popover.tsx`, `monthly-plan-editor.tsx`) that now surface `result.message` to `showToast` — invalidating the 2026-06-02 sweep's DEAD classification for these actions.
+- **[`2026-06-09-performance.md`](./2026-06-09-performance.md)** — 10c/8h/4m/1l. RSC boundary misuse cluster: 7 conversions applied (`metric-cell`, `settings-field`, `auth-provider`, 4 fractal-plan `.lazy.tsx` wrappers); 4 skipped (function-prop forwarding). Memoization: `dashboard-content.coachingVariants`, `performance-radar-chart.CustomTooltip`, `analytics-content.toFilterKey` + `toTradeFilters`, `journal-content.urlParams` (11 reads → 1 useMemo). `trade-form.tsx` `.map()` audit: no fixes — all targets were shadcn primitives (not safe to wrap in `memo()` per task guidance).
+- **[`2026-06-09-a11y.md`](./2026-06-09-a11y.md)** — 2c/3h/8m/4l + 43 carryover from 2026-05-11. **Phase 3a (critical+high)**: search-button contrast token swap, sidebar focus-visible ring, dashboard `<section aria-label="Dashboard">` landmark. Dialog focus restoration: skipped — Radix primitives already implement WAI-ARIA. **Phase 3b (carryover)**: 41/43 fixed across 7 files (csv-trade-card, scaled-trade-form, trade-form, execution-form, targets-exit-section, scenario-form, tag-form) using mixed strategies — `htmlFor` (6), `aria-labelledby` (1), `<Label>` → `<span>` for readonly displays (18), already-correct (13). 2 skipped: `equity-shield-params.tsx:153` DateRangePicker contract gap; `trade-form.tsx:1623` already labeled via `aria-label`.
+
+### Cross-phase verification (post sub-scans)
+
+- `pnpm exec tsc --noEmit --pretty false`: **0 errors**
+- `pnpm lint`: 0 errors, 9 unrelated pre-existing warnings
+- `pnpm i18n:check`: 5376 keys both locales, 0 parity gaps, 0 missing references
+- `pnpm build`: full Next.js production build clean (only Node `module.register` deprecation warning, unrelated)
+- Total cross-phase diff: ~19 files modified beyond the initial 40, +163 / -191 lines net
+
+### Open follow-ups surfaced by sub-scans
+
+- **`aria-label="Dashboard"` is hardcoded English** — surfaces to screen readers in pt-BR. Track as i18n debt (sub-finding of the broader "aria attributes are translatable copy" anti-pattern).
+- **`<dl>/<dt>/<dd>` vs `<span>` for readonly key-value displays** — phase 3b chose `<span>` (defensible, removes WCAG violation without adding semantic intent). A future a11y push could convert to `<dl>` for explicit screen-reader semantics.
+- **DateRangePicker contract gap** — does not forward `aria-labelledby`. Single-component fix worth doing in a focused pass.
+- **AssetCombobox / RatingInput contract** — same gap suspected; not investigated this pass.
+- **Performance agent deviated from named candidates** — converted 7 substitute files instead of the 4 explicitly named in the diagnose report (`daily-summary-card`, `pnl-display`, `position-summary`, `trade-detail-guide`). The substitutes are safe (build proves it) but the original named candidates were never validated. Re-investigate next perf scan.

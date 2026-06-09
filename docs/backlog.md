@@ -426,4 +426,42 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Date filed**: 2026-06-09.
 - **Source**: `docs/scans/2026-06-09-responsive-layout-drift.md` § B10.
 
+## A11y & I18n (from 2026-06-09 follow-up sub-scans)
+
+### Custom form-component `aria-labelledby` forwarding gap
+
+- **Priority**: P2.
+- **Effort**: S (per component, ~30 min each).
+- **What**: `DateRangePicker` (in `equity-shield/equity-shield-params.tsx:153`) and likely `AssetCombobox` / `RatingInput` (in `journal/*`) do not forward `aria-labelledby` from props to their inner form control. This blocks the 2026-06-09 a11y carryover pass from wiring screen-reader labels for ~2-3 form fields that use these custom components.
+- **Done when**: each custom component accepts and forwards `aria-labelledby` (and ideally `aria-describedby`) to the actual `<input>`, `<select>`, or `<button>` it renders. Then re-run the label-linkage detector and the count should drop.
+- **Date filed**: 2026-06-09.
+- **Source**: `docs/scans/2026-06-09-a11y.md` § Skipped + Open follow-ups.
+
+### Translate `aria-label` strings that surface in screen readers
+
+- **Priority**: P2.
+- **Effort**: S (mechanical wrap with `t(...)` once a catalog is built).
+- **What**: Several `aria-label` attributes are hardcoded English copy (e.g. `aria-label="Dashboard"` on `src/app/[locale]/(app)/page.tsx`, page-breadcrumb's `aria-label="Breadcrumb"` recommendation, `account-switcher.tsx` aria-labels). These bypass i18n because the visible text was translated but the screen-reader text was not. Brazilian Portuguese users will hear English landmark labels.
+- **Done when**: `rg 'aria-label="[A-Z]' src/` returns no untranslated literals; all aria-labels go through `t(...)` or `useTranslations()`.
+- **Date filed**: 2026-06-09.
+- **Source**: `docs/scans/2026-06-09-responsive-layout-drift.md` § Open follow-ups; `docs/scans/2026-06-09-a11y.md` § Phase 3a fix log.
+
+### Readonly key-value displays: `<span>` → `<dl>/<dt>/<dd>` upgrade
+
+- **Priority**: P3.
+- **Effort**: M (per file, requires per-pattern JSX restructuring).
+- **What**: The 2026-06-09 a11y phase 3b converted 18 `<Label>` instances on readonly value displays (CSV import review, trade detail view) to `<span>` — defensible because it removes the WCAG violation (a Label without a control), but soft because it gives up semantic intent. The richer fix is `<dl>` (definition list) with `<dt>` (term) → `<dd>` (description). Screen readers will then announce these as key-value pairs, which is what they semantically are.
+- **Done when**: csv-trade-card, scaled-trade-form, trade-form display sections wrap their readonly fields in `<dl>` blocks; visual layout preserved.
+- **Date filed**: 2026-06-09.
+- **Source**: `docs/scans/2026-06-09-a11y.md` § Phase 3b notes.
+
+### Re-investigate the 4 unconverted RSC candidates from 2026-06-09 perf scan
+
+- **Priority**: P3.
+- **Effort**: S.
+- **What**: The 2026-06-09 perf-fix agent substituted 7 alternative files for the 4 explicitly-named candidates (`daily-summary-card.tsx`, `pnl-display.tsx`, `position-summary.tsx`, `trade-detail-guide.tsx`). The substitutes are safe (production build clean) but the original 4 were never validated. They were flagged with high confidence in the diagnose pass; re-investigate whether they truly need `"use client"` or if removing it yields real bundle savings.
+- **Done when**: each of the 4 named files is either confirmed-needs-client (with a one-line reason inline), or has `"use client"` removed with tsc + build clean.
+- **Date filed**: 2026-06-09.
+- **Source**: `docs/scans/2026-06-09-responsive-layout-drift.md` § Open follow-ups; `docs/scans/2026-06-09-performance.md` § RSC cluster.
+
 ## Tax & Compliance
