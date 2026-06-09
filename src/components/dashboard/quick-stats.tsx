@@ -5,7 +5,7 @@ import { Flame, TrendingUp, AlertTriangle, Activity } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import type { StreakData, OverallStats } from "@/types"
 import { cn } from "@/lib/utils"
-import { formatDateLocale } from "@/lib/formatting"
+import { formatDateLocale, getPnlSignClass } from "@/lib/formatting"
 import { useFormatting } from "@/hooks/use-formatting"
 import { Panel } from "@/components/ui/panel"
 import type { Locale } from "@/i18n/config"
@@ -129,9 +129,9 @@ export const QuickStats = ({ streakData, stats }: QuickStatsProps) => {
 							: undefined
 					}
 					valueClass={
-						streakData?.worstDay && streakData.worstDay.pnl >= 0
-							? "text-trade-buy"
-							: "text-trade-sell"
+						streakData?.worstDay
+							? getPnlSignClass(streakData.worstDay.pnl)
+							: "text-txt-200"
 					}
 				/>
 				<StatRow
@@ -139,14 +139,14 @@ export const QuickStats = ({ streakData, stats }: QuickStatsProps) => {
 					label={t("totalTrades")}
 					value={stats?.totalTrades.toString() || "--"}
 				/>
-				<div className="mt-m-500 gap-s-300 pt-m-400 grid grid-cols-2">
-					<div className="bg-bg-100 p-s-300 min-w-0 rounded-md text-center">
+				<div className="mt-m-500 gap-s-300 pt-m-400 grid grid-cols-1 sm:grid-cols-2">
+					<div className="bg-bg-100 p-s-200 sm:p-s-300 min-w-0 rounded-md text-center">
 						<p className="text-tiny text-txt-300 truncate">{t("longestWin")}</p>
 						<p className="mt-s-100 text-body text-trade-buy font-semibold">
 							{streakData?.longestWinStreak || 0}
 						</p>
 					</div>
-					<div className="bg-bg-100 p-s-300 min-w-0 rounded-md text-center">
+					<div className="bg-bg-100 p-s-200 sm:p-s-300 min-w-0 rounded-md text-center">
 						<p className="text-tiny text-txt-300 truncate">
 							{t("longestLoss")}
 						</p>

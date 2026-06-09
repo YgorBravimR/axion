@@ -204,7 +204,17 @@ const AnalyticsContent = ({
 	}, [initialDashboard, initialTagStats, accountKey, applyDashboard])
 
 	// Stable key for current filters — drives refetch when URL params change
-	const filterKey = toFilterKey(filters, groupBy)
+	// Memoized to avoid expensive JSON.stringify on every render
+	const filterKey = useMemo(
+		() => toFilterKey(filters, groupBy),
+		[filters, groupBy]
+	)
+
+	// Memoize trade filters to avoid recreating object on every effect run
+	const tradeFilters = useMemo(
+		() => toTradeFilters(filters, groupBy),
+		[filters, groupBy]
+	)
 
 	// Refetch data when URL params change (filterKey changes)
 	// On first render with no URL filters, filterKey matches initial props, so we skip.
@@ -227,8 +237,6 @@ const AnalyticsContent = ({
 		setIsPending(true)
 		const capturedKey = filterKey
 		void (async () => {
-			const tradeFilters = toTradeFilters(filters, groupBy)
-
 			const [dashResult, tagResult] = await Promise.all([
 				getAnalyticsDashboard(tradeFilters),
 				getTagStats(tradeFilters),
@@ -277,7 +285,7 @@ const AnalyticsContent = ({
 				className="border-bg-300 bg-bg-200 p-m-500 sm:p-l-700 lg:p-l-800 rounded-lg border"
 			>
 				<h2 className="text-h2 sm:text-h1 text-txt-100 font-semibold">
-					Cumulative P&L
+					{t("cumulativePnLTitle")}
 				</h2>
 				<div className="mt-m-500 sm:mt-l-700">
 					<CumulativePnlChart data={equityCurve} />

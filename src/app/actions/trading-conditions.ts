@@ -23,6 +23,7 @@ export const createCondition = async (
 	input: CreateConditionInput
 ): Promise<ActionResponse<TradingCondition>> => {
 	const t = await getTranslations("playbook.conditionErrors")
+	const tMsg = await getTranslations("playbook.messages")
 	try {
 		const { userId } = await requireAuth()
 		const validated = createConditionSchema.parse(input)
@@ -41,7 +42,7 @@ export const createCondition = async (
 
 		return {
 			status: "success",
-			message: "Condition created successfully",
+			message: tMsg("conditionCreatedSuccessfully"),
 			data: condition,
 		}
 	} catch (error) {
@@ -87,6 +88,7 @@ export const updateCondition = async (
 	input: Partial<CreateConditionInput>
 ): Promise<ActionResponse<TradingCondition>> => {
 	const t = await getTranslations("playbook.conditionErrors")
+	const tMsg = await getTranslations("playbook.messages")
 	try {
 		const { userId } = await requireAuth()
 
@@ -124,7 +126,7 @@ export const updateCondition = async (
 
 		return {
 			status: "success",
-			message: "Condition updated successfully",
+			message: tMsg("conditionUpdatedSuccessfully"),
 			data: condition,
 		}
 	} catch (error) {
@@ -161,6 +163,7 @@ export const getConditions = async (
 	category?: ConditionCategory
 ): Promise<ActionResponse<TradingCondition[]>> => {
 	const t = await getTranslations("playbook.conditionErrors")
+	const tMsg = await getTranslations("playbook.messages")
 	try {
 		const { userId } = await requireAuth()
 
@@ -182,7 +185,7 @@ export const getConditions = async (
 
 		return {
 			status: "success",
-			message: "Conditions retrieved successfully",
+			message: tMsg("conditionsRetrievedSuccessfully"),
 			data: result,
 		}
 	} catch (error) {
@@ -210,6 +213,7 @@ export const deleteCondition = async (
 	id: string
 ): Promise<ActionResponse<void>> => {
 	const t = await getTranslations("playbook.conditionErrors")
+	const tMsg = await getTranslations("playbook.messages")
 	try {
 		const { userId } = await requireAuth()
 
@@ -239,7 +243,7 @@ export const deleteCondition = async (
 
 		return {
 			status: "success",
-			message: "Condition deleted successfully",
+			message: tMsg("conditionDeletedSuccessfully"),
 		}
 	} catch (error) {
 		return {

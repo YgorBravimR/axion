@@ -561,7 +561,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 					>
 						{/* Direction Toggle */}
 						<div className="space-y-s-200">
-							<Label id="label-scaled-direction">{t("direction.label")}</Label>
+							<span>{t("direction.label")}</span>
 							<div className="gap-m-400 flex">
 								<button
 									type="button"
@@ -599,7 +599,9 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 						{/* Asset */}
 						<div className="space-y-s-200">
 							<div className="gap-s-200 flex items-center">
-								<Label id="label-scaled-asset">{t("assetRequired")}</Label>
+								<Label id="label-scaled-asset" htmlFor="scaled-trade-asset">
+									{t("assetRequired")}
+								</Label>
 								{selectedAsset && (
 									<Tooltip>
 										<TooltipTrigger asChild>
@@ -656,9 +658,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 						{/* Entries Section */}
 						<div id="scaled-trade-entries" className="space-y-s-300">
 							<div className="flex items-center justify-between">
-								<Label id="label-scaled-entries" className="text-action-buy">
-									{tScaled("entries")}
-								</Label>
+								<span className="text-action-buy">{tScaled("entries")}</span>
 								<Button
 									id="scaled-trade-add-entry"
 									type="button"
@@ -710,9 +710,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 						{/* Exits Section */}
 						<div id="scaled-trade-exits" className="space-y-s-300">
 							<div className="flex items-center justify-between">
-								<Label id="label-scaled-exits" className="text-action-sell">
-									{tScaled("exits")}
-								</Label>
+								<span className="text-action-sell">{tScaled("exits")}</span>
 								<Button
 									id="scaled-trade-add-exit"
 									type="button"
@@ -870,9 +868,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 
 						{/* Risk Management */}
 						<div id="scaled-trade-risk" className="space-y-m-400">
-							<Label id="label-scaled-risk-management">
-								{tScaled("riskManagement")}
-							</Label>
+							<span>{tScaled("riskManagement")}</span>
 							<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-3">
 								<div className="space-y-s-200">
 									<Label
@@ -921,12 +917,9 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 									)}
 								</div>
 								<div className="space-y-s-200">
-									<Label
-										id="label-scaled-risk-amount"
-										className="text-small text-txt-300"
-									>
+									<span className="text-small text-txt-300">
 										{t("riskAmount")} ({selectedAsset?.currency ?? "$"})
-									</Label>
+									</span>
 									<div className="border-bg-300 bg-bg-100 px-s-300 flex h-10 items-center rounded-md border">
 										{calculatedRisk !== null ? (
 											<span className="text-small text-txt-100 font-medium">
@@ -954,7 +947,12 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 					>
 						<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2">
 							<div className="space-y-s-200">
-								<Label id="label-scaled-timeframe">{t("timeframe")}</Label>
+								<Label
+									id="label-scaled-timeframe"
+									htmlFor="scaled-trade-timeframe"
+								>
+									{t("timeframe")}
+								</Label>
 								<Select
 									value={timeframeId || ""}
 									onValueChange={(value) => setTimeframeId(value || null)}
@@ -981,7 +979,12 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 
 							{strategies.length > 0 && (
 								<div className="space-y-s-200">
-									<Label id="label-scaled-strategy">{t("strategy")}</Label>
+									<Label
+										id="label-scaled-strategy"
+										htmlFor="scaled-trade-strategy"
+									>
+										{t("strategy")}
+									</Label>
 									<Select
 										value={strategyId || ""}
 										onValueChange={(value) => setStrategyId(value || null)}
@@ -1076,9 +1079,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 
 						{/* Compliance */}
 						<div className="space-y-s-200">
-							<Label id="label-scaled-followed-plan">
-								{t("didYouFollowPlan")}
-							</Label>
+							<span>{t("didYouFollowPlan")}</span>
 							<div className="gap-m-400 flex">
 								<button
 									type="button"
@@ -1137,7 +1138,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 					>
 						{setupTags.length > 0 && (
 							<div className="space-y-s-200">
-								<Label id="label-scaled-setup-type">{t("setupType")}</Label>
+								<span>{t("setupType")}</span>
 								<div className="gap-s-200 flex flex-wrap">
 									{setupTags.map((tag) => (
 										<button
@@ -1162,7 +1163,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 
 						{mistakeTags.length > 0 && (
 							<div className="space-y-s-200">
-								<Label id="label-scaled-mistakes">{t("mistakes")}</Label>
+								<span>{t("mistakes")}</span>
 								<div className="gap-s-200 flex flex-wrap">
 									{mistakeTags.map((tag) => (
 										<button
@@ -1188,7 +1189,7 @@ export const ScaledTradeForm = forwardRef<TradeFormRef, ScaledTradeFormProps>(
 						{/* General Tags */}
 						{generalTags.length > 0 && (
 							<div className="space-y-s-200">
-								<Label id="label-scaled-general-tags">{t("generalTags")}</Label>
+								<span>{t("generalTags")}</span>
 								<div className="gap-s-200 flex flex-wrap">
 									{generalTags.map((tag) => (
 										<button

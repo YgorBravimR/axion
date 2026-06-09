@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import { connection } from "next/server"
+import { getCopyrightYear } from "@/lib/copyright-year"
 
 interface AuthLayoutProps {
 	children: ReactNode
@@ -9,7 +10,7 @@ const AuthLayout = async ({ children }: AuthLayoutProps) => {
 	await connection()
 
 	return (
-		<div className="p-m-400 pb-l-900 flex min-h-dvh flex-col items-center justify-center">
+		<div className="p-m-400 pb-m-400 md:pb-l-900 flex min-h-dvh flex-col items-center justify-center">
 			{/* Skip-to-content link — visually hidden until focused */}
 			<a
 				href="#main"
@@ -18,12 +19,12 @@ const AuthLayout = async ({ children }: AuthLayoutProps) => {
 				Skip to content
 			</a>
 
-			<main id="main" className="w-full max-w-sm md:max-w-md">
+			<main id="main" className="w-full max-w-sm md:max-w-md lg:max-w-lg">
 				{children}
 			</main>
 			<footer className="py-s-300 fixed right-0 bottom-0 left-0 flex items-center justify-center gap-1.5">
 				<span className="text-micro text-txt-placeholder tracking-wide">
-					© {new Date().getFullYear()} Axion
+					© {getCopyrightYear()} Axion
 				</span>
 				<span className="text-micro text-txt-placeholder">·</span>
 				<span className="text-micro text-txt-placeholder tracking-wide">

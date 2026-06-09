@@ -55,6 +55,26 @@ This file is a **router**. Read it fully every session. Only mandatory rules and
 
     When delegating, always pass a **self-contained prompt** — subagents start with no conversation context. State the goal, the relevant files/symbols, the constraints, and what "done" looks like.
 
+11. **Never touch working-tree or branch state from inside a subagent.** Subagents (and the orchestrator) must never run any command that discards or rewrites uncommitted work or moves the branch. Forbidden commands — refuse to run them, no exceptions:
+    - `git restore`, `git restore --staged`, `git checkout -- <path>`, `git checkout .`
+    - `git stash`, `git stash pop`, `git stash drop`
+    - `git reset` (any mode), `git clean`
+    - `git checkout <branch>`, `git switch`, `git rebase`, `git merge`, `git pull`, `git fetch`
+    - `git commit`, `git push`, `git tag`, `git branch -D`
+    - any `rm` / `mv` of files under version control that isn't part of the user's explicit task
+    - any tool that wipes node_modules / regenerates lockfiles unprompted
+
+    Read-only git is fine: `git status`, `git diff`, `git log`, `git show`, `git ls-files`, `git blame`, `git branch` (no flags).
+
+    **Why:** when subagents run in parallel, each one's "tidy up first" reflex can silently destroy a sibling agent's unstaged work. `git restore .` and `git checkout -- .` leave **no reflog trail**, so the loss is undiagnosable after the fact. We lost a wave of perf fixes this way on 2026-06-09; see `docs/postMorten/`.
+
+    **What to do instead** when you see an unexpected working-tree state:
+    - **Stop**, do not "clean up".
+    - **Report** the surprise back to the orchestrator (or user): list the unexpected files and ask whether they should be kept.
+    - If your scope genuinely requires a clean slate, **say so in your report and refuse to start** — let the orchestrator decide whether to commit, stash, or proceed despite the dirty tree.
+
+    The orchestrator is responsible for committing/branching between waves of parallel subagents. Subagents only do file edits inside their scope.
+
 ---
 
 ## Protected paths (refuse to modify without explicit user request)

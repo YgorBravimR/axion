@@ -281,7 +281,8 @@ export const AccountSwitcher = ({ isCollapsed }: AccountSwitcherProps) => {
 							>
 								<Icon className="h-4 w-4" />
 								<div className="flex-1 truncate">
-									<p className="truncate">{account.name}</p>
+									{/* Label (account name) pairs with secondary field (firm name) for hierarchy */}
+									<p className="text-small truncate">{account.name}</p>
 									{account.accountType === "prop" && account.propFirmName && (
 										<p className="text-txt-300 text-tiny truncate">
 											{account.propFirmName}
@@ -345,7 +346,10 @@ const CreateAccountDialog = ({
 }: CreateAccountDialogProps) => {
 	return (
 		<Dialog open={isOpen} onOpenChange={onOpenChange}>
-			<DialogContent id="create-account-dialog" className="sm:max-w-md">
+			<DialogContent
+				id="create-account-dialog"
+				className="max-w-[calc(100vw-2rem)] sm:max-w-md"
+			>
 				<DialogHeader>
 					<DialogTitle>{t("createAccount")}</DialogTitle>
 					<DialogDescription>{t("createAccountDesc")}</DialogDescription>

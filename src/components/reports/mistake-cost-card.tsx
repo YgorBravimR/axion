@@ -108,8 +108,8 @@ export const MistakeCostCard = ({ data }: MistakeCostCardProps) => {
 							{/* Cost bar */}
 							<div className="bg-bg-100 h-2 w-full rounded-full">
 								<div
-									className="bg-trade-sell/50 h-full rounded-full transition-[width]"
-									style={{ width: `${barWidth}%` }}
+									className="bg-trade-sell/50 h-full origin-left rounded-full transition-transform"
+									style={{ transform: `scaleX(${barWidth / 100})` }}
 								/>
 							</div>
 						</div>

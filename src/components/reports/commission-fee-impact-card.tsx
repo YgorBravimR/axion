@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, memo } from "react"
 import { useTranslations } from "next-intl"
 import { Receipt, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -308,4 +308,5 @@ const CommissionFeeImpactCard = ({ data }: CommissionFeeImpactCardProps) => {
 	)
 }
 
-export { CommissionFeeImpactCard }
+const MemoizedCommissionFeeImpactCard = memo(CommissionFeeImpactCard)
+export { MemoizedCommissionFeeImpactCard as CommissionFeeImpactCard }

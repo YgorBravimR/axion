@@ -614,10 +614,20 @@
 			"approachingLossLimit": "Aproximando do limite de perda diário",
 			"targetReached": "ALVO ATINGIDO"
 		},
+		"dailyRiskGauge": {
+			"title": "Faixa de Risco Diária",
+			"ariaLabel": "Posição do P&L diário na faixa de risco configurada",
+			"inLoss": "No Prejuízo",
+			"nearLimit": "Perto do Limite",
+			"limitHit": "Limite Atingido",
+			"inProfit": "No Lucro",
+			"nearTarget": "Perto do Alvo",
+			"targetHit": "Alvo Atingido"
+		},
 		"liveStatus": {
 			"title": "Status ao Vivo",
 			"loading": "Carregando status...",
-			"noProfile": "Nenhum perfil de risco vinculado ao seu plano mensal. Vincule um na aba Plano para ver orientações em tempo real.",
+			"noProfile": "Nenhum perfil de risco vinculado ao seu plano mensal. Abra seu plano mensal para definir um e ativar a orientação ao vivo.",
 			"phase": {
 				"base": "Base",
 				"loss_recovery": "Recuperação",
@@ -729,6 +739,8 @@
 			"maxTrades": "Máx. Trades",
 			"placeholder": "Escreva seus pensamentos, visão de mercado, metas...",
 			"postMarketPlaceholder": "Como foi o dia? O que você aprendeu?",
+			"preMarketEmpty": "Registre seu viés, níveis-chave e plano de risco a cada manhã. Crie um plano mensal para habilitar.",
+			"postMarketEmpty": "Revise o que aconteceu vs seu plano após o fechamento. Crie um plano mensal para habilitar.",
 			"save": "Salvar",
 			"saving": "Salvando...",
 			"moods": {
@@ -2034,6 +2046,13 @@
 			"windowDay": "Dia",
 			"totalTrades": "{count} trades",
 			"heatmapSubtitle": "Identifique suas janelas de operação mais e menos lucrativas",
+			"heatmapMetricLabel": "Métrica do mapa de calor",
+			"heatmapMetric": {
+				"pnl": "P&L",
+				"avgR": "R",
+				"winRate": "Acerto %",
+				"trades": "Trades"
+			},
 			"heatmapDays": {
 				"mon": "Seg",
 				"tue": "Ter",
@@ -2180,6 +2199,7 @@
 			"systemHasPositiveEdgeR": "Sua estratégia tem uma <positive>edge positiva</positive> de <amount></amount> por trade. Isso mede a qualidade da estratégia independente do tamanho da posição.",
 			"systemHasNegativeEdgeR": "Sua estratégia atualmente tem uma <negative>edge negativa</negative> de <amount></amount> por trade. Revise os critérios de entrada/saída."
 		},
+		"cumulativePnLTitle": "P&L Acumulado",
 		"rDistribution": {
 			"title": "Distribuição de R",
 			"noData": "Nenhum dado de R disponível. Adicione risco planejado aos seus trades para ver a distribuição.",
@@ -2582,6 +2602,12 @@
 			"last4WeeksAvg": "Média últimas 4 semanas: {pct}%",
 			"emptyState": "Trades insuficientes para traçar a tendência.",
 			"tooltipFormat": "Semana de {week}: {compliance}% ({followed}/{tracked} trades)"
+		},
+		"messages": {
+			"conditionCreatedSuccessfully": "Condição criada com sucesso",
+			"conditionUpdatedSuccessfully": "Condição atualizada com sucesso",
+			"conditionsRetrievedSuccessfully": "Condições recuperadas com sucesso",
+			"conditionDeletedSuccessfully": "Condição excluída com sucesso"
 		}
 	},
 	"reports": {
@@ -2594,6 +2620,14 @@
 		"weeklyMetaTitle": "Meta Semanal vs Real",
 		"annualRollupTitle": "Consolidado Anual",
 		"yearTaxTitle": "Imposto e Prejuízo Acumulado — {year}",
+		"rDistributionTitle": "Distribuição de R — {year}",
+		"rDistributionBins": {
+			"lt_neg1": "< -1R",
+			"neg1_to_0": "-1R a 0",
+			"0_to_1": "0 a 1R",
+			"1_to_2": "1R a 2R",
+			"ge_2": "≥ 2R"
+		},
 		"carryoverTitle": "Prejuízo a Compensar",
 		"monthClosing": {
 			"title": "Fechamento do Mês — {month}",
@@ -2794,7 +2828,10 @@
 		"withdrawalAmountAriaLabel": "Valor em reais",
 		"withdrawalDateAriaLabel": "Data da retirada",
 		"withdrawalEnterValidAmount": "Digite um valor válido maior que zero",
-		"withdrawalFailedToLog": "Falha ao registrar retirada"
+		"withdrawalFailedToLog": "Falha ao registrar retirada",
+		"messages": {
+			"accountNotFound": "Conta não encontrada"
+		}
 	},
 	"settings": {
 		"title": "Configurações",
@@ -3216,7 +3253,13 @@
 		},
 		"trading": {
 			"propFirms": {
-				"other": "Outro"
+				"other": "Outro",
+				"atom": "Atom",
+				"raise": "Raise",
+				"solotrader": "SoloTrader",
+				"apex": "Apex Trader Funding",
+				"topstep": "Topstep",
+				"ftmo": "FTMO"
 			}
 		},
 		"indicators": {
@@ -3765,7 +3808,9 @@
 			"backToLogin": "Voltar ao login",
 			"signInAgain": "Para selecionar sua conta de trading, faça login novamente.",
 			"backToLoginButton": "Voltar para Login",
-			"selectAccountLabel": "Selecionar conta"
+			"selectAccountLabel": "Selecionar conta",
+			"defaultBadge": "Padrão",
+			"todayLabel": "Hoje"
 		},
 		"errors": {
 			"emailExists": "Uma conta com este e-mail já existe",
@@ -4212,6 +4257,21 @@
 		"success": {
 			"imported": "{count} operações importadas com sucesso de {broker}",
 			"csvImported": "{count, plural, =1 {1 trade importado} other {# trades importados}} com sucesso."
+		},
+		"messages": {
+			"tradeImportedWithExecutions": "Trade importado com sucesso com {count} execuções",
+			"validationFailed": "Validação falhou",
+			"failedToImportTradeFromOcr": "Falha ao importar trade dos dados de OCR",
+			"assetFound": "Ativo encontrado",
+			"assetNotFound": "Ativo não encontrado",
+			"failedToValidateAsset": "Falha ao validar ativo",
+			"aiVisionAvailable": "IA Vision disponível",
+			"noAiVisionUsingTesseract": "Sem IA Vision - usando Tesseract",
+			"aiExtractionFailedFallingBackToTesseract": "Extração de IA falhou, retornando ao Tesseract",
+			"extractedTradesViaCascade": "Extraído(s) {count} trade(s) via {provider} com {confidence}% de confiança",
+			"failedToExtractTradesFromImage": "Falha ao extrair trades da imagem",
+			"noExitPricePnlCannotBeCalculated": "Sem preço de saída - P&L não pode ser calculado",
+			"validatedTrades": "Validado(s) {count} trades"
 		}
 	},
 	"notaImport": {
@@ -5115,6 +5175,10 @@
 			"overviewTitle": "Visão Geral dos Trades",
 			"overviewHint": "{count} trades — clique em um marcador para inspecionar",
 			"failedToLoad": "Falha ao carregar"
+		},
+		"renko": {
+			"entry": "entrada",
+			"exit": "saída"
 		}
 	},
 	"optimize": {
@@ -5654,7 +5718,19 @@
 			"invalidInput": "Entrada inválida.",
 			"invalidMonthFormat": "Formato de mês inválido.",
 			"monthInProgress": "Mês ainda em curso — DARF só pode ser marcada após o último dia do mês.",
-			"ledgerRowNotFoundForMonth": "Linha do ledger não encontrada para este mês."
+			"ledgerRowNotFoundForMonth": "Linha do ledger não encontrada para este mês.",
+			"ledgerRowRetrieved": "Linha de ledger recuperada.",
+			"carryoverStateRetrieved": "Estado de carryover recuperado.",
+			"noLedgerRowsToRecompute": "Nenhuma linha de ledger para recalcular.",
+			"ledgerRecomputedMonths": "Recalculado(s) {months} mês(es).",
+			"yearTaxSummaryRetrieved": "Resumo fiscal anual recuperado.",
+			"noTaxableGainThisMonth": "Nenhum ganho tributável este mês.",
+			"effectiveTaxRateRetrieved": "Alíquota fiscal efetiva recuperada.",
+			"darfMarkedAsPaid": "DARF marcado como pago.",
+			"feeRatesRetrieved": "Alíquotas de taxa recuperadas.",
+			"feeRatesListRetrieved": "Lista de alíquotas de taxa recuperada.",
+			"feeRatesSaved": "Alíquotas de taxa salvas.",
+			"feeRatesOverrideRemoved": "Sobreposição de alíquota de taxa removida."
 		},
 		"annualSummary": {
 			"title": "Resumo Anual {year}",
@@ -5808,6 +5884,20 @@
 				"overdue": "Vencido"
 			},
 			"noDarfLines": "Nenhuma linha de DARF para {year}. Clique em \"Recalcular ano\" após registrar trades."
+		},
+		"messages": {
+			"ledgerRowRetrieved": "Linha de ledger recuperada.",
+			"carryoverStateRetrieved": "Estado de carryover recuperado.",
+			"noLedgerRowsToRecompute": "Nenhuma linha de ledger para recalcular.",
+			"ledgerRecomputedMonths": "Recalculado(s) {months} mês(es).",
+			"yearTaxSummaryRetrieved": "Resumo fiscal anual recuperado.",
+			"noTaxableGainThisMonth": "Nenhum ganho tributável este mês.",
+			"effectiveTaxRateRetrieved": "Alíquota fiscal efetiva recuperada.",
+			"darfMarkedAsPaid": "DARF marcado como pago.",
+			"feeRatesRetrieved": "Alíquotas de taxa recuperadas.",
+			"feeRatesListRetrieved": "Lista de alíquotas de taxa recuperada.",
+			"feeRatesSaved": "Alíquotas de taxa salvas.",
+			"feeRatesOverrideRemoved": "Sobreposição de alíquota de taxa removida."
 		}
 	},
 	"plan": {
@@ -6396,6 +6486,41 @@
 		"dailyCount": {
 			"badge": "{ordinal} de {cap} trades hoje",
 			"atCap": "Limite diário atingido"
+		}
+	},
+	"fractalPlan": {
+		"daily": {
+			"success": {
+				"updated": "Plano diário atualizado",
+				"overrideReset": "Override redefinido",
+				"created": "Plano diário criado",
+				"fetched": "Carregado"
+			},
+			"errors": {
+				"alreadyExists": "Plano diário já existe",
+				"noActiveAccount": "Sem conta ativa",
+				"noYearlyPlan": "Sem plano anual",
+				"incompleteCascade": "Cascata incompleta"
+			}
+		},
+		"monthly": {
+			"success": {
+				"updated": "Plano mensal atualizado",
+				"overrideReset": "Override redefinido"
+			},
+			"errors": {
+				"notFound": "Plano mensal não encontrado.",
+				"forbiddenWrongAccount": "Proibido — plano mensal pertence a outra conta."
+			}
+		},
+		"yearly": {
+			"success": {
+				"createdWithSeed": "Plano anual criado com árvore fractal semeada"
+			},
+			"errors": {
+				"missingStartingBalance": "Defina o saldo inicial da conta em Configurações → Relatório Anual antes de criar um plano anual.",
+				"notFoundForYear": "Plano anual não encontrado para este ano"
+			}
 		}
 	}
 }

@@ -1,5 +1,6 @@
 "use server"
 
+import { cache } from "react"
 import { invalidateTradeData } from "@/lib/cache/invalidate"
 import { db } from "@/db/drizzle"
 import { getTranslations } from "next-intl/server"
@@ -16,7 +17,7 @@ import type {
 	AccountAssetSetting,
 } from "@/db/schema"
 import type { ActionResponse } from "@/types"
-import { eq, and, desc, gte, lte, inArray } from "drizzle-orm"
+import { eq, and, desc, gte, lte, inArray, sum } from "drizzle-orm"
 import { z } from "zod"
 import {
 	createChecklistSchema,
@@ -40,6 +41,34 @@ import type {
 	AssetSettingWithAsset,
 	DailySummary,
 } from "./command-center.types"
+
+// ==========================================
+// SHARED HELPERS
+// ==========================================
+
+/**
+ * Fetch today's trades for an account, cached per request.
+ * Used by both getCircuitBreakerStatus and getDailySummary to avoid duplicate queries.
+ */
+const getTodayTrades = cache(
+	async (
+		accountId: string,
+		today: Date
+	): Promise<(typeof trades.$inferSelect)[]> => {
+		const tomorrow = new Date(today)
+		tomorrow.setDate(tomorrow.getDate() + 1)
+
+		return db.query.trades.findMany({
+			where: and(
+				eq(trades.accountId, accountId),
+				gte(trades.entryDate, today),
+				lte(trades.entryDate, tomorrow),
+				eq(trades.isArchived, false)
+			),
+			orderBy: [desc(trades.entryDate)],
+		})
+	}
+)
 
 // ==========================================
 // CHECKLIST ACTIONS
@@ -165,14 +194,16 @@ export const updateChecklist = async (
 		}
 
 		const validated = updateChecklistSchema.parse(input)
+		const itemsString =
+			validated.items !== undefined
+				? JSON.stringify(validated.items)
+				: undefined
 
 		const [checklist] = await db
 			.update(dailyChecklists)
 			.set({
 				...(validated.name !== undefined && { name: validated.name }),
-				...(validated.items !== undefined && {
-					items: JSON.stringify(validated.items),
-				}),
+				...(itemsString !== undefined && { items: itemsString }),
 				...(validated.isActive !== undefined && {
 					isActive: validated.isActive,
 				}),
@@ -306,11 +337,13 @@ export const getTodayCompletions = async (
 					})
 				: []
 
-		// Map completions to checklists
+		// Build O(1) completion map by checklistId
+		const completionMap = new Map(completions.map((c) => [c.checklistId, c]))
+
+		// Map completions to checklists using O(1) lookup
 		const checklistsWithCompletions: ChecklistWithCompletion[] = checklists.map(
 			(checklist) => {
-				const completion =
-					completions.find((c) => c.checklistId === checklist.id) || null
+				const completion = completionMap.get(checklist.id) || null
 
 				const completedItemIds: string[] = completion
 					? ((
@@ -519,7 +552,7 @@ export const getAccountAssetSettings = async (): Promise<
 			(aa) => !existingAssetIds.has(aa.assetId)
 		)
 
-		// Auto-populate blank rows for missing assets
+		// Auto-populate blank rows for missing assets and fetch in single go
 		if (missingAssets.length > 0) {
 			await db
 				.insert(accountAssetSettings)
@@ -532,26 +565,9 @@ export const getAccountAssetSettings = async (): Promise<
 					}))
 				)
 				.onConflictDoNothing()
-
-			// Re-fetch with asset relation
-			const allSettings = await db.query.accountAssetSettings.findMany({
-				where: and(
-					eq(accountAssetSettings.userId, userId),
-					eq(accountAssetSettings.accountId, accountId),
-					eq(accountAssetSettings.isActive, true)
-				),
-				with: {
-					asset: true,
-				},
-			})
-
-			return {
-				status: "success",
-				message: t("actions.assetSettingsRetrieved"),
-				data: allSettings as AssetSettingWithAsset[],
-			}
 		}
 
+		// Return the combined result (existing + newly inserted rows)
 		return {
 			status: "success",
 			message: t("actions.assetSettingsRetrieved"),
@@ -733,19 +749,9 @@ export const getCircuitBreakerStatus = async (
 
 		const today = date ? new Date(date) : await getServerEffectiveNow()
 		today.setHours(0, 0, 0, 0)
-		const tomorrow = new Date(today)
-		tomorrow.setDate(tomorrow.getDate() + 1)
 
-		// Get today's trades
-		const todaysTrades = await db.query.trades.findMany({
-			where: and(
-				eq(trades.accountId, accountId),
-				gte(trades.entryDate, today),
-				lte(trades.entryDate, tomorrow),
-				eq(trades.isArchived, false)
-			),
-			orderBy: [desc(trades.entryDate)],
-		})
+		// Get today's trades (cached for request)
+		const todaysTrades = await getTodayTrades(accountId, today)
 
 		// Phase 4b: caps + behaviors come from the fractal-plan cascade.
 		const day = await resolveDay(accountId, today)
@@ -828,21 +834,24 @@ export const getCircuitBreakerStatus = async (
 			dailyLossLimitCents - Math.abs(Math.min(0, toCents(dailyPnL)))
 		)
 
-		// Get monthly P&L (using the target date's month)
+		// Get monthly P&L using SQL aggregate (avoid loading all rows)
 		const monthStart = new Date(today)
 		monthStart.setDate(1)
 
-		const monthlyTrades = await db.query.trades.findMany({
-			where: and(
-				eq(trades.accountId, accountId),
-				gte(trades.entryDate, monthStart),
-				eq(trades.isArchived, false)
-			),
-		})
-		const monthlyPnL = monthlyTrades.reduce(
-			(sum, trade) => sum + fromCents(trade.pnl),
-			0
-		)
+		const monthlyAgg = await db
+			.select({
+				totalPnlCents: sum(trades.pnl).mapWith(Number),
+			})
+			.from(trades)
+			.where(
+				and(
+					eq(trades.accountId, accountId),
+					gte(trades.entryDate, monthStart),
+					eq(trades.isArchived, false)
+				)
+			)
+
+		const monthlyPnL = fromCents(monthlyAgg[0]?.totalPnlCents ?? 0)
 
 		// Monthly loss limit (resolver — month↔year cascade)
 		const monthlyLossLimitCents = day
@@ -1025,19 +1034,9 @@ export const getDailySummary = async (
 
 		const today = date ? new Date(date) : await getServerEffectiveNow()
 		today.setHours(0, 0, 0, 0)
-		const tomorrow = new Date(today)
-		tomorrow.setDate(tomorrow.getDate() + 1)
 
-		// Get today's trades
-		const todaysTrades = await db.query.trades.findMany({
-			where: and(
-				eq(trades.accountId, accountId),
-				gte(trades.entryDate, today),
-				lte(trades.entryDate, tomorrow),
-				eq(trades.isArchived, false)
-			),
-			orderBy: [desc(trades.entryDate)],
-		})
+		// Get today's trades (cached for request)
+		const todaysTrades = await getTodayTrades(accountId, today)
 
 		// Calculate metrics
 		let totalPnL = 0

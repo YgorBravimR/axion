@@ -124,20 +124,20 @@ const JournalContent = () => {
 	const [isLoading, setIsLoading] = useState(true)
 	const [totalTrades, setTotalTrades] = useState(0)
 
-	// Extended filters (smart search) — read from URL params for persistence
-	const outcomesParam = urlParams.getArray("outcomes")
-	const directionsParam = urlParams.getArray("directions")
-	const assetsParam = urlParams.getArray("assets")
-	const ratingParam = urlParams.getArray("rating")
-	const followedPlanParam = urlParams.get("followedPlan")
-	const hourFromParam = urlParams.get("hourFrom")
-	const hourToParam = urlParams.get("hourTo")
-	const pnlMinParam = urlParams.get("pnlMin")
-	const pnlMaxParam = urlParams.get("pnlMax")
-	const quickFilterParam = urlParams.get("qf")
-
+	// Extended filters (smart search) — consolidated URL params read to avoid 11 context walks
 	const extendedFilters = useMemo(() => {
 		const filters: Record<string, string | string[] | undefined> = {}
+		const outcomesParam = urlParams.getArray("outcomes")
+		const directionsParam = urlParams.getArray("directions")
+		const assetsParam = urlParams.getArray("assets")
+		const ratingParam = urlParams.getArray("rating")
+		const followedPlanParam = urlParams.get("followedPlan")
+		const hourFromParam = urlParams.get("hourFrom")
+		const hourToParam = urlParams.get("hourTo")
+		const pnlMinParam = urlParams.get("pnlMin")
+		const pnlMaxParam = urlParams.get("pnlMax")
+		const quickFilterParam = urlParams.get("qf")
+
 		if (outcomesParam.length > 0) {
 			filters.outcomes = outcomesParam
 		}
@@ -172,21 +172,15 @@ const JournalContent = () => {
 		return Object.fromEntries(
 			Object.entries(filters).filter(([, v]) => v !== undefined)
 		) as Record<string, string | string[]>
-	}, [
-		outcomesParam,
-		directionsParam,
-		assetsParam,
-		ratingParam,
-		followedPlanParam,
-		hourFromParam,
-		hourToParam,
-		pnlMinParam,
-		pnlMaxParam,
-		quickFilterParam,
-	])
+	}, [urlParams])
 	const extendedFilterCount = Object.keys(extendedFilters).filter(
 		(k) => k !== "_qf"
 	).length
+
+	const dateRange = useMemo(
+		() => getDateRange(period, effectiveDate, customDateRange),
+		[period, effectiveDate, customDateRange]
+	)
 
 	const handleFiltersChange = useCallback(
 		(filters: Record<string, string | string[]>) => {
@@ -234,7 +228,7 @@ const JournalContent = () => {
 		const fetchTrades = async () => {
 			const requestId = ++latestRequestRef.current
 			setIsLoading(true)
-			const { from, to } = getDateRange(period, effectiveDate, customDateRange)
+			const { from, to } = dateRange
 
 			// Build extended filter params for the server action
 			const ext =

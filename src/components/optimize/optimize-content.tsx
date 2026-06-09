@@ -1238,7 +1238,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 			{/* ─── Step 2: Parameters ────────────────────────────── */}
 			{step === "parameters" && (
-				<div className="gap-m-500 grid grid-cols-1 lg:grid-cols-[1fr_280px]">
+				<div className="gap-m-500 grid grid-cols-1 md:grid-cols-[1fr_240px] lg:grid-cols-[1fr_280px]">
 					{/* Sweep config + base config */}
 					<div className="space-y-m-400">
 						<p className="text-small text-txt-300">

@@ -34,7 +34,7 @@ const DashboardPage = async ({ params }: DashboardPageProps) => {
 		hawksCoachingResult.status === "success" ? hawksCoachingResult.data : null
 
 	return (
-		<div className="flex h-full flex-col">
+		<section className="flex h-full flex-col" aria-label="Dashboard">
 			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1">
 				<DashboardContent
 					initialStats={stats}
@@ -49,7 +49,7 @@ const DashboardPage = async ({ params }: DashboardPageProps) => {
 					initialCapitalCents={initialCapitalCents}
 				/>
 			</div>
-		</div>
+		</section>
 	)
 }
 

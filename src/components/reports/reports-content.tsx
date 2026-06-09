@@ -12,7 +12,7 @@ import { WeeklyMetaChart } from "./weekly-meta-chart"
 import { AnnualRollupTable } from "./annual-rollup-table"
 import { CapitalEventLog } from "./capital-event-log"
 import { WithdrawalCalculator } from "./withdrawal-calculator"
-import { RDistributionTab } from "./r-distribution-tab"
+import { RDistributionServer } from "./r-distribution-server"
 import { MonthClosingSection, type AccountType } from "./month-closing-section"
 import type {
 	WeeklyReport,
@@ -123,7 +123,7 @@ export const ReportsContent = ({
 			/>
 
 			{/* Weekly and Monthly side by side on larger screens */}
-			<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid md:grid-cols-2 lg:grid-cols-2">
+			<div className="gap-m-400 sm:gap-m-500 lg:gap-m-600 grid lg:grid-cols-2">
 				<WeeklyReportCard initialReport={weeklyReport} />
 				<MonthlyReportCard initialReport={monthlyReport} />
 			</div>
@@ -196,36 +196,53 @@ export const ReportsContent = ({
 				</section>
 			)}
 
-			{(yearSummary || carryoverHistory.length > 0) && (
-				<section
-					aria-labelledby="tax-section-heading"
-					className="space-y-m-400 sm:space-y-m-500"
-				>
-					<div className="gap-s-200 flex items-center">
-						<span
-							className="bg-acc-100 h-1.5 w-1.5 rounded-full"
-							aria-hidden="true"
-						/>
-						<h2
-							id="tax-section-heading"
-							className="text-txt-200 text-tiny tracking-wider uppercase"
-						>
-							{t("yearTaxTitle", { year: currentYear })}
-						</h2>
-					</div>
-					{yearSummary && (
-						<AnnualTaxSummary year={currentYear} summary={yearSummary} />
-					)}
-					{carryoverHistory.length > 0 && (
-						<div className="space-y-s-200">
-							<h3 className="text-txt-300 text-tiny font-medium tracking-wider uppercase">
-								{t("carryoverTitle")}
-							</h3>
-							<CarryoverLedger history={carryoverHistory} />
+			{(() => {
+				// Hide the year-tax block when the ledger is empty — otherwise the
+				// Resumo Anual renders an all-zeros table that visually contradicts
+				// the Consolidado Anual above it (which reads from trades, not the
+				// ledger). Show the widget only when at least one ledger figure is
+				// non-zero, or when carry-over history exists.
+				const hasLedgerData =
+					yearSummary !== null &&
+					(yearSummary.grossGainCents !== 0 ||
+						yearSummary.totalDarfPaidCents !== 0 ||
+						yearSummary.totalDarfPendingCents !== 0 ||
+						yearSummary.totalFeesCents !== 0 ||
+						yearSummary.totalIrrfCents !== 0)
+				if (!hasLedgerData && carryoverHistory.length === 0) {
+					return null
+				}
+				return (
+					<section
+						aria-labelledby="tax-section-heading"
+						className="space-y-m-400 sm:space-y-m-500"
+					>
+						<div className="gap-s-200 flex items-center">
+							<span
+								className="bg-acc-100 h-1.5 w-1.5 rounded-full"
+								aria-hidden="true"
+							/>
+							<h2
+								id="tax-section-heading"
+								className="text-txt-200 text-tiny tracking-wider uppercase"
+							>
+								{t("yearTaxTitle", { year: currentYear })}
+							</h2>
 						</div>
-					)}
-				</section>
-			)}
+						{hasLedgerData && yearSummary && (
+							<AnnualTaxSummary year={currentYear} summary={yearSummary} />
+						)}
+						{carryoverHistory.length > 0 && (
+							<div className="space-y-s-200">
+								<h3 className="text-txt-300 text-tiny font-medium tracking-wider uppercase">
+									{t("carryoverTitle")}
+								</h3>
+								<CarryoverLedger history={carryoverHistory} />
+							</div>
+						)}
+					</section>
+				)
+			})()}
 
 			{/* R-Distribution Section (fractal plan) */}
 			<section
@@ -241,10 +258,10 @@ export const ReportsContent = ({
 						id="r-dist-section-heading"
 						className="text-txt-200 text-tiny tracking-wider uppercase"
 					>
-						R Distribution — {currentYear}
+						{t("rDistributionTitle", { year: currentYear })}
 					</h2>
 				</div>
-				<RDistributionTab
+				<RDistributionServer
 					from={new Date(currentYear, 0, 1)}
 					to={new Date(currentYear, 11, 31, 23, 59, 59)}
 				/>

@@ -61,7 +61,7 @@ const SummaryCards = ({ runs }: SummaryCardsProps) => {
 	]
 
 	return (
-		<div className="gap-s-300 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+		<div className="gap-s-300 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
 			{cards.map((card) => (
 				<div
 					key={card.label}

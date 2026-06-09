@@ -91,9 +91,6 @@ export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
 		[data, t]
 	)
 
-	// Stable tooltip element — avoids new JSX element identity each render
-	const tooltipContent = useMemo(() => <CustomTooltip />, [])
-
 	if (data.length === 0) {
 		return (
 			<Panel padding="md">
@@ -131,7 +128,7 @@ export const PerformanceRadarChart = ({ data }: PerformanceRadarChartProps) => {
 						tick={RADIUS_AXIS_TICK}
 						axisLine={false}
 					/>
-					<ChartTooltip content={tooltipContent} />
+					<ChartTooltip content={<CustomTooltip />} />
 					<Radar
 						name={tCharts("performance")}
 						dataKey="normalized"

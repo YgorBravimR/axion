@@ -174,8 +174,6 @@ export interface YearlyOverview {
 	}>
 }
 
-import type { UserSettingsData } from "./settings.types"
-
 interface ReportSummaryBase {
 	totalTrades: number
 	winCount: number

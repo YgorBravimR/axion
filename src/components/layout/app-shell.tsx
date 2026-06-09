@@ -6,6 +6,7 @@ import { Menu, Search, Bell } from "lucide-react"
 import Image from "next/image"
 import { Sidebar } from "@/components/layout/sidebar"
 import { CommandMenu } from "@/components/layout/command-menu"
+import { MarketStatusPill } from "@/components/layout/market-status-pill"
 import { PageBreadcrumb } from "@/components/layout/page-breadcrumb"
 import { UserMenu } from "@/components/layout/user-menu"
 import { ThemeSynchronizer } from "@/components/providers/theme-synchronizer"
@@ -113,7 +114,7 @@ const AppShell = ({
 									<SheetContent
 										id="mobile-sidebar-sheet"
 										side="left"
-										className="w-64 p-0"
+										className="w-full max-w-[16rem] p-0"
 									>
 										<SheetTitle className="sr-only">
 											{tCommon("openMenu")}
@@ -156,7 +157,10 @@ const AppShell = ({
 							</header>
 
 							{/* Mobile main content */}
-							<main id="main-content" className="min-h-dvh pt-14">
+							<main
+								id="main-content"
+								className="min-h-dvh pt-[var(--app-header-height)]"
+							>
 								{children}
 							</main>
 						</>
@@ -181,6 +185,7 @@ const AppShell = ({
 								{/* Top bar: breadcrumbs | search | notifications + user */}
 								<div className="border-bg-300 bg-bg-200 gap-m-400 px-m-600 lg:px-l-700 lg:pl-l-800 flex h-12 shrink-0 items-center border-b">
 									<PageBreadcrumb navStructure={navStructure} />
+									<MarketStatusPill />
 									<div className="flex-1" />
 									{/* Search trigger — opens CommandMenu via Cmd+K */}
 									<Button
@@ -189,7 +194,7 @@ const AppShell = ({
 										variant="outline"
 										size="sm"
 										onClick={handleSearchClick}
-										className="gap-s-200 px-s-300 py-s-100 text-tiny text-txt-placeholder hidden cursor-pointer items-center lg:flex lg:w-64 xl:w-80"
+										className="gap-s-200 px-s-300 py-s-100 text-tiny text-txt-200 hidden cursor-pointer items-center lg:flex lg:w-64 xl:w-80"
 										aria-label={tCommon("searchPlaceholder")}
 									>
 										<Search className="h-3.5 w-3.5 shrink-0" />
@@ -219,7 +224,7 @@ const AppShell = ({
 								</div>
 
 								{/* Scrollable main area */}
-								<div className="h-[calc(100dvh-3.5rem)] overflow-y-auto md:h-[calc(100dvh-3rem)]">
+								<div className="h-[calc(100dvh-var(--app-header-height))] overflow-y-auto">
 									<main id="main-content">{children}</main>
 								</div>
 							</div>

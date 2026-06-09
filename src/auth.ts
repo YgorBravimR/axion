@@ -31,6 +31,7 @@ declare module "next-auth" {
 		userId: string
 		accountId?: string | null
 		role: UserRole
+		iat?: number
 	}
 }
 /* eslint-enable no-unused-vars */
@@ -46,6 +47,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 				token.userId = user.id
 				token.accountId = user.accountId
 				token.role = user.role ?? "trader"
+				// Store issued-at time (seconds) for 1-hour refresh threshold
+				token.iat = Math.floor(Date.now() / 1000)
 			}
 
 			// Handle account switching via update
@@ -61,9 +64,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 				}
 			}
 
-			// Refresh role from DB on every JWT pass so role changes (promotions,
-			// demotions, drift fixes) propagate without forcing a re-login.
-			if (!user && token.userId) {
+			// Refresh role from DB only when: (a) explicit update trigger, or
+			// (b) token is >1h old. Avoids DB hit on every request.
+			const shouldRefresh =
+				trigger === "update" ||
+				(token.iat &&
+					Math.floor(Date.now() / 1000) - (token.iat as number) > 3600)
+
+			if (!user && token.userId && shouldRefresh) {
 				const dbUser = await db.query.users.findFirst({
 					where: eq(users.id, token.userId as string),
 					columns: { role: true },

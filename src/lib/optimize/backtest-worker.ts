@@ -82,16 +82,19 @@ const computeMatchRate = (
 		return undefined
 	}
 
-	// Count trades matching catalog by (date, brickIndex)
+	// Build a Set keyed on (date, brickIndex) tuples for O(1) lookups
+	const catalogSet = new Set<string>()
+	for (const entry of relevantCatalog) {
+		const key = `${entry.date}|${entry.brickIndex}`
+		catalogSet.add(key)
+	}
+
+	// Count trades matching catalog by (date, brickIndex) — now O(n) instead of O(n²)
 	let matches = 0
 	for (const trade of trades) {
 		if (trade.entryBrickIndex !== undefined) {
-			const hasMatch = relevantCatalog.some(
-				(entry) =>
-					entry.date === trade.dayKey &&
-					entry.brickIndex === trade.entryBrickIndex
-			)
-			if (hasMatch) {
+			const key = `${trade.dayKey}|${trade.entryBrickIndex}`
+			if (catalogSet.has(key)) {
 				matches++
 			}
 		}

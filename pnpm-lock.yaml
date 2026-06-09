@@ -186,6 +186,27 @@ importers:
       '@commitlint/config-conventional':
         specifier: 21.0.2
         version: 21.0.2
+      '@duckdb/node-bindings-darwin-x64':
+        specifier: 1.5.3-r.3
+        version: 1.5.3-r.3
+      '@duckdb/node-bindings-linux-arm64':
+        specifier: 1.5.3-r.3
+        version: 1.5.3-r.3
+      '@duckdb/node-bindings-linux-arm64-musl':
+        specifier: 1.5.3-r.3
+        version: 1.5.3-r.3
+      '@duckdb/node-bindings-linux-x64':
+        specifier: 1.5.3-r.3
+        version: 1.5.3-r.3
+      '@duckdb/node-bindings-linux-x64-musl':
+        specifier: 1.5.3-r.3
+        version: 1.5.3-r.3
+      '@duckdb/node-bindings-win32-arm64':
+        specifier: 1.5.3-r.3
+        version: 1.5.3-r.3
+      '@duckdb/node-bindings-win32-x64':
+        specifier: 1.5.3-r.3
+        version: 1.5.3-r.3
       '@eslint-react/eslint-plugin':
         specifier: 5.8.10
         version: 5.8.10(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)
@@ -663,25 +684,21 @@ packages:
     resolution: {integrity: sha512-IadRyx+98FEynKLXAk2MzReinFgduiDXgNd5Z8c5VKch+8FgBfqkEUYGOnBMMUPT8kuheKdLj23vpWXaCzOgoQ==}
     cpu: [arm64]
     os: [linux]
-    libc: [musl]
 
   '@duckdb/node-bindings-linux-arm64@1.5.3-r.3':
     resolution: {integrity: sha512-3HLcrzQE83947JS51UVR7C9qnXQMltCOk4Dnhiz1CD+9u32DGLMgPTIIxclk7O+Q7EwfqzD8JV86Ud+LT1crcQ==}
     cpu: [arm64]
     os: [linux]
-    libc: [glibc]
 
   '@duckdb/node-bindings-linux-x64-musl@1.5.3-r.3':
     resolution: {integrity: sha512-5bulS16YhftXcarki4tvCufVslntpQDLOEF6RZ+FSMOGiv5d7SDXqklmVRy4DKW3C5ekgN7S2oYzuGL/ss9BuA==}
     cpu: [x64]
     os: [linux]
-    libc: [musl]
 
   '@duckdb/node-bindings-linux-x64@1.5.3-r.3':
     resolution: {integrity: sha512-TXndAL0ZoETq17Df6wB+SUZjLGDmOsKuDSySxB+wy6sHfpRtbDgQibyXRlajVeUkRDwSzBFC5ymy16YG0Fl4iw==}
     cpu: [x64]
     os: [linux]
-    libc: [glibc]
 
   '@duckdb/node-bindings-win32-arm64@1.5.3-r.3':
     resolution: {integrity: sha512-55Vu13S0jUudiAGlNWJd7UvlW1iKjwWehD8s93jBCNm0AdE/EJN4nz5rQ0IuWzPWXpMjAYuKu00yE7NdtbTyug==}
@@ -7517,26 +7534,19 @@ snapshots:
   '@duckdb/node-bindings-darwin-arm64@1.5.3-r.3':
     optional: true
 
-  '@duckdb/node-bindings-darwin-x64@1.5.3-r.3':
-    optional: true
+  '@duckdb/node-bindings-darwin-x64@1.5.3-r.3': {}
 
-  '@duckdb/node-bindings-linux-arm64-musl@1.5.3-r.3':
-    optional: true
+  '@duckdb/node-bindings-linux-arm64-musl@1.5.3-r.3': {}
 
-  '@duckdb/node-bindings-linux-arm64@1.5.3-r.3':
-    optional: true
+  '@duckdb/node-bindings-linux-arm64@1.5.3-r.3': {}
 
-  '@duckdb/node-bindings-linux-x64-musl@1.5.3-r.3':
-    optional: true
+  '@duckdb/node-bindings-linux-x64-musl@1.5.3-r.3': {}
 
-  '@duckdb/node-bindings-linux-x64@1.5.3-r.3':
-    optional: true
+  '@duckdb/node-bindings-linux-x64@1.5.3-r.3': {}
 
-  '@duckdb/node-bindings-win32-arm64@1.5.3-r.3':
-    optional: true
+  '@duckdb/node-bindings-win32-arm64@1.5.3-r.3': {}
 
-  '@duckdb/node-bindings-win32-x64@1.5.3-r.3':
-    optional: true
+  '@duckdb/node-bindings-win32-x64@1.5.3-r.3': {}
 
   '@duckdb/node-bindings@1.5.3-r.3':
     dependencies:

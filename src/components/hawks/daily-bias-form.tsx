@@ -151,95 +151,103 @@ const DailyBiasForm = ({
 				</div>
 			</header>
 
-			<div className="mt-m-400 space-y-m-400">
-				<div
-					role="group"
-					aria-labelledby="hawks-bias-direction-label"
-					className="space-y-s-200"
-				>
-					<span
-						id="hawks-bias-direction-label"
-						className="text-small text-txt-200 block font-medium"
-					>
-						{t("directionLabel")}
-					</span>
-					<SegmentedToggle
-						value={bias}
-						options={biasOptions}
-						onChange={setBias}
-						disabled={isPending}
+			{/* 2-col layout at md+ — left: direction + 5 triple-screen
+			    checks, right: notes + save. Earlier the same content was a
+			    tall single column leaving the right half empty at desktop. */}
+			<div className="mt-m-400 gap-m-400 lg:gap-m-500 grid md:grid-cols-2">
+				<div className="space-y-m-400 min-w-0">
+					<div
+						role="group"
 						aria-labelledby="hawks-bias-direction-label"
-					/>
-				</div>
-
-				<fieldset className="space-y-s-200">
-					<legend className="text-small text-txt-100 font-medium">
-						{t("screensLabel")}
-					</legend>
-					<ul className="gap-s-200 flex flex-col">
-						{screenRows.map((row) => {
-							const inputId = `hawks-screen-${row.key}`
-							const hintId = `${inputId}-hint`
-							return (
-								<li key={row.key} className="gap-s-300 flex items-start">
-									<Checkbox
-										id={inputId}
-										checked={screens[row.key]}
-										onCheckedChange={handleScreenToggle(row.key)}
-										disabled={isPending}
-										aria-describedby={hintId}
-										className="mt-s-100"
-									/>
-									<div className="flex-1">
-										<label
-											htmlFor={inputId}
-											className="text-small text-txt-100 cursor-pointer font-medium"
-										>
-											{row.label}
-										</label>
-										<HelpText id={hintId}>{row.hint}</HelpText>
-									</div>
-								</li>
-							)
-						})}
-					</ul>
-				</fieldset>
-
-				<div className="space-y-s-200">
-					<Label id="hawks-bias-notes-label" htmlFor="hawks-bias-notes">
-						{t("notesLabel")}
-					</Label>
-					<Textarea
-						id="hawks-bias-notes"
-						value={notes}
-						onChange={handleNotesChange}
-						placeholder={t("notesPlaceholder")}
-						maxLength={1000}
-						disabled={isPending}
-					/>
-				</div>
-
-				<div className="gap-s-300 flex flex-col items-end">
-					<div className="gap-s-300 flex items-center">
-						<Button
-							id="hawks-bias-save"
-							size="sm"
-							onClick={handleSave}
-							disabled={isPending}
+						className="space-y-s-200"
+					>
+						<span
+							id="hawks-bias-direction-label"
+							className="text-small text-txt-200 block font-medium"
 						>
-							{isPending ? (
-								<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
-							) : null}
-							{tCommon("save")}
-						</Button>
+							{t("directionLabel")}
+						</span>
+						<SegmentedToggle
+							value={bias}
+							options={biasOptions}
+							onChange={setBias}
+							disabled={isPending}
+							aria-labelledby="hawks-bias-direction-label"
+						/>
 					</div>
-					{initialBias && initialBias.confirmedAt && (
-						<p className="text-tiny text-txt-300">
-							{t("confirmedAt", {
-								time: formatTime(new Date(initialBias.confirmedAt)),
+
+					<fieldset className="space-y-s-200">
+						<legend className="text-small text-txt-100 font-medium">
+							{t("screensLabel")}
+						</legend>
+						<ul className="gap-s-200 flex flex-col">
+							{screenRows.map((row) => {
+								const inputId = `hawks-screen-${row.key}`
+								const hintId = `${inputId}-hint`
+								return (
+									<li key={row.key} className="gap-s-300 flex items-start">
+										<Checkbox
+											id={inputId}
+											checked={screens[row.key]}
+											onCheckedChange={handleScreenToggle(row.key)}
+											disabled={isPending}
+											aria-describedby={hintId}
+											className="mt-s-100"
+										/>
+										<div className="flex-1">
+											<label
+												htmlFor={inputId}
+												className="text-small text-txt-100 cursor-pointer font-medium"
+											>
+												{row.label}
+											</label>
+											<HelpText id={hintId}>{row.hint}</HelpText>
+										</div>
+									</li>
+								)
 							})}
-						</p>
-					)}
+						</ul>
+					</fieldset>
+				</div>
+
+				<div className="space-y-m-400 min-w-0">
+					<div className="space-y-s-200">
+						<Label id="hawks-bias-notes-label" htmlFor="hawks-bias-notes">
+							{t("notesLabel")}
+						</Label>
+						<Textarea
+							id="hawks-bias-notes"
+							value={notes}
+							onChange={handleNotesChange}
+							placeholder={t("notesPlaceholder")}
+							maxLength={1000}
+							disabled={isPending}
+							className="min-h-[140px]"
+						/>
+					</div>
+
+					<div className="gap-s-300 flex flex-col items-end">
+						<div className="gap-s-300 flex items-center">
+							<Button
+								id="hawks-bias-save"
+								size="sm"
+								onClick={handleSave}
+								disabled={isPending}
+							>
+								{isPending ? (
+									<Loader2 className="mr-s-200 h-4 w-4 animate-spin motion-reduce:animate-none" />
+								) : null}
+								{tCommon("save")}
+							</Button>
+						</div>
+						{initialBias && initialBias.confirmedAt && (
+							<p className="text-tiny text-txt-300">
+								{t("confirmedAt", {
+									time: formatTime(new Date(initialBias.confirmedAt)),
+								})}
+							</p>
+						)}
+					</div>
 				</div>
 			</div>
 		</section>

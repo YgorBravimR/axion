@@ -77,9 +77,11 @@ const GET = async (request: NextRequest) => {
 		// Calculate report summary
 		const summary = calculateReportSummary(rawMonthTrades)
 
-		// Pre-index trades by day and week in a single pass
+		// Pre-index trades by day and week, track best/worst day in single pass
 		const dailyPnl = new Map<string, number>()
 		const tradesByWeek = new Map<string, typeof rawMonthTrades>()
+		let bestDay: { date: string; pnl: number } | null = null
+		let worstDay: { date: string; pnl: number } | null = null
 
 		for (const trade of rawMonthTrades) {
 			const entryDate = new Date(trade.entryDate)
@@ -88,25 +90,22 @@ const GET = async (request: NextRequest) => {
 			const weekKey = formatDateKey(weekStart)
 
 			// Accumulate daily PnL
-			dailyPnl.set(day, (dailyPnl.get(day) || 0) + fromCents(trade.pnl))
+			const dayPnl = (dailyPnl.get(day) || 0) + fromCents(trade.pnl)
+			dailyPnl.set(day, dayPnl)
+
+			// Track best/worst day
+			if (!bestDay || dayPnl > bestDay.pnl) {
+				bestDay = { date: day, pnl: dayPnl }
+			}
+			if (!worstDay || dayPnl < worstDay.pnl) {
+				worstDay = { date: day, pnl: dayPnl }
+			}
 
 			// Index trades by week
 			if (!tradesByWeek.has(weekKey)) {
 				tradesByWeek.set(weekKey, [])
 			}
 			tradesByWeek.get(weekKey)!.push(trade)
-		}
-
-		// Find best/worst day
-		let bestDay: { date: string; pnl: number } | null = null
-		let worstDay: { date: string; pnl: number } | null = null
-		for (const [date, pnl] of dailyPnl) {
-			if (!bestDay || pnl > bestDay.pnl) {
-				bestDay = { date, pnl }
-			}
-			if (!worstDay || pnl < worstDay.pnl) {
-				worstDay = { date, pnl }
-			}
 		}
 
 		// Weekly breakdown using pre-indexed trades

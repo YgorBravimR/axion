@@ -316,6 +316,7 @@ const FilterPanel = ({
 									? "bg-acc-100 text-bg-100"
 									: "text-txt-300 hover:bg-bg-300 hover:text-txt-100"
 							)}
+							aria-label={t(`datePresets.${preset.key}`)}
 						>
 							{t(`datePresets.${preset.key}`)}
 						</button>
@@ -332,6 +333,7 @@ const FilterPanel = ({
 								? "bg-acc-100 text-bg-100"
 								: "text-txt-300 hover:bg-bg-300 hover:text-txt-100"
 						)}
+						aria-label={t("datePresets.custom")}
 					>
 						<Calendar className="h-3 w-3" />
 						{t("datePresets.custom")}
@@ -372,7 +374,7 @@ const FilterPanel = ({
 								className="gap-s-200 border-bg-300 bg-bg-100 px-s-300 py-s-100 text-tiny text-txt-200 hover:border-txt-300 flex items-center rounded-md border transition-colors"
 								aria-label={t("advancedFilters")}
 							>
-								<SlidersHorizontal className="h-3.5 w-3.5" />
+								<SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
 								<span className="hidden sm:inline">{t("advancedFilters")}</span>
 								{advancedFilterCount > 0 && (
 									<span className="bg-acc-100 text-micro text-bg-100 px-s-100 flex h-4 min-w-4 items-center justify-center rounded-full font-bold">

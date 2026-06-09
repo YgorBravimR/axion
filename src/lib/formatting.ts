@@ -316,7 +316,11 @@ export const formatCompactCurrencyWithSign = (
 	currency: string = "BRL",
 	locale: string = "en-US"
 ): string => {
-	const formatted = formatCompactCurrency(Math.abs(value), currency, locale)
+	// `formatCompactCurrency` already injects "-" when value is negative.
+	// Passing the *signed* value here keeps that branch alive — earlier
+	// versions called Math.abs first and silently lost the minus sign on
+	// negative numbers, so "Pior Dia" rendered as "R$1K" instead of "-R$1K".
+	const formatted = formatCompactCurrency(value, currency, locale)
 	if (value > 0) {
 		return `+${formatted}`
 	}
@@ -388,6 +392,31 @@ export const formatFinite = (
 ): string => (Number.isFinite(value) ? value.toFixed(decimals) : fallback)
 
 /**
+ * Tailwind class for P&L coloring. Zero is neutral — never green.
+ * Use this anywhere a monetary delta is shown with a sign-driven color
+ * (Circuit Breaker, KPI cards, summary tables, calendar tiles).
+ *
+ * Returns:
+ *   value > 0  → text-trade-buy   (green)
+ *   value < 0  → text-trade-sell  (red)
+ *   value === 0 → text-txt-200    (neutral; matches the surrounding label)
+ *
+ * Treat NaN / null / undefined as neutral.
+ */
+export const getPnlSignClass = (value: number | null | undefined): string => {
+	if (value === null || value === undefined || Number.isNaN(value)) {
+		return "text-txt-200"
+	}
+	if (value > 0) {
+		return "text-trade-buy"
+	}
+	if (value < 0) {
+		return "text-trade-sell"
+	}
+	return "text-txt-200"
+}
+
+/**
  * Format currency with sign prefix (e.g., +R$ 1.234,56 or -$ 500,00)
  * Used in journal and analytics components for P&L display
  * @param value - numeric value to format
@@ -428,4 +457,41 @@ export const formatBrlCompactWithSign = (
 ): string => {
 	const formatted = formatCompactCurrencyWithSign(value, currency)
 	return formatted
+}
+
+/**
+ * Compute a data-driven Y-axis domain for a P&L / R-multiple bar chart.
+ *
+ * Picks the right shape based on the data:
+ *   - all-positive    → `[0, max*1.1]`        (no wasted bottom half)
+ *   - all-negative    → `[min*1.1, 0]`        (no wasted top half)
+ *   - mixed signs     → `[min*1.1, max*1.1]`  (zero line stays visible)
+ *
+ * The old "symmetric [-max, +max] regardless of sign" was readable but wasted
+ * half the chart's vertical space whenever the dataset was one-sided (e.g. a
+ * winning streak). This keeps the zero line legible without throwing away pixels.
+ *
+ * @param values - raw metric values (signed)
+ * @param fallbackMax - minimum domain size when all values are ~0 (avoids a flat chart)
+ */
+export const computeChartDomain = (
+	values: number[],
+	fallbackMax: number
+): [number, number] => {
+	if (values.length === 0) {
+		return [0, fallbackMax]
+	}
+	const dataMin = Math.min(...values)
+	const dataMax = Math.max(...values)
+	const padHigh = (v: number): number =>
+		v > 0 ? Math.ceil(v * 1.1 * 100) / 100 : 0
+	const padLow = (v: number): number =>
+		v < 0 ? Math.floor(v * 1.1 * 100) / 100 : 0
+	if (dataMin >= 0) {
+		return [0, Math.max(padHigh(dataMax), fallbackMax)]
+	}
+	if (dataMax <= 0) {
+		return [Math.min(padLow(dataMin), -fallbackMax), 0]
+	}
+	return [padLow(dataMin), padHigh(dataMax)]
 }

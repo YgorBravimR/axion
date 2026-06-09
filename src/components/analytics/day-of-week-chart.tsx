@@ -4,7 +4,11 @@ import { memo, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
-import { formatCompactCurrencyWithSign, formatR } from "@/lib/formatting"
+import {
+	formatCompactCurrencyWithSign,
+	formatR,
+	computeChartDomain,
+} from "@/lib/formatting"
 import { useChartConfig } from "@/hooks/use-chart-config"
 import type { DayOfWeekPerformance } from "@/types"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
@@ -104,19 +108,22 @@ export const DayOfWeekChart = memo(
 		const isRMode = expectancyMode === "edge"
 		const metricKey = isRMode ? "avgR" : "totalPnl"
 
-		const { tradingDays, domainMax, bestDay, worstDay } = useMemo(() => {
-			const days = data.filter((d) => d.totalTrades > 0)
-			const maxAbs = Math.max(
-				...days.map((d) => Math.abs(d[metricKey])),
-				isRMode ? 0.5 : 100
+		const { tradingDays, domain, bestDay, worstDay } = useMemo(() => {
+			// B3 (Bovespa) is closed Saturday + Sunday, so weekend bars are noise.
+			// Drop them defensively even if the dataset leaks weekend rows.
+			const WEEKEND = new Set(["Saturday", "Sunday"])
+			const days = data.filter(
+				(d) => d.totalTrades > 0 && !WEEKEND.has(d.dayName)
 			)
-			const dMax = isRMode
-				? Math.ceil(maxAbs * 1.2 * 100) / 100
-				: Math.ceil(maxAbs * 1.1)
+			const fallback = isRMode ? 0.5 : 100
+			const domainTuple = computeChartDomain(
+				days.map((d) => d[metricKey]),
+				fallback
+			)
 			const sorted = days.toSorted((a, b) => b[metricKey] - a[metricKey])
 			return {
 				tradingDays: days,
-				domainMax: dMax,
+				domain: domainTuple,
 				bestDay: sorted[0],
 				worstDay: sorted[sorted.length - 1],
 			}
@@ -208,7 +215,7 @@ export const DayOfWeekChart = memo(
 							tick={AXIS_TICK}
 							tickLine={false}
 							axisLine={false}
-							domain={[-domainMax, domainMax]}
+							domain={domain}
 							width={yAxisWidth}
 						/>
 						<ChartTooltip content={<CustomTooltip />} />

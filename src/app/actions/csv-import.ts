@@ -57,6 +57,7 @@ export const validateCsvTrades = async (
 	csvTrades: CsvTradeInput[]
 ): Promise<ActionResponse<CsvValidationResult>> => {
 	const t = await getTranslations("imports")
+	const tImports = await getTranslations("imports.messages")
 	try {
 		const { accountId, userId } = await requireAuth()
 		const account = await getCurrentAccount()
@@ -269,7 +270,7 @@ export const validateCsvTrades = async (
 			} else {
 				// Add warning if no exit price
 				processed.warnings.push({
-					message: "No exit price - P&L cannot be calculated",
+					message: tImports("noExitPricePnlCannotBeCalculated"),
 				})
 			}
 
@@ -337,7 +338,7 @@ export const validateCsvTrades = async (
 
 		return {
 			status: "success",
-			message: `Validated ${csvTrades.length} trades`,
+			message: tImports("validatedTrades", { count: csvTrades.length }),
 			data: {
 				trades: processedTrades,
 				summary: {

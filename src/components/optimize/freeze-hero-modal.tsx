@@ -40,7 +40,7 @@ interface FreezeHeroModalProps {
 
 interface GatesSummaryProps {
 	run: OptimizationRun
-	t: (key: string, values?: Record<string, string | number>) => string
+	t: (_key: string, _values?: Record<string, string | number>) => string
 }
 
 const GatesSummary = memo(({ run, t }: GatesSummaryProps) => (
@@ -109,8 +109,8 @@ const GatesSummary = memo(({ run, t }: GatesSummaryProps) => (
 GatesSummary.displayName = "GatesSummary"
 
 type Translator = (
-	key: string,
-	values?: Record<string, string | number>
+	_key: string,
+	_values?: Record<string, string | number>
 ) => string
 
 interface MetricsDisplayProps {

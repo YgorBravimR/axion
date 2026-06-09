@@ -303,7 +303,7 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 							{/* Prices & Risk Grid (no per-item card chrome) */}
 							<div
 								id="trade-detail-metrics"
-								className="gap-s-300 sm:gap-m-400 lg:gap-m-500 px-m-400 sm:px-m-500 lg:px-m-600 grid grid-cols-2 md:grid-cols-4"
+								className="gap-s-300 sm:gap-m-400 lg:gap-m-500 px-m-400 sm:px-m-500 lg:px-m-600 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
 							>
 								<div className="min-w-0">
 									<TradeMetric

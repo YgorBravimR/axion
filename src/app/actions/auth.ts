@@ -8,9 +8,14 @@ import {
 import { redirect } from "next/navigation"
 import bcrypt from "bcryptjs"
 import { getTranslations } from "next-intl/server"
-import { eq, and } from "drizzle-orm"
+import { eq, and, sql, inArray, gte, isNotNull } from "drizzle-orm"
 import { db } from "@/db/drizzle"
-import { users, tradingAccounts, type TradingAccount } from "@/db/schema"
+import {
+	users,
+	tradingAccounts,
+	trades,
+	type TradingAccount,
+} from "@/db/schema"
 import { createDbRateLimiter } from "@/lib/db-rate-limiter"
 import { firstIssueMessage } from "@/lib/zod-helpers"
 import { seedUserData } from "@/db/seed-user-data"
@@ -29,6 +34,107 @@ import {
 } from "@/lib/validations/auth"
 
 const SALT_ROUNDS = 12
+
+const SPARKLINE_DAYS = 7
+
+/**
+ * One-shot aggregation that returns per-account day-P&L for the last 7 days.
+ * Used to enrich the login picker without paying the cost of N separate
+ * round-trips (one per account).
+ *
+ * The query sums `trades.pnl` (stored as text-encoded cents) per
+ * `(accountId, exit_date::date)`. Open trades are excluded — we want
+ * *realized* P&L, mirroring the dashboard semantics.
+ *
+ * Returns a map keyed by accountId so the picker assembly stays O(n).
+ */
+const fetchAccountPickerEnrichment = async (
+	accountIds: string[]
+): Promise<
+	Map<string, { todayPnl: number | null; sparkline: number[] | null }>
+> => {
+	const result = new Map<
+		string,
+		{ todayPnl: number | null; sparkline: number[] | null }
+	>()
+	if (accountIds.length === 0) {
+		return result
+	}
+
+	// Window starts at midnight UTC of (today - 6) so today's bucket lands at
+	// index 6. We bucket by UTC date — for the login picker this is precise
+	// enough; per-trader-timezone bucketing is a dashboard concern, not auth.
+	const now = new Date()
+	const windowStart = new Date(
+		Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+	)
+	windowStart.setUTCDate(windowStart.getUTCDate() - (SPARKLINE_DAYS - 1))
+
+	const rows = await db
+		.select({
+			accountId: trades.accountId,
+			day: sql<string>`(${trades.exitDate} at time zone 'UTC')::date`.as("day"),
+			pnlSumCents: sql<string>`coalesce(sum((${trades.pnl})::numeric), 0)`.as(
+				"pnl_sum_cents"
+			),
+		})
+		.from(trades)
+		.where(
+			and(
+				inArray(trades.accountId, accountIds),
+				isNotNull(trades.exitDate),
+				isNotNull(trades.pnl),
+				gte(trades.exitDate, windowStart)
+			)
+		)
+		.groupBy(trades.accountId, sql`day`)
+
+	// Build today's UTC date key once so the per-row check is a string compare.
+	const todayKey = `${windowStart.getUTCFullYear()}-${String(windowStart.getUTCMonth() + 1).padStart(2, "0")}-${String(windowStart.getUTCDate() + (SPARKLINE_DAYS - 1)).padStart(2, "0")}`
+
+	// Pre-compute the 7-day date axis (oldest → today) as ISO date strings.
+	const dayKeys: string[] = []
+	for (let i = 0; i < SPARKLINE_DAYS; i++) {
+		const d = new Date(windowStart)
+		d.setUTCDate(d.getUTCDate() + i)
+		dayKeys.push(
+			`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`
+		)
+	}
+
+	// Bucket rows by account.
+	const byAccount = new Map<string, Map<string, number>>()
+	for (const row of rows) {
+		if (!row.accountId) {
+			continue
+		}
+		const cents = Number(row.pnlSumCents)
+		if (!Number.isFinite(cents)) {
+			continue
+		}
+		const dayMap = byAccount.get(row.accountId) ?? new Map<string, number>()
+		dayMap.set(row.day, cents / 100)
+		byAccount.set(row.accountId, dayMap)
+	}
+
+	for (const accountId of accountIds) {
+		const dayMap = byAccount.get(accountId)
+		if (!dayMap || dayMap.size === 0) {
+			result.set(accountId, { todayPnl: null, sparkline: null })
+			continue
+		}
+		// Build cumulative equity series from the per-day P&L deltas.
+		let running = 0
+		const sparkline = dayKeys.map((key) => {
+			running += dayMap.get(key) ?? 0
+			return running
+		})
+		const todayPnl = dayMap.get(todayKey) ?? null
+		result.set(accountId, { todayPnl, sparkline })
+	}
+
+	return result
+}
 
 // 5 login attempts per 15 minutes, keyed by email (DB-backed, survives cold starts)
 const loginLimiter = createDbRateLimiter({
@@ -229,15 +335,27 @@ export const loginUser = async (
 		})
 
 		// If no accountId provided and user has multiple accounts, return for selection
-		// Only expose fields needed for the account picker UI
+		// Only expose fields needed for the account picker UI. We piggy-back on
+		// the same request to fetch 7-day P&L per account so the picker can
+		// show day P&L + sparkline without a follow-up round trip.
 		if (!accountId && userAccounts.length > 1) {
+			const accountIds = userAccounts.map((a) => a.id)
+			const enrichment = await fetchAccountPickerEnrichment(accountIds)
 			const safeAccounts = userAccounts.map(
-				({ id, name, accountType, isDefault }) => ({
-					id,
-					name,
-					accountType,
-					isDefault,
-				})
+				({ id, name, accountType, isDefault }) => {
+					const extra = enrichment.get(id) ?? {
+						todayPnl: null,
+						sparkline: null,
+					}
+					return {
+						id,
+						name,
+						accountType,
+						isDefault,
+						todayPnl: extra.todayPnl,
+						sparkline: extra.sparkline,
+					}
+				}
 			)
 			return {
 				status: "success",
@@ -270,7 +388,11 @@ export const logoutUser = async (): Promise<void> => {
 // SESSION HELPERS
 // ==========================================
 
-export const getCurrentUser = async (): Promise<SafeUser | null> => {
+/**
+ * Cached helper for loading current user from session.
+ * Deduplicates user row fetches within a single request.
+ */
+const getCachedCurrentUser = cache(async (): Promise<SafeUser | null> => {
 	const session = await auth()
 	if (!session) {
 		return null
@@ -301,6 +423,10 @@ export const getCurrentUser = async (): Promise<SafeUser | null> => {
 	}
 
 	return user
+})
+
+export const getCurrentUser = async (): Promise<SafeUser | null> => {
+	return getCachedCurrentUser()
 }
 
 export const getCurrentAccount = async (): Promise<TradingAccount | null> => {
@@ -342,7 +468,7 @@ export const getUserAccounts = async (): Promise<TradingAccount[]> => {
 /**
  * Cached auth context provider - deduplicates auth checks within a single request.
  * When multiple server actions call requireAuth() in parallel (e.g., dashboard fetching 6 data sources),
- * this ensures auth is only checked once per request instead of 6 times.
+ * this ensures auth is only checked once per request and queries are parallelized.
  *
  * @see React.cache() docs: https://react.dev/reference/react/cache
  */
@@ -356,51 +482,53 @@ export const requireAuth = cache(async (): Promise<AuthContext> => {
 		redirect("/login")
 	}
 
-	// Verify user still exists in the database (handles deleted users)
-	const dbUser = await db.query.users.findFirst({
-		where: eq(users.id, session.user.id),
-		columns: { id: true },
-	})
+	const userId = session.user.id
+	const accountId = session.user.accountId
 
-	if (!dbUser) {
-		// User was deleted — delegate to route handler to clear session and redirect
-		redirect("/api/auth/force-signout")
-	}
-
-	// Verify the current account still exists and belongs to this user
-	const currentAccount = await db.query.tradingAccounts.findFirst({
-		where: and(
-			eq(tradingAccounts.id, session.user.accountId),
-			eq(tradingAccounts.userId, session.user.id)
-		),
-		columns: { id: true },
-	})
-
-	if (!currentAccount) {
-		// Account was deleted — delegate to route handler to clear session.
-		// On re-login, the authorize flow auto-selects the default account.
-		redirect("/api/auth/force-signout")
-	}
-
-	// Get user settings for showAllAccounts preference
+	// Import userSettings schema once for reuse
 	const { userSettings } = await import("@/db/schema")
-	const settings = await db.query.userSettings.findFirst({
-		where: eq(userSettings.userId, session.user.id),
-	})
 
-	// Get all user's account IDs for "all accounts" mode
-	let allAccountIds: string[] = [session.user.accountId]
-	if (settings?.showAllAccounts) {
-		const accounts = await db.query.tradingAccounts.findMany({
-			where: eq(tradingAccounts.userId, session.user.id),
+	// Parallelize independent DB queries: user check, account check, settings, accounts-list
+	const [dbUser, currentAccount, settings, allAccounts] = await Promise.all([
+		db.query.users.findFirst({
+			where: eq(users.id, userId),
 			columns: { id: true },
-		})
-		allAccountIds = accounts.map((a) => a.id)
+		}),
+		db.query.tradingAccounts.findFirst({
+			where: and(
+				eq(tradingAccounts.id, accountId),
+				eq(tradingAccounts.userId, userId)
+			),
+			columns: { id: true },
+		}),
+		db.query.userSettings.findFirst({
+			where: eq(userSettings.userId, userId),
+		}),
+		db.query.tradingAccounts.findMany({
+			where: eq(tradingAccounts.userId, userId),
+			columns: { id: true },
+		}),
+	])
+
+	// User was deleted — delegate to route handler to clear session and redirect
+	if (!dbUser) {
+		redirect("/api/auth/force-signout")
 	}
+
+	// Account was deleted — delegate to route handler to clear session.
+	// On re-login, the authorize flow auto-selects the default account.
+	if (!currentAccount) {
+		redirect("/api/auth/force-signout")
+	}
+
+	// Build allAccountIds: use all accounts if showAllAccounts is enabled, else just current
+	const allAccountIds = settings?.showAllAccounts
+		? allAccounts.map((a) => a.id)
+		: [accountId]
 
 	return {
-		userId: session.user.id,
-		accountId: session.user.accountId,
+		userId,
+		accountId,
 		showAllAccounts: settings?.showAllAccounts ?? false,
 		allAccountIds,
 	}

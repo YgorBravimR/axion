@@ -182,7 +182,7 @@ export const getMonthlyDarf = async (params: {
 
 	return {
 		status: "success",
-		message: "Ledger row retrieved.",
+		message: t("ledgerRowRetrieved"),
 		data: row as MonthlyDarfRow,
 	}
 }
@@ -241,7 +241,7 @@ export const getCarryoverState = async (params: {
 
 	return {
 		status: "success",
-		message: "Carryover state retrieved.",
+		message: t("carryoverStateRetrieved"),
 		data: { currentBalanceCents, history },
 	}
 }
@@ -301,7 +301,7 @@ export const recomputeLedger = async (params: {
 		} else {
 			return {
 				status: "success",
-				message: "No ledger rows to recompute.",
+				message: t("noLedgerRowsToRecompute"),
 				data: { recomputedMonths: 0 },
 			}
 		}
@@ -315,7 +315,7 @@ export const recomputeLedger = async (params: {
 
 	return {
 		status: "success",
-		message: `Recomputed ${recomputedMonths} month(s).`,
+		message: t("ledgerRecomputedMonths", { months: recomputedMonths }),
 		data: { recomputedMonths },
 	}
 }
@@ -394,7 +394,7 @@ export const getYearTaxSummary = async (params: {
 
 	return {
 		status: "success",
-		message: "Year tax summary retrieved.",
+		message: t("yearTaxSummaryRetrieved"),
 		data: {
 			...summary,
 			irBurdenPercent: Math.round(irBurdenPercent * 100) / 100,
@@ -466,7 +466,7 @@ export const getEffectiveTaxRate = async (params: {
 	if (!row || row.grossGainCents <= 0) {
 		return {
 			status: "success",
-			message: "No taxable gain this month.",
+			message: t("noTaxableGainThisMonth"),
 			data: { ratePercent: 0, breakdown: { feesPercent: 0, irPercent: 0 } },
 		}
 	}
@@ -477,7 +477,7 @@ export const getEffectiveTaxRate = async (params: {
 
 	return {
 		status: "success",
-		message: "Effective tax rate retrieved.",
+		message: t("effectiveTaxRateRetrieved"),
 		data: {
 			ratePercent: Math.round(ratePercent * 100) / 100,
 			breakdown: {
@@ -562,7 +562,7 @@ export const markDarfPaid = async (params: {
 		}
 	}
 
-	return { status: "success", message: "DARF marked as paid." }
+	return { status: "success", message: t("darfMarkedAsPaid") }
 }
 
 // ─── getFeeRates ─────────────────────────────────────────────────────────────
@@ -580,6 +580,7 @@ const DEFAULT_FEE_RATES: FeeRatesRow = {
 export const getFeeRates = async (
 	assetSymbol: string | null = null
 ): Promise<ActionResponse<FeeRatesRow>> => {
+	const t = await getTranslations("tax.errors")
 	const { accountId } = await requireAuth()
 
 	const matcher =
@@ -603,7 +604,7 @@ export const getFeeRates = async (
 
 	return {
 		status: "success",
-		message: "Fee rates retrieved.",
+		message: t("feeRatesRetrieved"),
 		data: row ?? DEFAULT_FEE_RATES,
 	}
 }
@@ -613,6 +614,7 @@ export const getFeeRates = async (
 export const listFeeRates = async (): Promise<
 	ActionResponse<FeeRatesEntry[]>
 > => {
+	const t = await getTranslations("tax.errors")
 	const { accountId } = await requireAuth()
 
 	const rows = await db
@@ -631,7 +633,7 @@ export const listFeeRates = async (): Promise<
 
 	return {
 		status: "success",
-		message: "Fee rates list retrieved.",
+		message: t("feeRatesListRetrieved"),
 		data: rows,
 	}
 }
@@ -648,6 +650,7 @@ export const upsertFeeRates = async (params: {
 	irRateBps: number
 	subjectToPersonalIr: boolean
 }): Promise<ActionResponse<void>> => {
+	const t = await getTranslations("tax.errors")
 	const { accountId } = await requireAuth()
 	const { assetSymbol = null, ...rates } = params
 
@@ -681,7 +684,7 @@ export const upsertFeeRates = async (params: {
 		.set({ isDirty: true })
 		.where(eq(monthlyTaxLedger.accountId, accountId))
 
-	return { status: "success", message: "Fee rates saved." }
+	return { status: "success", message: t("feeRatesSaved") }
 }
 
 // ─── deleteFeeRates ──────────────────────────────────────────────────────────
@@ -689,6 +692,7 @@ export const upsertFeeRates = async (params: {
 export const deleteFeeRates = async (
 	assetSymbol: string
 ): Promise<ActionResponse<void>> => {
+	const t = await getTranslations("tax.errors")
 	const { accountId } = await requireAuth()
 
 	await db
@@ -705,7 +709,7 @@ export const deleteFeeRates = async (
 		.set({ isDirty: true })
 		.where(eq(monthlyTaxLedger.accountId, accountId))
 
-	return { status: "success", message: "Fee rates override removed." }
+	return { status: "success", message: t("feeRatesOverrideRemoved") }
 }
 
 // ─── Exports ──────────────────────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 "use server"
 
 import { z } from "zod"
+import { getTranslations } from "next-intl/server"
 import { db } from "@/db/drizzle"
 import { dailyPlan } from "@/db/schema"
 import { eq, and } from "drizzle-orm"
@@ -28,6 +29,7 @@ export const upsertDailyPlan = async (
 	input: z.infer<typeof upsertSchema>
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
+		const t = await getTranslations("fractalPlan.daily.success")
 		const parsed = upsertSchema.parse(input)
 		await requireAuth()
 
@@ -70,7 +72,7 @@ export const upsertDailyPlan = async (
 			.where(eq(dailyPlan.id, parsed.dailyPlanId))
 		return {
 			status: "success",
-			message: "Daily plan updated",
+			message: t("updated"),
 			data: { id: parsed.dailyPlanId },
 		}
 	} catch (err) {
@@ -100,6 +102,7 @@ export const resetDailyOverride = async (
 	input: z.infer<typeof resetSchema>
 ): Promise<ActionResponse<{ id: string }>> => {
 	try {
+		const t = await getTranslations("fractalPlan.daily.success")
 		const parsed = resetSchema.parse(input)
 		await requireAuth()
 		await db
@@ -108,7 +111,7 @@ export const resetDailyOverride = async (
 			.where(eq(dailyPlan.id, parsed.dailyPlanId))
 		return {
 			status: "success",
-			message: "Override reset",
+			message: t("overrideReset"),
 			data: { id: parsed.dailyPlanId },
 		}
 	} catch (err) {
@@ -129,6 +132,7 @@ export const lazyEnsureDailyPlan = async (
 	input: z.infer<typeof lazyEnsureSchema>
 ): Promise<ActionResponse<{ id: string; created: boolean }>> => {
 	try {
+		const t = await getTranslations("fractalPlan.daily")
 		const parsed = lazyEnsureSchema.parse(input)
 		await requireAuth()
 
@@ -141,7 +145,7 @@ export const lazyEnsureDailyPlan = async (
 		if (existing) {
 			return {
 				status: "success",
-				message: "Daily plan exists",
+				message: t("errors.alreadyExists"),
 				data: { id: existing.id, created: false },
 			}
 		}
@@ -160,7 +164,7 @@ export const lazyEnsureDailyPlan = async (
 
 		return {
 			status: "success",
-			message: "Daily plan created",
+			message: t("success.created"),
 			data: { id: created.id, created: true },
 		}
 	} catch (err) {
@@ -182,6 +186,7 @@ export const getDailyPlanById = async (
 	input: z.infer<typeof getDailyPlanByIdSchema>
 ): Promise<ActionResponse<DailyPlan | null>> => {
 	try {
+		const t = await getTranslations("fractalPlan.daily.success")
 		const parsed = getDailyPlanByIdSchema.parse(input)
 		await requireAuth()
 		const row = await db.query.dailyPlan.findFirst({
@@ -189,7 +194,7 @@ export const getDailyPlanById = async (
 		})
 		return {
 			status: "success",
-			message: "Daily plan fetched",
+			message: t("fetched"),
 			data: row ?? null,
 		}
 	} catch (err) {
@@ -214,13 +219,14 @@ export const getDailyPlanForCurrentAccount = async (
 	input: z.infer<typeof fetchByDateSchema>
 ): Promise<ActionResponse<FetchByDateResult>> => {
 	try {
+		const t = await getTranslations("fractalPlan.daily")
 		const parsed = fetchByDateSchema.parse(input)
 		await requireAuth()
 		const account = await getCurrentAccount()
 		if (!account?.id) {
 			return {
 				status: "success",
-				message: "No active account",
+				message: t("errors.noActiveAccount"),
 				data: { kind: "no-account" },
 			}
 		}
@@ -229,20 +235,20 @@ export const getDailyPlanForCurrentAccount = async (
 		if (ensured.status === "ok") {
 			return {
 				status: "success",
-				message: "Fetched",
+				message: t("success.fetched"),
 				data: { kind: "ok", dayRow: ensured.dayRow },
 			}
 		}
 		if (ensured.status === "no-yearly-plan") {
 			return {
 				status: "success",
-				message: "No yearly plan",
+				message: t("errors.noYearlyPlan"),
 				data: { kind: "no-yearly-plan" },
 			}
 		}
 		return {
 			status: "success",
-			message: "Incomplete cascade",
+			message: t("errors.incompleteCascade"),
 			data: { kind: "incomplete-cascade", missing: ensured.missing },
 		}
 	} catch (err) {

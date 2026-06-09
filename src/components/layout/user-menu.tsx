@@ -156,6 +156,7 @@ export const UserMenu = ({ isCollapsed }: UserMenuProps) => {
 						isPending && "opacity-50"
 					)}
 					disabled={isPending}
+					aria-label={t("userMenu")}
 				>
 					<div className="bg-acc-100/20 text-acc-100 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
 						<span className="text-small font-medium">

@@ -169,6 +169,7 @@ export const EquityCurve = ({
 	const [data, setData] = useState<EquityPoint[]>(initialData)
 	const [isPending, startTransition] = useTransition()
 
+	// Fetch data for the given period and view mode
 	const fetchData = useCallback(
 		(newPeriod: Period, newMode: ViewMode) => {
 			startTransition(async () => {
@@ -208,7 +209,7 @@ export const EquityCurve = ({
 		if (period === "month") {
 			fetchData("month", viewMode)
 		}
-	}, [calendarMonth, effectiveDate, period, viewMode, fetchData])
+	}, [period, viewMode, fetchData])
 
 	const periodLabels = useMemo(
 		() => ({
@@ -290,7 +291,7 @@ export const EquityCurve = ({
 						/>
 					</div>
 				</div>
-				<div className="mt-s-300 text-txt-300 sm:mt-m-400 flex h-48 items-center justify-center sm:h-64">
+				<div className="mt-s-300 text-txt-300 sm:mt-m-400 flex h-32 items-center justify-center sm:h-48 md:h-64">
 					{t("noData")}
 				</div>
 			</Panel>
@@ -321,7 +322,7 @@ export const EquityCurve = ({
 			<ChartContainer
 				id="chart-dashboard-equity-curve"
 				className={cn(
-					"mt-s-300 sm:mt-m-400 h-48 max-h-80 transition-opacity duration-200 sm:h-64",
+					"mt-s-300 sm:mt-m-400 h-32 max-h-80 transition-opacity duration-200 sm:h-48 md:h-64",
 					isPending && "opacity-50"
 				)}
 			>

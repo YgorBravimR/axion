@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { Panel } from "@/components/ui/panel"
 import { useFormatting } from "@/hooks/use-formatting"
+import { getPnlSignClass } from "@/lib/formatting"
 import type { DailySummary } from "@/app/actions/command-center.types"
 
 interface DailySummaryCardProps {
@@ -45,11 +46,13 @@ export const DailySummaryCard = ({ summary }: DailySummaryCardProps) => {
 				<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
 					{/* Total P&L */}
 					<div>
-						<p className="text-tiny text-txt-200">{t("totalPnL")}</p>
+						<p className="text-tiny sm:text-small text-txt-200">
+							{t("totalPnL")}
+						</p>
 						<p
 							className={cn(
-								"mt-s-100 text-h2 font-bold",
-								summary.totalPnL >= 0 ? "text-trade-buy" : "text-trade-sell"
+								"mt-s-100 text-h2 sm:text-h1 font-bold",
+								getPnlSignClass(summary.totalPnL)
 							)}
 						>
 							{formatCurrencyWithSign(summary.totalPnL)}
@@ -58,20 +61,24 @@ export const DailySummaryCard = ({ summary }: DailySummaryCardProps) => {
 
 					{/* Trades */}
 					<div>
-						<p className="text-tiny text-txt-200">{t("trades")}</p>
-						<p className="mt-s-100 text-body text-txt-100 font-semibold">
+						<p className="text-tiny sm:text-small text-txt-200">
+							{t("trades")}
+						</p>
+						<p className="mt-s-100 text-small sm:text-body text-txt-100 font-semibold">
 							{summary.tradesCount}
 						</p>
 					</div>
 
 					{/* Win Rate */}
 					<div>
-						<p className="text-tiny text-txt-200">{t("winRate")}</p>
+						<p className="text-tiny sm:text-small text-txt-200">
+							{t("winRate")}
+						</p>
 						<div className="mt-s-100 gap-s-100 flex items-center">
-							<p className="text-body text-txt-100 font-semibold">
+							<p className="text-small sm:text-body text-txt-100 font-semibold">
 								{formatPercent(summary.winRate)}
 							</p>
-							<span className="text-tiny text-txt-200">
+							<span className="text-tiny sm:text-small text-txt-200">
 								({summary.winCount}
 								{tCommon("winAbbr")} / {summary.lossCount}
 								{tCommon("lossAbbr")})
@@ -81,13 +88,13 @@ export const DailySummaryCard = ({ summary }: DailySummaryCardProps) => {
 
 					{/* Best Trade */}
 					<div>
-						<p className="gap-s-100 text-tiny text-txt-200 flex items-center">
+						<p className="gap-s-100 text-tiny sm:text-small text-txt-200 flex items-center">
 							<Award className="h-3 w-3" />
 							{t("bestTrade")}
 						</p>
 						<p
 							className={cn(
-								"mt-s-100 text-body font-semibold",
+								"mt-s-100 text-small sm:text-body font-semibold",
 								summary.bestTrade > 0 ? "text-trade-buy" : "text-txt-200"
 							)}
 						>
@@ -99,13 +106,13 @@ export const DailySummaryCard = ({ summary }: DailySummaryCardProps) => {
 
 					{/* Worst Trade */}
 					<div>
-						<p className="gap-s-100 text-tiny text-txt-200 flex items-center">
+						<p className="gap-s-100 text-tiny sm:text-small text-txt-200 flex items-center">
 							<AlertTriangle className="h-3 w-3" />
 							{t("worstTrade")}
 						</p>
 						<p
 							className={cn(
-								"mt-s-100 text-body font-semibold",
+								"mt-s-100 text-small sm:text-body font-semibold",
 								summary.worstTrade < 0 ? "text-trade-sell" : "text-txt-200"
 							)}
 						>
@@ -117,12 +124,12 @@ export const DailySummaryCard = ({ summary }: DailySummaryCardProps) => {
 
 					{/* Consecutive Losses */}
 					<div>
-						<p className="text-tiny text-txt-200">
+						<p className="text-tiny sm:text-small text-txt-200">
 							{t("maxConsecutiveLosses")}
 						</p>
 						<p
 							className={cn(
-								"mt-s-100 text-body font-semibold",
+								"mt-s-100 text-small sm:text-body font-semibold",
 								summary.consecutiveLosses >= 3 ? "text-warning" : "text-txt-100"
 							)}
 						>

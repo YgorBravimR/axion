@@ -53,56 +53,63 @@ const calculateReportSummary = (
 		realizedRMultiple: string | null
 	}>
 ): ReportSummaryBase => {
-	const winTrades = tradeList.filter((t) => t.outcome === "win")
-	const lossTrades = tradeList.filter((t) => t.outcome === "loss")
-	const breakevenCount = tradeList.filter(
-		(t) => t.outcome === "breakeven"
-	).length
+	const summary = tradeList.reduce(
+		(acc, t) => {
+			const pnlVal = fromCents(t.pnl)
+			const isWin = t.outcome === "win"
+			const isLoss = t.outcome === "loss"
+			const isBreakeven = t.outcome === "breakeven"
+			const hasR = t.realizedRMultiple !== null
 
-	const netPnl = tradeList.reduce((sum, t) => sum + fromCents(t.pnl), 0)
-	const totalFees = tradeList.reduce(
-		(sum, t) => sum + fromCents(t.commission) + fromCents(t.fees),
-		0
+			return {
+				netPnl: acc.netPnl + pnlVal,
+				totalFees: acc.totalFees + fromCents(t.commission) + fromCents(t.fees),
+				winCount: acc.winCount + (isWin ? 1 : 0),
+				lossCount: acc.lossCount + (isLoss ? 1 : 0),
+				breakevenCount: acc.breakevenCount + (isBreakeven ? 1 : 0),
+				grossProfit: acc.grossProfit + (isWin ? pnlVal : 0),
+				grossLossDenom: acc.grossLossDenom + (isLoss ? pnlVal : 0),
+				avgWinSum: acc.avgWinSum + (isWin ? pnlVal : 0),
+				avgLossSum: acc.avgLossSum + (isLoss ? pnlVal : 0),
+				rSum: acc.rSum + (hasR ? parseFloat(t.realizedRMultiple!) : 0),
+				rCount: acc.rCount + (hasR ? 1 : 0),
+			}
+		},
+		{
+			netPnl: 0,
+			totalFees: 0,
+			winCount: 0,
+			lossCount: 0,
+			breakevenCount: 0,
+			grossProfit: 0,
+			grossLossDenom: 0,
+			avgWinSum: 0,
+			avgLossSum: 0,
+			rSum: 0,
+			rCount: 0,
+		}
 	)
-	const grossPnl = netPnl + totalFees
-	const grossProfit = winTrades.reduce((sum, t) => sum + fromCents(t.pnl), 0)
-	const grossLoss = Math.abs(
-		lossTrades.reduce((sum, t) => sum + fromCents(t.pnl), 0)
-	)
-	const avgWin =
-		winTrades.length > 0
-			? winTrades.reduce((sum, t) => sum + fromCents(t.pnl), 0) /
-				winTrades.length
-			: 0
+
+	const grossPnl = summary.netPnl + summary.totalFees
+	const grossLoss = Math.abs(summary.grossLossDenom)
+	const avgWin = summary.winCount > 0 ? summary.avgWinSum / summary.winCount : 0
 	const avgLoss =
-		lossTrades.length > 0
-			? lossTrades.reduce((sum, t) => sum + fromCents(t.pnl), 0) /
-				lossTrades.length
-			: 0
-	const tradesWithR = tradeList.filter((t) => t.realizedRMultiple)
-	const avgR =
-		tradesWithR.length > 0
-			? tradesWithR.reduce(
-					(sum, t) =>
-						sum + (t.realizedRMultiple ? parseFloat(t.realizedRMultiple) : 0),
-					0
-				) / tradesWithR.length
-			: 0
-
-	const decidedCount = winTrades.length + lossTrades.length
+		summary.lossCount > 0 ? summary.avgLossSum / summary.lossCount : 0
+	const avgR = summary.rCount > 0 ? summary.rSum / summary.rCount : 0
+	const decidedCount = summary.winCount + summary.lossCount
 
 	return {
 		totalTrades: tradeList.length,
-		winCount: winTrades.length,
-		lossCount: lossTrades.length,
-		breakevenCount,
+		winCount: summary.winCount,
+		lossCount: summary.lossCount,
+		breakevenCount: summary.breakevenCount,
 		grossPnl,
-		netPnl,
-		totalFees,
-		winRate: decidedCount > 0 ? (winTrades.length / decidedCount) * 100 : 0,
+		netPnl: summary.netPnl,
+		totalFees: summary.totalFees,
+		winRate: decidedCount > 0 ? (summary.winCount / decidedCount) * 100 : 0,
 		avgWin,
 		avgLoss,
-		profitFactor: grossLoss > 0 ? grossProfit / grossLoss : 0,
+		profitFactor: grossLoss > 0 ? summary.grossProfit / grossLoss : 0,
 		avgR,
 	}
 }
@@ -172,9 +179,50 @@ export const getWeeklyReport = async (
 		// Calculate summary using shared helper
 		const summary = calculateReportSummary(weekTrades)
 
-		const pnlValues = weekTrades
-			.map((t) => fromCents(t.pnl))
-			.filter((p) => p !== 0)
+		const { pnlValues, sortedByPnl } = weekTrades.reduce(
+			(acc, t) => {
+				const pnl = fromCents(t.pnl)
+				if (pnl !== 0) {
+					acc.pnlValues.push(pnl)
+				}
+				acc.sortedByPnl.push({ trade: t, pnl })
+				return acc
+			},
+			{
+				pnlValues: [] as number[],
+				sortedByPnl: [] as Array<{
+					trade: (typeof weekTrades)[0]
+					pnl: number
+				}>,
+			}
+		)
+
+		sortedByPnl.sort((a, b) => b.pnl - a.pnl)
+
+		const topWins = sortedByPnl
+			.filter((item) => item.pnl > 0)
+			.slice(0, 3)
+			.map(({ trade: t }) => ({
+				id: t.id,
+				asset: t.asset,
+				pnl: fromCents(t.pnl),
+				r: t.realizedRMultiple ? parseFloat(t.realizedRMultiple) : null,
+				direction: t.direction,
+				date: formatDateKey(new Date(t.entryDate)),
+			}))
+
+		const topLosses = sortedByPnl
+			.filter((item) => item.pnl < 0)
+			.slice(-3)
+			.reverse()
+			.map(({ trade: t }) => ({
+				id: t.id,
+				asset: t.asset,
+				pnl: fromCents(t.pnl),
+				r: t.realizedRMultiple ? parseFloat(t.realizedRMultiple) : null,
+				direction: t.direction,
+				date: formatDateKey(new Date(t.entryDate)),
+			}))
 
 		// Daily breakdown
 		const days = eachDayOfInterval({ start: weekStart, end: weekEnd })
@@ -195,36 +243,6 @@ export const getWeeklyReport = async (
 				winRate: dayDecided > 0 ? (dayWins / dayDecided) * 100 : 0,
 			}
 		})
-
-		// Top wins/losses - pnl is stored in cents, convert to dollars (using toSorted for immutability)
-		const sortedByPnl = weekTrades
-			.filter((t) => t.pnl)
-			.toSorted((a, b) => fromCents(b.pnl) - fromCents(a.pnl))
-
-		const topWins = sortedByPnl
-			.filter((t) => fromCents(t.pnl) > 0)
-			.slice(0, 3)
-			.map((t) => ({
-				id: t.id,
-				asset: t.asset,
-				pnl: fromCents(t.pnl),
-				r: t.realizedRMultiple ? parseFloat(t.realizedRMultiple) : null,
-				direction: t.direction,
-				date: formatDateKey(new Date(t.entryDate)),
-			}))
-
-		const topLosses = sortedByPnl
-			.filter((t) => fromCents(t.pnl) < 0)
-			.slice(-3)
-			.reverse()
-			.map((t) => ({
-				id: t.id,
-				asset: t.asset,
-				pnl: fromCents(t.pnl),
-				r: t.realizedRMultiple ? parseFloat(t.realizedRMultiple) : null,
-				direction: t.direction,
-				date: formatDateKey(new Date(t.entryDate)),
-			}))
 
 		return {
 			status: "success",
@@ -556,8 +574,13 @@ const getUniqueTradingDays = (
 // MONTHLY RESULTS WITH PROP CALCULATIONS
 // ============================================================================
 
-export const getMonthlyResultsWithProp = async (
-	monthOffset = 0
+const getMonthlyResultsWithPropInternal = async (
+	monthOffset = 0,
+	prefetchedData?: {
+		account: Awaited<ReturnType<typeof db.query.tradingAccounts.findFirst>>
+		settingsResult: Awaited<ReturnType<typeof getUserSettings>>
+		authContext: Awaited<ReturnType<typeof requireAuth>>
+	}
 ): Promise<{
 	status: "success" | "error"
 	data?: MonthlyResultsWithProp
@@ -565,16 +588,15 @@ export const getMonthlyResultsWithProp = async (
 }> => {
 	const t = await getTranslations("reports")
 	try {
-		const authContext = await requireAuth()
-
-		// Get current account, user settings, and monthly report in parallel
-		const [account, settingsResult, reportResult] = await Promise.all([
-			db.query.tradingAccounts.findFirst({
+		const authContext = prefetchedData?.authContext ?? (await requireAuth())
+		const account =
+			prefetchedData?.account ??
+			(await db.query.tradingAccounts.findFirst({
 				where: eq(tradingAccounts.id, authContext.accountId),
-			}),
-			getUserSettings(),
-			getMonthlyReport(monthOffset),
-		])
+			}))
+		const settingsResult =
+			prefetchedData?.settingsResult ?? (await getUserSettings())
+		const reportResult = await getMonthlyReport(monthOffset)
 
 		if (!account) {
 			return { status: "error", message: t("actions.accountNotFound") }
@@ -588,7 +610,6 @@ export const getMonthlyResultsWithProp = async (
 			return { status: "error", message: t("actions.monthlyFetchFailed") }
 		}
 
-		const userSettings = settingsResult.data
 		const report = reportResult.data
 
 		// Account fields are plaintext
@@ -638,6 +659,14 @@ export const getMonthlyResultsWithProp = async (
 	}
 }
 
+export const getMonthlyResultsWithProp = async (
+	monthOffset = 0
+): Promise<{
+	status: "success" | "error"
+	data?: MonthlyResultsWithProp
+	message?: string
+}> => getMonthlyResultsWithPropInternal(monthOffset)
+
 // ============================================================================
 // MONTHLY PROJECTION
 // ============================================================================
@@ -682,7 +711,6 @@ export const getMonthlyProjection = async (): Promise<{
 			return { status: "error", message: t("actions.settingsFetchFailed") }
 		}
 
-		const userSettings = settingsResult.data
 		const decryptedAccount = account
 		const totalTradingDays = getBusinessDaysInMonth(now)
 		const daysTraded = getUniqueTradingDays(monthTrades)
@@ -749,10 +777,25 @@ export const getMonthComparison = async (
 }> => {
 	const t = await getTranslations("reports")
 	try {
-		// Get current and previous month results
+		// Prefetch shared account and settings data once
+		const authContext = await requireAuth()
+		const [account, settingsResult] = await Promise.all([
+			db.query.tradingAccounts.findFirst({
+				where: eq(tradingAccounts.id, authContext.accountId),
+			}),
+			getUserSettings(),
+		])
+
+		const prefetchedData = {
+			account,
+			settingsResult,
+			authContext,
+		}
+
+		// Get current and previous month results with prefetched data
 		const [currentResult, previousResult] = await Promise.all([
-			getMonthlyResultsWithProp(monthOffset),
-			getMonthlyResultsWithProp(monthOffset + 1),
+			getMonthlyResultsWithPropInternal(monthOffset, prefetchedData),
+			getMonthlyResultsWithPropInternal(monthOffset + 1, prefetchedData),
 		])
 
 		if (currentResult.status !== "success" || !currentResult.data) {

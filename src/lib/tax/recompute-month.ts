@@ -13,6 +13,10 @@ interface RecomputeInput {
 	year: number
 	month: number // 1–12
 	carryoverInCents: number
+	prefetchedData?: {
+		feeRatesRows?: Array<typeof accountFeeRates.$inferSelect>
+		priorMonthDeferredIr?: number
+	}
 }
 
 interface RecomputeOutput {
@@ -49,19 +53,19 @@ interface RecomputeOutput {
 const recomputeAccountMonth = async (
 	input: RecomputeInput
 ): Promise<RecomputeOutput> => {
-	const { accountId, year, month, carryoverInCents } = input
+	const { accountId, year, month, carryoverInCents, prefetchedData } = input
 
 	// timestamptz columns: build UTC range bounds, never local-tz date-fns helpers
 	const monthStart = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0))
 	const monthEnd = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999))
 
-	// Fetch all fee rate rows for this account.
-	// One row may have NULL assetSymbol (catch-all default); zero or more rows
-	// override per-asset (e.g. WDO, WIN). Build a lookup keyed by assetSymbol.
-	const feeRatesRows = await db
-		.select()
-		.from(accountFeeRates)
-		.where(eq(accountFeeRates.accountId, accountId))
+	// Use prefetched fee rates if provided, otherwise fetch.
+	const feeRatesRows =
+		prefetchedData?.feeRatesRows ??
+		(await db
+			.select()
+			.from(accountFeeRates)
+			.where(eq(accountFeeRates.accountId, accountId)))
 
 	const DEFAULT_FEES = {
 		txCorretagemCents: 5,
@@ -89,14 +93,16 @@ const recomputeAccountMonth = async (
 	const resolveFeeRates = (assetSymbol: string) =>
 		feeRatesByAsset.get(assetSymbol) ?? defaultFeeRates
 
-	// Fetch previous month's deferred IR balance (if it exists).
+	// Fetch or use prefetched previous month's deferred IR balance (if it exists).
 	// For the first month with no prior row, start with deferredIrInCents = 0.
-	const priorMonthStart = new Date(Date.UTC(year, month - 2, 1, 0, 0, 0, 0))
-	const priorMonthEnd = new Date(Date.UTC(year, month - 1, 0, 23, 59, 59, 999))
-	let deferredIrInCents = 0
+	let deferredIrInCents = prefetchedData?.priorMonthDeferredIr ?? 0
 
-	if (month > 1) {
-		// Prior month exists within the same year
+	if (!prefetchedData?.priorMonthDeferredIr && month > 1) {
+		// Prior month exists within the same year — only fetch if not prefetched
+		const priorMonthStart = new Date(Date.UTC(year, month - 2, 1, 0, 0, 0, 0))
+		const priorMonthEnd = new Date(
+			Date.UTC(year, month - 1, 0, 23, 59, 59, 999)
+		)
 		const priorRows = await db
 			.select({ deferredIrCents: monthlyTaxLedger.deferredIrCents })
 			.from(monthlyTaxLedger)

@@ -43,7 +43,7 @@ const BacktestTradeChartModal = ({
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent
 				id="backtest-trade-chart-modal"
-				className="w-[95vw] max-w-5xl"
+				className="w-full sm:w-[95vw] sm:max-w-5xl"
 			>
 				<DialogHeader>
 					<DialogTitle>

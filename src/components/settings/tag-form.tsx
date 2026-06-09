@@ -179,9 +179,7 @@ export const TagForm = ({
 
 					{/* Color */}
 					<div className="space-y-s-200">
-						<Label id="label-tag-color" required filled={!!formData.color}>
-							{t("color")}
-						</Label>
+						<span>{t("color")}</span>
 						<div className="gap-s-200 flex flex-wrap items-center">
 							{TAG_COLORS.map((color) => (
 								<button

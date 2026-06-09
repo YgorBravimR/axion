@@ -122,6 +122,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 
 ## Next.js / App Router
 
+### Turbopack static-analyzes every `require()` even when the package is in `serverExternalPackages` — DuckDB binding-shim fails on a fresh Apple Silicon worktree
+
+- **What**: `@duckdb/node-bindings/duckdb.js` contains an unguarded `switch (process.arch)` with a `require()` per platform (`darwin-arm64`, `darwin-x64`, `linux-x64`, `linux-arm64`, `win32-x64`, `win32-arm64`, plus `-musl` variants). Turbopack walks **every** branch at build time regardless of runtime reachability. pnpm only installs the host-arch optional binding by default, so the cross-arch `require()` calls fail to resolve → `Module not found: Can't resolve '@duckdb/node-bindings-darwin-x64/duckdb.node'` and the dev server overlay blocks every route, not just `/backtest/optimize`. Listing `@duckdb/node-api` + `@duckdb/node-bindings` in `next.config.ts` → `serverExternalPackages` is **not enough** in Next.js 16.x + Turbopack — externalization does not stop the static walk of internal `require()`s.
+- **What to do**: Install the cross-arch bindings as `devDependencies` (already done on 2026-06-09): `@duckdb/node-bindings-darwin-x64`, `@duckdb/node-bindings-linux-x64`, `@duckdb/node-bindings-linux-x64-musl`, `@duckdb/node-bindings-linux-arm64`, `@duckdb/node-bindings-linux-arm64-musl`, `@duckdb/node-bindings-win32-x64`, `@duckdb/node-bindings-win32-arm64`. Costs ~50MB in `node_modules` but unblocks dev on any host. Long-term: file a Next.js issue or upstream a `await import()` shim in DuckDB so the require is lazy and not visible to static analysis.
+- **Symptom that mimics this**: Build overlay shows ONE missing arch (the first one Turbopack hit) — fixing only that arch shifts the error to the next one. Always install all of them at once.
+- **Source**: 2026-06-09 visual-review session; `next.config.ts` already lists both DuckDB packages but the static walk happens anyway. Affects `darwin-arm64` (Apple Silicon) hosts most visibly because pnpm doesn't fetch cross-arch optional deps for any platform.
+
 ### `cookies()` / `headers()` / `draftMode()` are banned in pages
 
 - **What**: Calling these from `next/headers` inside `page.tsx`/`layout.tsx`/`template.tsx` forces full dynamic rendering implicitly and breaks static analysis.
@@ -276,6 +283,34 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: Treat "green lint:strict" as necessary but not sufficient. Run `pnpm exec tsc --noEmit` locally before assuming the branch is ready to push, especially after merging another branch in. If you're CI-only, the deploy workflow gate must include `tsc --noEmit` for parity with pre-push, or the failure mode is "push works for me but blocks the next contributor."
 - **Date logged**: 2026-05-20.
 - **Source**: feat/hawks-mode-v0 pre-push failure during manifesto §6 backlog filing.
+
+### Refactor-leftover intermediate vars escape tsc but trip `no-unused-vars`
+
+- **What**: When refactoring a server action to "validate result then assign for use", it's idiomatic to write `if (settingsResult.status !== "success" || !settingsResult.data) return errorPath; const userSettings = settingsResult.data; const report = reportResult.data;` and then build downstream output using only `report`. Several scan-fix refactors (`T6` hoisting, `T3/T4` async-section splits) consistently left these intermediate `const X = result.data` assignments unread. tsc doesn't flag them (they're typed correctly), but ESLint `no-unused-vars` does. The fix is mechanical (delete the line) but the bug-class re-ships every refactor because the pattern reads like documentation of what the validated payload is.
+- **What to do**: After ANY refactor of a server action or async-section that changes which fetch results flow downstream, run `pnpm lint` immediately. The warnings will point at the dead intermediates. Delete the assignments; the validation check above them is the load-bearing part. If you keep it, prefix with `_` to make the intent explicit (e.g. `const _userSettings = ...` to flag "kept for future use"), but expect a reviewer to push back.
+- **Date logged**: 2026-06-09.
+- **Source**: `chore/perf-scan-2026-06-09` Tier-1 lint cleanup after the T6/T3/T4 perf refactors — `src/app/actions/reports.ts:613,715` and `src/components/reports/async-sections.tsx:192`.
+
+### Async server component props passed by the caller but unread by the body
+
+- **What**: When you split a heavy `page.tsx` into Suspense-streamed async server components (the canonical T3/T4 perf pattern), it's tempting to forward "everything the parent had" — `currentYear`, `currentMonth`, `currentAccountId` — to every section "in case the section needs it." Sections that only call `getAnnualRollup(year)` end up with two unread props. tsc accepts the unused props (they're valid in the type), `next dev` runs fine, but `pnpm lint` fires `no-unused-vars` on the destructure. Net effect: dead data flows through the RSC tree, the prop interface lies about what the section depends on, and any reader-side check ("what changes when `currentAccountId` changes?") returns a misleading answer.
+- **What to do**: When extracting a Suspense-wrapped section, slim the props to exactly what the body reads. The caller passes only what's needed — if a later requirement adds a dependency, add the prop then. Catch existing drift with: `rg -nU '^\s*[a-zA-Z]+,$' <async-section-file>` (look for destructured props), then for each one `rg -c <propName> <same-file>`; any prop that appears exactly once (the destructure) is dead.
+- **Date logged**: 2026-06-09.
+- **Source**: `chore/perf-scan-2026-06-09` — `AnnualReportSectionAsync` in `src/components/reports/async-sections.tsx` received `currentMonth` + `currentAccountId` from page.tsx but the body only used `currentYear`.
+
+### TS interface / type-alias arg names trigger `no-unused-vars` — prefix with `_`
+
+- **What**: ESLint's `@typescript-eslint/no-unused-vars` rule runs on **interface method signatures and type-alias function signatures**, not just on actual function declarations. So `interface Props { onStartEdit: (setting: Setting) => void }` warns because the arg name `setting` is "unused" inside the type itself. Same for `type Translator = (key: string, values?: ...) => string`. Axion's lint config has `argsIgnorePattern: "^_"` set, so the fix is to prefix arg names with underscore: `onStartEdit: (_setting: Setting) => void`. The arg names are documentation only in TS signatures — the underscore prefix preserves intent without firing the rule.
+- **What to do**: When defining callback prop types or function-type aliases, prefix every arg with `_` from the start: `(_event: MouseEvent) => void`. Existing convention in the codebase: `onOpenChange: (_open: boolean) => void`, `onFrozen?: (_preset: HeroWinPreset) => void`. Detector for drift: `rg -nU --multiline 'interface \w+ \{[^}]*: \([a-z]+:' src/components/ src/hooks/` (interface members with non-underscored arg names — manual triage; you want most to start with `_`).
+- **Date logged**: 2026-06-09.
+- **Source**: `chore/perf-scan-2026-06-09` Tier-1 lint cleanup — `src/components/command-center/asset-rules-panel.tsx:65-72` (7 sites) and `src/components/optimize/freeze-hero-modal.tsx:43,112` (4 sites).
+
+### Static skeleton lists still trip `no-array-index-key` — use a precomputed string-key tuple
+
+- **What**: Even when a list never reorders (the canonical skeleton case — N placeholder rows that mount once and unmount once), the pattern `Array.from({ length: N }).map((_, i) => <Skeleton key={i} />)` fires `@eslint-react/no-array-index-key` in Tier-2 strict. Existing gotcha "Tier-1 vs Tier-2 disable-comments are tier-asymmetric" rules out a `// eslint-disable-next-line` here (the rule is strict-only, so the disable comment would error in Tier-1). A `useMemo`-wrapped UUID array is overkill (turns RSC into client component just for keys).
+- **What to do**: Declare a module-level `as const` string array of stable keys keyed on length, then map over the string elements: `const KEYS_6 = ["a","b","c","d","e","f"] as const` then `{KEYS_6.map(key => <Skeleton key={key} />)}`. Stays RSC, lint-clean, zero runtime cost. Pattern landed in `src/components/reports/report-skeletons.tsx` 2026-06-09. Reuse the same const for any other skeleton needing the same row count.
+- **Date logged**: 2026-06-09.
+- **Source**: `chore/perf-scan-2026-06-09` Tier-2 lint cleanup — the new `report-skeletons.tsx` created during T3/T4 Suspense refactor had 9 array-index-key warnings.
 
 ---
 
@@ -503,6 +538,17 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
   - **Belt and braces**: for routing/cleanup-only agents whose `git status` should be near-empty, restrict their prompt to a single file scope ("only touch `docs/backlog.md`"). If the agent then auto-commits, the blast radius is one file.
 - **Source**: 2026-05-15 parallel-wave (commit `6a7e986` over-swept; recovered via `560310e` follow-up).
 - **Date logged**: 2026-05-15.
+
+### `/scan` fix-agents can silently revert sibling cluster work + delete untracked drafts
+
+- **What**: During a multi-cluster `/scan` (sequential fix-agents per cluster), state-loss occurred between Cluster B's completion and Cluster C's launch — Cluster A's working-tree edits across ~6 files (`auth/layout`, `app-shell`, `sidebar`, `login-form`, `account-switcher`, `user-menu`, new `src/lib/copyright-year.ts`) reverted to baseline, and untracked draft reports in `docs/scans/_drafts/2026-06-09-responsive/` were deleted. Cluster B's working-tree edits (10 files) survived. `git reflog` showed a single `558a7697 HEAD@{0}: reset: moving to HEAD` entry but no `--hard` evidence. The survival pattern (one cluster's edits intact, the prior cluster's gone, untracked files removed) is consistent with `git clean -fd` followed by `git checkout HEAD -- <pathspec>` — root cause unconfirmed.
+- **What to do**:
+  - **Forbid destructive git commands in every fix-agent prompt** explicitly: `"DO NOT run \`git reset\`, \`git clean\`, \`git checkout --\` or any destructive git command. Read-only inspection only (\`git status\`, \`git diff\`). If your edits create a problem, fix it forward — never roll back the working tree."`
+  - **Prefer inline findings over disk-based draft reports** in fix-agent prompts. The 2026-06-09 incident was recoverable only because the orchestrator had read the draft reports into its conversation context before they were deleted. If you must use disk artifacts, accept that they are vulnerable.
+  - **`git diff --stat` spot-check after every fix-agent** before launching the next sibling. Don't trust an agent's self-reported "all green tsc + lint" — verify the files it claims to have modified are actually modified, and that no prior-cluster files reverted. Three lines of orchestrator-side bash beats a 90-minute recovery.
+  - **Consider `isolation: "worktree"`** if you don't need the fix-agent's edits to be visible to subsequent siblings. Trade-off: extra merge cost vs zero blast radius.
+- **Source**: 2026-06-09 `/scan for layout drifts on responsiveness`. Full incident report: `docs/scans/2026-06-09-responsive-layout-drift.md` § Incident.
+- **Date logged**: 2026-06-09.
 
 ---
 

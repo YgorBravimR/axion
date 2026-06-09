@@ -79,8 +79,20 @@ export const DateNavigator = ({ currentDate, isToday }: DateNavigatorProps) => {
 
 			<div className="gap-s-200 flex items-center">
 				<CalendarDays className="text-txt-300 h-4 w-4" aria-hidden="true" />
+				{/* Always show the concrete date — when reviewing the dashboard the
+				    day after, "Today" alone is ambiguous. The date prefix is muted
+				    on the "Today" view so the eye still anchors on "Today". */}
 				<span className="text-small text-txt-100 font-medium">
-					{isToday ? t("today") : formatDisplayDate(currentDate, locale)}
+					{isToday ? (
+						<>
+							{t("today")}
+							<span className="text-txt-300 ml-s-200 font-normal">
+								· {formatDisplayDate(currentDate, locale)}
+							</span>
+						</>
+					) : (
+						formatDisplayDate(currentDate, locale)
+					)}
 				</span>
 			</div>
 

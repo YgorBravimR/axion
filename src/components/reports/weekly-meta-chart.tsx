@@ -3,6 +3,7 @@
 
 import { useTranslations } from "next-intl"
 import { useFormatting } from "@/hooks/use-formatting"
+import { useMemo, memo } from "react"
 import {
 	ComposedChart,
 	Bar,
@@ -83,14 +84,18 @@ const CustomTooltip = ({
 const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
 	const t = useTranslations("reports.weeklyMeta")
 	const { formatCurrency } = useFormatting()
-	const chartData = data.weeks.map((w) => ({
-		name: `W${w.isoWeek}`,
-		resultado: w.disabled ? 0 : w.resultado,
-		metaBruto: w.metaBruto,
-		metaLiquido: w.metaLiquido,
-		autoRetirada: w.autoRetirada > 0 ? w.autoRetirada : undefined,
-		disabled: w.disabled,
-	}))
+	const chartData = useMemo(
+		() =>
+			data.weeks.map((w) => ({
+				name: `W${w.isoWeek}`,
+				resultado: w.disabled ? 0 : w.resultado,
+				metaBruto: w.metaBruto,
+				metaLiquido: w.metaLiquido,
+				autoRetirada: w.autoRetirada > 0 ? w.autoRetirada : undefined,
+				disabled: w.disabled,
+			})),
+		[data.weeks]
+	)
 
 	return (
 		<div
@@ -246,4 +251,5 @@ const WeeklyMetaChart = ({ data, className }: WeeklyMetaChartProps) => {
 	)
 }
 
-export { WeeklyMetaChart }
+const MemoizedWeeklyMetaChart = memo(WeeklyMetaChart)
+export { MemoizedWeeklyMetaChart as WeeklyMetaChart }

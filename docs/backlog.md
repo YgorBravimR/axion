@@ -396,4 +396,72 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Done when**: heatmaps with 1000+ cells render in <16ms; existing interactivity preserved or explicitly migrated.
 - **Date filed**: 2026-06-02.
 
+## Layout & Theming (from 2026-06-09 scan)
+
+### Server-action unreachable i18n fallback class — 41 caller sites (continues 2026-06-02 sweep)
+
+- **What**: The `result.message ?? t("fallback")` / `result.message || t(...)` pattern in client components is dead code — server actions return truthy English strings, so the `??`/`||` never fire. The 2026-06-02 i18n deep-sweep enumerated ~41 caller sites; the 2026-06-09 scan found 9 still-live instances in Cluster F (settings, reports) alone. The fix is server-side: wrap action error messages with `getTranslations()` and return translated strings; the client-side `??` then becomes correct defense-in-depth.
+- **Why it's deferred from 2026-06-09 scan**: requires coordinated server-action audit across many `src/app/actions/*.ts` files; cleanly out of scope for a responsive-drift pass; risks colliding with the 2026-06-02 sweep's tracked work if done piecemeal.
+- **Fix shape**:
+  1. Read `docs/scans/2026-06-02-i18n-action-errors.md` for the full caller catalog.
+  2. For each affected server action: import `getTranslations` from `next-intl/server`, wrap each English error-return message with `t("namespace.errors.<key>")`, add the key to both `messages/en.json` and `messages/pt-BR.json` in lockstep.
+  3. After all actions are migrated, audit client components for now-dead `??`/`||` fallbacks — keep or remove based on aesthetic preference.
+  4. Validate with `pnpm i18n:check`.
+- **Known live caller sites (post 2026-06-09 scan)**: `recalculate-button.tsx:28-34`, `recalculate-pnl-button.tsx:28-34`, `capital-event-log.tsx:67`, `withdrawal-calculator.tsx:55`, `general-settings.tsx:70`, `trading-account-settings.tsx:95`, `user-profile-settings.tsx:107`, `hawks-settings.tsx:~170-180`, `tag-list.tsx:~300+`, `user-list.tsx:~400+`, plus the broader 41 sites enumerated 2026-06-02.
+- **Done when**: `rg 'result\.(message|error)\s*(\?\?|\|\|)' src/components/` returns empty (or only intentional defense-in-depth where server is already translated).
+- **Date filed**: 2026-06-09.
+- **Source**: `docs/scans/2026-06-09-responsive-layout-drift.md` § RC4, § Still armed.
+
+### Backtest trades table — mobile card-layout alternative
+
+- **What**: `src/components/backtest/backtest-trades-table.tsx` uses `hidden md:table-cell` to drop columns on mobile, plus `overflow-x-auto` was added in the 2026-06-09 pass. There is still no mobile-optimized card layout — on a 375px viewport users either scroll horizontally or see a heavily-reduced column set. A vertical card mode (one row → one card with stacked fields) would be the canonical fix.
+- **Done when**: at `<sm:` breakpoint, the table renders as vertical cards; at `>=sm:` it renders as the existing table.
+- **Date filed**: 2026-06-09.
+- **Source**: `docs/scans/2026-06-09-responsive-layout-drift.md` § E8.
+
+### Trading-calendar mobile alt view
+
+- **What**: `src/components/dashboard/trading-calendar.tsx` renders 7-column or 5-column day grids. The 2026-06-09 pass added `overflow-x-auto md:overflow-visible` to the wrapper so it scrolls instead of squashing — but at 375px each cell is still ~53px and day-number text remains tight. A numeric-list alternative mobile view (list of days with P&L badges, no grid) may serve mobile users better.
+- **Done when**: gather feedback after shipping the overflow-fix; if mobile users report calendar discomfort, build the list-view alt.
+- **Date filed**: 2026-06-09.
+- **Source**: `docs/scans/2026-06-09-responsive-layout-drift.md` § B10.
+
+## A11y & I18n (from 2026-06-09 follow-up sub-scans)
+
+### Custom form-component `aria-labelledby` forwarding gap
+
+- **Priority**: P2.
+- **Effort**: S (per component, ~30 min each).
+- **What**: `DateRangePicker` (in `equity-shield/equity-shield-params.tsx:153`) and likely `AssetCombobox` / `RatingInput` (in `journal/*`) do not forward `aria-labelledby` from props to their inner form control. This blocks the 2026-06-09 a11y carryover pass from wiring screen-reader labels for ~2-3 form fields that use these custom components.
+- **Done when**: each custom component accepts and forwards `aria-labelledby` (and ideally `aria-describedby`) to the actual `<input>`, `<select>`, or `<button>` it renders. Then re-run the label-linkage detector and the count should drop.
+- **Date filed**: 2026-06-09.
+- **Source**: `docs/scans/2026-06-09-a11y.md` § Skipped + Open follow-ups.
+
+### Translate `aria-label` strings that surface in screen readers
+
+- **Priority**: P2.
+- **Effort**: S (mechanical wrap with `t(...)` once a catalog is built).
+- **What**: Several `aria-label` attributes are hardcoded English copy (e.g. `aria-label="Dashboard"` on `src/app/[locale]/(app)/page.tsx`, page-breadcrumb's `aria-label="Breadcrumb"` recommendation, `account-switcher.tsx` aria-labels). These bypass i18n because the visible text was translated but the screen-reader text was not. Brazilian Portuguese users will hear English landmark labels.
+- **Done when**: `rg 'aria-label="[A-Z]' src/` returns no untranslated literals; all aria-labels go through `t(...)` or `useTranslations()`.
+- **Date filed**: 2026-06-09.
+- **Source**: `docs/scans/2026-06-09-responsive-layout-drift.md` § Open follow-ups; `docs/scans/2026-06-09-a11y.md` § Phase 3a fix log.
+
+### Readonly key-value displays: `<span>` → `<dl>/<dt>/<dd>` upgrade
+
+- **Priority**: P3.
+- **Effort**: M (per file, requires per-pattern JSX restructuring).
+- **What**: The 2026-06-09 a11y phase 3b converted 18 `<Label>` instances on readonly value displays (CSV import review, trade detail view) to `<span>` — defensible because it removes the WCAG violation (a Label without a control), but soft because it gives up semantic intent. The richer fix is `<dl>` (definition list) with `<dt>` (term) → `<dd>` (description). Screen readers will then announce these as key-value pairs, which is what they semantically are.
+- **Done when**: csv-trade-card, scaled-trade-form, trade-form display sections wrap their readonly fields in `<dl>` blocks; visual layout preserved.
+- **Date filed**: 2026-06-09.
+- **Source**: `docs/scans/2026-06-09-a11y.md` § Phase 3b notes.
+
+### Re-investigate the 4 unconverted RSC candidates from 2026-06-09 perf scan
+
+- **Priority**: P3.
+- **Effort**: S.
+- **What**: The 2026-06-09 perf-fix agent substituted 7 alternative files for the 4 explicitly-named candidates (`daily-summary-card.tsx`, `pnl-display.tsx`, `position-summary.tsx`, `trade-detail-guide.tsx`). The substitutes are safe (production build clean) but the original 4 were never validated. They were flagged with high confidence in the diagnose pass; re-investigate whether they truly need `"use client"` or if removing it yields real bundle savings.
+- **Done when**: each of the 4 named files is either confirmed-needs-client (with a one-line reason inline), or has `"use client"` removed with tsc + build clean.
+- **Date filed**: 2026-06-09.
+- **Source**: `docs/scans/2026-06-09-responsive-layout-drift.md` § Open follow-ups; `docs/scans/2026-06-09-performance.md` § RSC cluster.
+
 ## Tax & Compliance

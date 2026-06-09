@@ -114,7 +114,7 @@ const TradeDetailLayout = ({ children, chartData }: TradeDetailLayoutProps) => {
 		<>
 			<div
 				ref={layoutContainerRef}
-				className="flex h-[calc(100dvh-3.5rem)] flex-col md:h-[calc(100dvh-3rem)]"
+				className="flex h-[calc(100dvh-var(--app-header-height))] flex-col"
 			>
 				{view === "chart" ? (
 					<div className="h-full overflow-hidden">
@@ -133,6 +133,7 @@ const TradeDetailLayout = ({ children, chartData }: TradeDetailLayoutProps) => {
 					</div>
 				) : (
 					<div className="flex-1 overflow-auto">
+						{/* H10: backdrop-blur-sm used for visual polish on scroll edge; note performance trade-off on older tablets */}
 						<div className="bg-bg-100/80 px-m-400 py-s-300 sm:px-m-500 lg:px-m-600 sticky top-0 z-10 flex justify-end backdrop-blur-sm">
 							<Button
 								id="toggle-chart-view"

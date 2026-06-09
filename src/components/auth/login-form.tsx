@@ -19,6 +19,80 @@ interface AccountPickerItem {
 	name: string
 	accountType: string
 	isDefault: boolean
+	todayPnl: number | null
+	sparkline: number[] | null
+}
+
+const PICKER_SPARK_WIDTH = 80
+const PICKER_SPARK_HEIGHT = 24
+
+interface PickerSparklineProps {
+	points: number[]
+}
+
+/**
+ * Tiny pre-session sparkline rendered inside each account-picker row.
+ * Tone follows the slope of the last vs first sample so the user reads
+ * "trending up" / "trending down" without needing numeric annotations.
+ */
+const PickerSparkline = ({ points }: PickerSparklineProps) => {
+	if (points.length < 2) {
+		return null
+	}
+	const min = Math.min(...points)
+	const max = Math.max(...points)
+	const range = max - min || 1
+	const innerW = PICKER_SPARK_WIDTH - 2
+	const innerH = PICKER_SPARK_HEIGHT - 2
+	const xy = points.map((v, i) => {
+		const x = 1 + (i / (points.length - 1)) * innerW
+		const y = 1 + innerH - ((v - min) / range) * innerH
+		return { x, y }
+	})
+	const path = xy
+		.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`)
+		.join(" ")
+	const lastPoint = points[points.length - 1] ?? 0
+	const firstPoint = points[0] ?? 0
+	const toneClass =
+		lastPoint > firstPoint
+			? "text-trade-buy"
+			: lastPoint < firstPoint
+				? "text-trade-sell"
+				: "text-txt-300"
+	return (
+		<svg
+			viewBox={`0 0 ${PICKER_SPARK_WIDTH} ${PICKER_SPARK_HEIGHT}`}
+			width={PICKER_SPARK_WIDTH}
+			height={PICKER_SPARK_HEIGHT}
+			className={cn("shrink-0", toneClass)}
+			aria-hidden="true"
+			preserveAspectRatio="none"
+		>
+			<path
+				d={path}
+				fill="none"
+				stroke="currentColor"
+				strokeWidth={1.5}
+				strokeLinejoin="round"
+				strokeLinecap="round"
+				vectorEffect="non-scaling-stroke"
+			/>
+		</svg>
+	)
+}
+
+const formatCompactBrlSigned = (value: number): string => {
+	const abs = Math.abs(value)
+	const fmt =
+		abs >= 1000 ? `R$ ${(abs / 1000).toFixed(1)}K` : `R$ ${abs.toFixed(0)}`
+	if (value > 0) {
+		return `+${fmt}`
+	}
+	if (value < 0) {
+		return `-${fmt}`
+	}
+	return fmt
 }
 
 interface LoginFormProps {
@@ -141,7 +215,7 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 	// Account selection step
 	if (step === "account-selection") {
 		return (
-			<div className="space-y-m-600 w-full max-w-sm md:max-w-md">
+			<div className="space-y-m-600 w-full max-w-sm md:max-w-md lg:max-w-lg">
 				{/* Logo */}
 				<div className="flex justify-center">
 					<Image
@@ -173,58 +247,107 @@ const LoginForm = ({ callbackUrl = "/" }: LoginFormProps) => {
 				)}
 
 				<div className="space-y-s-300">
-					{accounts.map((account) => (
-						<button
-							key={account.id}
-							type="button"
-							onClick={() => setSelectedAccountId(account.id)}
-							disabled={isPending}
-							className={cn(
-								"gap-m-400 p-m-400 flex w-full items-center rounded-lg border text-left transition-colors",
-								selectedAccountId === account.id
-									? "border-acc-100 bg-acc-100/10"
-									: "border-bg-300 bg-bg-200 hover:border-bg-400",
-								isPending && "cursor-not-allowed opacity-50"
-							)}
-						>
-							<div
+					{accounts.map((account) => {
+						// "Personal personal" is visually redundant — when the row's
+						// display name already includes the accountType label
+						// (case-insensitive), suppress the type chip so the row reads
+						// as a single noun instead of a duplicated pair.
+						const typeLabel = account.accountType
+						const nameContainsType = account.name
+							.toLowerCase()
+							.includes(typeLabel.toLowerCase())
+						return (
+							<button
+								key={account.id}
+								type="button"
+								onClick={() => setSelectedAccountId(account.id)}
+								disabled={isPending}
 								className={cn(
-									"flex h-10 w-10 items-center justify-center rounded-lg",
-									account.accountType === "prop"
-										? "bg-acc-100/20 text-acc-100"
-										: "bg-txt-300/20 text-txt-200"
-								)}
-							>
-								{account.accountType === "prop" ? (
-									<Building2 className="h-5 w-5" aria-hidden="true" />
-								) : (
-									<User className="h-5 w-5" aria-hidden="true" />
-								)}
-							</div>
-
-							<div className="flex-1">
-								<p className="text-txt-100 font-medium">{account.name}</p>
-								<p className="text-tiny text-txt-300 capitalize">
-									{account.accountType}
-								</p>
-							</div>
-
-							<div
-								className={cn(
-									"h-5 w-5 rounded-full border-2 transition-colors",
+									"gap-m-400 p-m-400 flex w-full items-center rounded-lg border text-left transition-colors",
 									selectedAccountId === account.id
-										? "border-acc-100 bg-acc-100"
-										: "border-bg-400"
+										? "border-acc-100 bg-acc-100/10"
+										: "border-bg-300 bg-bg-200 hover:border-bg-400",
+									isPending && "cursor-not-allowed opacity-50"
 								)}
 							>
-								{selectedAccountId === account.id && (
-									<div className="flex h-full w-full items-center justify-center">
-										<div className="bg-bg-100 h-2 w-2 rounded-full" />
+								<div
+									className={cn(
+										"flex h-10 w-10 items-center justify-center rounded-lg",
+										account.accountType === "prop"
+											? "bg-acc-100/20 text-acc-100"
+											: "bg-txt-300/20 text-txt-200"
+									)}
+								>
+									{account.accountType === "prop" ? (
+										<Building2 className="h-5 w-5" aria-hidden="true" />
+									) : (
+										<User className="h-5 w-5" aria-hidden="true" />
+									)}
+								</div>
+
+								<div className="min-w-0 flex-1">
+									<div className="gap-s-200 flex items-center">
+										<p className="text-txt-100 truncate font-medium">
+											{account.name}
+										</p>
+										{account.isDefault && (
+											<span className="bg-acc-100/15 text-acc-100 text-micro px-s-200 shrink-0 rounded-full py-0.5 font-medium">
+												{tSelect("defaultBadge")}
+											</span>
+										)}
+									</div>
+									<div className="gap-s-200 mt-s-100 flex items-center">
+										{!nameContainsType && (
+											<span className="text-tiny text-txt-300 shrink-0 capitalize">
+												{typeLabel}
+											</span>
+										)}
+										{account.todayPnl !== null && (
+											<>
+												{!nameContainsType && (
+													<span aria-hidden="true" className="text-txt-300">
+														·
+													</span>
+												)}
+												<span
+													className={cn(
+														"text-tiny shrink-0 font-medium tabular-nums",
+														account.todayPnl > 0 && "text-trade-buy",
+														account.todayPnl < 0 && "text-trade-sell",
+														account.todayPnl === 0 && "text-txt-300"
+													)}
+												>
+													{tSelect("todayLabel")}{" "}
+													{formatCompactBrlSigned(account.todayPnl)}
+												</span>
+											</>
+										)}
+									</div>
+								</div>
+
+								{account.sparkline && account.sparkline.length >= 2 && (
+									<div className="hidden shrink-0 sm:block">
+										<PickerSparkline points={account.sparkline} />
 									</div>
 								)}
-							</div>
-						</button>
-					))}
+
+								<div
+									className={cn(
+										"h-5 w-5 shrink-0 rounded-full border-2 transition-colors",
+										selectedAccountId === account.id
+											? "border-acc-100 bg-acc-100"
+											: "border-bg-400"
+									)}
+								>
+									{selectedAccountId === account.id && (
+										<div className="flex h-full w-full items-center justify-center">
+											<div className="bg-bg-100 h-2 w-2 rounded-full" />
+										</div>
+									)}
+								</div>
+							</button>
+						)
+					})}
 				</div>
 
 				<div className="space-y-s-300">

@@ -76,7 +76,7 @@ const Sidebar = ({
 	const showLabels = !isCollapsed || isSheet
 
 	// Group open/closed state — defaults: open if active child, else closed
-	const initialGroupState = useMemo(() => {
+	const computeInitialState = () => {
 		const state: Partial<Record<NavGroupKey, boolean>> = {}
 		for (const entry of filteredStructure) {
 			if (isGroup(entry)) {
@@ -86,10 +86,11 @@ const Sidebar = ({
 			}
 		}
 		return state
-	}, [filteredStructure, pathname, navItems])
+	}
 
-	const [groupsOpen, setGroupsOpen] =
-		useState<Partial<Record<NavGroupKey, boolean>>>(initialGroupState)
+	const [groupsOpen, setGroupsOpen] = useState<
+		Partial<Record<NavGroupKey, boolean>>
+	>(() => computeInitialState())
 
 	// Hydrate from localStorage on mount
 	useEffect(() => {
@@ -119,7 +120,8 @@ const Sidebar = ({
 
 	const renderItem = (item: NavItem) => {
 		const isActive = isItemActive(item.href, pathname, navItems)
-		return (
+		const itemLabel = t(item.labelKey)
+		const link = (
 			<Link
 				key={item.href}
 				href={item.href}
@@ -132,11 +134,13 @@ const Sidebar = ({
 				)}
 				aria-current={isActive ? "page" : undefined}
 				onClick={onNavigate}
+				title={isCompact ? itemLabel : undefined}
 			>
 				<item.icon className="h-5 w-5 shrink-0" />
-				{showLabels && <span className="truncate">{t(item.labelKey)}</span>}
+				{showLabels && <span className="truncate">{itemLabel}</span>}
 			</Link>
 		)
+		return link
 	}
 
 	return (
@@ -151,7 +155,7 @@ const Sidebar = ({
 			aria-label={tCommon("mainNavigation")}
 		>
 			{/* Logo */}
-			<div className="border-bg-300 flex h-16 items-center justify-center border-b">
+			<div className="border-bg-300 relative flex h-16 items-center justify-center border-b">
 				<Image
 					src="/axion-mark-white.png"
 					alt="Axion"
@@ -159,7 +163,7 @@ const Sidebar = ({
 					height={2348}
 					data-axion-logo="invertable"
 					className={cn(
-						"absolute h-8 w-auto object-contain transition-opacity duration-200 motion-reduce:transition-none",
+						"absolute inset-0 h-8 w-auto object-contain transition-opacity duration-200 motion-reduce:transition-none",
 						isCompact ? "opacity-100" : "opacity-0"
 					)}
 					priority
@@ -171,7 +175,7 @@ const Sidebar = ({
 					height={1163}
 					data-axion-logo="invertable"
 					className={cn(
-						"absolute h-8 w-auto object-contain transition-opacity duration-200 motion-reduce:transition-none",
+						"absolute inset-0 h-8 w-auto object-contain transition-opacity duration-200 motion-reduce:transition-none",
 						isCompact ? "opacity-0" : "opacity-100"
 					)}
 					priority
@@ -192,9 +196,9 @@ const Sidebar = ({
 					}
 				>
 					{isCollapsed ? (
-						<PanelLeftOpen className="h-6 w-6" />
+						<PanelLeftOpen aria-hidden="true" className="h-6 w-6" />
 					) : (
-						<PanelLeftClose className="h-6 w-6" />
+						<PanelLeftClose aria-hidden="true" className="h-6 w-6" />
 					)}
 				</Button>
 			)}
@@ -260,7 +264,7 @@ const Sidebar = ({
 									onClick={() => toggleGroup(entry.groupKey)}
 									aria-expanded={open}
 									className={cn(
-										"text-small gap-s-300 px-s-300 py-s-200 flex h-10 w-full items-center rounded-md transition-colors",
+										"text-small gap-s-300 px-s-300 py-s-200 focus-visible:ring-acc-100 flex h-10 w-full items-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 										hasActive
 											? "text-txt-100"
 											: "text-txt-200 hover:bg-bg-300 hover:text-txt-100"
@@ -279,7 +283,7 @@ const Sidebar = ({
 									/>
 								</button>
 								{open && (
-									<div className="space-y-s-100 ml-m-400 border-bg-300 pl-s-200 border-l">
+									<div className="space-y-s-100 md:ml-m-400 border-bg-300 pl-s-200 ml-0 border-l">
 										{entry.items.map((item) => renderItem(item))}
 									</div>
 								)}

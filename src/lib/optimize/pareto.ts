@@ -28,6 +28,56 @@ const DEFAULT_CONSTRAINTS: Required<ParetoConstraints> = {
 	robustOnly: false,
 }
 
+// ── Memoization cache (LRU, size 8) ──────────────────────────────────
+
+interface CacheEntry {
+	key: string
+	result: ParetoPoint[]
+	timestamp: number
+}
+
+const memoCache: CacheEntry[] = []
+const MEMO_CACHE_SIZE = 8
+
+const getMemoKey = (
+	runs: OptimizationRun[],
+	xKey: MetricKey,
+	yKey: MetricKey,
+	constraints: Required<ParetoConstraints>
+): string => {
+	const constraintHash = JSON.stringify({
+		profitOnly: constraints.profitOnly,
+		minTrades: constraints.minTrades,
+		minMatchRate: constraints.minMatchRate,
+		robustOnly: constraints.robustOnly,
+	})
+	return `${runs.length}:${runs[0]?.id || ""}|${xKey}|${yKey}|${constraintHash}`
+}
+
+const getMemoizedResult = (key: string): ParetoPoint[] | undefined => {
+	for (const entry of memoCache) {
+		if (entry.key === key) {
+			memoCache.splice(memoCache.indexOf(entry), 1)
+			memoCache.unshift(entry)
+			return entry.result
+		}
+	}
+	return undefined
+}
+
+const setMemoizedResult = (key: string, result: ParetoPoint[]): void => {
+	const idx = memoCache.findIndex((e) => e.key === key)
+	if (idx >= 0) {
+		memoCache.splice(idx, 1)
+	}
+
+	memoCache.unshift({ key, result, timestamp: Date.now() })
+
+	if (memoCache.length > MEMO_CACHE_SIZE) {
+		memoCache.pop()
+	}
+}
+
 const passesConstraints = (
 	run: OptimizationRun,
 	constraints: Required<ParetoConstraints>
@@ -65,6 +115,9 @@ const passesConstraints = (
  *
  * Runs failing any constraint, or producing `null` on either axis extractor,
  * are excluded entirely (not just dimmed).
+ *
+ * Memoization: results are cached (LRU, size 8) by (runs, xKey, yKey, constraints).
+ * Avoids recomputation on constraint toggles in React renders.
  */
 const computeParetoFrontier = (
 	runs: OptimizationRun[],
@@ -77,6 +130,13 @@ const computeParetoFrontier = (
 	const merged: Required<ParetoConstraints> = {
 		...DEFAULT_CONSTRAINTS,
 		...constraints,
+	}
+
+	// Check memo cache
+	const memoKey = getMemoKey(runs, xKey, yKey, merged)
+	const cachedResult = getMemoizedResult(memoKey)
+	if (cachedResult !== undefined) {
+		return cachedResult
 	}
 
 	const points: ParetoPoint[] = []
@@ -117,6 +177,9 @@ const computeParetoFrontier = (
 			bestY = p.y
 		}
 	}
+
+	// Cache and return
+	setMemoizedResult(memoKey, points)
 	return points
 }
 

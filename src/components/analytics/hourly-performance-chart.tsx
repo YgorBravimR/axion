@@ -4,7 +4,11 @@ import { memo, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell } from "recharts"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart-container"
-import { formatCompactCurrencyWithSign, formatR } from "@/lib/formatting"
+import {
+	formatCompactCurrencyWithSign,
+	formatR,
+	computeChartDomain,
+} from "@/lib/formatting"
 import { useChartConfig } from "@/hooks/use-chart-config"
 import type { HourlyPerformance } from "@/types"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
@@ -81,17 +85,15 @@ export const HourlyPerformanceChart = memo(
 		const isRMode = expectancyMode === "edge"
 		const metricKey = isRMode ? "avgR" : "totalPnl"
 
-		const { domainMax, bestHour, worstHour } = useMemo(() => {
-			const maxAbs = Math.max(
-				...data.map((d) => Math.abs(d[metricKey])),
-				isRMode ? 0.5 : 100
+		const { domain, bestHour, worstHour } = useMemo(() => {
+			const fallback = isRMode ? 0.5 : 100
+			const domainTuple = computeChartDomain(
+				data.map((d) => d[metricKey]),
+				fallback
 			)
-			const dMax = isRMode
-				? Math.ceil(maxAbs * 1.2 * 100) / 100
-				: Math.ceil(maxAbs * 1.1)
 			const sorted = data.toSorted((a, b) => b[metricKey] - a[metricKey])
 			return {
-				domainMax: dMax,
+				domain: domainTuple,
 				bestHour: sorted[0],
 				worstHour: sorted[sorted.length - 1],
 			}
@@ -155,7 +157,7 @@ export const HourlyPerformanceChart = memo(
 							tick={AXIS_TICK}
 							tickLine={false}
 							axisLine={false}
-							domain={[-domainMax, domainMax]}
+							domain={domain}
 							width={yAxisWidth}
 						/>
 						<ChartTooltip content={<CustomTooltip />} />

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
+import { useFormatting } from "@/hooks/use-formatting"
 import {
 	AlertTriangle,
 	Loader2,
@@ -43,7 +44,13 @@ interface LadderRowDraft {
 
 const TOP_TIER_MAX_CENTS = 999_999_999_99
 
-const formatBRNoCents = (reais: number): string => reais.toLocaleString("pt-BR")
+const formatBRNoCents = (reais: number, locale: string): string =>
+	reais.toLocaleString(locale, {
+		style: "currency",
+		currency: "BRL",
+		minimumFractionDigits: 0,
+		maximumFractionDigits: 0,
+	})
 
 const ruleToDraft = (rule: LadderRuleR, idx: number): LadderRowDraft => ({
 	id: `row-${idx}-${Math.random().toString(36).slice(2, 8)}`,
@@ -156,17 +163,13 @@ const YearlyPlanEditor = ({
 	const router = useRouter()
 	const { showToast } = useToast()
 	const t = useTranslations("plan")
+	const { formatCurrency, locale } = useFormatting()
 	const [isPending, startTransition] = useTransition()
 	const [form, setForm] = useState<FormState>(() => seedForm(existing))
 	const accountCapitalAvailable = defaultInitialCapitalCents !== null
 	const accountCapitalLabel =
 		defaultInitialCapitalCents !== null
-			? (defaultInitialCapitalCents / 100).toLocaleString("pt-BR", {
-					style: "currency",
-					currency: "BRL",
-					minimumFractionDigits: 0,
-					maximumFractionDigits: 0,
-				})
+			? formatCurrency(defaultInitialCapitalCents / 100)
 			: null
 	const [riskProfileId, setRiskProfileId] = useState<string | null>(
 		existing?.defaultRiskProfileId ?? null
@@ -464,7 +467,7 @@ const YearlyPlanEditor = ({
 						<div className="min-w-0">
 							<p className="text-small text-fb-error font-medium">
 								{t("editors.yearly.capitalBelowMinTitle", {
-									amount: formatBRNoCents(tier1MinReais),
+									amount: formatBRNoCents(tier1MinReais, locale),
 								})}
 							</p>
 							<p className="mt-s-100 text-tiny text-txt-300">

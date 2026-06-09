@@ -417,7 +417,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 				    Asset. Asset is hidden in user_catalog mode (the catalog
 				    implies the asset/timeframe). */}
 				<div
-					className={`gap-m-400 grid grid-cols-1 ${isUserCatalog ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"}`}
+					className={`gap-m-400 grid grid-cols-1 ${isUserCatalog ? "sm:grid-cols-2" : "sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3"}`}
 				>
 					{/* Load Preset */}
 					<div className="space-y-s-200">

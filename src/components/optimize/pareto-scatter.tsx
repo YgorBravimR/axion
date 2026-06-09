@@ -69,9 +69,7 @@ const SELECTED_STROKE = "var(--color-accent, #6366f1)"
 const qualityFill = (t: number): string => {
 	const clamped = Math.max(0, Math.min(1, t))
 
-	// Trade-sell (loss): rgb(248, 113, 113) ≈ #f87171
-	// Neutral mid: rgb(120, 124, 132) ≈ #787c84
-	// Trade-buy (win): rgb(52, 211, 153) ≈ #34d399
+	// Trade-sell (loss): rgb(248, 113, 113) → neutral: rgb(120, 124, 132) → trade-buy: rgb(52, 211, 153)
 	if (clamped < 0.5) {
 		// Low range [0..0.5] → red → gray
 		const alpha = clamped * 2 // [0..1] in the red→gray segment

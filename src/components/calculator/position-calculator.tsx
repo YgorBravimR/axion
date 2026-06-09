@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect, useCallback } from "react"
+import { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import { Calculator } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/routing"
@@ -44,10 +44,16 @@ const PositionCalculator = ({
 	})
 	const [direction, setDirection] = useState<"long" | "short">("long")
 	const [entryPrice, setEntryPrice] = useState("")
+	const [debouncedEntryPrice, setDebouncedEntryPrice] = useState("")
 	const [stopPrice, setStopPrice] = useState("")
+	const [debouncedStopPrice, setDebouncedStopPrice] = useState("")
 	const [targetPrice, setTargetPrice] = useState("")
 	const [manualContracts, setManualContracts] = useState("")
 	const [maxRiskOverride, setMaxRiskOverride] = useState("")
+
+	// Debounce timer refs for price inputs
+	const entryPriceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+	const stopPriceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
 	// Strategy state
 	const [selectedStrategyId, setSelectedStrategyId] = useState("")
@@ -172,6 +178,36 @@ const PositionCalculator = ({
 		selectedAsset,
 	])
 
+	// Debounce entry price: update local state immediately, sync to debounced after 200ms
+	useEffect(() => {
+		if (entryPriceTimerRef.current) {
+			clearTimeout(entryPriceTimerRef.current)
+		}
+		entryPriceTimerRef.current = setTimeout(() => {
+			setDebouncedEntryPrice(entryPrice)
+		}, 200)
+		return () => {
+			if (entryPriceTimerRef.current) {
+				clearTimeout(entryPriceTimerRef.current)
+			}
+		}
+	}, [entryPrice])
+
+	// Debounce stop price: update local state immediately, sync to debounced after 200ms
+	useEffect(() => {
+		if (stopPriceTimerRef.current) {
+			clearTimeout(stopPriceTimerRef.current)
+		}
+		stopPriceTimerRef.current = setTimeout(() => {
+			setDebouncedStopPrice(stopPrice)
+		}, 200)
+		return () => {
+			if (stopPriceTimerRef.current) {
+				clearTimeout(stopPriceTimerRef.current)
+			}
+		}
+	}, [stopPrice])
+
 	// Handle manual target price change — marks target as manual
 	const handleTargetPriceChange = useCallback((value: string) => {
 		setTargetPrice(value)
@@ -189,14 +225,14 @@ const PositionCalculator = ({
 	// Check if prices are entered
 	const hasPrices = entryPrice !== "" && stopPrice !== ""
 
-	// Compute result
+	// Compute result using debounced prices to avoid recalculation on every keystroke
 	const calculatorResult = useMemo(() => {
 		if (!selectedAsset) {
 			return null
 		}
 
-		const entry = parseFloat(entryPrice)
-		const stop = parseFloat(stopPrice)
+		const entry = parseFloat(debouncedEntryPrice)
+		const stop = parseFloat(debouncedStopPrice)
 
 		if (isNaN(entry) || isNaN(stop) || entry <= 0 || stop <= 0) {
 			return null
@@ -228,8 +264,8 @@ const PositionCalculator = ({
 		})
 	}, [
 		selectedAsset,
-		entryPrice,
-		stopPrice,
+		debouncedEntryPrice,
+		debouncedStopPrice,
 		targetPrice,
 		manualContracts,
 		direction,
