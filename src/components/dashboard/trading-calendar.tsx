@@ -56,16 +56,14 @@ export const TradingCalendar = memo(
 			return map
 		}, [data])
 
-		// Single-tier confident tints so wins and losses are equally legible.
-		// Magnitude-scaled opacity flattens the green side into invisibility
-		// when the biggest loss eclipses the biggest win — direction reads
-		// first, magnitude is conveyed by the P&L text itself.
+		// Single-tier confident tints. Border stays neutral so the inter-cell
+		// gap is what separates cards visually; the fill carries the colour.
 		const pnlBgClass = (pnl: number): string => {
 			if (pnl > 0) {
-				return "bg-trade-buy/15 border-trade-buy/40"
+				return "bg-trade-buy/18 border-bg-300/30"
 			}
 			if (pnl < 0) {
-				return "bg-trade-sell/15 border-trade-sell/40"
+				return "bg-trade-sell/18 border-bg-300/30"
 			}
 			return "bg-bg-200/40 border-bg-300/50"
 		}
@@ -222,49 +220,33 @@ export const TradingCalendar = memo(
 					)}
 					aria-busy={isLoading || undefined}
 				>
-					<div className="w-full">
-						{/* Days of week + WEEK summary header */}
-						<div
-							className={cn(
-								"grid gap-x-1",
-								colCount === 7
-									? "grid-cols-[repeat(7,minmax(0,1fr))_5.5rem]"
-									: "grid-cols-[repeat(5,minmax(0,1fr))_5.5rem]"
-							)}
-						>
-							{daysOfWeek.map((day) => (
-								<div
-									key={day}
-									className="py-s-100 text-txt-300 text-micro sm:text-tiny text-center font-medium tracking-wide uppercase"
-								>
-									{day}
-								</div>
-							))}
-							<div className="py-s-100 text-txt-300 text-micro sm:text-tiny text-center font-medium tracking-wide uppercase">
-								{t("week")}
+					<div className="flex w-full gap-x-3">
+						<div className="min-w-0 flex-1">
+							{/* Days of week header */}
+							<div
+								className={cn(
+									"grid gap-x-2",
+									colCount === 7 ? "grid-cols-7" : "grid-cols-5"
+								)}
+							>
+								{daysOfWeek.map((day) => (
+									<div
+										key={day}
+										className="py-s-100 text-txt-300 text-micro sm:text-tiny text-center font-medium tracking-wide uppercase"
+									>
+										{day}
+									</div>
+								))}
 							</div>
-						</div>
 
-						{/* One row per calendar week, with summary cell anchored at the end */}
-						<div className="flex flex-col gap-y-2">
-							{calendarWeeks.map((week, weekIndex) => {
-								const summary = weeklySummaries[weekIndex]
-								const summaryTextClass =
-									summary && summary.pnl > 0
-										? "text-trade-buy"
-										: summary && summary.pnl < 0
-											? "text-trade-sell"
-											: "text-txt-300"
-								const isLastWeek = weekIndex === calendarWeeks.length - 1
-								return (
+							{/* One row per calendar week — days only, no inline summary */}
+							<div className="flex flex-col gap-y-2">
+								{calendarWeeks.map((week, weekIndex) => (
 									<div
 										key={`week-${String(weekIndex)}`}
 										className={cn(
-											"grid gap-x-1",
-											!isLastWeek && "border-bg-300/30 border-b pb-2",
-											colCount === 7
-												? "grid-cols-[repeat(7,minmax(0,1fr))_5.5rem]"
-												: "grid-cols-[repeat(5,minmax(0,1fr))_5.5rem]"
+											"grid gap-x-2",
+											colCount === 7 ? "grid-cols-7" : "grid-cols-5"
 										)}
 									>
 										{week.map((cell, index) => {
@@ -377,29 +359,49 @@ export const TradingCalendar = memo(
 												</div>
 											)
 										})}
-										{summary && (
-											<div className="border-bg-300/50 bg-bg-200/60 flex aspect-square flex-col items-start justify-center gap-0.5 rounded-md border px-2 py-2">
-												<span className="text-micro text-txt-300 font-medium">
-													{t("weekLabel", { number: weekIndex + 1 })}
-												</span>
-												<span
-													className={cn(
-														"text-small font-semibold tabular-nums",
-														summaryTextClass
-													)}
-												>
-													{formatCompactCurrencyWithSign(summary.pnl)}
-												</span>
-												<span className="text-micro text-txt-300 tabular-nums">
-													{summary.activeDays}
-													{tCommon("daysAbbr")}
-												</span>
-											</div>
-										)}
 									</div>
-								)
-							})}
+								))}
+							</div>
 						</div>
+
+						{/* Weekly summary sidebar — visually separate region */}
+						<aside className="border-bg-300/30 bg-bg-200/30 w-24 shrink-0 rounded-lg border p-2">
+							<div className="text-txt-300 text-micro sm:text-tiny py-s-100 mb-1 text-center font-medium tracking-wide uppercase">
+								{t("week")}
+							</div>
+							<div className="flex flex-col gap-y-2">
+								{weeklySummaries.map((summary, weekIndex) => {
+									const summaryTextClass =
+										summary.pnl > 0
+											? "text-trade-buy"
+											: summary.pnl < 0
+												? "text-trade-sell"
+												: "text-txt-300"
+									return (
+										<div
+											key={`week-summary-${String(weekIndex)}`}
+											className="border-bg-300/40 bg-bg-200/80 flex aspect-square flex-col items-start justify-center gap-0.5 rounded-md border px-2 py-2"
+										>
+											<span className="text-micro text-txt-300 font-medium">
+												{t("weekLabel", { number: weekIndex + 1 })}
+											</span>
+											<span
+												className={cn(
+													"text-small font-semibold tabular-nums",
+													summaryTextClass
+												)}
+											>
+												{formatCompactCurrencyWithSign(summary.pnl)}
+											</span>
+											<span className="text-micro text-txt-300 tabular-nums">
+												{summary.activeDays}
+												{tCommon("daysAbbr")}
+											</span>
+										</div>
+									)
+								})}
+							</div>
+						</aside>
 					</div>
 				</div>
 			</Panel>
