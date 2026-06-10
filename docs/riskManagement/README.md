@@ -32,6 +32,12 @@ These three docs cover the local-market adaptation.
 | [`tsr-iniciante-win-adaptation.md`](./tsr-iniciante-win-adaptation.md) | WIN-specific overrides on top of TSR Iniciante baseline                  |
 | [`tsr-rules-reference.md`](./tsr-rules-reference.md)                   | Quick-reference card of TSR's discrete rules                             |
 
+## Yearly Plan profiles (preset risk profiles for `/plan/[year]` editor)
+
+| File                                                   | What's in it                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`yearly-plan-profiles.md`](./yearly-plan-profiles.md) | Conservativo / Moderado / Agressivo preset profiles. Single-parameter `f_target` design; tier ladder stores BRL targets (not contracts); contracts derive per OCO from current stop. Hysteresis rules, caps, withdrawal %, JSON shape, UI/schema changes. Includes TSR prop-firm pass model as separate constraint-optimized profile. |
+
 ## Research / methodology
 
 | File                                                               | What's in it                                                                                       |
