@@ -80,24 +80,24 @@ export const TradingCalendar = memo(
 			return max
 		}, [data, year, monthIndex])
 
-		// Maps a day's P&L to one of four opacity tiers, matching the heatmap
-		// encoding so the visual vocabulary stays consistent across the app.
 		const pnlBgClass = (pnl: number): string => {
 			if (pnl === 0 || maxAbsMonthPnl === 0) {
-				return "bg-bg-300"
+				return "bg-bg-200/40 border-bg-300/60"
 			}
-			const base = pnl > 0 ? "bg-trade-buy" : "bg-trade-sell"
 			const intensity = Math.abs(pnl) / maxAbsMonthPnl
+			const positive = pnl > 0
+			const bg = positive ? "bg-trade-buy" : "bg-trade-sell"
+			const border = positive ? "border-trade-buy" : "border-trade-sell"
 			if (intensity > 0.7) {
-				return `${base}/40`
+				return `${bg}/35 ${border}/70`
 			}
 			if (intensity > 0.4) {
-				return `${base}/25`
+				return `${bg}/22 ${border}/50`
 			}
 			if (intensity > 0.15) {
-				return `${base}/15`
+				return `${bg}/12 ${border}/35`
 			}
-			return `${base}/10`
+			return `${bg}/6 ${border}/25`
 		}
 
 		// B3 is closed on Saturday and Sunday, so the calendar collapses to a
@@ -241,7 +241,7 @@ export const TradingCalendar = memo(
 
 				<div
 					className={cn(
-						"mt-s-300 sm:mt-m-400 overflow-x-auto transition-opacity duration-200 md:overflow-visible",
+						"mt-s-300 sm:mt-m-400 mx-auto w-full max-w-lg transition-opacity duration-200",
 						isLoading && "opacity-50"
 					)}
 					aria-busy={isLoading || undefined}
@@ -249,14 +249,14 @@ export const TradingCalendar = memo(
 					{/* Days of week header */}
 					<div
 						className={cn(
-							"sm:gap-s-100 gap-s-100 grid",
+							"grid gap-1",
 							hasWeekendTrades ? "grid-cols-7" : "grid-cols-5"
 						)}
 					>
 						{daysOfWeek.map((day) => (
 							<div
 								key={day}
-								className="py-s-100 text-txt-300 text-micro sm:py-s-200 sm:text-tiny text-center font-medium"
+								className="py-s-100 text-txt-300 text-micro sm:text-tiny text-center font-medium tracking-wide uppercase"
 							>
 								{day}
 							</div>
@@ -266,7 +266,7 @@ export const TradingCalendar = memo(
 					{/* Calendar grid */}
 					<div
 						className={cn(
-							"sm:gap-s-100 gap-s-100 grid",
+							"grid gap-1",
 							hasWeekendTrades ? "grid-cols-7" : "grid-cols-5"
 						)}
 					>
@@ -301,37 +301,32 @@ export const TradingCalendar = memo(
 
 							const cellContent = (
 								<div className="flex h-full flex-col">
-									<span className="text-micro text-txt-200 sm:text-tiny leading-tight">
+									<span className="text-micro text-txt-300 leading-none">
 										{dayData.date.getDate()}
 									</span>
 									{dailyData && (
-										<>
-											<div className="mt-auto flex justify-center sm:hidden">
-												<span
-													className={cn("h-1 w-1 rounded-full", textClass)}
-													aria-hidden="true"
-												/>
-											</div>
-											<div className="mt-auto hidden sm:block">
-												<span
-													className={cn("text-tiny font-medium", textClass)}
-												>
-													{formatCompactCurrencyWithSign(dailyData.pnl)}
-												</span>
-												<span className="text-tiny text-txt-300 block">
-													{dailyData.tradeCount}
-													{tCommon("tradeCountAbbr")}
-												</span>
-											</div>
-										</>
+										<div className="mt-auto flex flex-col items-center leading-tight">
+											<span
+												className={cn(
+													"text-micro sm:text-tiny font-semibold tabular-nums",
+													textClass
+												)}
+											>
+												{formatCompactCurrencyWithSign(dailyData.pnl)}
+											</span>
+											<span className="text-micro text-txt-300 tabular-nums">
+												{dailyData.tradeCount}
+												{tCommon("tradeCountAbbr")}
+											</span>
+										</div>
 									)}
 								</div>
 							)
 
 							const baseClass = cn(
-								"p-s-100 aspect-square rounded-sm sm:rounded-md",
+								"aspect-square rounded-md border p-1.5 flex flex-col",
 								bgClass,
-								isToday && "ring-acc-100 ring-1 sm:ring-2"
+								isToday && "outline-2 outline-offset-1 outline-acc-100"
 							)
 
 							if (isClickable) {
