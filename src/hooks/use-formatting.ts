@@ -1,8 +1,7 @@
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
+import { useMemo } from "react"
 import { useLocale } from "next-intl"
-import { useSession } from "next-auth/react"
 import type { Locale } from "@/i18n/config"
 import {
 	formatCurrency,
@@ -23,7 +22,7 @@ import {
 	formatBrlWithSign,
 	formatBrlCompactWithSign,
 } from "@/lib/formatting"
-import { getAccountCurrency } from "@/app/actions/auth"
+import { useAccountCurrency } from "@/components/providers/account-currency-provider"
 
 /**
  * Hook that provides locale-aware formatting functions
@@ -32,20 +31,7 @@ import { getAccountCurrency } from "@/app/actions/auth"
  */
 export const useFormatting = () => {
 	const locale = useLocale() as Locale
-	const session = useSession()
-	const [accountCurrency, setAccountCurrency] = useState<string>("BRL")
-
-	// Fetch account currency when session is ready
-	useEffect(() => {
-		if (session?.data?.user?.id) {
-			getAccountCurrency()
-				.then(setAccountCurrency)
-				.catch(() => {
-					// Silently fall back to BRL on error
-					setAccountCurrency("BRL")
-				})
-		}
-	}, [session?.data?.user?.id])
+	const accountCurrency = useAccountCurrency()
 
 	return useMemo(
 		() => ({
