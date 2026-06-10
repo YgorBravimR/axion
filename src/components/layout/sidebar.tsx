@@ -163,7 +163,7 @@ const Sidebar = ({
 					height={2348}
 					data-axion-logo="invertable"
 					className={cn(
-						"absolute inset-0 h-8 w-auto object-contain transition-opacity duration-200 motion-reduce:transition-none",
+						"absolute top-1/2 left-1/2 h-8 w-auto -translate-x-1/2 -translate-y-1/2 object-contain transition-opacity duration-200 motion-reduce:transition-none",
 						isCompact ? "opacity-100" : "opacity-0"
 					)}
 					priority
@@ -175,7 +175,7 @@ const Sidebar = ({
 					height={1163}
 					data-axion-logo="invertable"
 					className={cn(
-						"absolute inset-0 h-8 w-auto object-contain transition-opacity duration-200 motion-reduce:transition-none",
+						"absolute top-1/2 left-1/2 h-8 w-auto -translate-x-1/2 -translate-y-1/2 object-contain transition-opacity duration-200 motion-reduce:transition-none",
 						isCompact ? "opacity-0" : "opacity-100"
 					)}
 					priority
