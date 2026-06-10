@@ -134,6 +134,7 @@ const AppShell = ({
 									alt="Axion"
 									width={100}
 									height={28}
+									data-axion-logo="invertable"
 									className="ml-s-200 h-7 w-auto object-contain"
 									style={{ height: "auto" }}
 									priority
