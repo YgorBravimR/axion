@@ -252,7 +252,7 @@ export const TradingCalendar = memo(
 												)
 												const bgClass = hasData
 													? pnlBgClass(dailyData?.pnl ?? 0)
-													: "bg-bg-200/60 border-bg-300/40"
+													: "bg-bg-100/40 border-bg-300/40"
 
 												const textClass = hasData
 													? (dailyData?.pnl ?? 0) > 0
@@ -359,10 +359,6 @@ export const TradingCalendar = memo(
 													)}
 												>
 													{formatCompactCurrency(Math.abs(summary.pnl))}
-												</span>
-												<span className="text-micro text-txt-300 tabular-nums">
-													{summary.activeDays}
-													{tCommon("daysAbbr")}
 												</span>
 											</div>
 										)}
