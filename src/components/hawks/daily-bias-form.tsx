@@ -15,6 +15,7 @@ import { FeatureStamp } from "@/components/ui/feature-stamp"
 import { HelpText } from "@/components/ui/help-text"
 import { confirmDailyBias } from "@/app/actions/hawks-bias"
 import { useFormatting } from "@/hooks/use-formatting"
+import { getScreenLabel, type ScreenLabel } from "@/lib/hawks/get-screen-label"
 import type { DailyHawksBias } from "@/db/schema"
 
 type Bias = "long" | "short" | "neutral"
@@ -106,20 +107,12 @@ const DailyBiasForm = ({
 		{ value: "short" as const, label: t("biasShort") },
 	]
 
-	const screenRows: ReadonlyArray<{
-		key: keyof Screens
-		label: string
-		hint: string
-	}> = [
-		{ key: "renko60", label: t("screenRenko60"), hint: t("screenRenko60Hint") },
-		{ key: "macd", label: t("screenMacd"), hint: t("screenMacdHint") },
-		{
-			key: "emaStack",
-			label: t("screenEmaStack"),
-			hint: t("screenEmaStackHint"),
-		},
-		{ key: "vwap", label: t("screenVwap"), hint: t("screenVwapHint") },
-		{ key: "ajuste", label: t("screenAjuste"), hint: t("screenAjusteHint") },
+	const screenRows: ReadonlyArray<ScreenLabel> = [
+		getScreenLabel("renko60", bias, t),
+		getScreenLabel("macd", bias, t),
+		getScreenLabel("emaStack", bias, t),
+		getScreenLabel("vwap", bias, t),
+		getScreenLabel("ajuste", bias, t),
 	]
 
 	return (

@@ -495,6 +495,99 @@ test.describe("Command Center", () => {
 		})
 	})
 
+	test.describe("Daily Bias Form", () => {
+		test.beforeEach(async ({ page }) => {
+			await page.goto(ROUTES.commandCenter)
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1000)
+
+			// Scroll down to the daily bias form
+			const biasTitleRegex = /daily bias|viés do dia/i
+			const biasSection = page.getByText(biasTitleRegex).first()
+			await biasSection.scrollIntoViewIfNeeded()
+		})
+
+		test("should display daily bias form with default long bias labels", async ({
+			page,
+		}) => {
+			// Verify bullish labels are shown by default (long bias)
+			await expect(
+				page.getByText(/renko close above 60min|renko fechou acima/i)
+			).toBeVisible()
+			await expect(
+				page.getByText(/macd slope up|inclinação.*positiva/i)
+			).toBeVisible()
+			await expect(
+				page.getByText(/ema stack bullish|stack.*bullish/i)
+			).toBeVisible()
+			await expect(
+				page.getByText(/price above vwap|preço acima/i)
+			).toBeVisible()
+		})
+
+		test("should invert screen labels when bias is changed to short", async ({
+			page,
+		}) => {
+			// Find and click the Short bias button
+			const shortBiasButton = page.getByRole("button", {
+				name: /short|vendido/i,
+			})
+			await shortBiasButton.click()
+			await page.waitForTimeout(300)
+
+			// Verify bearish labels now appear
+			await expect(
+				page.getByText(/renko close below 60min|renko fechou abaixo/i)
+			).toBeVisible()
+			await expect(
+				page.getByText(/macd slope down|inclinação.*negativa/i)
+			).toBeVisible()
+			await expect(
+				page.getByText(/ema stack bearish|stack.*bearish/i)
+			).toBeVisible()
+			await expect(
+				page.getByText(/price below vwap|preço abaixo/i)
+			).toBeVisible()
+			await expect(
+				page.getByText(/ajuste broken|ajuste quebrado/i)
+			).toBeVisible()
+
+			// Verify bullish labels are NOT visible anymore
+			await expect(
+				page.getByText(/renko close above 60min|renko fechou acima/i)
+			).not.toBeVisible()
+			await expect(
+				page.getByText(/macd slope up|inclinação.*positiva/i)
+			).not.toBeVisible()
+		})
+
+		test("should return to bullish labels when switched back to long", async ({
+			page,
+		}) => {
+			// Switch to short first
+			const shortBiasButton = page.getByRole("button", {
+				name: /short|vendido/i,
+			})
+			await shortBiasButton.click()
+			await page.waitForTimeout(300)
+
+			// Switch back to long
+			const longBiasButton = page.getByRole("button", {
+				name: /long|comprado/i,
+			})
+			await longBiasButton.click()
+			await page.waitForTimeout(300)
+
+			// Verify bullish labels are back
+			await expect(
+				page.getByText(/renko close above 60min|renko fechou acima/i)
+			).toBeVisible()
+			await expect(
+				page.getByText(/macd slope up|inclinação.*positiva/i)
+			).toBeVisible()
+		})
+	})
+
 	test.describe("Responsiveness", () => {
 		test("should adapt layout on mobile viewport", async ({ page }) => {
 			await page.setViewportSize({ width: 375, height: 667 })
