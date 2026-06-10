@@ -56,43 +56,18 @@ export const TradingCalendar = memo(
 			return map
 		}, [data])
 
-		// Largest absolute P&L *within the current month view* — used to scale
-		// each cell's tint by magnitude rather than just sign. Restricting the
-		// max to the visible month means a single outlier day (e.g. a payout in
-		// June) doesn't flatten every other month's contrast.
-		const maxAbsMonthPnl = useMemo(() => {
-			let max = 0
-			for (const day of data) {
-				const parts = day.date.split("-")
-				if (parts.length !== 3) {
-					continue
-				}
-				const y = Number(parts[0])
-				const m = Number(parts[1])
-				if (y !== year || m !== monthIndex + 1) {
-					continue
-				}
-				const abs = Math.abs(day.pnl)
-				if (abs > max) {
-					max = abs
-				}
-			}
-			return max
-		}, [data, year, monthIndex])
-
+		// Single-tier confident tints so wins and losses are equally legible.
+		// Magnitude-scaled opacity flattens the green side into invisibility
+		// when the biggest loss eclipses the biggest win — direction reads
+		// first, magnitude is conveyed by the P&L text itself.
 		const pnlBgClass = (pnl: number): string => {
-			if (pnl === 0 || maxAbsMonthPnl === 0) {
-				return "bg-bg-200/50"
+			if (pnl > 0) {
+				return "bg-trade-buy/15 border-trade-buy/40"
 			}
-			const intensity = Math.abs(pnl) / maxAbsMonthPnl
-			const bg = pnl > 0 ? "bg-trade-buy" : "bg-trade-sell"
-			if (intensity > 0.6) {
-				return `${bg}/20`
+			if (pnl < 0) {
+				return "bg-trade-sell/15 border-trade-sell/40"
 			}
-			if (intensity > 0.25) {
-				return `${bg}/12`
-			}
-			return `${bg}/6`
+			return "bg-bg-200/40 border-bg-300/50"
 		}
 
 		// B3 closes on weekends, so the calendar collapses to a 5-column Mon–Fri
@@ -247,33 +222,54 @@ export const TradingCalendar = memo(
 					)}
 					aria-busy={isLoading || undefined}
 				>
-					<div className="gap-s-300 flex">
-						<div className="min-w-0 flex-1">
-							{/* Days of week header */}
-							<div
-								className={cn(
-									"grid gap-1",
-									colCount === 7 ? "grid-cols-7" : "grid-cols-5"
-								)}
-							>
-								{daysOfWeek.map((day) => (
-									<div
-										key={day}
-										className="py-s-100 text-txt-300 text-micro sm:text-tiny text-center font-medium tracking-wide uppercase"
-									>
-										{day}
-									</div>
-								))}
+					<div
+						className={cn(
+							"w-full",
+							colCount === 7 ? "max-w-[840px]" : "max-w-[680px]"
+						)}
+					>
+						{/* Days of week + WEEK summary header */}
+						<div
+							className={cn(
+								"grid gap-x-1",
+								colCount === 7
+									? "grid-cols-[repeat(7,minmax(0,1fr))_5.5rem]"
+									: "grid-cols-[repeat(5,minmax(0,1fr))_5.5rem]"
+							)}
+						>
+							{daysOfWeek.map((day) => (
+								<div
+									key={day}
+									className="py-s-100 text-txt-300 text-micro sm:text-tiny text-center font-medium tracking-wide uppercase"
+								>
+									{day}
+								</div>
+							))}
+							<div className="py-s-100 text-txt-300 text-micro sm:text-tiny text-center font-medium tracking-wide uppercase">
+								{t("week")}
 							</div>
+						</div>
 
-							{/* One row per calendar week */}
-							<div className="grid grid-flow-row gap-1">
-								{calendarWeeks.map((week, weekIndex) => (
+						{/* One row per calendar week, with summary cell anchored at the end */}
+						<div className="flex flex-col gap-y-2">
+							{calendarWeeks.map((week, weekIndex) => {
+								const summary = weeklySummaries[weekIndex]
+								const summaryTextClass =
+									summary && summary.pnl > 0
+										? "text-trade-buy"
+										: summary && summary.pnl < 0
+											? "text-trade-sell"
+											: "text-txt-300"
+								const isLastWeek = weekIndex === calendarWeeks.length - 1
+								return (
 									<div
 										key={`week-${String(weekIndex)}`}
 										className={cn(
-											"grid gap-1",
-											colCount === 7 ? "grid-cols-7" : "grid-cols-5"
+											"grid gap-x-1",
+											!isLastWeek && "border-bg-300/30 border-b pb-2",
+											colCount === 7
+												? "grid-cols-[repeat(7,minmax(0,1fr))_5.5rem]"
+												: "grid-cols-[repeat(5,minmax(0,1fr))_5.5rem]"
 										)}
 									>
 										{week.map((cell, index) => {
@@ -297,7 +293,7 @@ export const TradingCalendar = memo(
 											)
 											const bgClass = hasData
 												? pnlBgClass(dailyData?.pnl ?? 0)
-												: "bg-transparent"
+												: "bg-transparent border-bg-300/30"
 
 											const textClass = hasData
 												? (dailyData?.pnl ?? 0) > 0
@@ -339,7 +335,7 @@ export const TradingCalendar = memo(
 											)
 
 											const baseClass = cn(
-												"border-bg-300/40 aspect-square rounded-md border p-1.5",
+												"aspect-square rounded-md border p-1.5",
 												bgClass,
 												isToday && "border-acc-100/60"
 											)
@@ -386,48 +382,28 @@ export const TradingCalendar = memo(
 												</div>
 											)
 										})}
+										{summary && (
+											<div className="border-bg-300/40 bg-bg-200/30 flex aspect-square flex-col items-center justify-center rounded-md border px-2 text-center">
+												<span className="text-micro text-txt-300 uppercase">
+													{t("weekLabel", { number: weekIndex + 1 })}
+												</span>
+												<span
+													className={cn(
+														"text-tiny sm:text-small font-semibold tabular-nums",
+														summaryTextClass
+													)}
+												>
+													{formatCompactCurrencyWithSign(summary.pnl)}
+												</span>
+												<span className="text-micro text-txt-300 tabular-nums">
+													{summary.activeDays}
+													{tCommon("daysAbbr")}
+												</span>
+											</div>
+										)}
 									</div>
-								))}
-							</div>
-						</div>
-
-						{/* Weekly summaries side column */}
-						<div className="hidden w-24 shrink-0 sm:block">
-							<div className="text-txt-300 text-micro sm:text-tiny py-s-100 text-center font-medium tracking-wide uppercase">
-								{t("week")}
-							</div>
-							<div className="grid gap-1">
-								{weeklySummaries.map((week, index) => {
-									const weekTextClass =
-										week.pnl > 0
-											? "text-trade-buy"
-											: week.pnl < 0
-												? "text-trade-sell"
-												: "text-txt-300"
-									return (
-										<div
-											key={`week-summary-${String(index)}`}
-											className="border-bg-300/40 bg-bg-200/30 flex aspect-square flex-col items-center justify-center rounded-md border px-2 text-center"
-										>
-											<span className="text-micro text-txt-300 uppercase">
-												{t("weekLabel", { number: index + 1 })}
-											</span>
-											<span
-												className={cn(
-													"text-tiny sm:text-small font-semibold tabular-nums",
-													weekTextClass
-												)}
-											>
-												{formatCompactCurrencyWithSign(week.pnl)}
-											</span>
-											<span className="text-micro text-txt-300 tabular-nums">
-												{week.activeDays}
-												{tCommon("daysAbbr")}
-											</span>
-										</div>
-									)
-								})}
-							</div>
+								)
+							})}
 						</div>
 					</div>
 				</div>
