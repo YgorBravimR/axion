@@ -4,6 +4,11 @@ import { useTranslations } from "next-intl"
 import { useFormatting } from "@/hooks/use-formatting"
 import { ColoredValue } from "@/components/shared/colored-value"
 import { fromCents } from "@/lib/money"
+import {
+	Tooltip,
+	TooltipTrigger,
+	TooltipContent,
+} from "@/components/ui/tooltip"
 import type { SimulationSummary } from "@/types/risk-simulation"
 
 const formatPf = (value: number): string =>
@@ -20,29 +25,47 @@ interface ComparisonRowProps {
 	label: string
 	originalValue: string
 	simulatedValue: string
+	tooltip?: string
 }
 
 const ComparisonRow = ({
 	label,
 	originalValue,
 	simulatedValue,
-}: ComparisonRowProps) => (
-	<div className="py-s-100 flex items-center justify-between">
-		<span className="text-tiny text-txt-300">{label}</span>
-		<div className="gap-s-200 sm:gap-s-300 flex items-center">
-			<span className="text-tiny text-txt-300 whitespace-nowrap">
-				{originalValue}
-			</span>
-			<span className="text-tiny text-txt-300">&rarr;</span>
-			<span className="text-tiny sm:text-small text-txt-100 font-medium whitespace-nowrap">
-				{simulatedValue}
-			</span>
+	tooltip,
+}: ComparisonRowProps) => {
+	const content = (
+		<div className="py-s-100 flex items-center justify-between">
+			<span className="text-tiny text-txt-300">{label}</span>
+			<div className="gap-s-200 sm:gap-s-300 flex items-center">
+				<span className="text-tiny text-txt-300 whitespace-nowrap">
+					{originalValue}
+				</span>
+				<span className="text-tiny text-txt-300">&rarr;</span>
+				<span className="text-tiny sm:text-small text-txt-100 font-medium whitespace-nowrap">
+					{simulatedValue}
+				</span>
+			</div>
 		</div>
-	</div>
-)
+	)
+
+	if (!tooltip) {
+		return content
+	}
+
+	return (
+		<Tooltip>
+			<TooltipTrigger asChild>
+				<div className="cursor-help">{content}</div>
+			</TooltipTrigger>
+			<TooltipContent id={`tooltip-${label}`}>{tooltip}</TooltipContent>
+		</Tooltip>
+	)
+}
 
 const SummaryCards = ({ summary }: SummaryCardsProps) => {
 	const t = useTranslations("riskSimulation.summary")
+	const tTooltips = useTranslations("riskSimulation.summary.tooltips")
 	const { formatPercent } = useFormatting()
 
 	return (
@@ -62,6 +85,12 @@ const SummaryCards = ({ summary }: SummaryCardsProps) => {
 						showSign
 						size="lg"
 					/>
+					<p className="text-tiny text-txt-300 mt-s-100">
+						{t("returnOf", {
+							percent: formatPercent(summary.originalReturnPercent),
+							capital: fromCents(summary.originalCapitalCents).toLocaleString(),
+						})}
+					</p>
 				</div>
 
 				{/* Simulated P&L */}
@@ -73,6 +102,14 @@ const SummaryCards = ({ summary }: SummaryCardsProps) => {
 						showSign
 						size="lg"
 					/>
+					<p className="text-tiny text-txt-300 mt-s-100">
+						{t("returnOf", {
+							percent: formatPercent(summary.simulatedReturnPercent),
+							capital: fromCents(
+								summary.simulatedCapitalCents
+							).toLocaleString(),
+						})}
+					</p>
 				</div>
 
 				{/* Delta */}
@@ -84,6 +121,11 @@ const SummaryCards = ({ summary }: SummaryCardsProps) => {
 						showSign
 						size="lg"
 					/>
+					<p className="text-tiny text-txt-300 mt-s-100">
+						{t("pp", {
+							delta: summary.returnPercentDelta.toFixed(1),
+						})}
+					</p>
 				</div>
 			</div>
 
@@ -98,21 +140,25 @@ const SummaryCards = ({ summary }: SummaryCardsProps) => {
 						label={t("winRate")}
 						originalValue={formatPercent(summary.originalWinRate)}
 						simulatedValue={formatPercent(summary.simulatedWinRate)}
+						tooltip={tTooltips("winRate")}
 					/>
 					<ComparisonRow
 						label={t("profitFactor")}
 						originalValue={formatPf(summary.originalProfitFactor)}
 						simulatedValue={formatPf(summary.simulatedProfitFactor)}
+						tooltip={tTooltips("profitFactor")}
 					/>
 					<ComparisonRow
 						label={t("avgR")}
 						originalValue={formatR(summary.originalAvgR)}
 						simulatedValue={formatR(summary.simulatedAvgR)}
+						tooltip={tTooltips("avgR")}
 					/>
 					<ComparisonRow
 						label={t("maxDrawdown")}
 						originalValue={formatPercent(summary.originalMaxDrawdownPercent)}
 						simulatedValue={formatPercent(summary.simulatedMaxDrawdownPercent)}
+						tooltip={tTooltips("maxDrawdown")}
 					/>
 				</div>
 

@@ -815,4 +815,83 @@ describe("runAdvancedSimulation", () => {
 			expect(result.equityCurve).toHaveLength(0)
 		})
 	})
+
+	describe("capital normalization and return %", () => {
+		it("simple mode: originalReturnPercent uses originalCapitalCents when supplied", () => {
+			const trades = createDaySequence(["win", "win"])
+			const params: SimpleSimulationParams = {
+				...defaultSimpleParams,
+				accountBalanceCents: 10_000_000, // R$100,000 sim capital
+				originalCapitalCents: 5_000_000, // R$50,000 original
+			}
+
+			const result = runSimpleSimulation(trades, params)
+
+			expect(result.summary.originalCapitalCents).toBe(5_000_000)
+			expect(result.summary.simulatedCapitalCents).toBe(10_000_000)
+			expect(result.summary.originalReturnPercent).toBeGreaterThan(0)
+		})
+
+		it("simple mode: originalReturnPercent defaults to accountBalanceCents when omitted", () => {
+			const trades = createDaySequence(["win", "win"])
+			const params: SimpleSimulationParams = {
+				...defaultSimpleParams,
+				accountBalanceCents: 5_000_000,
+			}
+
+			const result = runSimpleSimulation(trades, params)
+
+			expect(result.summary.originalCapitalCents).toBe(5_000_000)
+			expect(result.summary.simulatedCapitalCents).toBe(5_000_000)
+		})
+
+		it("simple mode: returnPercentDelta is computed correctly", () => {
+			const trades = createDaySequence(["win", "win"])
+			const params: SimpleSimulationParams = {
+				...defaultSimpleParams,
+				accountBalanceCents: 10_000_000,
+				originalCapitalCents: 5_000_000,
+			}
+
+			const result = runSimpleSimulation(trades, params)
+
+			const expectedDelta =
+				result.summary.simulatedReturnPercent -
+				result.summary.originalReturnPercent
+			expect(result.summary.returnPercentDelta).toBeCloseTo(expectedDelta, 5)
+		})
+
+		it("simple mode: totalTradingDays counts distinct dayKeys", () => {
+			const trades = createTwoWeekSequence(["win"], ["win"])
+			const result = runSimpleSimulation(trades, defaultSimpleParams)
+
+			expect(result.summary.totalTradingDays).toBeGreaterThan(0)
+			expect(result.summary.totalTradingDays).toBeLessThanOrEqual(
+				result.summary.totalTrades
+			)
+		})
+
+		it("advanced mode: originalReturnPercent uses originalCapitalCents when supplied", () => {
+			const trades = createDaySequence(["win", "win"])
+			const params: AdvancedSimulationParams = {
+				...defaultAdvancedParams,
+				accountBalanceCents: 10_000_000,
+				originalCapitalCents: 5_000_000,
+			}
+
+			const result = runAdvancedSimulation(trades, params)
+
+			expect(result.summary.originalCapitalCents).toBe(5_000_000)
+			expect(result.summary.simulatedCapitalCents).toBe(10_000_000)
+		})
+
+		it("advanced mode: zero trades returns zero returns", () => {
+			const result = runAdvancedSimulation([], defaultAdvancedParams)
+
+			expect(result.summary.originalReturnPercent).toBe(0)
+			expect(result.summary.simulatedReturnPercent).toBe(0)
+			expect(result.summary.returnPercentDelta).toBe(0)
+			expect(result.summary.totalTradingDays).toBe(0)
+		})
+	})
 })

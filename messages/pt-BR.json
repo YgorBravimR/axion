@@ -3938,7 +3938,9 @@
 			"profitReinvestmentPercent": "% Reinvestimento",
 			"dailyLoss": "Limite de Perda Diária",
 			"monthlyLoss": "Limite de Perda Mensal",
-			"baseRisk": "Risco Base (do perfil)"
+			"baseRisk": "Risco Base (do perfil)",
+			"originalCapital": "Saldo Original (período histórico)",
+			"originalCapitalInfo": "Digite o saldo real que você tinha durante o período em que as operações originais foram executadas. Usamos isso para calcular a taxa de retorno (% do capital), a forma correta de comparar duas estratégias operando em tamanhos de conta diferentes. Multiplicar valores em R$ entre capitais diferentes assumiria que você escalou o risco proporcionalmente — coisa que a maioria dos traders não faz."
 		},
 		"preview": {
 			"loading": "Carregando preview das operações...",
@@ -3967,7 +3969,15 @@
 			"executed": "Executadas",
 			"skipped": "Ignoradas",
 			"daysHitLimit": "Dias que Atingiram Limite",
-			"daysHitTarget": "Dias que Atingiram Meta"
+			"daysHitTarget": "Dias que Atingiram Meta",
+			"returnOf": "+{percent}% de R${capital}",
+			"pp": "{delta}pp retorno",
+			"tooltips": {
+				"winRate": "Taxa de acerto apenas nas operações EXECUTADAS. Se a simulação mostra queda, geralmente reflete o viés causado pelo mecanismo de limite (dispara após perdas, removendo recuperações que viriam depois).",
+				"profitFactor": "Lucro bruto / perda bruta nas operações executadas. Scaling de posição preserva essa razão em teoria; deltas vêm do viés da amostra filtrada.",
+				"avgR": "R-múltiplo médio nas operações executadas. Deve ser estável entre tamanhos de posição — quedas indicam viés de seleção do filtro de limite.",
+				"maxDrawdown": "Queda pico-a-vale do patrimônio. Escala aproximadamente linear com tamanho de posição no mesmo risco por operação. Maior posição = maior drawdown em R$ E em % se o capital não escalou equivalentemente."
+			}
 		},
 		"chart": {
 			"title": "Curva de Capital: Original vs Simulado",
@@ -4036,6 +4046,24 @@
 			"failedToRunSimulation": "Falha ao executar simulação",
 			"tradeYearsRetrieved": "Anos de trades recuperados",
 			"failedToGetTradeYears": "Falha ao obter anos de trades"
+		},
+		"insights": {
+			"capSelectionBias": {
+				"title": "Viés de seleção dos limites",
+				"body": "Você descartou {skipPct}% das operações. Os limites diários/mensais cortam o dia depois de perdas, removendo recuperações que viriam depois. A taxa de acerto da amostra executada sub-representa a estratégia real."
+			},
+			"sameEdge": {
+				"title": "Mesma vantagem, tamanho diferente",
+				"body": "O retorno percentual é praticamente idêntico ({origPct}% vs {simPct}%). A diferença em R$ vem do tamanho da conta, não da qualidade da estratégia."
+			},
+			"drawdownTradeoff": {
+				"title": "Drawdown amplificado",
+				"body": "Posições maiores aumentaram o P&L mas o drawdown máximo cresceu de {origDd}% para {simDd}%. O retorno escala linear; o risco escala junto."
+			},
+			"capTooTight": {
+				"title": "Limite diário muito apertado",
+				"body": "Em {capPct}% dos dias o limite diário foi acionado. Considere afrouxar — pode liberar mais da vantagem da estratégia (ao custo de drawdowns maiores)."
+			}
 		}
 	},
 	"equityShield": {

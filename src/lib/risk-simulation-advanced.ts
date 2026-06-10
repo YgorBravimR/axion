@@ -578,6 +578,21 @@ const runAdvancedSimulation = (
 	const originalStats = buildOriginalStats(trades, accountBalanceCents)
 	const simStats = buildSimulatedStats(simulatedTrades, accountBalanceCents)
 
+	const originalCapitalCents =
+		params.originalCapitalCents ?? accountBalanceCents
+	const simulatedCapitalCents = accountBalanceCents
+	const originalReturnPercent =
+		originalCapitalCents > 0
+			? (originalStats.totalPnlCents / originalCapitalCents) * 100
+			: 0
+	const simulatedReturnPercent =
+		simulatedCapitalCents > 0
+			? (simStats.totalPnlCents / simulatedCapitalCents) * 100
+			: 0
+	const returnPercentDelta = simulatedReturnPercent - originalReturnPercent
+
+	const totalTradingDays = new Set(simulatedTrades.map((t) => t.dayKey)).size
+
 	const summary: SimulationSummary = {
 		totalTrades: trades.length,
 		executedTrades: simulatedTrades.filter((t) => t.status === "executed")
@@ -606,6 +621,12 @@ const runAdvancedSimulation = (
 		pnlDeltaCents: simStats.totalPnlCents - originalStats.totalPnlCents,
 		daysHitDailyLimit,
 		daysHitDailyTarget,
+		originalCapitalCents,
+		simulatedCapitalCents,
+		originalReturnPercent,
+		simulatedReturnPercent,
+		returnPercentDelta,
+		totalTradingDays,
 	}
 
 	const dateRange =
