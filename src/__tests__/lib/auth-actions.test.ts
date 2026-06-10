@@ -51,12 +51,29 @@ const {
 		userSettings: { findFirst: vi.fn() },
 	}
 
+	// Chainable stub for fetchAccountPickerEnrichment's
+	// db.select().from().where().groupBy() — returns no rows so the
+	// enrichment map produces { todayPnl: null, sparkline: null } per account.
+	const enrichmentSelectChain = {
+		from: () => ({
+			where: () => ({
+				groupBy: async () =>
+					[] as Array<{
+						accountId: string | null
+						day: string
+						pnlSumCents: string
+					}>,
+			}),
+		}),
+	}
+
 	const dbMock = {
 		query: dbQueryMock,
 		insert: vi.fn(),
 		update: vi.fn(),
 		delete: vi.fn(),
 		transaction: vi.fn(),
+		select: vi.fn(() => enrichmentSelectChain),
 	}
 
 	const bcryptCompareMock = vi.fn()
@@ -91,6 +108,11 @@ vi.mock("@/db/schema", () => ({
 	users: { email: "col_email", id: "col_id" },
 	tradingAccounts: { userId: "col_user_id", isDefault: "col_is_default" },
 	userSettings: { userId: "col_user_id", showAllAccounts: "col_show_all" },
+	trades: {
+		accountId: "col_account_id",
+		exitDate: "col_exit_date",
+		pnl: "col_pnl",
+	},
 }))
 
 vi.mock("drizzle-orm", async (importOriginal) => {
@@ -512,7 +534,14 @@ describe("loginUser()", () => {
 			if (result.accounts) {
 				for (const account of result.accounts) {
 					expect(Object.keys(account).sort()).toEqual(
-						["accountType", "id", "isDefault", "name"].sort()
+						[
+							"accountType",
+							"id",
+							"isDefault",
+							"name",
+							"sparkline",
+							"todayPnl",
+						].sort()
 					)
 				}
 			}

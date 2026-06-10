@@ -86,8 +86,8 @@ describe("getHawksCoachingInsights — null hawksMetadata regression", () => {
 		const result = await getHawksCoachingInsights(90)
 
 		expect(result.status).toBe("success")
-		if (result.status !== "success") {
-			throw new Error("expected success result")
+		if (result.status !== "success" || !result.data) {
+			throw new Error("expected success result with data")
 		}
 		expect(result.data.tradeCount).toBe(1)
 
@@ -133,8 +133,8 @@ describe("getHawksCoachingInsights — null hawksMetadata regression", () => {
 		const result = await getHawksCoachingInsights(90)
 
 		expect(result.status).toBe("success")
-		if (result.status !== "success") {
-			throw new Error("expected success result")
+		if (result.status !== "success" || !result.data) {
+			throw new Error("expected success result with data")
 		}
 		expect(result.data.tradeCount).toBe(2)
 	})
