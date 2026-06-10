@@ -153,11 +153,14 @@
       "Skill(review-team)",
       "Bash(bunx drizzle-kit *)",
       "WebFetch(domain:getdesign.md)",
-      "Bash(pnpm lint:strict)"
+      "Bash(pnpm lint:strict)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot"
     ],
     "deny": [],
     "ask": []
   },
   "model": "opus",
-  "outputStyle": "Explanatory"
+  "outputStyle": "Proactive",
+  "prefersReducedMotion": true
 }
