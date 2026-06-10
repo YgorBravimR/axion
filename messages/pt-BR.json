@@ -121,6 +121,7 @@
 		"lossAbbr": "D",
 		"breakevenAbbr": "E",
 		"tradeCountAbbr": "t",
+		"daysAbbr": "d",
 		"rMultipleAbbr": "R",
 		"unknown": "Desconhecido",
 		"noStrategy": "Sem Estratégia",
@@ -1452,7 +1453,9 @@
 				"sat": "Sáb"
 			},
 			"dayAriaLabel": "{date}: {pnl}, {count} trades",
-			"todayAriaLabel": "Hoje, {date}"
+			"todayAriaLabel": "Hoje, {date}",
+			"week": "Semana",
+			"weekLabel": "S{number}"
 		},
 		"equity": {
 			"title": "Curva de Capital",

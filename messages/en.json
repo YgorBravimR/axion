@@ -121,6 +121,7 @@
 		"lossAbbr": "L",
 		"breakevenAbbr": "BE",
 		"tradeCountAbbr": "t",
+		"daysAbbr": "d",
 		"rMultipleAbbr": "R",
 		"unknown": "Unknown",
 		"noStrategy": "No Strategy",
@@ -1452,7 +1453,9 @@
 				"sat": "Sat"
 			},
 			"dayAriaLabel": "{date}: {pnl}, {count} trades",
-			"todayAriaLabel": "Today, {date}"
+			"todayAriaLabel": "Today, {date}",
+			"week": "Week",
+			"weekLabel": "W{number}"
 		},
 		"equity": {
 			"title": "Equity Curve",

@@ -82,28 +82,22 @@ export const TradingCalendar = memo(
 
 		const pnlBgClass = (pnl: number): string => {
 			if (pnl === 0 || maxAbsMonthPnl === 0) {
-				return "bg-bg-200/40 border-bg-300/60"
+				return "bg-bg-200/50"
 			}
 			const intensity = Math.abs(pnl) / maxAbsMonthPnl
-			const positive = pnl > 0
-			const bg = positive ? "bg-trade-buy" : "bg-trade-sell"
-			const border = positive ? "border-trade-buy" : "border-trade-sell"
-			if (intensity > 0.7) {
-				return `${bg}/35 ${border}/70`
+			const bg = pnl > 0 ? "bg-trade-buy" : "bg-trade-sell"
+			if (intensity > 0.6) {
+				return `${bg}/20`
 			}
-			if (intensity > 0.4) {
-				return `${bg}/22 ${border}/50`
+			if (intensity > 0.25) {
+				return `${bg}/12`
 			}
-			if (intensity > 0.15) {
-				return `${bg}/12 ${border}/35`
-			}
-			return `${bg}/6 ${border}/25`
+			return `${bg}/6`
 		}
 
-		// B3 is closed on Saturday and Sunday, so the calendar collapses to a
-		// 5-column Mon–Fri view by default. The hidden columns reappear the moment
-		// a trade is recorded on a weekend (e.g. crypto, FX, manual entry), so the
-		// affected day stays addressable.
+		// B3 closes on weekends, so the calendar collapses to a 5-column Mon–Fri
+		// view by default. Sat/Sun columns reappear automatically when any trade
+		// is recorded on a weekend (e.g. crypto, FX, manual entry).
 		const hasWeekendTrades = useMemo(() => {
 			for (const day of data) {
 				const parts = day.date.split("-")
@@ -137,48 +131,55 @@ export const TradingCalendar = memo(
 			return hasWeekendTrades ? all : all.slice(1, 6)
 		}, [tDays, hasWeekendTrades])
 
-		const calendarDays = useMemo(() => {
+		// One row per calendar week. In Mon–Fri mode the Sun/Sat slots are
+		// stripped (5 cells per row); otherwise the full 7-column Sun–Sat row.
+		const calendarWeeks = useMemo(() => {
 			const lastDayOfMonth = new Date(year, monthIndex + 1, 0)
 			const daysInMonth = lastDayOfMonth.getDate()
-			const days: Array<{ date: Date; isCurrentMonth: boolean } | null> = []
-
-			if (hasWeekendTrades) {
-				// 7-column Sun–Sat layout
-				const firstDayOfMonth = new Date(year, monthIndex, 1)
-				const startingDayOfWeek = firstDayOfMonth.getDay()
-				for (let i = 0; i < startingDayOfWeek; i++) {
-					days.push(null)
-				}
-				for (let day = 1; day <= daysInMonth; day++) {
-					days.push({
-						date: new Date(year, monthIndex, day),
-						isCurrentMonth: true,
-					})
-				}
-				return days
+			const firstDayOfWeek = new Date(year, monthIndex, 1).getDay()
+			const weeks: Array<Array<{ date: Date } | null>> = []
+			let current: Array<{ date: Date } | null> = []
+			for (let i = 0; i < firstDayOfWeek; i++) {
+				current.push(null)
 			}
-
-			// 5-column Mon–Fri layout: skip weekend dates, pad leading empties so
-			// the first weekday aligns with its column (Mon = col 0 … Fri = col 4).
-			let started = false
 			for (let day = 1; day <= daysInMonth; day++) {
-				const date = new Date(year, monthIndex, day)
-				const dow = date.getDay()
-				if (dow === 0 || dow === 6) {
-					continue
+				current.push({ date: new Date(year, monthIndex, day) })
+				if (current.length === 7) {
+					weeks.push(current)
+					current = []
 				}
-				if (!started) {
-					const leading = dow - 1 // 1 (Mon) → 0, 5 (Fri) → 4
-					for (let i = 0; i < leading; i++) {
-						days.push(null)
-					}
-					started = true
-				}
-				days.push({ date, isCurrentMonth: true })
 			}
-
-			return days
+			if (current.length > 0) {
+				while (current.length < 7) {
+					current.push(null)
+				}
+				weeks.push(current)
+			}
+			if (!hasWeekendTrades) {
+				return weeks.map((week) => week.slice(1, 6))
+			}
+			return weeks
 		}, [year, monthIndex, hasWeekendTrades])
+
+		const weeklySummaries = useMemo(() => {
+			return calendarWeeks.map((week) => {
+				let pnl = 0
+				let activeDays = 0
+				for (const cell of week) {
+					if (!cell) {
+						continue
+					}
+					const dailyData = dailyPnLMap.get(formatDateKey(cell.date))
+					if (dailyData && dailyData.tradeCount > 0) {
+						pnl += dailyData.pnl
+						activeDays += 1
+					}
+				}
+				return { pnl, activeDays }
+			})
+		}, [calendarWeeks, dailyPnLMap])
+
+		const colCount = hasWeekendTrades ? 7 : 5
 
 		// Memoized handlers for stable references
 		const handlePreviousMonth = useCallback(() => {
@@ -241,132 +242,193 @@ export const TradingCalendar = memo(
 
 				<div
 					className={cn(
-						"mt-s-300 sm:mt-m-400 mx-auto w-full max-w-lg transition-opacity duration-200",
+						"mt-s-300 sm:mt-m-400 transition-opacity duration-200",
 						isLoading && "opacity-50"
 					)}
 					aria-busy={isLoading || undefined}
 				>
-					{/* Days of week header */}
-					<div
-						className={cn(
-							"grid gap-1",
-							hasWeekendTrades ? "grid-cols-7" : "grid-cols-5"
-						)}
-					>
-						{daysOfWeek.map((day) => (
+					<div className="gap-s-300 flex">
+						<div className="min-w-0 flex-1">
+							{/* Days of week header */}
 							<div
-								key={day}
-								className="py-s-100 text-txt-300 text-micro sm:text-tiny text-center font-medium tracking-wide uppercase"
+								className={cn(
+									"grid gap-1",
+									colCount === 7 ? "grid-cols-7" : "grid-cols-5"
+								)}
 							>
-								{day}
-							</div>
-						))}
-					</div>
-
-					{/* Calendar grid */}
-					<div
-						className={cn(
-							"grid gap-1",
-							hasWeekendTrades ? "grid-cols-7" : "grid-cols-5"
-						)}
-					>
-						{calendarDays.map((dayData, index) => {
-							if (!dayData) {
-								return (
+								{daysOfWeek.map((day) => (
 									<div
-										key={`empty-${String(index)}`}
-										className="aspect-square"
-									/>
-								)
-							}
+										key={day}
+										className="py-s-100 text-txt-300 text-micro sm:text-tiny text-center font-medium tracking-wide uppercase"
+									>
+										{day}
+									</div>
+								))}
+							</div>
 
-							const dateKey = formatDateKey(dayData.date)
-							const dailyData = dailyPnLMap.get(dateKey)
-							const isToday =
-								dayData.date.toDateString() === effectiveDate.toDateString()
+							{/* One row per calendar week */}
+							<div className="grid grid-flow-row gap-1">
+								{calendarWeeks.map((week, weekIndex) => (
+									<div
+										key={`week-${String(weekIndex)}`}
+										className={cn(
+											"grid gap-1",
+											colCount === 7 ? "grid-cols-7" : "grid-cols-5"
+										)}
+									>
+										{week.map((cell, index) => {
+											if (!cell) {
+												return (
+													<div
+														key={`empty-${String(weekIndex)}-${String(index)}`}
+														className="aspect-square"
+													/>
+												)
+											}
 
-							const bgClass = dailyData
-								? pnlBgClass(dailyData.pnl)
-								: "bg-bg-100"
+											const dateKey = formatDateKey(cell.date)
+											const dailyData = dailyPnLMap.get(dateKey)
+											const isToday =
+												cell.date.toDateString() ===
+												effectiveDate.toDateString()
 
-							const textClass = dailyData
-								? dailyData.pnl > 0
-									? "text-trade-buy"
-									: dailyData.pnl < 0
-										? "text-trade-sell"
-										: "text-txt-300"
-								: "text-txt-300"
+											const hasData = Boolean(
+												dailyData && dailyData.tradeCount > 0
+											)
+											const bgClass = hasData
+												? pnlBgClass(dailyData?.pnl ?? 0)
+												: "bg-transparent"
 
-							const isClickable = dailyData && onDayClick
+											const textClass = hasData
+												? (dailyData?.pnl ?? 0) > 0
+													? "text-trade-buy"
+													: (dailyData?.pnl ?? 0) < 0
+														? "text-trade-sell"
+														: "text-txt-300"
+												: "text-txt-300"
 
-							const cellContent = (
-								<div className="flex h-full flex-col">
-									<span className="text-micro text-txt-300 leading-none">
-										{dayData.date.getDate()}
-									</span>
-									{dailyData && (
-										<div className="mt-auto flex flex-col items-center leading-tight">
+											const isClickable = hasData && Boolean(onDayClick)
+
+											const cellContent = (
+												<div className="flex h-full flex-col">
+													<span
+														className={cn(
+															"text-micro text-txt-300 self-end leading-none tabular-nums",
+															isToday && "text-acc-100 font-semibold"
+														)}
+													>
+														{cell.date.getDate()}
+													</span>
+													{hasData && dailyData && (
+														<div className="mt-auto flex flex-col items-center leading-tight">
+															<span
+																className={cn(
+																	"text-tiny sm:text-small font-semibold tabular-nums",
+																	textClass
+																)}
+															>
+																{formatCompactCurrencyWithSign(dailyData.pnl)}
+															</span>
+															<span className="text-micro text-txt-300 tabular-nums">
+																{dailyData.tradeCount}
+																{tCommon("tradeCountAbbr")}
+															</span>
+														</div>
+													)}
+												</div>
+											)
+
+											const baseClass = cn(
+												"border-bg-300/40 aspect-square rounded-md border p-1.5",
+												bgClass,
+												isToday && "border-acc-100/60"
+											)
+
+											if (isClickable) {
+												return (
+													<button
+														key={dateKey}
+														type="button"
+														data-date-key={dateKey}
+														className={cn(
+															baseClass,
+															"focus-visible:ring-acc-100 cursor-pointer transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:outline-none active:opacity-60"
+														)}
+														onClick={handleCellClick}
+														aria-label={
+															dailyData
+																? t("dayAriaLabel", {
+																		date: dateKey,
+																		pnl: formatCompactCurrencyWithSign(
+																			dailyData.pnl
+																		),
+																		count: dailyData.tradeCount,
+																	})
+																: undefined
+														}
+													>
+														{cellContent}
+													</button>
+												)
+											}
+
+											return (
+												<div
+													key={dateKey}
+													className={baseClass}
+													aria-label={
+														isToday
+															? t("todayAriaLabel", { date: dateKey })
+															: undefined
+													}
+												>
+													{cellContent}
+												</div>
+											)
+										})}
+									</div>
+								))}
+							</div>
+						</div>
+
+						{/* Weekly summaries side column */}
+						<div className="hidden w-24 shrink-0 sm:block">
+							<div className="text-txt-300 text-micro sm:text-tiny py-s-100 text-center font-medium tracking-wide uppercase">
+								{t("week")}
+							</div>
+							<div className="grid gap-1">
+								{weeklySummaries.map((week, index) => {
+									const weekTextClass =
+										week.pnl > 0
+											? "text-trade-buy"
+											: week.pnl < 0
+												? "text-trade-sell"
+												: "text-txt-300"
+									return (
+										<div
+											key={`week-summary-${String(index)}`}
+											className="border-bg-300/40 bg-bg-200/30 flex aspect-square flex-col items-center justify-center rounded-md border px-2 text-center"
+										>
+											<span className="text-micro text-txt-300 uppercase">
+												{t("weekLabel", { number: index + 1 })}
+											</span>
 											<span
 												className={cn(
-													"text-micro sm:text-tiny font-semibold tabular-nums",
-													textClass
+													"text-tiny sm:text-small font-semibold tabular-nums",
+													weekTextClass
 												)}
 											>
-												{formatCompactCurrencyWithSign(dailyData.pnl)}
+												{formatCompactCurrencyWithSign(week.pnl)}
 											</span>
 											<span className="text-micro text-txt-300 tabular-nums">
-												{dailyData.tradeCount}
-												{tCommon("tradeCountAbbr")}
+												{week.activeDays}
+												{tCommon("daysAbbr")}
 											</span>
 										</div>
-									)}
-								</div>
-							)
-
-							const baseClass = cn(
-								"aspect-square rounded-md border p-1.5 flex flex-col",
-								bgClass,
-								isToday && "outline-2 outline-offset-1 outline-acc-100"
-							)
-
-							if (isClickable) {
-								return (
-									<button
-										key={dateKey}
-										type="button"
-										data-date-key={dateKey}
-										className={cn(
-											baseClass,
-											"focus-visible:ring-acc-100 cursor-pointer transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:outline-none active:opacity-60"
-										)}
-										onClick={handleCellClick}
-										aria-label={
-											dailyData
-												? t("dayAriaLabel", {
-														date: dateKey,
-														pnl: formatCompactCurrencyWithSign(dailyData.pnl),
-														count: dailyData.tradeCount,
-													})
-												: undefined
-										}
-									>
-										{cellContent}
-									</button>
-								)
-							}
-
-							return (
-								<div
-									key={dateKey}
-									className={baseClass}
-									aria-label={
-										isToday ? t("todayAriaLabel", { date: dateKey }) : undefined
-									}
-								>
-									{cellContent}
-								</div>
-							)
-						})}
+									)
+								})}
+							</div>
+						</div>
 					</div>
 				</div>
 			</Panel>
