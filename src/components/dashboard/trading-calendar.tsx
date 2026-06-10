@@ -220,12 +220,12 @@ export const TradingCalendar = memo(
 					)}
 					aria-busy={isLoading || undefined}
 				>
-					<div className="flex w-full gap-x-3">
-						<div className="min-w-0 flex-1">
-							{/* Days of week header */}
+					<div className="w-full">
+						{/* Header row: day-of-week labels + WEEK label aligned over sidebar */}
+						<div className="flex w-full items-center gap-x-3">
 							<div
 								className={cn(
-									"grid gap-x-2",
+									"grid min-w-0 flex-1 gap-x-2",
 									colCount === 7 ? "grid-cols-7" : "grid-cols-5"
 								)}
 							>
@@ -238,170 +238,166 @@ export const TradingCalendar = memo(
 									</div>
 								))}
 							</div>
+							<div className="text-txt-300 text-micro sm:text-tiny py-s-100 w-24 shrink-0 text-center font-medium tracking-wide uppercase">
+								{t("week")}
+							</div>
+						</div>
 
-							{/* One row per calendar week — days only, no inline summary */}
-							<div className="flex flex-col gap-y-2">
-								{calendarWeeks.map((week, weekIndex) => (
+						{/* One row per calendar week — days + matching summary side-by-side */}
+						<div className="flex flex-col gap-y-2">
+							{calendarWeeks.map((week, weekIndex) => {
+								const summary = weeklySummaries[weekIndex]
+								const summaryTextClass =
+									summary && summary.pnl > 0
+										? "text-trade-buy"
+										: summary && summary.pnl < 0
+											? "text-trade-sell"
+											: "text-txt-300"
+								return (
 									<div
 										key={`week-${String(weekIndex)}`}
-										className={cn(
-											"grid gap-x-2",
-											colCount === 7 ? "grid-cols-7" : "grid-cols-5"
-										)}
+										className="flex items-stretch gap-x-3"
 									>
-										{week.map((cell, index) => {
-											if (!cell) {
+										<div
+											className={cn(
+												"grid min-w-0 flex-1 gap-x-2",
+												colCount === 7 ? "grid-cols-7" : "grid-cols-5"
+											)}
+										>
+											{week.map((cell, index) => {
+												if (!cell) {
+													return (
+														<div
+															key={`empty-${String(weekIndex)}-${String(index)}`}
+															className="aspect-square"
+														/>
+													)
+												}
+
+												const dateKey = formatDateKey(cell.date)
+												const dailyData = dailyPnLMap.get(dateKey)
+												const isToday =
+													cell.date.toDateString() ===
+													effectiveDate.toDateString()
+
+												const hasData = Boolean(
+													dailyData && dailyData.tradeCount > 0
+												)
+												const bgClass = hasData
+													? pnlBgClass(dailyData?.pnl ?? 0)
+													: "bg-bg-200/60 border-bg-300/40"
+
+												const textClass = hasData
+													? (dailyData?.pnl ?? 0) > 0
+														? "text-trade-buy"
+														: (dailyData?.pnl ?? 0) < 0
+															? "text-trade-sell"
+															: "text-txt-300"
+													: "text-txt-300"
+
+												const isClickable = hasData && Boolean(onDayClick)
+
+												const cellContent = (
+													<div className="flex h-full flex-col">
+														<span
+															className={cn(
+																"text-micro text-txt-300 self-end leading-none tabular-nums",
+																isToday && "text-acc-100 font-semibold"
+															)}
+														>
+															{cell.date.getDate()}
+														</span>
+														{hasData && dailyData && (
+															<div className="mt-auto flex flex-col items-center leading-tight">
+																<span
+																	className={cn(
+																		"text-tiny sm:text-small font-semibold tabular-nums",
+																		textClass
+																	)}
+																>
+																	{formatCompactCurrencyWithSign(dailyData.pnl)}
+																</span>
+																<span className="text-micro text-txt-300 tabular-nums">
+																	{dailyData.tradeCount}
+																	{tCommon("tradeCountAbbr")}
+																</span>
+															</div>
+														)}
+													</div>
+												)
+
+												const baseClass = cn(
+													"aspect-square rounded-md border p-1.5",
+													bgClass,
+													isToday && "border-acc-100/60"
+												)
+
+												if (isClickable) {
+													return (
+														<button
+															key={dateKey}
+															type="button"
+															data-date-key={dateKey}
+															className={cn(
+																baseClass,
+																"focus-visible:ring-acc-100 cursor-pointer transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:outline-none active:opacity-60"
+															)}
+															onClick={handleCellClick}
+															aria-label={
+																dailyData
+																	? t("dayAriaLabel", {
+																			date: dateKey,
+																			pnl: formatCompactCurrencyWithSign(
+																				dailyData.pnl
+																			),
+																			count: dailyData.tradeCount,
+																		})
+																	: undefined
+															}
+														>
+															{cellContent}
+														</button>
+													)
+												}
+
 												return (
 													<div
-														key={`empty-${String(weekIndex)}-${String(index)}`}
-														className="aspect-square"
-													/>
-												)
-											}
-
-											const dateKey = formatDateKey(cell.date)
-											const dailyData = dailyPnLMap.get(dateKey)
-											const isToday =
-												cell.date.toDateString() ===
-												effectiveDate.toDateString()
-
-											const hasData = Boolean(
-												dailyData && dailyData.tradeCount > 0
-											)
-											const bgClass = hasData
-												? pnlBgClass(dailyData?.pnl ?? 0)
-												: "bg-bg-200/60 border-bg-300/40"
-
-											const textClass = hasData
-												? (dailyData?.pnl ?? 0) > 0
-													? "text-trade-buy"
-													: (dailyData?.pnl ?? 0) < 0
-														? "text-trade-sell"
-														: "text-txt-300"
-												: "text-txt-300"
-
-											const isClickable = hasData && Boolean(onDayClick)
-
-											const cellContent = (
-												<div className="flex h-full flex-col">
-													<span
-														className={cn(
-															"text-micro text-txt-300 self-end leading-none tabular-nums",
-															isToday && "text-acc-100 font-semibold"
-														)}
-													>
-														{cell.date.getDate()}
-													</span>
-													{hasData && dailyData && (
-														<div className="mt-auto flex flex-col items-center leading-tight">
-															<span
-																className={cn(
-																	"text-tiny sm:text-small font-semibold tabular-nums",
-																	textClass
-																)}
-															>
-																{formatCompactCurrencyWithSign(dailyData.pnl)}
-															</span>
-															<span className="text-micro text-txt-300 tabular-nums">
-																{dailyData.tradeCount}
-																{tCommon("tradeCountAbbr")}
-															</span>
-														</div>
-													)}
-												</div>
-											)
-
-											const baseClass = cn(
-												"aspect-square rounded-md border p-1.5",
-												bgClass,
-												isToday && "border-acc-100/60"
-											)
-
-											if (isClickable) {
-												return (
-													<button
 														key={dateKey}
-														type="button"
-														data-date-key={dateKey}
-														className={cn(
-															baseClass,
-															"focus-visible:ring-acc-100 cursor-pointer transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:outline-none active:opacity-60"
-														)}
-														onClick={handleCellClick}
+														className={baseClass}
 														aria-label={
-															dailyData
-																? t("dayAriaLabel", {
-																		date: dateKey,
-																		pnl: formatCompactCurrencyWithSign(
-																			dailyData.pnl
-																		),
-																		count: dailyData.tradeCount,
-																	})
+															isToday
+																? t("todayAriaLabel", { date: dateKey })
 																: undefined
 														}
 													>
 														{cellContent}
-													</button>
+													</div>
 												)
-											}
-
-											return (
-												<div
-													key={dateKey}
-													className={baseClass}
-													aria-label={
-														isToday
-															? t("todayAriaLabel", { date: dateKey })
-															: undefined
-													}
-												>
-													{cellContent}
-												</div>
-											)
-										})}
-									</div>
-								))}
-							</div>
-						</div>
-
-						{/* Weekly summary sidebar — visually separate region */}
-						<aside className="border-bg-300/30 bg-bg-200/30 w-24 shrink-0 rounded-lg border p-2">
-							<div className="text-txt-300 text-micro sm:text-tiny py-s-100 mb-1 text-center font-medium tracking-wide uppercase">
-								{t("week")}
-							</div>
-							<div className="flex flex-col gap-y-2">
-								{weeklySummaries.map((summary, weekIndex) => {
-									const summaryTextClass =
-										summary.pnl > 0
-											? "text-trade-buy"
-											: summary.pnl < 0
-												? "text-trade-sell"
-												: "text-txt-300"
-									return (
-										<div
-											key={`week-summary-${String(weekIndex)}`}
-											className="border-bg-300/40 bg-bg-200/80 flex aspect-square flex-col items-start justify-center gap-0.5 rounded-md border px-2 py-2"
-										>
-											<span className="text-micro text-txt-300 font-medium">
-												{t("weekLabel", { number: weekIndex + 1 })}
-											</span>
-											<span
-												className={cn(
-													"text-small font-semibold tabular-nums",
-													summaryTextClass
-												)}
-											>
-												{formatCompactCurrencyWithSign(summary.pnl)}
-											</span>
-											<span className="text-micro text-txt-300 tabular-nums">
-												{summary.activeDays}
-												{tCommon("daysAbbr")}
-											</span>
+											})}
 										</div>
-									)
-								})}
-							</div>
-						</aside>
+										{summary && (
+											<div className="border-bg-300/40 bg-bg-200/60 flex w-24 shrink-0 flex-col items-center justify-center gap-0.5 self-stretch rounded-md border px-2 py-2 text-center">
+												<span className="text-micro text-txt-300 font-medium">
+													{t("weekLabel", { number: weekIndex + 1 })}
+												</span>
+												<span
+													className={cn(
+														"text-small font-semibold tabular-nums",
+														summaryTextClass
+													)}
+												>
+													{formatCompactCurrencyWithSign(summary.pnl)}
+												</span>
+												<span className="text-micro text-txt-300 tabular-nums">
+													{summary.activeDays}
+													{tCommon("daysAbbr")}
+												</span>
+											</div>
+										)}
+									</div>
+								)
+							})}
+						</div>
 					</div>
 				</div>
 			</Panel>
