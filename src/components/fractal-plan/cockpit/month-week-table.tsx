@@ -25,6 +25,7 @@ interface MonthWeekTableProps {
 	planWeeks: readonly PlanWeek[]
 	actualWeeks: readonly ActualWeek[]
 	oneRCents: number
+	monthlyGoalCents?: number | null
 }
 
 const formatDateRangePT = (startISO: string, endISO: string): string => {
@@ -46,6 +47,7 @@ const MonthWeekTable = ({
 	planWeeks,
 	actualWeeks,
 	oneRCents,
+	monthlyGoalCents,
 }: MonthWeekTableProps) => {
 	const t = useTranslations("plan.month")
 	const { formatCurrency } = useFormatting()
@@ -57,6 +59,10 @@ const MonthWeekTable = ({
 		...actualWeeks.map((w) => Math.abs(w.pnl * 100))
 	)
 	const rowCount = Math.max(sortedPlan.length, actualWeeks.length)
+	const derivedWeeklyGoalCents =
+		monthlyGoalCents && monthlyGoalCents > 0 && sortedPlan.length > 0
+			? Math.round(monthlyGoalCents / sortedPlan.length)
+			: 0
 
 	if (rowCount === 0) {
 		return (
@@ -100,7 +106,10 @@ const MonthWeekTable = ({
 					const actual = actualWeeks[idx] ?? null
 					const targetR = week ? parseR(week.targetR) : 0
 					const actualR = week ? parseR(week.actualR) : 0
-					const targetCents = Math.round(targetR * oneRCents)
+					const targetCents =
+						targetR > 0
+							? Math.round(targetR * oneRCents)
+							: derivedWeeklyGoalCents
 					const actualCents = actual?.pnl ? Math.round(actual.pnl * 100) : 0
 					const barWidth =
 						maxAbsActualCents > 0

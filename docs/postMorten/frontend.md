@@ -2,6 +2,109 @@
 
 ---
 
+## [BUG-2026-06-10] Hardcoded Portuguese month labels bypass i18n locale switching
+
+**Date:** 2026-06-10
+**Severity:** High (breaks UI in EN locale; affects user experience across multiple pages)
+**Affected Area:** Monthly plan pages, quarterly plan pages, annual report generation; `src/components/fractal-plan/cockpit/month-report.tsx:62`, `quarter-report.tsx:85,352`, `src/app/actions/annual-reports.ts:383,451`
+
+### Cause
+
+The codebase imported and used hardcoded Portuguese month label functions (`monthLabelPt()`, `monthAbbrPt()`) unconditionally, bypassing the i18n translation system. These functions return only Portuguese names (Janeiro, Fevereiro, etc.) regardless of the app's current locale.
+
+On `/en/plan/2026/2/6`, the header rendered "Junho 2026" instead of "June 2026" because `monthLabelPt(6)` always returns the Portuguese string. The functions were defined in `src/lib/fractal-plan/month-labels.ts` and used across four files without locale awareness.
+
+### Effect
+
+Users viewing the monthly plan in English locale saw Portuguese month names on the header (breadcrumb + right-side label), creating a jarring mixed-language UI. The bug also propagated to the quarterly plan summary and annual report generation.
+
+### Solution
+
+Replaced all hardcoded `monthLabelPt()` / `monthAbbrPt()` calls with `next-intl`'s `getTranslations("months")` function, which respects the app's locale. The i18n messages already contained a `months` object with 0-based numeric keys (0-11) for both EN and PT-BR:
+
+```json
+"months": {
+  "0": "January",
+  "1": "February",
+  ...
+  "5": "June",
+  ...
+}
+```
+
+Fixed four locations:
+
+1. **month-report.tsx:62** — Changed `monthLabelPt(month)` to `tMonths(String(month - 1))`
+2. **quarter-report.tsx:85** — Changed month abbreviation loop to use i18n
+3. **quarter-report.tsx:352** — Changed month label prop for card rendering
+4. **annual-reports.ts:383,451** — Changed two monthName assignments in getAnnualRollup action
+
+The month parameter (1-12) is reduced by 1 to match the 0-based i18n keys.
+
+### Prevention
+
+- Never hardcode language-specific strings in UI components or server actions. Always route through `getTranslations()`.
+- When importing utility functions like `monthLabelPt()`, treat them as internal helpers (e.g., for database defaults or fallbacks when i18n is unavailable), never as the primary UI rendering path.
+- Add linter rule or TypeScript check to flag imports of `monthLabelPt` / `monthAbbrPt` in RSC/client components.
+
+### Related Files
+
+- `src/components/fractal-plan/cockpit/month-report.tsx`
+- `src/components/fractal-plan/cockpit/quarter-report.tsx`
+- `src/app/actions/annual-reports.ts`
+- `src/lib/fractal-plan/month-labels.ts` (unchanged; still serves as fallback utility)
+- `messages/en.json`, `messages/pt-BR.json` (i18n keys verified present)
+
+---
+
+## [BUG-2026-06-10] Weekly plan targets not derived from monthly goal
+
+**Date:** 2026-06-10
+**Severity:** High (weekly targets show 0.00R when monthly goal is non-zero, breaking financial plan visibility)
+**Affected Area:** `/en/plan/2026/2/6` monthly plan page; `src/components/fractal-plan/cockpit/month-week-table.tsx:103-112`
+
+### Cause
+
+The weekly plan table displayed zero targets for weeks even when a monthly goal cap was set. The `monthlyGoalCents` value (R$ 50.160 = 5,016,000 cents in the bug report) was correctly derived at the month level but never cascaded down to weekly rows.
+
+The `MonthWeekTable` component received `planWeeks` with `targetR` fields that could be null or zero (no explicit manual target set). When rendering, the component calculated `targetCents = targetR * oneRCents`, which evaluated to 0 for any null/zero `targetR`, ignoring the monthly cap entirely.
+
+### Effect
+
+Users saw the Weeks section with four rows, each labeled `target 0.00R real 0.00R` and showing `R$ 0,00` on the right, despite the monthly goal at the top showing `R$ 50.160`. This made weekly planning impossible — users had no visibility into how the monthly cap should be split across weeks.
+
+### Solution
+
+Added automatic weekly target derivation in `MonthWeekTable`:
+
+1. Calculate `derivedWeeklyGoalCents = monthlyGoalCents / numberOfWeeks` when monthly goal is set and weeks have no explicit target.
+2. Pass `monthlyGoalCents` as a new prop from `month-report.tsx` to `MonthWeekTable`.
+3. Change target calculation logic from:
+   ```ts
+   const targetCents = Math.round(targetR * oneRCents)
+   ```
+   to:
+   ```ts
+   const targetCents =
+   	targetR > 0 ? Math.round(targetR * oneRCents) : derivedWeeklyGoalCents
+   ```
+
+This maintains the priority: explicit weekly targetR (if set) takes precedence; otherwise, derive equally from the monthly cap.
+
+### Prevention
+
+- When a parent plan level (month) has a cap that cascades to child levels (weeks), ensure the cascade happens both at the data layer (database) AND at the UI render layer as a fallback.
+- Add tests for derivation logic to catch missing cascades early.
+- Document the cascade hierarchy: Yearly → Quarterly → Monthly → Weekly → Daily.
+
+### Related Files
+
+- `src/components/fractal-plan/cockpit/month-week-table.tsx` (added derivation logic)
+- `src/components/fractal-plan/cockpit/month-report.tsx` (pass monthlyGoalCents prop)
+- `src/__tests__/components/month-week-table.test.ts` (new test file verifying derivation)
+
+---
+
 ## [BUG-2026-06-02] E2E setup test hangs 90s when session already authenticated
 
 **Date:** 2026-06-02

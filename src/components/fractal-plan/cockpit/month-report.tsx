@@ -13,10 +13,7 @@ import { deriveMonthGoal } from "@/lib/fractal-plan/derive-goal"
 import { getHistoricalAssertivity } from "@/lib/fractal-plan/historical-assertivity"
 import { computeProjectedOneRCents } from "@/lib/fractal-plan/compound-projection"
 import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
-import {
-	monthLabelPt,
-	DEFAULT_TRADING_DAYS_PER_MONTH,
-} from "@/lib/fractal-plan/month-labels"
+import { DEFAULT_TRADING_DAYS_PER_MONTH } from "@/lib/fractal-plan/month-labels"
 import { listActiveRiskProfiles } from "@/app/actions/risk-profiles"
 import {
 	getMonthlyResultsWithProp,
@@ -59,7 +56,8 @@ const MonthReport = async ({
 	locale,
 }: MonthReportProps) => {
 	const t = await getTranslations("plan.month")
-	const monthLabel = `${monthLabelPt(month)} ${year}`
+	const tMonths = await getTranslations("months")
+	const monthLabel = `${tMonths(String(month - 1))} ${year}`
 
 	const yearRow = await db.query.yearlyPlans.findFirst({
 		where: and(
@@ -297,6 +295,7 @@ const MonthReport = async ({
 					}))
 					.sort((a, b) => a.isoWeek - b.isoWeek)}
 				actualWeeks={monthlyData?.weeklyBreakdown ?? []}
+				monthlyGoalCents={planGoalCents}
 			/>
 
 			{darfRow && (

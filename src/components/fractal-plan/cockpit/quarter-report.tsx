@@ -17,11 +17,7 @@ import {
 import { getHistoricalAssertivity } from "@/lib/fractal-plan/historical-assertivity"
 import { computeProjectedOneRCents } from "@/lib/fractal-plan/compound-projection"
 import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
-import {
-	monthLabelPt,
-	monthAbbrPt,
-	DEFAULT_TRADING_DAYS_PER_MONTH,
-} from "@/lib/fractal-plan/month-labels"
+import { DEFAULT_TRADING_DAYS_PER_MONTH } from "@/lib/fractal-plan/month-labels"
 import {
 	getMonthlyResultsWithProp,
 	getMonthlyProjection,
@@ -72,9 +68,10 @@ const QuarterReport = async ({
 	quarter,
 	locale,
 }: QuarterReportProps) => {
-	const [t, tSetup] = await Promise.all([
+	const [t, tSetup, tMonths] = await Promise.all([
 		getTranslations("plan.quarter"),
 		getTranslations("plan.setup"),
+		getTranslations("months"),
 	])
 	const quarterLabel = `Q${quarter} ${year}`
 	const months = [
@@ -82,7 +79,7 @@ const QuarterReport = async ({
 		(quarter - 1) * 3 + 2,
 		(quarter - 1) * 3 + 3,
 	] as const
-	const monthRangeLabel = months.map((m) => monthAbbrPt(m)).join(" · ")
+	const monthRangeLabel = months.map((m) => tMonths(String(m - 1))).join(" · ")
 
 	const yearRow = await db.query.yearlyPlans.findFirst({
 		where: and(
@@ -352,7 +349,7 @@ const QuarterReport = async ({
 					<QuarterMonthCard
 						key={p.month}
 						href={`/${locale}/plan/${year}/${quarter}/${p.month}`}
-						monthLabel={monthLabelPt(p.month)}
+						monthLabel={tMonths(String(p.month - 1))}
 						state={p.state}
 						tierIndex={p.tierIndex}
 						oneRCents={p.oneRCents}

@@ -15,7 +15,6 @@ import {
 	getWeekAggregate,
 } from "@/lib/queries/period-queries"
 import { getWeeksInYear } from "@/lib/calendar/iso-week"
-import { monthLabelPt } from "@/lib/fractal-plan/month-labels"
 import { recomputeAccountMonth } from "@/lib/tax/recompute-month"
 
 import type { CapitalEvent } from "@/types/integration"
@@ -295,7 +294,10 @@ export const getAnnualRollup = async (
 	year: number
 ): Promise<ActionResult<AnnualRollupData>> => {
 	const { accountId } = await requireAuth()
-	const t = await getTranslations("reports.messages")
+	const [t, tMonths] = await Promise.all([
+		getTranslations("reports.messages"),
+		getTranslations("months"),
+	])
 
 	const accountRows = await db
 		.select({
@@ -380,7 +382,7 @@ export const getAnnualRollup = async (
 		if (isDisabled) {
 			rows.push({
 				month,
-				monthName: monthLabelPt(month),
+				monthName: tMonths(String(month - 1)),
 				disabled: true,
 				resultadoBruto: null,
 				resultadoLiquido: null,
@@ -448,7 +450,7 @@ export const getAnnualRollup = async (
 
 		rows.push({
 			month,
-			monthName: monthLabelPt(month),
+			monthName: tMonths(String(month - 1)),
 			disabled: false,
 			resultadoBruto: agg.grossCents,
 			resultadoLiquido: agg.netCents,
