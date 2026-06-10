@@ -130,10 +130,10 @@ export const TradingCalendar = memo(
 				}
 				weeks.push(current)
 			}
-			if (!hasWeekendTrades) {
-				return weeks.map((week) => week.slice(1, 6))
-			}
-			return weeks
+			const trimmed = hasWeekendTrades
+				? weeks
+				: weeks.map((week) => week.slice(1, 6))
+			return trimmed.filter((week) => week.some((cell) => cell !== null))
 		}, [year, monthIndex, hasWeekendTrades])
 
 		const weeklySummaries = useMemo(() => {
@@ -222,12 +222,7 @@ export const TradingCalendar = memo(
 					)}
 					aria-busy={isLoading || undefined}
 				>
-					<div
-						className={cn(
-							"w-full",
-							colCount === 7 ? "max-w-[840px]" : "max-w-[680px]"
-						)}
-					>
+					<div className="w-full">
 						{/* Days of week + WEEK summary header */}
 						<div
 							className={cn(
@@ -293,7 +288,7 @@ export const TradingCalendar = memo(
 											)
 											const bgClass = hasData
 												? pnlBgClass(dailyData?.pnl ?? 0)
-												: "bg-transparent border-bg-300/30"
+												: "bg-bg-200/60 border-bg-300/40"
 
 											const textClass = hasData
 												? (dailyData?.pnl ?? 0) > 0
@@ -383,13 +378,13 @@ export const TradingCalendar = memo(
 											)
 										})}
 										{summary && (
-											<div className="border-bg-300/40 bg-bg-200/30 flex aspect-square flex-col items-center justify-center rounded-md border px-2 text-center">
-												<span className="text-micro text-txt-300 uppercase">
+											<div className="border-bg-300/50 bg-bg-200/60 flex aspect-square flex-col items-start justify-center gap-0.5 rounded-md border px-2 py-2">
+												<span className="text-micro text-txt-300 font-medium">
 													{t("weekLabel", { number: weekIndex + 1 })}
 												</span>
 												<span
 													className={cn(
-														"text-tiny sm:text-small font-semibold tabular-nums",
+														"text-small font-semibold tabular-nums",
 														summaryTextClass
 													)}
 												>

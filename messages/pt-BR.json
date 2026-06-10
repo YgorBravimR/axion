@@ -1455,7 +1455,7 @@
 			"dayAriaLabel": "{date}: {pnl}, {count} trades",
 			"todayAriaLabel": "Hoje, {date}",
 			"week": "Semana",
-			"weekLabel": "S{number}"
+			"weekLabel": "Semana {number}"
 		},
 		"equity": {
 			"title": "Curva de Capital",

@@ -1455,7 +1455,7 @@
 			"dayAriaLabel": "{date}: {pnl}, {count} trades",
 			"todayAriaLabel": "Today, {date}",
 			"week": "Week",
-			"weekLabel": "W{number}"
+			"weekLabel": "Week {number}"
 		},
 		"equity": {
 			"title": "Equity Curve",
