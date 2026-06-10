@@ -345,7 +345,7 @@ export const TradingCalendar = memo(
 										{summary && (
 											<div
 												className={cn(
-													"bg-bg-200/60 flex w-24 shrink-0 flex-col items-center justify-center gap-0.5 self-stretch rounded-md border px-2 py-2 text-center",
+													"bg-bg-200/60 flex w-24 shrink-0 flex-col items-center justify-center gap-0.5 self-center rounded-md border px-2 py-1.5 text-center",
 													summaryBorderClass
 												)}
 											>
