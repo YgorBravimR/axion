@@ -68,31 +68,8 @@ export const TradingCalendar = memo(
 			return "bg-bg-200/40 border-bg-300/50"
 		}
 
-		// B3 closes on weekends, so the calendar collapses to a 5-column Mon–Fri
-		// view by default. Sat/Sun columns reappear automatically when any trade
-		// is recorded on a weekend (e.g. crypto, FX, manual entry).
-		const hasWeekendTrades = useMemo(() => {
-			for (const day of data) {
-				const parts = day.date.split("-")
-				if (parts.length !== 3) {
-					continue
-				}
-				const y = Number(parts[0])
-				const m = Number(parts[1])
-				const d = Number(parts[2])
-				if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) {
-					continue
-				}
-				const dow = new Date(y, m - 1, d).getDay()
-				if (dow === 0 || dow === 6) {
-					return true
-				}
-			}
-			return false
-		}, [data])
-
-		const daysOfWeek = useMemo(() => {
-			const all = [
+		const daysOfWeek = useMemo(
+			() => [
 				tDays("sunShort"),
 				tDays("monShort"),
 				tDays("tueShort"),
@@ -100,12 +77,11 @@ export const TradingCalendar = memo(
 				tDays("thuShort"),
 				tDays("friShort"),
 				tDays("satShort"),
-			]
-			return hasWeekendTrades ? all : all.slice(1, 6)
-		}, [tDays, hasWeekendTrades])
+			],
+			[tDays]
+		)
 
-		// One row per calendar week. In Mon–Fri mode the Sun/Sat slots are
-		// stripped (5 cells per row); otherwise the full 7-column Sun–Sat row.
+		// One row per calendar week — always 7 columns (Sun–Sat).
 		const calendarWeeks = useMemo(() => {
 			const lastDayOfMonth = new Date(year, monthIndex + 1, 0)
 			const daysInMonth = lastDayOfMonth.getDate()
@@ -128,11 +104,8 @@ export const TradingCalendar = memo(
 				}
 				weeks.push(current)
 			}
-			const trimmed = hasWeekendTrades
-				? weeks
-				: weeks.map((week) => week.slice(1, 6))
-			return trimmed.filter((week) => week.some((cell) => cell !== null))
-		}, [year, monthIndex, hasWeekendTrades])
+			return weeks.filter((week) => week.some((cell) => cell !== null))
+		}, [year, monthIndex])
 
 		const weeklySummaries = useMemo(() => {
 			return calendarWeeks.map((week) => {
@@ -151,8 +124,6 @@ export const TradingCalendar = memo(
 				return { pnl, activeDays }
 			})
 		}, [calendarWeeks, dailyPnLMap])
-
-		const colCount = hasWeekendTrades ? 7 : 5
 
 		// Memoized handlers for stable references
 		const handlePreviousMonth = useCallback(() => {
@@ -223,12 +194,7 @@ export const TradingCalendar = memo(
 					<div className="w-full">
 						{/* Header row: day-of-week labels + WEEK label aligned over sidebar */}
 						<div className="flex w-full items-center gap-x-3">
-							<div
-								className={cn(
-									"grid min-w-0 flex-1 gap-x-2",
-									colCount === 7 ? "grid-cols-7" : "grid-cols-5"
-								)}
-							>
+							<div className="grid min-w-0 flex-1 grid-cols-7 gap-x-2">
 								{daysOfWeek.map((day) => (
 									<div
 										key={day}
@@ -253,17 +219,18 @@ export const TradingCalendar = memo(
 										: summary && summary.pnl < 0
 											? "text-trade-sell"
 											: "text-txt-300"
+								const summaryBorderClass =
+									summary && summary.pnl > 0
+										? "border-trade-buy/60"
+										: summary && summary.pnl < 0
+											? "border-trade-sell/60"
+											: "border-bg-300/40"
 								return (
 									<div
 										key={`week-${String(weekIndex)}`}
 										className="flex items-stretch gap-x-3"
 									>
-										<div
-											className={cn(
-												"grid min-w-0 flex-1 gap-x-2",
-												colCount === 7 ? "grid-cols-7" : "grid-cols-5"
-											)}
-										>
+										<div className="grid min-w-0 flex-1 grid-cols-7 gap-x-2">
 											{week.map((cell, index) => {
 												if (!cell) {
 													return (
@@ -376,7 +343,12 @@ export const TradingCalendar = memo(
 											})}
 										</div>
 										{summary && (
-											<div className="border-bg-300/40 bg-bg-200/60 flex w-24 shrink-0 flex-col items-center justify-center gap-0.5 self-stretch rounded-md border px-2 py-2 text-center">
+											<div
+												className={cn(
+													"bg-bg-200/60 flex w-24 shrink-0 flex-col items-center justify-center gap-0.5 self-stretch rounded-md border px-2 py-2 text-center",
+													summaryBorderClass
+												)}
+											>
 												<span className="text-micro text-txt-300 font-medium">
 													{t("weekLabel", { number: weekIndex + 1 })}
 												</span>
