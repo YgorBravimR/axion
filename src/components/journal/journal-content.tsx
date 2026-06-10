@@ -413,7 +413,7 @@ const JournalContent = () => {
 			{/* Period Filter */}
 			<div
 				id="journal-period-filter"
-				className="gap-s-300 sm:gap-m-400 flex flex-wrap items-start justify-between"
+				className="gap-s-300 sm:gap-m-400 flex flex-col"
 			>
 				<PeriodFilter
 					value={period}

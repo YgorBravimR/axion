@@ -149,6 +149,45 @@ test.describe("Journal", () => {
 				await page.waitForTimeout(500)
 			}
 		})
+
+		test("period filter chips visible on journal page", async ({ page }) => {
+			const dayChip = page.getByRole("radio", { name: /day|dia/i })
+			const weekChip = page.getByRole("radio", { name: /week|semana/i })
+			const monthChip = page.getByRole("radio", { name: /month|mês/i })
+			const allChip = page.getByRole("radio", { name: /all|todos/i })
+			const customChip = page.getByRole("radio", {
+				name: /custom|personalizado/i,
+			})
+
+			await expect(dayChip).toBeVisible()
+			await expect(weekChip).toBeVisible()
+			await expect(monthChip).toBeVisible()
+			await expect(allChip).toBeVisible()
+			await expect(customChip).toBeVisible()
+		})
+
+		test("Search & Filter button text does not wrap", async ({ page }) => {
+			const searchButton = page.getByRole("button", {
+				name: /search.*filter|pesquisa.*filtro/i,
+			})
+			await expect(searchButton).toBeVisible()
+
+			const boundingBox = await searchButton.boundingBox()
+			const text = await searchButton.textContent()
+
+			if (boundingBox && text) {
+				expect(text).toMatch(/search.*filter|pesquisa.*filtro/i)
+				const lineHeight = parseInt(
+					(await searchButton.evaluate(
+						(el) => window.getComputedStyle(el).lineHeight
+					)) as string,
+					10
+				)
+				const expectedHeight = lineHeight
+
+				await expect(searchButton).toHaveCSS("white-space", "nowrap")
+			}
+		})
 	})
 
 	test.describe("New Trade Page", () => {

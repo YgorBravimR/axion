@@ -302,7 +302,7 @@ const SmartSearch = ({
 				tabIndex={0}
 				onClick={() => setIsOpen(!isOpen)}
 				className={cn(
-					"gap-s-200 px-s-300 py-s-100 text-tiny focus-visible:ring-acc-100 flex items-center rounded-md border font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none",
+					"gap-s-200 px-s-300 py-s-100 text-tiny focus-visible:ring-acc-100 flex items-center rounded-md border font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:outline-none",
 					isOpen || activeFilterCount > 0
 						? "border-txt-300 text-txt-100"
 						: "border-bg-300 text-txt-300 hover:border-txt-300 hover:text-txt-200"
