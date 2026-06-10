@@ -41,6 +41,17 @@ test.describe("Monte Carlo", () => {
 		test("should default to Edge Expectancy tab", async ({ page }) => {
 			test.skip(true, "Edge Expectancy tab not found in current implementation")
 		})
+
+		// Regression: V2DistributionHistogram crashed with
+		// "RangeError: Invalid currency code : $" when the component's
+		// `currency` prop defaulted to "$" (not an ISO 4217 code). The page
+		// should load without surfacing the error boundary.
+		test("should not show error boundary on initial load", async ({ page }) => {
+			const errorBoundary = page.getByText(
+				/something went wrong|algo deu errado|invalid currency code/i
+			)
+			await expect(errorBoundary).toHaveCount(0)
+		})
 	})
 
 	test.describe("Edge Expectancy - Input", () => {

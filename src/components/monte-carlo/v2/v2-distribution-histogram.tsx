@@ -57,7 +57,7 @@ export const V2DistributionHistogram = ({
 	buckets,
 	medianBalance,
 	initialBalance,
-	currency = "$",
+	currency = "BRL",
 }: V2DistributionHistogramProps) => {
 	const { yAxisWidth } = useChartConfig()
 	const t = useTranslations("monteCarlo.results")

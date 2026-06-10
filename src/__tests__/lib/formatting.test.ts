@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { formatFinite } from "@/lib/formatting"
+import { formatFinite, formatCompactCurrency } from "@/lib/formatting"
 
 describe("formatFinite", () => {
 	it("returns toFixed for finite numbers", () => {
@@ -43,5 +43,22 @@ describe("formatFinite", () => {
 		expect(formatFinite(0.00001, 5)).toBe("0.00001")
 		expect(formatFinite(-0, 2)).toBe("0.00") // toFixed drops -0 sign
 		expect(formatFinite(1e-10, 2)).toBe("0.00")
+	})
+})
+
+// Regression: monte-carlo V2DistributionHistogram crashed in production with
+// "RangeError: Invalid currency code : $" because the component defaulted
+// `currency` to "$" (a symbol) and passed it directly into
+// `Intl.NumberFormat({ currency })`, which requires an ISO 4217 code.
+describe("formatCompactCurrency — currency code validation", () => {
+	it("accepts valid ISO 4217 codes (BRL default)", () => {
+		expect(() => formatCompactCurrency(1000)).not.toThrow()
+		expect(() => formatCompactCurrency(1000, "BRL")).not.toThrow()
+		expect(() => formatCompactCurrency(1000, "USD")).not.toThrow()
+	})
+
+	it("throws RangeError when given a currency symbol instead of ISO code", () => {
+		expect(() => formatCompactCurrency(1000, "$")).toThrow(RangeError)
+		expect(() => formatCompactCurrency(1000, "R$")).toThrow(RangeError)
 	})
 })
