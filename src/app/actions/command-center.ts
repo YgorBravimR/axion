@@ -17,7 +17,7 @@ import type {
 	AccountAssetSetting,
 } from "@/db/schema"
 import type { ActionResponse } from "@/types"
-import { eq, and, desc, gte, lte, inArray, sum } from "drizzle-orm"
+import { eq, and, desc, gte, lte, inArray, sum, sql } from "drizzle-orm"
 import { z } from "zod"
 import {
 	createChecklistSchema,
@@ -840,7 +840,7 @@ export const getCircuitBreakerStatus = async (
 
 		const monthlyAgg = await db
 			.select({
-				totalPnlCents: sum(trades.pnl).mapWith(Number),
+				totalPnlCents: sum(sql`CAST(${trades.pnl} AS bigint)`).mapWith(Number),
 			})
 			.from(trades)
 			.where(

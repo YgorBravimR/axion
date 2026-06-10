@@ -6,6 +6,7 @@ vi.mock("@/db/drizzle", () => ({
 		insert: vi.fn(),
 		update: vi.fn(),
 		delete: vi.fn(),
+		select: vi.fn(),
 		query: {
 			dailyChecklists: {
 				findMany: vi.fn(),
@@ -250,6 +251,13 @@ describe("Command Center Server Actions", () => {
 		vi.mocked(checkHawksCascade).mockImplementation(
 			async () => ({ triggered: false }) as never
 		)
+		// Default mock for db.select used by monthly P&L aggregate query.
+		// Returns shape matching the SQL aggregate: { totalPnlCents: number | null }.
+		vi.mocked(db.select).mockReturnValue({
+			from: vi.fn().mockReturnValue({
+				where: vi.fn().mockResolvedValue([{ totalPnlCents: 0 }]),
+			}),
+		} as never)
 	})
 
 	describe("getChecklists", () => {
@@ -832,6 +840,42 @@ describe("Command Center Server Actions", () => {
 
 			expect(result.status).toBe("error")
 			expect(result.errors?.[0]?.code).toBe("FETCH_FAILED")
+		})
+
+		// Regression: sentry:PROFIT-JOURNAL-B — trades.pnl is text in PG and was being
+		// passed directly to sum(), producing "function sum(text) does not exist".
+		// The fix wraps pnl in CAST(... AS bigint). This test fails (status: error)
+		// if the monthly aggregate query throws.
+		it("should aggregate monthly P&L from text pnl column without DB error", async () => {
+			vi.mocked(db.query.trades).findMany.mockImplementation(
+				(async () => []) as never
+			)
+			vi.mocked(db.select).mockReturnValue({
+				from: vi.fn().mockReturnValue({
+					where: vi.fn().mockResolvedValue([{ totalPnlCents: 125000 }]),
+				}),
+			} as never)
+
+			const result = await getCircuitBreakerStatus()
+
+			expect(result.status).toBe("success")
+			expect(result.data?.monthlyPnL).toBeCloseTo(1250, 2)
+		})
+
+		it("should handle null monthly aggregate (no trades this month)", async () => {
+			vi.mocked(db.query.trades).findMany.mockImplementation(
+				(async () => []) as never
+			)
+			vi.mocked(db.select).mockReturnValue({
+				from: vi.fn().mockReturnValue({
+					where: vi.fn().mockResolvedValue([{ totalPnlCents: null }]),
+				}),
+			} as never)
+
+			const result = await getCircuitBreakerStatus()
+
+			expect(result.status).toBe("success")
+			expect(result.data?.monthlyPnL).toBe(0)
 		})
 	})
 

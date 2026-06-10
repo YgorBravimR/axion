@@ -138,6 +138,22 @@ test.describe("Command Center", () => {
 			)
 			await expect(consecutiveLosses.first()).toBeVisible()
 		})
+
+		// Regression: sentry:PROFIT-JOURNAL-B — getCircuitBreakerStatus crashed
+		// because `sum(trades.pnl)` was called on a text column, producing
+		// "function sum(text) does not exist". The page should render the
+		// monthly P&L metric without any 500 / DB error.
+		test("should render monthly P&L without database error", async ({
+			page,
+		}) => {
+			const monthlyPnl = page.getByText(/monthly p&l|p&l mensal/i)
+			await expect(monthlyPnl.first()).toBeVisible()
+
+			const errorBanner = page.getByText(
+				/failed query|sum\(text\) does not exist|database error|erro de banco/i
+			)
+			await expect(errorBanner).toHaveCount(0)
+		})
 	})
 
 	test.describe("Daily Checklist", () => {
