@@ -43,7 +43,7 @@ export const TradingCalendar = memo(
 		const tDays = useTranslations("dayOfWeek")
 		const locale = useLocale()
 		const effectiveDate = useEffectiveDate()
-		const { formatCompactCurrencyWithSign } = useFormatting()
+		const { formatCompactCurrency } = useFormatting()
 
 		const year = month.getFullYear()
 		const monthIndex = month.getMonth()
@@ -224,7 +224,7 @@ export const TradingCalendar = memo(
 										? "border-trade-buy/60"
 										: summary && summary.pnl < 0
 											? "border-trade-sell/60"
-											: "border-bg-300/40"
+											: "border-txt-300"
 								return (
 									<div
 										key={`week-${String(weekIndex)}`}
@@ -282,7 +282,9 @@ export const TradingCalendar = memo(
 																		textClass
 																	)}
 																>
-																	{formatCompactCurrencyWithSign(dailyData.pnl)}
+																	{formatCompactCurrency(
+																		Math.abs(dailyData.pnl)
+																	)}
 																</span>
 																<span className="text-micro text-txt-300 tabular-nums">
 																	{dailyData.tradeCount}
@@ -314,9 +316,7 @@ export const TradingCalendar = memo(
 																dailyData
 																	? t("dayAriaLabel", {
 																			date: dateKey,
-																			pnl: formatCompactCurrencyWithSign(
-																				dailyData.pnl
-																			),
+																			pnl: formatCompactCurrency(dailyData.pnl),
 																			count: dailyData.tradeCount,
 																		})
 																	: undefined
@@ -358,7 +358,7 @@ export const TradingCalendar = memo(
 														summaryTextClass
 													)}
 												>
-													{formatCompactCurrencyWithSign(summary.pnl)}
+													{formatCompactCurrency(Math.abs(summary.pnl))}
 												</span>
 												<span className="text-micro text-txt-300 tabular-nums">
 													{summary.activeDays}
