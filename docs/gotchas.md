@@ -125,9 +125,26 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 ### Turbopack static-analyzes every `require()` even when the package is in `serverExternalPackages` — DuckDB binding-shim fails on a fresh Apple Silicon worktree
 
 - **What**: `@duckdb/node-bindings/duckdb.js` contains an unguarded `switch (process.arch)` with a `require()` per platform (`darwin-arm64`, `darwin-x64`, `linux-x64`, `linux-arm64`, `win32-x64`, `win32-arm64`, plus `-musl` variants). Turbopack walks **every** branch at build time regardless of runtime reachability. pnpm only installs the host-arch optional binding by default, so the cross-arch `require()` calls fail to resolve → `Module not found: Can't resolve '@duckdb/node-bindings-darwin-x64/duckdb.node'` and the dev server overlay blocks every route, not just `/backtest/optimize`. Listing `@duckdb/node-api` + `@duckdb/node-bindings` in `next.config.ts` → `serverExternalPackages` is **not enough** in Next.js 16.x + Turbopack — externalization does not stop the static walk of internal `require()`s.
-- **What to do**: Install the cross-arch bindings as `devDependencies` (already done on 2026-06-09): `@duckdb/node-bindings-darwin-x64`, `@duckdb/node-bindings-linux-x64`, `@duckdb/node-bindings-linux-x64-musl`, `@duckdb/node-bindings-linux-arm64`, `@duckdb/node-bindings-linux-arm64-musl`, `@duckdb/node-bindings-win32-x64`, `@duckdb/node-bindings-win32-arm64`. Costs ~50MB in `node_modules` but unblocks dev on any host. Long-term: file a Next.js issue or upstream a `await import()` shim in DuckDB so the require is lazy and not visible to static analysis.
+- **What to do**: Install the cross-arch bindings. **Linux variants must be `dependencies`** (Vercel runs prod-only install — devDeps are skipped at runtime); Darwin/Win32 stay in `devDependencies` for dev convenience only. `dependencies`: `@duckdb/node-bindings-linux-x64`, `@duckdb/node-bindings-linux-x64-musl`, `@duckdb/node-bindings-linux-arm64`, `@duckdb/node-bindings-linux-arm64-musl`. `devDependencies`: `@duckdb/node-bindings-darwin-x64`, `@duckdb/node-bindings-win32-x64`, `@duckdb/node-bindings-win32-arm64`. Long-term: upstream a lazy `await import()` shim so the require is invisible to static analysis.
 - **Symptom that mimics this**: Build overlay shows ONE missing arch (the first one Turbopack hit) — fixing only that arch shifts the error to the next one. Always install all of them at once.
 - **Source**: 2026-06-09 visual-review session; `next.config.ts` already lists both DuckDB packages but the static walk happens anyway. Affects `darwin-arm64` (Apple Silicon) hosts most visibly because pnpm doesn't fetch cross-arch optional deps for any platform.
+
+### Vercel serverless drops `libduckdb.so` unless `outputFileTracingIncludes` is set — `dlopen` fails at cold start
+
+- **What**: `@duckdb/node-bindings-linux-x64` ships `duckdb.node` (the V8 binding, ~400KB) **and** a 67MB sibling `libduckdb.so` that the `.node` dlopens at runtime. Next.js' file-tracer follows the `.node` `require()` but does **not** include sibling shared libraries. Vercel's serverless bundler then ships `duckdb.node` without `libduckdb.so`, and cold-start crashes with `Failed to load external module @duckdb/node-api-…: Error: libduckdb.so: cannot open shared object file: No such file or directory`. Crashes any route that transitively imports `@/lib/candle-store` — e.g. `journal/[id]/page.tsx` imports `candle-query.ts` which statically imports `getCandleStore`, so DuckDB loads at module-eval time on every cold start of that route.
+- **What to do**: Set `outputFileTracingIncludes` in `next.config.ts` to force all Linux binding directories into the trace:
+  ```ts
+  outputFileTracingIncludes: {
+  	"/**/*": [
+  		"./node_modules/@duckdb/node-bindings-linux-x64/**",
+  		"./node_modules/@duckdb/node-bindings-linux-arm64/**",
+  		"./node_modules/@duckdb/node-bindings-linux-x64-musl/**",
+  		"./node_modules/@duckdb/node-bindings-linux-arm64-musl/**",
+  	],
+  },
+  ```
+  This MUST be paired with the Linux bindings living in `dependencies` (not `devDependencies`) so they exist in `node_modules` during Vercel's prod install. Both halves are required; either one alone leaves the function broken.
+- **Source**: 2026-06-11 Sentry PROFIT-JOURNAL-D investigation. See `docs/postMorten/2026-06-11-duckdb-libduckdb-so-missing-on-vercel.md`.
 
 ### `cookies()` / `headers()` / `draftMode()` are banned in pages
 
