@@ -44,6 +44,11 @@ const formatTime = (isoString: string): string => {
 
 export const MarketMonitorContent = () => {
 	const t = useTranslations("market")
+	// Hold a stable ref to `t` so fetchData has no deps and never re-creates,
+	// preventing the double initial fetch caused by useEffect re-running when
+	// fetchData changes identity between renders.
+	const tRef = useRef(t)
+	tRef.current = t
 
 	// ── Data state ───────────────────────────────────────────────────────────
 	const [groups, setGroups] = useState<QuoteGroup[]>([])
@@ -116,7 +121,7 @@ export const MarketMonitorContent = () => {
 			}
 
 			if (!quotesSucceeded && !calendarSucceeded && isFirstLoad.current) {
-				setError(t("quote.error"))
+				setError(tRef.current("quote.error"))
 			}
 
 			if (quotesSucceeded || calendarSucceeded) {
@@ -125,7 +130,7 @@ export const MarketMonitorContent = () => {
 		} catch (err) {
 			console.error("[MarketMonitor] poll failed", err)
 			if (isFirstLoad.current) {
-				setError(t("quote.error"))
+				setError(tRef.current("quote.error"))
 			}
 		} finally {
 			if (isFirstLoad.current) {
@@ -133,7 +138,7 @@ export const MarketMonitorContent = () => {
 				setIsLoading(false)
 			}
 		}
-	}, [t])
+	}, [])
 
 	// Refs to hold interval IDs so the visibility handler can clear/restart them
 	const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -332,7 +337,7 @@ export const MarketMonitorContent = () => {
 			{heroQuotes.length > 0 ? (
 				<div className="relative">
 					<div
-						className="scrollbar-none gap-s-300 pb-s-100 flex overflow-x-auto"
+						className="gap-s-300 pb-s-100 flex scrollbar-none overflow-x-auto"
 						role="list"
 						aria-label={t("assets")}
 					>

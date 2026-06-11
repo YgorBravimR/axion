@@ -32,10 +32,12 @@ interface RootLayoutProps {
 const RootLayout = ({ children }: RootLayoutProps) => {
 	return (
 		<html suppressHydrationWarning data-brand="axion">
+			<head>
+				<AccountTransitionScript />
+			</head>
 			<body
 				className={`${publicSans.variable} ${geistMono.variable} font-sans antialiased`}
 			>
-				<AccountTransitionScript />
 				{children}
 			</body>
 		</html>
