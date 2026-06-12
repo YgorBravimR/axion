@@ -30,6 +30,13 @@ const resolveTier = (
 		}
 	}
 
+	// Below the bottom band: clamp to lowest tier (don't reward sub-floor capital
+	// with the highest 1R — that would scale up risk catastrophically).
+	const bottom = rules[0]!
+	if (capitalCents < bottom.minCapitalCents) {
+		return { tierIndex: 0, oneRCents: bottom.oneRCents }
+	}
+
 	// Above the top band: clamp to highest tier.
 	const top = rules[rules.length - 1]!
 	return { tierIndex: rules.length - 1, oneRCents: top.oneRCents }

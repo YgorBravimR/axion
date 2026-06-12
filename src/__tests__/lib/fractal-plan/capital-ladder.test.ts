@@ -33,6 +33,27 @@ describe("resolveTier", () => {
 		})
 	})
 
+	it("returns the lowest tier when capital is below the lowest band's floor", () => {
+		// Ladder whose lowest tier starts at 500_000 (R$5,000) — capital below that
+		// must clamp to tier 0, NOT the highest tier (which would 50× risk).
+		const GAPPED: LadderRuleR[] = [
+			{
+				minCapitalCents: 500_000,
+				maxCapitalCents: 1_499_999,
+				oneRCents: 10_000,
+			},
+			{
+				minCapitalCents: 1_500_000,
+				maxCapitalCents: 99_999_999_999,
+				oneRCents: 500_000,
+			},
+		]
+		expect(resolveTier(100_000, GAPPED)).toEqual({
+			tierIndex: 0,
+			oneRCents: 10_000,
+		})
+	})
+
 	it("throws on an empty rules array", () => {
 		expect(() => resolveTier(100_000, [])).toThrow(
 			"ladder rules cannot be empty"
