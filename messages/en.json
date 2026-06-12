@@ -5975,6 +5975,7 @@
 		},
 		"capsStrip": {
 			"ariaLabel": "Tier and risk caps",
+			"monthStartCapital": "Month-start capital",
 			"dailyLT": "Daily L/T",
 			"weekly": "Weekly",
 			"monthly": "Monthly"
@@ -6240,7 +6241,8 @@
 				"saveError": "Error saving yearly plan",
 				"tierColumnHead": "Tier",
 				"fromColumnHead": "From (R$)",
-				"oneRColumnHead": "1R (R$)"
+				"oneRColumnHead": "1R (R$)",
+				"pctOfCapitalColumnHead": "% of capital"
 			}
 		},
 		"breadcrumb": {
