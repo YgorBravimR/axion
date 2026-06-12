@@ -16,7 +16,10 @@ import {
 } from "@/lib/fractal-plan/derive-goal"
 import { getHistoricalAssertivity } from "@/lib/fractal-plan/historical-assertivity"
 import { computeProjectedOneRCents } from "@/lib/fractal-plan/compound-projection"
-import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
+import {
+	resolveTier,
+	type LadderRuleR,
+} from "@/lib/fractal-plan/capital-ladder"
 import { DEFAULT_TRADING_DAYS_PER_MONTH } from "@/lib/fractal-plan/month-labels"
 import {
 	getMonthlyResultsWithProp,
@@ -126,6 +129,7 @@ const QuarterReport = async ({
 			showTaxEstimates: tradingAccounts.showTaxEstimates,
 			accountStartYear: tradingAccounts.accountStartYear,
 			accountStartMonth: tradingAccounts.accountStartMonth,
+			startingBalanceCents: tradingAccounts.startingBalanceCents,
 		})
 		.from(tradingAccounts)
 		.where(eq(tradingAccounts.id, accountId))
@@ -172,6 +176,31 @@ const QuarterReport = async ({
 		account?.accountStartYear === year && account?.accountStartMonth != null
 			? account.accountStartMonth
 			: 1
+	// Mirrors month-report.tsx: prefer the account's starting balance over the
+	// (possibly-stale) yearly plan initial capital when the account starts in
+	// this year. Otherwise the quarterly cards inherit the bug where months
+	// below the ladder floor resolve to the wrong tier.
+	const effectiveInitialCapitalCents =
+		account?.startingBalanceCents != null && account.accountStartYear === year
+			? account.startingBalanceCents
+			: yearRow.initialCapitalCents
+	const COMPOUND_DAYS = 22
+	const assertivity01 = Math.min(100, Math.max(1, assertivityPct)) / 100
+	const compoundCapitalAtMonth = (targetMonth: number): number => {
+		if (defaultDailyWinR <= 0 || ladderRules.length === 0) {
+			return effectiveInitialCapitalCents
+		}
+		let cap = effectiveInitialCapitalCents
+		for (let m = planStartMonth; m < targetMonth; m++) {
+			const { oneRCents } = resolveTier(cap, ladderRules)
+			const grossGoal = Math.round(
+				defaultDailyWinR * COMPOUND_DAYS * assertivity01 * oneRCents
+			)
+			const taxCents = grossGoal > 0 ? Math.round(grossGoal * irTaxRate) : 0
+			cap += grossGoal - taxCents
+		}
+		return cap
+	}
 
 	const perMonth = await Promise.all(
 		months.map(async (m) => {
@@ -208,7 +237,7 @@ const QuarterReport = async ({
 			const compoundOneRCents =
 				defaultDailyWinR > 0
 					? computeProjectedOneRCents(m, {
-							initialCapitalCents: yearRow.initialCapitalCents,
+							initialCapitalCents: effectiveInitialCapitalCents,
 							ladderRules,
 							dailyTargetR: defaultDailyWinR,
 							assertivityPct,
@@ -216,6 +245,11 @@ const QuarterReport = async ({
 							irTaxRate,
 						})
 					: (row?.snapshotOneRCents ?? 0)
+			const effectiveCapitalCents = compoundCapitalAtMonth(m)
+			const effectiveTierIndex =
+				ladderRules.length > 0
+					? resolveTier(effectiveCapitalCents, ladderRules).tierIndex
+					: (row?.snapshotTierIndex ?? 0)
 
 			const goal = row
 				? deriveMonthGoal({
@@ -254,8 +288,8 @@ const QuarterReport = async ({
 				darfDueCents: darfRow?.darfDueCents ?? 0,
 				tradeCount,
 				state: monthState(year, m),
-				tierIndex: row?.snapshotTierIndex ?? 0,
-				oneRCents: row?.snapshotOneRCents ?? 0,
+				tierIndex: effectiveTierIndex,
+				oneRCents: compoundOneRCents,
 			}
 		})
 	)

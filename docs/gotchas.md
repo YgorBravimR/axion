@@ -904,3 +904,11 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: When clamping at boundaries, write the two branches explicitly — never let "no rule matched" be a single fallback. The fix adds `if (capital < rules[0].minCapitalCents) return tier 0` before the "above top band" fallback. Also: when two code paths (page + grid) both compute "month-start capital", extract a single helper — they drift otherwise. The grid uses `running` capital and only trusts the snapshot when `snapshotReason === "manual"`; the page block was reading the snapshot unconditionally.
 - **Related**: `docs/postMorten/2026-06-12-resolve-tier-floor-clamp-inversion.md`.
 - **Date logged**: 2026-06-12.
+
+### Cockpit tier display: three pages, three implementations, one easy drift
+
+- **What**: The yearly cockpit (`annual-cockpit-grid.tsx`), the monthly plan (`month-report.tsx`) and the quarterly plan (`quarter-report.tsx`) all show "what tier is this month at, what is 1R?". Each does it differently. PR #15 fixed yearly + monthly to (a) prefer `account.startingBalanceCents` over the frozen `yearlyPlans.initialCapitalCents` and (b) re-resolve the tier via `resolveTier()` from compounded running capital. The quarterly page was missed and kept reading raw `monthlyPlan.snapshotOneRCents` / `snapshotTierIndex` — values that can be stale for months where `snapshotReason !== "manual"`. Result: yearly said 1R = R$ 100, quarterly said R$ 80, monthly said R$ 100. Different answers per page.
+- **Why it's easy to miss**: The fields are spelled `snapshotOneRCents` / `snapshotTierIndex` in the schema — they look authoritative. The page reading them literally is the one that drifts furthest. There's no type-system signal that these snapshots are conditional on `snapshotReason`.
+- **What to do**: Until a shared helper exists, audit ALL THREE cockpit pages whenever tier resolution logic changes: `annual-cockpit-grid.tsx`, `quarter-report.tsx`, `month-report.tsx`. Smoke-test on a real account whose `account.startingBalanceCents` differs from the seeded `yearlyPlans.initialCapitalCents` (e.g. Hawk T2 Live: account = R$ 5.000, yearly seed = R$ 1.500).
+- **Related**: `docs/postMorten/2026-06-12-quarterly-cockpit-stale-snapshot.md`.
+- **Date logged**: 2026-06-12.
