@@ -20,6 +20,18 @@ importers:
       '@duckdb/node-api':
         specifier: 1.5.3-r.3
         version: 1.5.3-r.3
+      '@duckdb/node-bindings-linux-arm64':
+        specifier: 1.5.3-r.3
+        version: 1.5.3-r.3
+      '@duckdb/node-bindings-linux-arm64-musl':
+        specifier: 1.5.3-r.3
+        version: 1.5.3-r.3
+      '@duckdb/node-bindings-linux-x64':
+        specifier: 1.5.3-r.3
+        version: 1.5.3-r.3
+      '@duckdb/node-bindings-linux-x64-musl':
+        specifier: 1.5.3-r.3
+        version: 1.5.3-r.3
       '@google-cloud/vision':
         specifier: 5.3.6
         version: 5.3.6
@@ -187,18 +199,6 @@ importers:
         specifier: 21.0.2
         version: 21.0.2
       '@duckdb/node-bindings-darwin-x64':
-        specifier: 1.5.3-r.3
-        version: 1.5.3-r.3
-      '@duckdb/node-bindings-linux-arm64':
-        specifier: 1.5.3-r.3
-        version: 1.5.3-r.3
-      '@duckdb/node-bindings-linux-arm64-musl':
-        specifier: 1.5.3-r.3
-        version: 1.5.3-r.3
-      '@duckdb/node-bindings-linux-x64':
-        specifier: 1.5.3-r.3
-        version: 1.5.3-r.3
-      '@duckdb/node-bindings-linux-x64-musl':
         specifier: 1.5.3-r.3
         version: 1.5.3-r.3
       '@duckdb/node-bindings-win32-arm64':

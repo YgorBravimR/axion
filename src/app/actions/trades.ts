@@ -64,7 +64,7 @@ import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { computeTradeHash } from "@/lib/deduplication"
 import { isFractalPlanDualWriteEnabled } from "@/lib/flags/fractal-plan"
-import { captureROnEntry } from "@/lib/fractal-plan/r-snapshot"
+import { captureROnEntry, computeROutcome } from "@/lib/fractal-plan/r-snapshot"
 import { checkDrawdownTrigger } from "@/lib/fractal-plan/drawdown-trigger"
 
 /**
@@ -298,6 +298,7 @@ export const createTrade = async (
 		}
 
 		// Insert trade - money fields (pnl, plannedRiskAmount) stored as cents in text columns
+		const pnlCents = pnl !== undefined ? toCents(pnl) : null
 		const insertValues: Record<string, unknown> = {
 			accountId,
 			asset: tradeData.asset,
@@ -315,7 +316,7 @@ export const createTrade = async (
 					? toNumericString(toCents(plannedRiskAmount))
 					: null,
 			plannedRMultiple: toNumericString(plannedRMultiple),
-			pnl: pnl !== undefined ? toNumericString(toCents(pnl)) : null,
+			pnl: pnlCents !== null ? toNumericString(pnlCents) : null,
 			outcome,
 			realizedRMultiple: toNumericString(realizedR),
 			mfe: toNumericString(tradeData.mfe),
@@ -340,6 +341,11 @@ export const createTrade = async (
 			screenshotS3Key: tradeData.screenshotS3Key || null,
 			// Fractal plan 1R snapshot (null when flag is OFF or no plan resolved)
 			oneRSnapshotCents,
+			// Compute rOutcome if both pnl and oneRSnapshotCents are available
+			rOutcome:
+				pnlCents !== null && oneRSnapshotCents
+					? computeROutcome({ pnlCents, oneRSnapshotCents })
+					: null,
 		}
 
 		const [inserted] = await db
@@ -692,9 +698,24 @@ export const updateTrade = async (
 		// Always include calculated fields when we have exit data
 		// Money fields (pnl, plannedRiskAmount) stored as cents in text columns
 		if (exitPrice) {
-			updateData.pnl = pnl !== undefined ? toNumericString(toCents(pnl)) : null
+			const pnlCents = pnl !== undefined ? toCents(pnl) : null
+			updateData.pnl = pnlCents !== null ? toNumericString(pnlCents) : null
 			updateData.outcome = outcome
 			updateData.realizedRMultiple = toNumericString(realizedR) ?? null
+			// Compute rOutcome if both pnl and oneRSnapshotCents are available
+			if (
+				pnlCents !== null &&
+				existing.oneRSnapshotCents &&
+				typeof existing.oneRSnapshotCents === "number"
+			) {
+				updateData.rOutcome = computeROutcome({
+					pnlCents,
+					oneRSnapshotCents: existing.oneRSnapshotCents,
+				})
+			} else {
+				// Clear rOutcome if pnl is being cleared
+				updateData.rOutcome = null
+			}
 		}
 		if (plannedRiskAmount !== undefined) {
 			updateData.plannedRiskAmount = toNumericString(toCents(plannedRiskAmount))
@@ -1403,6 +1424,7 @@ export const bulkCreateTrades = async (
 							strategyId || tradeData.strategyId
 						)
 
+					const pnlCentsCsv = pnl !== undefined ? toCents(pnl) : null
 					const tradeInsertValues: Record<string, unknown> = {
 						accountId,
 						asset: tradeData.asset,
@@ -1420,7 +1442,7 @@ export const bulkCreateTrades = async (
 								? toNumericString(toCents(plannedRiskAmount))
 								: null,
 						plannedRMultiple: toNumericString(plannedRMultiple),
-						pnl: pnl !== undefined ? toNumericString(toCents(pnl)) : null,
+						pnl: pnlCentsCsv !== null ? toNumericString(pnlCentsCsv) : null,
 						outcome,
 						realizedRMultiple: toNumericString(realizedR),
 						mfe: toNumericString(tradeData.mfe),
@@ -1460,6 +1482,13 @@ export const bulkCreateTrades = async (
 						}
 					}
 					tradeInsertValues.oneRSnapshotCents = oneRSnapshotCentsCsv
+					// Compute rOutcome if both pnl and oneRSnapshotCents are available
+					if (pnlCentsCsv !== null && oneRSnapshotCentsCsv) {
+						tradeInsertValues.rOutcome = computeROutcome({
+							pnlCents: pnlCentsCsv,
+							oneRSnapshotCents: oneRSnapshotCentsCsv,
+						})
+					}
 
 					tradeValues.push(tradeInsertValues as typeof trades.$inferInsert)
 					batchTagNames.push(inputTagNames)
@@ -1695,6 +1724,7 @@ export const createScaledTrade = async (
 		}
 
 		// Insert trade with execution_mode = 'scaled'
+		const pnlCentsScaled = pnl !== undefined ? toCents(pnl) : null
 		const scaledInsertValues: Record<string, unknown> = {
 			accountId,
 			asset: tradeData.asset.toUpperCase(),
@@ -1712,7 +1742,7 @@ export const createScaledTrade = async (
 					? toNumericString(toCents(plannedRiskAmount))
 					: null,
 			plannedRMultiple: toNumericString(plannedRMultiple),
-			pnl: pnl !== undefined ? toNumericString(toCents(pnl)) : null,
+			pnl: pnlCentsScaled !== null ? toNumericString(pnlCentsScaled) : null,
 			outcome,
 			realizedRMultiple: toNumericString(realizedR),
 			contractsExecuted: toNumericString(contractsExecuted),
@@ -1748,6 +1778,13 @@ export const createScaledTrade = async (
 			}
 		}
 		scaledInsertValues.oneRSnapshotCents = oneRSnapshotCentsScaled
+		// Compute rOutcome if both pnl and oneRSnapshotCents are available
+		if (pnlCentsScaled !== null && oneRSnapshotCentsScaled) {
+			scaledInsertValues.rOutcome = computeROutcome({
+				pnlCents: pnlCentsScaled,
+				oneRSnapshotCents: oneRSnapshotCentsScaled,
+			})
+		}
 
 		const insertedTrades = await db
 			.insert(trades)

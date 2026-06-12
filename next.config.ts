@@ -43,6 +43,19 @@ const nextConfig: NextConfig = {
 		"@duckdb/node-api",
 		"@duckdb/node-bindings",
 	],
+	// Force Vercel's file tracer to ship libduckdb.so (the 67MB native shared
+	// library) alongside duckdb.node into the serverless function bundle.
+	// Without this, only duckdb.node is traced; dlopen at cold-start fails with
+	// `libduckdb.so: cannot open shared object file`. The globs cover every
+	// Linux variant Vercel might run (glibc/musl, x64/arm64).
+	outputFileTracingIncludes: {
+		"/**/*": [
+			"./node_modules/@duckdb/node-bindings-linux-x64/**",
+			"./node_modules/@duckdb/node-bindings-linux-arm64/**",
+			"./node_modules/@duckdb/node-bindings-linux-x64-musl/**",
+			"./node_modules/@duckdb/node-bindings-linux-arm64-musl/**",
+		],
+	},
 	// Enable "use cache" directive + cacheTag/cacheLife for server-side caching
 	cacheComponents: true,
 	experimental: {

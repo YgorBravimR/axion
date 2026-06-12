@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation"
 import { NextIntlClientProvider } from "next-intl"
-import { getMessages, getTranslations, setRequestLocale } from "next-intl/server"
+import {
+	getMessages,
+	getTranslations,
+	setRequestLocale,
+} from "next-intl/server"
 import type { Metadata } from "next"
 import { ThemeProvider } from "next-themes"
 import { ToastProvider } from "@/components/ui/toast"
@@ -10,6 +14,7 @@ import { AuthProvider } from "@/components/auth"
 import { PostHogProvider } from "@/components/providers/posthog-provider"
 import type { ReactNode } from "react"
 import { routing } from "@/i18n/routing"
+import { auth } from "@/auth"
 
 interface LocaleLayoutProps {
 	children: ReactNode
@@ -64,8 +69,9 @@ const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
 	// Enable static rendering
 	setRequestLocale(locale)
 
-	// Providing all messages to the client side
-	const messages = await getMessages()
+	// Fetch session server-side to seed the client SessionProvider cache,
+	// eliminating the initial /api/auth/session network request on every page.
+	const [messages, session] = await Promise.all([getMessages(), auth()])
 
 	return (
 		<NextIntlClientProvider messages={messages}>
@@ -77,7 +83,7 @@ const LocaleLayout = async ({ children, params }: LocaleLayoutProps) => {
 			>
 				<ToastProvider>
 					<LoadingOverlayProvider>
-						<AuthProvider>
+						<AuthProvider session={session}>
 							<PostHogProvider>
 								<AccountTransitionOverlayProvider>
 									<div className="bg-bg-100 min-h-dvh">{children}</div>

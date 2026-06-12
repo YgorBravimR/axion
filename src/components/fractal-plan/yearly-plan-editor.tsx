@@ -643,6 +643,9 @@ const YearlyPlanEditor = ({
 								<TableHead className="w-12">{t("common.tier")}</TableHead>
 								<TableHead>{t("editors.yearly.fromColumnHead")}</TableHead>
 								<TableHead>{t("editors.yearly.oneRColumnHead")}</TableHead>
+								<TableHead className="w-24 text-right">
+									{t("editors.yearly.pctOfCapitalColumnHead")}
+								</TableHead>
 								<TableHead
 									className="text-right"
 									aria-label={t("common.actions")}
@@ -684,6 +687,11 @@ const YearlyPlanEditor = ({
 											})}
 											className="h-9"
 										/>
+									</TableCell>
+									<TableCell className="text-txt-300 text-small text-right font-mono tabular-nums">
+										{row.minCents && row.minCents > 0 && row.oneRCents
+											? `${((row.oneRCents / row.minCents) * 100).toFixed(2)}%`
+											: "—"}
 									</TableCell>
 									<TableCell className="text-right">
 										<Button

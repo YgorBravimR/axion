@@ -12,7 +12,10 @@ import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
 import { deriveMonthGoal } from "@/lib/fractal-plan/derive-goal"
 import { getHistoricalAssertivity } from "@/lib/fractal-plan/historical-assertivity"
 import { computeProjectedOneRCents } from "@/lib/fractal-plan/compound-projection"
-import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
+import {
+	resolveTier,
+	type LadderRuleR,
+} from "@/lib/fractal-plan/capital-ladder"
 import { DEFAULT_TRADING_DAYS_PER_MONTH } from "@/lib/fractal-plan/month-labels"
 import { listActiveRiskProfiles } from "@/app/actions/risk-profiles"
 import {
@@ -140,6 +143,7 @@ const MonthReport = async ({
 				showTaxEstimates: tradingAccounts.showTaxEstimates,
 				accountStartYear: tradingAccounts.accountStartYear,
 				accountStartMonth: tradingAccounts.accountStartMonth,
+				startingBalanceCents: tradingAccounts.startingBalanceCents,
 			})
 			.from(tradingAccounts)
 			.where(eq(tradingAccounts.id, accountId))
@@ -210,17 +214,51 @@ const MonthReport = async ({
 		account?.accountStartYear === year && account?.accountStartMonth != null
 			? account.accountStartMonth
 			: 1
+	// Source of truth: account.startingBalanceCents when it's set and the account
+	// starts in this year (matches the year-page logic). Falls back to the yearly
+	// plan's initialCapitalCents only when the account row has no balance.
+	const effectiveInitialCapitalCents =
+		account?.startingBalanceCents != null && account.accountStartYear === year
+			? account.startingBalanceCents
+			: yearRow.initialCapitalCents
+	const ladderRules = yearRow.ladderRules as unknown as LadderRuleR[]
 	const compoundOneRCents =
 		defaultDailyWinR > 0
 			? computeProjectedOneRCents(month, {
-					initialCapitalCents: yearRow.initialCapitalCents,
-					ladderRules: yearRow.ladderRules as unknown as LadderRuleR[],
+					initialCapitalCents: effectiveInitialCapitalCents,
+					ladderRules,
 					dailyTargetR: defaultDailyWinR,
 					assertivityPct,
 					planStartMonth,
 					irTaxRate,
 				})
 			: monthRow.snapshotOneRCents
+	// Compute month-start capital from the SAME baseline (`effectiveInitialCapitalCents`)
+	// by mirroring `computeProjectedOneRCents`'s compounding loop. This keeps
+	// CapsStrip aligned with the planning math — and avoids reading the stale
+	// `monthlyPlan.snapshotCapitalCents`, which was frozen at plan-seed time
+	// from a now-superseded `yearlyPlans.initialCapitalCents`.
+	const COMPOUND_DAYS = 22
+	const effectiveCapitalCents = (() => {
+		if (defaultDailyWinR <= 0 || ladderRules.length === 0) {
+			return effectiveInitialCapitalCents
+		}
+		const assertivity = Math.min(100, Math.max(1, assertivityPct)) / 100
+		let cap = effectiveInitialCapitalCents
+		for (let m = planStartMonth; m < month; m++) {
+			const { oneRCents } = resolveTier(cap, ladderRules)
+			const grossGoal = Math.round(
+				defaultDailyWinR * COMPOUND_DAYS * assertivity * oneRCents
+			)
+			const taxCents = grossGoal > 0 ? Math.round(grossGoal * irTaxRate) : 0
+			cap += grossGoal - taxCents
+		}
+		return cap
+	})()
+	const effectiveTierIndex =
+		ladderRules.length > 0
+			? resolveTier(effectiveCapitalCents, ladderRules).tierIndex
+			: monthRow.snapshotTierIndex
 
 	const { planGoalCents, planGoalSource } = deriveMonthGoal({
 		manualGoalCents: monthRow.monthlyGoalCents,
@@ -273,9 +311,9 @@ const MonthReport = async ({
 			{resolved && (
 				<CapsStrip
 					monthlyPlanId={monthRow.id}
-					tierIndex={monthRow.snapshotTierIndex}
-					oneRCents={monthRow.snapshotOneRCents}
-					capitalCents={monthRow.snapshotCapitalCents}
+					tierIndex={effectiveTierIndex}
+					oneRCents={compoundOneRCents}
+					capitalCents={effectiveCapitalCents}
 					dailyLossR={resolved.dailyLossR}
 					dailyTargetR={resolved.dailyTargetR}
 					weeklyLossR={resolved.weeklyLossR}
@@ -284,7 +322,7 @@ const MonthReport = async ({
 			)}
 
 			<MonthWeekTable
-				oneRCents={monthRow.snapshotOneRCents}
+				oneRCents={compoundOneRCents}
 				planWeeks={weeks
 					.map((w) => ({
 						weeklyPlanId: w.id,
