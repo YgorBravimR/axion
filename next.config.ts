@@ -46,16 +46,35 @@ const nextConfig: NextConfig = {
 	// Force Vercel's file tracer to ship libduckdb.so (the 67MB native shared
 	// library) alongside duckdb.node into the serverless function bundle.
 	// Without this, only duckdb.node is traced; dlopen at cold-start fails with
-	// `libduckdb.so: cannot open shared object file`. The globs target the
-	// pnpm store paths directly — the platform packages live there as
-	// optionalDependencies of the @duckdb/node-bindings umbrella, NOT as
-	// top-level deps (which would cause a symlink clash on Vercel re-install).
+	// `libduckdb.so: cannot open shared object file`.
+	//
+	// Vercel serverless functions run on Amazon Linux 2 / x86_64 (glibc) — so
+	// ONLY the linux-x64 binding is needed at runtime. Including the musl /
+	// arm64 / darwin / win32 variants would multiply per-function bundle size
+	// by ~260MB and risk hitting Vercel's per-function size cap. The other
+	// variants stay available locally through the umbrella's optionalDependencies
+	// but are kept OUT of the deploy via outputFileTracingExcludes.
 	outputFileTracingIncludes: {
 		"/**/*": [
 			"./node_modules/.pnpm/@duckdb+node-bindings-linux-x64@*/node_modules/@duckdb/node-bindings-linux-x64/**",
-			"./node_modules/.pnpm/@duckdb+node-bindings-linux-arm64@*/node_modules/@duckdb/node-bindings-linux-arm64/**",
-			"./node_modules/.pnpm/@duckdb+node-bindings-linux-x64-musl@*/node_modules/@duckdb/node-bindings-linux-x64-musl/**",
-			"./node_modules/.pnpm/@duckdb+node-bindings-linux-arm64-musl@*/node_modules/@duckdb/node-bindings-linux-arm64-musl/**",
+		],
+	},
+	outputFileTracingExcludes: {
+		"/**/*": [
+			"./node_modules/.pnpm/@duckdb+node-bindings-linux-arm64@*/**",
+			"./node_modules/.pnpm/@duckdb+node-bindings-linux-arm64-musl@*/**",
+			"./node_modules/.pnpm/@duckdb+node-bindings-linux-x64-musl@*/**",
+			"./node_modules/.pnpm/@duckdb+node-bindings-darwin-x64@*/**",
+			"./node_modules/.pnpm/@duckdb+node-bindings-darwin-arm64@*/**",
+			"./node_modules/.pnpm/@duckdb+node-bindings-win32-x64@*/**",
+			"./node_modules/.pnpm/@duckdb+node-bindings-win32-arm64@*/**",
+			"./node_modules/@duckdb/node-bindings-linux-arm64/**",
+			"./node_modules/@duckdb/node-bindings-linux-arm64-musl/**",
+			"./node_modules/@duckdb/node-bindings-linux-x64-musl/**",
+			"./node_modules/@duckdb/node-bindings-darwin-x64/**",
+			"./node_modules/@duckdb/node-bindings-darwin-arm64/**",
+			"./node_modules/@duckdb/node-bindings-win32-x64/**",
+			"./node_modules/@duckdb/node-bindings-win32-arm64/**",
 		],
 	},
 	// Enable "use cache" directive + cacheTag/cacheLife for server-side caching
