@@ -385,9 +385,15 @@ const PlanYearPage = async ({ params }: PageProps) => {
 			cur.setUTCDate(cur.getUTCDate() + 1)
 		}
 		if (weekdaysRemaining > 0) {
+			// Mirror annual-cockpit-grid: only trust the monthly snapshot when the
+			// reason is "manual"; otherwise the snapshot is just a stale month-start
+			// seed and we want the running capital (= account starting balance,
+			// since June is the first month of trades for this account).
+			const monthRow = monthRows.find((r) => r.monthIndex === m)
 			const monthStartCapital =
-				monthRows.find((r) => r.monthIndex === m)?.snapshotCapitalCents ??
-				initialCapitalCents
+				monthRow?.snapshotReason === "manual"
+					? monthRow.snapshotCapitalCents
+					: initialCapitalCents
 			const realEnd = monthStartCapital + realByMonth[m]!.realPnlCents
 			const oneRForMonth = resolveTier(realEnd, ladderRules).oneRCents
 			const addedRsum = avgRPerDayYtd * weekdaysRemaining
