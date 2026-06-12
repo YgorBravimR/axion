@@ -1,0 +1,23 @@
+# Local-only data — never needed at runtime
+data/
+playwright-report/
+test-results/
+blob-report/
+e2e/
+docs/
+scripts/
+
+# Caches
+.next/cache/
+.turbo/
+.swc/
+
+# Test / lint configs
+playwright.config.ts
+vitest.config.ts
+eslint.config.mjs
+eslint.config.strict.mjs
+eslint-rules/
+
+# Source maps already uploaded to Sentry — see next.config.ts sourcemaps.deleteSourcemapsAfterUpload
+*.map
