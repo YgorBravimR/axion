@@ -892,3 +892,15 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: For unbounded client storage (optimization history, session recordings, large result sets), use **IndexedDB**. It supports gigabytes of headroom, stores structured-clonable objects directly (no JSON.stringify cap), and handles quota overflow gracefully. localStorage is fine for small session tokens or flags (<1 MB), but not for accumulated data. If migrating from localStorage, do one-shot migration on first load: read legacy data, apply schema migrations, write to IDB, clear localStorage keys.
 - **Related**: `[BUG-2026-06-01]` in `docs/postMorten/frontend.md`. Fix: commit `f208c330`.
 - **Date logged**: 2026-06-01.
+
+---
+
+## Fractal Plan / capital ladder
+
+### `resolveTier` returned the highest tier for sub-floor capital — inverted risk sizing
+
+- **What**: `resolveTier(capitalCents, rules)` in `src/lib/fractal-plan/capital-ladder.ts` iterates the ladder and, if no rule matches, falls through to "clamp to highest tier". That clamp was intended for capital **above** the top band, but the same code path also caught capital **below the lowest tier's floor** — returning the **most aggressive** 1R available (e.g. R$5,000 instead of R$100). On Hawk T2 Live, the cockpit's "+ proj fim mês" displayed R$130k projected from a R$6.9k start (a 50× over-projection).
+- **Why it's easy to miss**: The existing test fixture always defined a tier whose `minCapitalCents` started at `0`, so the sub-floor gap was never exercised. Real user ladders start at non-zero floors (Hawk T2 Live's lowest tier starts at R$5,000) — leaving an unguarded range. The bug was triggered by a second issue: `currentMonthRemainder` in `src/app/[locale]/(app)/plan/[year]/page.tsx` used the stale `monthlyPlan.snapshotCapitalCents` (R$1,500, frozen from an old `yearlyPlans.initialCapitalCents`) instead of the account's actual `startingBalanceCents` (R$5,000), pushing realEnd below the ladder floor.
+- **What to do**: When clamping at boundaries, write the two branches explicitly — never let "no rule matched" be a single fallback. The fix adds `if (capital < rules[0].minCapitalCents) return tier 0` before the "above top band" fallback. Also: when two code paths (page + grid) both compute "month-start capital", extract a single helper — they drift otherwise. The grid uses `running` capital and only trusts the snapshot when `snapshotReason === "manual"`; the page block was reading the snapshot unconditionally.
+- **Related**: `docs/postMorten/2026-06-12-resolve-tier-floor-clamp-inversion.md`.
+- **Date logged**: 2026-06-12.
