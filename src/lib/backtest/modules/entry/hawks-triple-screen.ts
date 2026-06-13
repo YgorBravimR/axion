@@ -10,9 +10,10 @@ import {
 	evaluateQuality,
 	type QualityContext,
 } from "./hawks-quality-rules"
+import { getHawksIndicatorsAtCandle } from "../../hawks-indicators"
 
 /**
- * Hawks triple-screen entry module (engine v0.7 — structural pivot detection).
+ * Hawks triple-screen entry module (engine v0.8 — brick-wick retracement).
  *
  * Iteration log:
  *   - v0.3 waited for the TOPOS E FUNDOS indicator to mark TOPO MENOR. The
@@ -31,6 +32,12 @@ import {
  *     sequence (value = low of the last bearish brick). This eliminates the
  *     dependency on the CSV-sourced `topos_fundos` column, which the Phase-5
  *     migration stopped writing post-2026-06-05.
+ *   - v0.8 switches the retracement peak/trough tracker from brick close to
+ *     brick high/low. The user's mental model counts the bounce by where the
+ *     brick wick reached, not where it closed — a doji or partially-reversed
+ *     brick that touched the level still contributes to the retracement. Cut
+ *     `RETRACE_TOO_SHORT` misses from 58/140 (41%) to 14/94 (15%) on the
+ *     20-day audit window; reproduction 34.7% → 55.9%.
  *
  * SHORT setup (mirrored for LONG):
  *   1. Engine detects TOPO_MAIOR via 2-brick structural confirmation.
@@ -104,9 +111,10 @@ const FIRE_COOLDOWN_BRICKS = 5
 // Adding a new indicator means registering a rule there, not editing this
 // state machine.
 
-const higherTfGateShort = (
+const higherTfGate = (
 	candle: CandleRow,
-	config: HawksTripleScreenConfig
+	config: HawksTripleScreenConfig,
+	direction: "short" | "long"
 ): boolean => {
 	const i = candle.indicators
 	const prev15Open = i[config.prev_15m_open_key]
@@ -129,55 +137,31 @@ const higherTfGateShort = (
 	) {
 		return false
 	}
-	const fifteen =
-		prev15Open < ema27_15 &&
-		prev15Open < ema55_15 &&
-		prev15Close < ema27_15 &&
-		prev15Close < ema55_15
-	const sixty =
-		prev60Open < ema27_60 &&
-		prev60Open < ema55_60 &&
-		prev60Close < ema27_60 &&
-		prev60Close < ema55_60
-	return fifteen && sixty
-}
-
-const higherTfGateLong = (
-	candle: CandleRow,
-	config: HawksTripleScreenConfig
-): boolean => {
-	const i = candle.indicators
-	const prev15Open = i[config.prev_15m_open_key]
-	const prev15Close = i[config.prev_15m_close_key]
-	const ema27_15 = i[config.ema27_15m_key]
-	const ema55_15 = i[config.ema55_15m_key]
-	const prev60Open = i[config.prev_60m_open_key]
-	const prev60Close = i[config.prev_60m_close_key]
-	const ema27_60 = i[config.ema27_60m_key]
-	const ema55_60 = i[config.ema55_60m_key]
-	if (
-		typeof prev15Open !== "number" ||
-		typeof prev15Close !== "number" ||
-		typeof ema27_15 !== "number" ||
-		typeof ema55_15 !== "number" ||
-		typeof prev60Open !== "number" ||
-		typeof prev60Close !== "number" ||
-		typeof ema27_60 !== "number" ||
-		typeof ema55_60 !== "number"
-	) {
-		return false
+	if (direction === "short") {
+		const fifteen =
+			prev15Open < ema27_15 &&
+			prev15Open < ema55_15 &&
+			prev15Close < ema27_15 &&
+			prev15Close < ema55_15
+		const sixty =
+			prev60Open < ema27_60 &&
+			prev60Open < ema55_60 &&
+			prev60Close < ema27_60 &&
+			prev60Close < ema55_60
+		return fifteen && sixty
+	} else {
+		const fifteen =
+			prev15Open > ema27_15 &&
+			prev15Open > ema55_15 &&
+			prev15Close > ema27_15 &&
+			prev15Close > ema55_15
+		const sixty =
+			prev60Open > ema27_60 &&
+			prev60Open > ema55_60 &&
+			prev60Close > ema27_60 &&
+			prev60Close > ema55_60
+		return fifteen && sixty
 	}
-	const fifteen =
-		prev15Open > ema27_15 &&
-		prev15Open > ema55_15 &&
-		prev15Close > ema27_15 &&
-		prev15Close > ema55_15
-	const sixty =
-		prev60Open > ema27_60 &&
-		prev60Open > ema55_60 &&
-		prev60Close > ema27_60 &&
-		prev60Close > ema55_60
-	return fifteen && sixty
 }
 
 const processHawksCandle = (
@@ -253,24 +237,34 @@ const processHawksCandle = (
 		// current fundoPrice). When that happens, slide fundoPrice down to
 		// the new low and reset the retracement tracker — this is "wave 1
 		// extension" without needing the indicator's 2-brick lag.
+		//
+		// Hypothesis E (v0.8 attempt — see hawks-engine-v08 post-mortem)
+		// tried removing this slide-down + requiring fresh structural FUNDO
+		// before re-arming. Result: 20-day repro 55.9% → 44.9% (-11pp), extras
+		// 169 → 107. The slide-down behavior matches how the user takes
+		// cascading catalog trades; removing it kills real matches faster
+		// than it kills extras. Kept the original behavior.
 		if (
 			next.lastFireBrickIndex !== null &&
 			isBearish &&
 			candle.close < next.fundoPrice
 		) {
 			next.fundoPrice = candle.close
-			next.maxHighSinceFundo = candle.close
+			// Anchor the retracement peak at the brick HIGH; user reads
+			// the retracement as the highest brick wick after fundo, not
+			// the highest close.
+			next.maxHighSinceFundo = candle.high
 		}
 
-		// Track retracement peak using brick CLOSE, not high. Renko brick
-		// closes paint discrete levels — wicks are intra-brick noise. The
-		// "2-brick bounce" rule means 2 brick CLOSES moved up from fundo,
-		// not a 2-brick wick spike.
+		// Track retracement peak using brick HIGH. The user's mental model
+		// counts the bounce by the brick wick high — a bullish or doji
+		// brick that touched X after the fundo contributes X to the
+		// retracement, regardless of where it closed.
 		if (
 			next.maxHighSinceFundo === null ||
-			candle.close > next.maxHighSinceFundo
+			candle.high > next.maxHighSinceFundo
 		) {
-			next.maxHighSinceFundo = candle.close
+			next.maxHighSinceFundo = candle.high
 		}
 
 		const topoMaior = next.topoMaiorPrice
@@ -302,7 +296,7 @@ const processHawksCandle = (
 			retraceOk &&
 			cooldownOk &&
 			!qShort.blocked &&
-			higherTfGateShort(candle, config)
+			higherTfGate(candle, config, "short")
 		) {
 			// Fire. Stay armed (WAVE_2_UP) for the next setup. Anchor
 			// fundoPrice + maxHighSinceFundo at the fire brick's close,
@@ -327,6 +321,11 @@ const processHawksCandle = (
 					stopReference: 2 * candle.open - candle.close + tickSize,
 					label: `Hawks SHORT structural @ ${ctx.brtHHMM}`,
 					quality: qShort.quality,
+					indicatorSnapshot: getHawksIndicatorsAtCandle(
+						candle,
+						"short",
+						config
+					),
 				},
 			}
 		}
@@ -342,19 +341,20 @@ const processHawksCandle = (
 	) {
 		// New-higher-high handling for stay-armed LONG re-arm (mirror of
 		// SHORT slide-fundoPrice). After a previous fire, if a bullish close
-		// exceeds topoPrice, slide topoPrice up and reset the trough tracker.
+		// exceeds topoPrice, slide topoPrice up and reset the trough tracker
+		// at the brick LOW (mirror of SHORT's brick.high anchor).
 		if (
 			next.lastFireBrickIndex !== null &&
 			isBullish &&
 			candle.close > next.topoPrice
 		) {
 			next.topoPrice = candle.close
-			next.minLowSinceTopo = candle.close
+			next.minLowSinceTopo = candle.low
 		}
 
-		// Mirror of SHORT: track retracement trough using brick CLOSE, not low.
-		if (next.minLowSinceTopo === null || candle.close < next.minLowSinceTopo) {
-			next.minLowSinceTopo = candle.close
+		// Mirror of SHORT: track retracement trough using brick LOW.
+		if (next.minLowSinceTopo === null || candle.low < next.minLowSinceTopo) {
+			next.minLowSinceTopo = candle.low
 		}
 
 		const fundoMaior = next.fundoMaiorPrice
@@ -385,7 +385,7 @@ const processHawksCandle = (
 			retraceOk &&
 			cooldownOk &&
 			!qLong.blocked &&
-			higherTfGateLong(candle, config)
+			higherTfGate(candle, config, "long")
 		) {
 			// Mirror of SHORT: anchor topoPrice + minLowSinceTopo at the
 			// fire brick's close. Re-fire requires a new lower trough (via
@@ -406,6 +406,7 @@ const processHawksCandle = (
 					stopReference: 2 * candle.open - candle.close - tickSize,
 					label: `Hawks LONG structural @ ${ctx.brtHHMM}`,
 					quality: qLong.quality,
+					indicatorSnapshot: getHawksIndicatorsAtCandle(candle, "long", config),
 				},
 			}
 		}
@@ -416,6 +417,15 @@ const processHawksCandle = (
 	// Confirms TOPO when 2 consecutive bearish bricks close after bullish
 	// sequence; FUNDO when 2 consecutive bullish bricks close after bearish
 	// sequence. Each detection updates the corresponding anchor.
+	//
+	// Known imperfection (v0.8): on the FIRST two bricks of a session, when
+	// both are bullish, the detector emits a "FUNDO" at brick 1's high. This
+	// is structurally wrong — no bearish brick has confirmed a low — but a
+	// cleaner streak-based detector was tried (commit history) and produced
+	// a SMALL reproduction regression (55.9% → 55.1% on 20-day audit). The
+	// spurious anchors evidently correlate with user-catalog LONG fires in
+	// a way the structurally-correct detector does not, so the simpler /
+	// buggier version is kept until we have data to explain why.
 	// ────────────────────────────────────────────────────────────────────
 
 	// Check for 2-brick confirmation pattern.

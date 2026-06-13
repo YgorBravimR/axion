@@ -23,6 +23,7 @@ import {
 	evaluateQuality,
 } from "@/lib/backtest/modules/entry/hawks-quality-rules"
 import type { HawksTripleScreenConfig } from "@/types/backtest"
+import { makeHawksConfig } from "@/__tests__/helpers/hawks-config"
 import type { CandleRow } from "@/types/candle"
 
 describe("Dual-mode rules exports and interface compliance", () => {
@@ -232,31 +233,24 @@ describe("Dual-mode rules exports and interface compliance", () => {
 			candleIndex: 1,
 			indicators: {
 				macd: 0,
-				volume: 1000,
-				aggression_balance: 0,
-				keltner_sup_125: 100100,
-				keltner_inf_125: 99900,
-				keltner_sup_165: 100200,
-				keltner_inf_165: 99800,
+				volume_fin: 1000,
+				agr_saldo: 0,
+				kc1_sup: 100100,
+				kc1_inf: 99900,
+				kc2_sup: 100200,
+				kc2_inf: 99800,
 				...opts.indicators,
 			},
 			...opts,
 		})
 
-		const baseConfig: HawksTripleScreenConfig = {
-			ema27_60m_key: "mme27_60m",
-			ema55_60m_key: "mme55_60m",
-			ema27_15m_key: "mme27_15m",
-			ema55_15m_key: "mme55_15m",
-			macd_key: "macd",
-			prev_15m_open_key: "prev_15m_open",
-			prev_15m_close_key: "prev_15m_close",
-			prev_60m_open_key: "prev_60m_open",
-			prev_60m_close_key: "prev_60m_close",
-			brickSize5mPoints: 100,
+		// Tests use bare "macd" key (not parquet's "macd1_histo") since fixture
+		// objects emit `macd: 0`. The override keeps the snapshot reader pointed
+		// at that literal so fixtures stay self-consistent.
+		const baseConfig: HawksTripleScreenConfig = makeHawksConfig({
 			startTime: 930,
-			endTime: 1730,
-		}
+			macd_key: "macd",
+		})
 
 		// Keltner inner: 4 modes × 2 trigger states = 8 cases
 		describe("keltnerInner dual-mode", () => {
@@ -266,8 +260,8 @@ describe("Dual-mode rules exports and interface compliance", () => {
 				it(`mode="${mode}" with trigger FIRED (price within 125 band)`, () => {
 					const candle = makeCandle({
 						indicators: {
-							keltner_sup_125: 100100, // d = 100100 - 100050 = 50, fires
-							keltner_inf_125: 99950,
+							kc1_sup: 100100, // d = 100100 - 100050 = 50, fires
+							kc1_inf: 99950,
 						},
 					})
 					const config = {
@@ -303,8 +297,8 @@ describe("Dual-mode rules exports and interface compliance", () => {
 				it(`mode="${mode}" with trigger MISSED (price outside 125 band)`, () => {
 					const candle = makeCandle({
 						indicators: {
-							keltner_sup_125: 99900, // d = 99900 - 100050 = -150 (negative, no trigger)
-							keltner_inf_125: 99700,
+							kc1_sup: 99900, // d = 99900 - 100050 = -150 (negative, no trigger)
+							kc1_inf: 99700,
 						},
 					})
 					const config = {
@@ -470,7 +464,7 @@ describe("Dual-mode rules exports and interface compliance", () => {
 				for (const testCase of volumeCases) {
 					it(`mode="${mode}" with state="${testCase.name}"`, () => {
 						const candle = makeCandle({
-							indicators: { volume: testCase.volumeValue },
+							indicators: { volume_fin: testCase.volumeValue },
 						})
 						const config = {
 							...baseConfig,
@@ -597,7 +591,7 @@ describe("Dual-mode rules exports and interface compliance", () => {
 			} of testMatrix) {
 				it(`scoreMode="${scoreMode}" blockMode="${blockMode}" state="${name}"`, () => {
 					const candle = makeCandle({
-						indicators: { aggression_balance: aggressionValue },
+						indicators: { agr_saldo: aggressionValue },
 					})
 					const config = {
 						...baseConfig,

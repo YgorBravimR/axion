@@ -58,6 +58,11 @@ interface EntrySignal {
 	// Optional quality score attached at fire time. The engine threads this
 	// through unchanged into the trade row; pure metadata, no behavior.
 	quality?: TradeQuality
+	// Optional point-in-time Hawks indicator readout at fire time. Produced
+	// by `src/lib/backtest/hawks-indicators.ts:getHawksIndicatorsAt`. Pure
+	// metadata; shared between the autonomous engine (replay) and the two-
+	// phase journaling enrichment pass (manual entries get the same readout).
+	indicatorSnapshot?: HawksIndicatorSnapshot
 }
 
 // Quality tiering — signed-score model.
@@ -82,6 +87,55 @@ interface TradeQuality {
 	tier: QualityTier
 	score: number
 	contributions: IndicatorContribution[]
+}
+
+// ─── Hawks indicator snapshot — pure readout shape ───────────────────────
+// Produced by `src/lib/backtest/hawks-indicators.ts:getHawksIndicatorsAt`.
+// Used by the engine to capture indicator state at fire time and by the
+// two-phase journaling enrichment to derive the same readout for a manually-
+// entered trade. No structural state (TOPO/FUNDO/phase) is included —
+// strictly indicator values + direction-aware `favorable` flags.
+
+interface HawksHtfGateReadout {
+	state: "above_both" | "below_both" | "mixed" | "unknown"
+	favorable: boolean
+	prevOpen?: number
+	prevClose?: number
+	ema27?: number
+	ema55?: number
+}
+
+interface HawksMacdReadout {
+	sign: "positive" | "negative" | "zero" | "unknown"
+	favorable: boolean
+	value?: number
+}
+
+interface HawksVwapReadout {
+	side: "above" | "below" | "at" | "unknown"
+	favorable: boolean
+	value?: number
+	distance?: number // candle.close - vwap (positive = above)
+}
+
+interface HawksAjusteReadout {
+	position: "above" | "below" | "at" | "unknown"
+	favorable: boolean
+	value?: number
+	distance?: number // candle.close - ajuste (positive = above)
+}
+
+interface HawksIndicatorSnapshot {
+	candleTimestamp: string
+	direction: "short" | "long"
+	gate15m: HawksHtfGateReadout
+	gate60m: HawksHtfGateReadout
+	macd: HawksMacdReadout
+	vwapD: HawksVwapReadout
+	vwapM: HawksVwapReadout
+	vwapW: HawksVwapReadout
+	ajuste: HawksAjusteReadout
+	favorableCount: number // 0..7 — how many of the 7 indicators favor the trade direction
 }
 
 interface EntryState {
@@ -114,11 +168,11 @@ interface MACDWMAConfig {
 // Stop = 2 bricks back (Hawks 1R = 2 Renko boxes), via signal.stopReference = 2·open − close.
 // Indicator keys must match candle-header-mappings.ts and the candle JSONB.
 interface HawksTripleScreenConfig {
+	// ── Higher-TF EMA stack (engine HARD GATE) ───────────────────────────
 	ema27_60m_key: string // default: "mme27_60m"
 	ema55_60m_key: string // default: "mme55_60m"
 	ema27_15m_key: string // default: "mme27_15m"
 	ema55_15m_key: string // default: "mme55_15m"
-	macd_key: string // default: "macd"
 	// Previous-closed-candle OHLC projected from 15m / 60m at ingest time.
 	// Used by the higher-TF gate: the brick BEFORE the current one must have
 	// opened AND closed below both EMAs (for SHORT) / above both (for LONG).
@@ -126,6 +180,23 @@ interface HawksTripleScreenConfig {
 	prev_15m_close_key: string // default: "prev_15m_close"
 	prev_60m_open_key: string // default: "prev_60m_open"
 	prev_60m_close_key: string // default: "prev_60m_close"
+	// ── Quality indicators (read by hawks-quality-rules + hawks-indicators) ─
+	// Every per-brick indicator key is plumbed through config — no hardcoded
+	// literals in rule code. Adding a new column means: (a) add key here,
+	// (b) set default in the preset, (c) consume via config in the rule.
+	macd_key: string // 5m MACD histogram. Default: "macd1_histo" (MACD config #1).
+	vwap_d_key: string // VWAP daily.   Default: "vwap_d"
+	vwap_m_key: string // VWAP monthly. Default: "vwap_m"
+	vwap_w_key: string // VWAP weekly ("semanal").       Default: "vwap_w"
+	ajuste_key: string // D-1 settlement (anchor table). Default: "ajuste"
+	// Keltner channel bands. Inner = 1.25× ATR (kc1); outer = 1.65× (kc2).
+	keltner_inner_inf_key: string // default: "kc1_inf"
+	keltner_inner_sup_key: string // default: "kc1_sup"
+	keltner_outer_inf_key: string // default: "kc2_inf"
+	keltner_outer_sup_key: string // default: "kc2_sup"
+	// Order-flow indicators.
+	aggression_key: string // net buy-aggression. Default: "agr_saldo"
+	volume_key: string // brick volume (financial). Default: "volume_fin"
 	// Renko box size in points for the 5m chart. Used as the unit for the
 	// "wave-1 ≥ 4 boxes" and "retracement ≥ 2 boxes" structural checks.
 	// Currently a constant per recipe; future revision can swap to a
@@ -784,4 +855,10 @@ export type {
 	OptimizationRunProvenance,
 	FunnelStage,
 	HeroWinPreset,
+	// Hawks indicator snapshot (read-only readout for engine + enrichment)
+	HawksHtfGateReadout,
+	HawksMacdReadout,
+	HawksVwapReadout,
+	HawksAjusteReadout,
+	HawksIndicatorSnapshot,
 }

@@ -100,21 +100,33 @@ interface AggressionDualModeRule extends DualModeRule {
 // S/R level set — shared between BLOCK and FAVOR rules
 // ════════════════════════════════════════════════════════════════════
 //
-// Active set: 4 HTF MAs + vwap_d + ajuste.
-// Deferred (probe was anti-predictive — re-probe with more data):
-//   vwap_m, vwap_w
+// Active set: 4 HTF EMAs + vwap_d + ajuste. `vwap_m` and `vwap_w` are
+// available in the parquet but were probed as anti-predictive and are
+// excluded — re-probe with more data before adding them back. See
+// `docs/hawks-strategy/indicator-inventory.md`.
+//
 // `ajuste` comes from `asset_session_anchors` (one row per day), injected
 // into candle.indicators at fetch time by daily-anchors.ts. The others are
-// per-brick indicators stored in price_candles.indicators JSONB.
-// See docs/hawks-strategy/indicator-inventory.md for reasoning.
-const ACTIVE_SR_LEVEL_KEYS = [
-	"mme27_60m",
-	"mme55_60m",
-	"mme27_15m",
-	"mme55_15m",
-	"vwap_d",
-	"ajuste",
-] as const
+// per-brick indicator columns in the parquet.
+//
+// Returned as a derived array so vendor column renames are config-driven
+// rather than baked into a `const` array. `htfOnly: true` returns the
+// legacy `htfMaBlock` subset (4 EMAs only — no vwap_d / ajuste).
+const getActiveSrLevelKeys = (
+	config: HawksTripleScreenConfig,
+	htfOnly: boolean = false
+): readonly string[] => {
+	const htf = [
+		config.ema27_60m_key,
+		config.ema55_60m_key,
+		config.ema27_15m_key,
+		config.ema55_15m_key,
+	]
+	if (htfOnly) {
+		return htf
+	}
+	return [...htf, config.vwap_d_key, config.ajuste_key]
+}
 
 // Sign convention for any level L at entry price P with direction D:
 //   signedDelta = D === "short" ? (L - P) : (P - L)
@@ -155,12 +167,11 @@ const srLevelBlockRule: BlockRule = {
 	evaluate: (candle, direction, brickSize, config) => {
 		const buffer =
 			config.qualityGates?.srBlockBufferBricks ?? DEFAULT_SR_BLOCK_BUFFER_BRICKS
-		// Legacy htfMaBlock only checks the 4 MAs, not vwap_d / ajuste.
-		const keys =
+		// Legacy htfMaBlock only checks the 4 EMAs, not vwap_d / ajuste.
+		const htfOnly =
 			config.qualityGates?.srLevelBlock !== true &&
 			config.qualityGates?.htfMaBlock === true
-				? ACTIVE_SR_LEVEL_KEYS.slice(0, 4)
-				: ACTIVE_SR_LEVEL_KEYS
+		const keys = getActiveSrLevelKeys(config, htfOnly)
 		for (const k of keys) {
 			const delta = srSignedDelta(candle, k, direction)
 			if (delta === null) {
@@ -177,15 +188,24 @@ const srLevelBlockRule: BlockRule = {
 // Distance from trade close to its direction-relevant Keltner band, measured
 // in the trade-favorable direction. Positive = trade has room; ≤ 0 = price
 // at/past the band. SHORT uses `inf` (lower band); LONG uses `sup` (upper).
+// "Inner" band = methodology label for the tighter (lower-multiple) channel
+// (1.25× ATR, vendor column kc1_*); "outer" = the wider 1.65× ATR channel
+// (kc2_*). Column names come from config; no hardcoded literals.
 const keltnerDistance = (
 	candle: CandleRow,
 	direction: "short" | "long",
-	multiple: "125" | "165"
+	band: "inner" | "outer",
+	config: HawksTripleScreenConfig
 ): number | null => {
-	const key =
-		direction === "short"
-			? `keltner_inf_${multiple}`
-			: `keltner_sup_${multiple}`
+	const infKey =
+		band === "inner"
+			? config.keltner_inner_inf_key
+			: config.keltner_outer_inf_key
+	const supKey =
+		band === "inner"
+			? config.keltner_inner_sup_key
+			: config.keltner_outer_sup_key
+	const key = direction === "short" ? infKey : supKey
 	const raw = candle.indicators[key]
 	if (typeof raw !== "number") {
 		return null
@@ -202,7 +222,7 @@ const keltnerOuterBlockRule: BlockRule = {
 	key: "keltner_outer_block",
 	configFlag: (c) => c.qualityGates?.keltnerOuterBlock === true,
 	evaluate: (candle, direction, brickSize, config) => {
-		const d = keltnerDistance(candle, direction, "165")
+		const d = keltnerDistance(candle, direction, "outer", config)
 		if (d === null) {
 			return false
 		}
@@ -265,7 +285,7 @@ const keltnerInnerDualRule: DualModeRule = {
 		return c.qualityGates?.keltnerInnerPenalty === true ? "score" : "off"
 	},
 	evaluateSignal: (candle, direction, brickSize, config) => {
-		const d = keltnerDistance(candle, direction, "125")
+		const d = keltnerDistance(candle, direction, "inner", config)
 		if (d === null) {
 			return "neutral"
 		}
@@ -278,6 +298,29 @@ const keltnerInnerDualRule: DualModeRule = {
 		}
 		return "neutral"
 	},
+}
+
+// Helper: extract aggression value and check against threshold.
+const getAggressionState = (
+	candle: CandleRow,
+	config: HawksTripleScreenConfig,
+	direction: "short" | "long"
+): { agg: number; threshold: number; aligned: boolean } | null => {
+	const agg = candle.indicators[config.aggression_key]
+	if (typeof agg !== "number") {
+		return null
+	}
+	const threshold =
+		config.qualityGates?.aggression?.threshold ??
+		config.qualityGates?.aggressionThreshold ??
+		DEFAULT_AGGRESSION_THRESHOLD
+	if (Math.abs(agg) < threshold) {
+		return null
+	}
+	const aligned =
+		(direction === "long" && agg >= threshold) ||
+		(direction === "short" && agg <= -threshold)
+	return { agg, threshold, aligned }
 }
 
 // Group D SPLIT DUAL-MODE: aggression with independent score + block modes.
@@ -323,49 +366,29 @@ const aggressionSplitRule: AggressionDualModeRule = {
 		return scoreSignal
 	},
 	evaluateScoreSignal: (candle, direction, config) => {
-		const agg = candle.indicators["aggression_balance"]
-		if (typeof agg !== "number") {
+		const state = getAggressionState(candle, config, direction)
+		if (!state) {
 			return "neutral"
 		}
-		const threshold =
-			config.qualityGates?.aggression?.threshold ??
-			config.qualityGates?.aggressionThreshold ??
-			DEFAULT_AGGRESSION_THRESHOLD
-		if (Math.abs(agg) < threshold) {
-			return "neutral"
-		}
-		const aligned =
-			(direction === "long" && agg >= threshold) ||
-			(direction === "short" && agg <= -threshold)
 		const scoreMode = config.qualityGates?.aggression?.scoreMode ?? "off"
 		if (scoreMode === "original") {
-			return aligned ? "favor" : "penalty"
+			return state.aligned ? "favor" : "penalty"
 		}
 		if (scoreMode === "reversed") {
-			return aligned ? "penalty" : "favor"
+			return state.aligned ? "penalty" : "favor"
 		}
 		return "neutral"
 	},
 	evaluateBlockSignal: (candle, direction, config) => {
-		const agg = candle.indicators["aggression_balance"]
-		if (typeof agg !== "number") {
+		const state = getAggressionState(candle, config, direction)
+		if (!state) {
 			return "neutral"
 		}
-		const threshold =
-			config.qualityGates?.aggression?.threshold ??
-			config.qualityGates?.aggressionThreshold ??
-			DEFAULT_AGGRESSION_THRESHOLD
-		if (Math.abs(agg) < threshold) {
-			return "neutral"
-		}
-		const aligned =
-			(direction === "long" && agg >= threshold) ||
-			(direction === "short" && agg <= -threshold)
 		const blockMode = config.qualityGates?.aggression?.blockMode ?? "off"
-		if (blockMode === "blockOnAligned" && aligned) {
+		if (blockMode === "blockOnAligned" && state.aligned) {
 			return "block"
 		}
-		if (blockMode === "blockOnAnti" && !aligned) {
+		if (blockMode === "blockOnAnti" && !state.aligned) {
 			return "block"
 		}
 		return "neutral"
@@ -427,7 +450,7 @@ const volumeDualRule: DualModeRule = {
 		return c.qualityGates?.volumeScore === true ? "score" : "off"
 	},
 	evaluateSignal: (candle, _direction, _brickSize, config, ctx) => {
-		const vol = candle.indicators["volume"]
+		const vol = candle.indicators[config.volume_key]
 		if (typeof vol !== "number" || ctx.volumeEma === null) {
 			return "neutral"
 		}
@@ -438,7 +461,10 @@ const volumeDualRule: DualModeRule = {
 	},
 }
 
-const scoreRules: ScoreRule[] = [...ACTIVE_SR_LEVEL_KEYS.map(buildSrFavorRule)]
+// One ScoreRule per S/R level, derived from config so vendor column renames
+// stay one-line preset changes.
+const getScoreRules = (config: HawksTripleScreenConfig): ScoreRule[] =>
+	getActiveSrLevelKeys(config).map(buildSrFavorRule)
 
 const dualModeRules: DualModeRule[] = [
 	keltnerInnerDualRule,
@@ -489,7 +515,7 @@ const updateQualityContext = (
 			next.recentMacd.shift()
 		}
 	}
-	const vol = candle.indicators["volume"]
+	const vol = candle.indicators[config.volume_key]
 	if (typeof vol === "number") {
 		const period = config.qualityGates?.volumeEmaPeriod ?? 500
 		const alpha = 2 / (period + 1)
@@ -563,7 +589,9 @@ const evaluateQuality = (
 	const contributions: IndicatorContribution[] = []
 	let score = 0
 
-	// Legacy score rules (S/R favor).
+	// Legacy score rules (S/R favor). Built per-call from config so column
+	// renames in the preset propagate automatically.
+	const scoreRules = getScoreRules(config)
 	for (const rule of scoreRules) {
 		if (!rule.configFlag(config)) {
 			continue
@@ -655,7 +683,7 @@ export {
 	createQualityContext,
 	updateQualityContext,
 	evaluateQuality,
-	ACTIVE_SR_LEVEL_KEYS,
+	getActiveSrLevelKeys,
 	keltnerInnerDualRule,
 	macdDualRule,
 	volumeDualRule,

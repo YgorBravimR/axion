@@ -393,7 +393,7 @@ const getEngineVersionForRecipe = (
 	recipe: StrategyRecipe
 ): string | undefined => {
 	if (recipe.entry.type === "hawks_triple_screen") {
-		return "hawks-v0.7"
+		return "hawks-v0.8"
 	}
 	if (recipe.entry.type === "user_catalog") {
 		return "user-catalog-v1"

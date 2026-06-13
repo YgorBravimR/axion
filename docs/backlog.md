@@ -41,6 +41,34 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ---
 
+## Journaling Workflow
+
+### Two-phase journaling: thin daily entry + periodic enrichment
+
+- **Priority**: P1
+- **Effort**: M (~7.5 days, see plan doc for step-by-step breakdown — Steps 1-7 plus 5b)
+- **Source**: 2026-06-12 — brainstorm session with Arch. Full session captured at [`docs/plans/two-phase-journaling-with-enrichment.md`](plans/two-phase-journaling-with-enrichment.md). The plan doc has the spec locked across 6 phase appendices (A–F: schema, parser, enrichment passes, review UI, build sequence, definition of done). All design decisions are locked; only execution remains.
+- **Sequencing**: **Blocked behind** the "Hawks autonomous engine: reproduction 51% → improve via quality gates" P1 entry below. Do not start until Hawks reproduction > ~70%; the indicator-readout enrichment pass is reliable now, but the design bundles all enrichment passes into one shipped feature.
+- **What + Why**: Hand-typing every trade's SL, target, BE moment, tier, gate state, indicator alignment, MFE/MAE every day is the friction that kills journaling discipline today. Two-phase design splits the work: a **thin daily form** captures only the execution facts the Zod schema marks mandatory (entry/exit times, side, qty, prices, asset — ~30 seconds per trade), and a **weekly enrichment ritual** auto-derives all methodology context from candles + the Profit Pro `orders.csv` (authoritative for executed numbers) + Hawks indicator readout + deterministic OCO SL/target rule. Trader reviews each enriched trade in a stepped, day-grouped UI, accepts/edits per field, commits. Re-runnable: every enrichment writes a snapshot so when Hawks engine improves the trader can re-enrich and diff.
+- **Locked decisions** (read [`docs/plans/two-phase-journaling-with-enrichment.md`](plans/two-phase-journaling-with-enrichment.md) for full context, including the rationale for each):
+  1. Daily mandatory set = whatever the Zod schema at [`src/lib/validations/trade.ts`](../src/lib/validations/trade.ts) marks non-optional. **One form**, no fork.
+  2. Playbook is optional at entry-time, editable at enrichment-time, can stay empty. Trader's call.
+  3. SL is **deterministic** per OCO rule (one global formula, e.g. Hawks = entry ± 2×brickSize favorable / 1×brickSize against). Trader **never** moves stop — this is locked.
+  4. `orders.csv` is **source of truth** for execution numbers (entry/exit times, qty, prices, P&L, MFE, MAE, drawdown). Axion's candle-derived calculations are sanity checks; on disagreement, orders.csv wins and the diff is logged.
+  5. Hawks engine in enrichment = **indicator readout only** (15m gate, 60m gate, MACD, VWAP, AJUSTE — each tagged favorable/contrary). State-machine tier classification deferred until reproduction > 70%; trader hand-tags tier in the meantime.
+  6. Review UI: stepped, trade-by-trade, day-grouped headers, prev/next keyboard navigation. **No** approve-entire-day-at-once.
+  7. Enrichment is re-runnable with a snapshot history table (`trade_enrichment_snapshots`). Three trigger modes: bulk by date range, single trade, all pending.
+  8. **Out of scope** (decided, not deferred): boletas (`test.csv`) parsing, Profit DLL bridge (R$4k/mo paywall), audio capture, real-time enrichment, multi-tenant, "quick-add" simplified form variant.
+- **Open at build kickoff** (🟡 in the plan doc's decision log):
+  - Enrichment-snapshots table schema shape
+  - Where the Enrich button lives in nav
+  - Account scoping from `Conta:` header in `orders.csv`
+  - Conflict resolution default (proposed: orders.csv overwrites, diff banner shown once)
+- **Done when**: trader's average time-to-journal-a-trading-day drops from ~15-20 min daily to ~2 min daily + ~10 min weekly review; all enriched trades carry full methodology context with no hand-typed SL/target/MFE/MAE/indicator-quality fields; `orders.csv` numbers and Axion's stored numbers match for ≥95% of trades; re-enrichment after Hawks engine improvement produces a sensible diff view without data corruption.
+- **Date filed**: 2026-06-12.
+
+---
+
 ## Backtest / Inspector
 
 ### Precomputed structural pivots — `asset_pivots` table (N=1..6, all timeframes, Renko first)
@@ -140,18 +168,25 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Done when**: Two consecutive sweep runs against the same range/asset/indicators show the second one starting backtest execution within 50 ms of clicking Run.
 - **Date filed**: 2026-05-29.
 
-### Hawks autonomous engine: reproduction 51% → improve via quality gates
+### Hawks autonomous engine: indicator-isolation validation (replaces "reproduction 51% → 75%")
 
-- **Priority**: P1
+- **Priority**: P1 (paused — see below)
 - **Effort**: L (multi-session)
-- **Source**: 2026-05-28 — Step 8 parallel-audit harness (`scripts/audit-parallel.ts`) and state-machine tracer (`scripts/trace-hawks.ts`) landed in commit `6390656e`. Subsequent session pushed engine to v0.6 (stay-armed + slide-down FUNDO/TOPO + 5-brick cooldown). Audit moved 47.6% → 51.4% with extras 38 → 57.
-- **What + Why**: State-machine tuning has hit diminishing returns. Empirical cooldown sweep (3/5/7 bricks) and stay-armed-vs-anchored variants explored; best matches-to-extras ratio is the anchored + cd=5 configuration currently shipped. Remaining ~50% miss rate likely requires structural changes outside the wave detector:
-  1. **Quality multipliers → hard gates.** MACD histogram, VWAP, AJUSTE are computed and logged but never gate fire. Catalog T2/T3/T4 misses likely correlate with one of these being off.
-  2. **15m/60m gate transition windows.** `gateS` / `gateL` flip binary on EMA crossovers. Trades catalogged in transition zones (e.g., 2026-03-19 16:00 area, 2026-03-25 11:00 area) miss because the gate isn't on at the catalog brick.
-  3. **Per-day volatility calibration.** Tight days (NR4/NR7) may need a different retracement threshold than expansion days.
-  4. **Synthetic test fixtures need rebuild.** `src/__tests__/lib/backtest/hawks-engine.test.ts` has 3 `describe.skip` tests (re-arm pair + LONG smoke) that were written against pre-stay-armed semantics. Rebuild with brick close + cooldown awareness.
-  5. **Fibonacci-based retracement & extension layer.** Current wave detector uses a single `retracementMin` brick threshold for wave-2. Try replacing the binary threshold with a Fibonacci band: accept wave-2 entries whose retracement falls within `[0.382, 0.618]` of wave-1's range, and tag projected targets at `1.272 / 1.618 / 2.618` extensions. Hypothesis: per-day volatility calibration (#3 above) may collapse into "the right Fib ratio for this day's brick size" rather than a per-day-tuned constant. Plumb the Fib levels through the engine + the inspector overlay so audit traces can show where the catalog entry lands on the Fib grid.
-- **Done when**: Reproduction rate >75% with extras <60 across the 20-day catalog. Skipped test fixtures rebuilt. Fib-band experiment has been tried and either kept (with measured lift) or recorded as ruled-out with the audit numbers.
+- **Source**: 2026-06-12 — full archive of the reproduction-vs-catalog tuning pass at [`docs/postMorten/2026-06-12-hawks-engine-v0.8-archive.md`](postMorten/2026-06-12-hawks-engine-v0.8-archive.md). Final state: v0.8 engine reaches **55.9% reproduction / 169 extras** on the 20-day catalog. Five hypotheses tested with audit numbers; only one kept (brick-high retracement anchor — Hypothesis A). Bar of 75% / <60 NOT met.
+- **Pause trigger**: Ygor's strategic observation that the paper-traded user catalog itself may contain input errors (mis-clicked timestamps, wrong direction tags, late clicks), making "reproduction-vs-catalog" a noisy validation target. Five hours of hypothesis testing optimized engine co-occurrence with a target we never audited for correctness.
+- **What + Why** (new direction): Replace reproduction-vs-catalog with **indicator-isolation validation**. For each Hawks indicator independently:
+  1. **Define how to track it.** State explicitly whether it's a level (S/R), trend, momentum reading, etc. Should price be below for SHORT / above for LONG? Should the absolute value be increasing? Pre-register the predictive hypothesis before measurement (no cherry-pick).
+  2. **Script test.** For each indicator state, measure forward outcome distribution on raw 5m candles (next-N-brick MFE/MAE/return). Compare conditional vs baseline distributions. Report effect size + sample size + comparison-to-null.
+  3. **Visual smoke test.** Plot the indicator on chart; Ygor + Arch scroll through and confirm the script's measurement matches what the eye sees.
+     Indicators to validate, in order: 15m gate, 60m gate, MACD 5m, VWAP D, VWAP M, VWAP S, AJUSTE. Only after all 7 pass solo do we compose them in the engine.
+- **Pre-work check before resuming**: Ygor will recheck a sample of paper-traded catalog entries against the live chart to estimate the catalog's error rate. If the catalog is verifiably clean we may reconsider reproduction-vs-catalog as a co-validation regime; otherwise it stays archived.
+- **What's already shipped and kept** (orthogonal to validation regime, see archive doc for full list):
+  1. `getHawksIndicatorsAt` + `getHawksIndicatorsAtCandle` at `src/lib/backtest/hawks-indicators.ts` — pure functions returning `HawksIndicatorSnapshot` (15m/60m/MACD/VWAP D-M-S/AJUSTE tagged favorable per direction). 8 passing tests. Unblocks the two-phase journaling enrichment plan above.
+  2. `EntrySignal.indicatorSnapshot` attached at fire time so audit harness can grade fires by indicator alignment.
+  3. v0.8 brick-high retracement anchor in `hawks-triple-screen.ts` (only hypothesis with measurable lift, +21pp from intermediate baseline).
+  4. Audit harness rebuilt for post-Phase-5 data layer (direct DuckDB+Parquet read, no `price_candles` table dependency).
+  5. Diagnostic probes: `scripts/diagnose-misses.ts`, `scripts/probe-fib-retrace.ts`.
+- **Done when** (new bar): Each of the 7 Hawks indicators has a recorded solo-validation result (kept / rejected / inconclusive with sample size); the engine retains only kept indicators as hard gates; final engine reproduction rate is reported as a _consequence_ of indicator quality, not as the optimization target.
 
 ### Hawks engine: 10-day verification and multi-trade open questions
 

@@ -3,23 +3,10 @@ import {
 	processHawksCandle,
 	createInitialHawksState,
 } from "@/lib/backtest/modules/entry/hawks-triple-screen"
-import type { HawksTripleScreenConfig } from "@/types/backtest"
 import type { CandleRow } from "@/types/candle"
+import { makeHawksConfig } from "@/__tests__/helpers/hawks-config"
 
-const CONFIG: HawksTripleScreenConfig = {
-	ema27_60m_key: "mme27_60m",
-	ema55_60m_key: "mme55_60m",
-	ema27_15m_key: "mme27_15m",
-	ema55_15m_key: "mme55_15m",
-	macd_key: "macd",
-	prev_15m_open_key: "prev_15m_open",
-	prev_15m_close_key: "prev_15m_close",
-	prev_60m_open_key: "prev_60m_open",
-	prev_60m_close_key: "prev_60m_close",
-	brickSize5mPoints: 100,
-	startTime: 930,
-	endTime: 1730,
-}
+const CONFIG = makeHawksConfig({ startTime: 930, macd_key: "macd" })
 
 const TICK_SIZE = 5
 
@@ -78,7 +65,7 @@ const runSequence = (
 	return { signals, finalState: state }
 }
 
-describe("Hawks v0.7 — Structural pivot detection", () => {
+describe("Hawks v0.8 — Structural pivot detection", () => {
 	it("detects TOPO after 2 consecutive bearish bricks from bullish setup", () => {
 		const seq = [
 			// c0: bullish — initialization
@@ -183,3 +170,12 @@ describe("Hawks v0.7 — Structural pivot detection", () => {
 		expect(finalState.lastPivotPrice).toBe(2000)
 	})
 })
+
+// NOTE (2026-06-12): Re-arm + LONG fixture tests intentionally NOT rebuilt
+// at v0.8. The reproduction-vs-catalog work is archived (see
+// docs/postMorten/hawks-engine-v0.8-archive.md) pending Ygor's recheck of
+// paper-traded catalog correctness. When the validation regime resumes (via
+// indicator-isolation harness, not catalog co-occurrence), the re-arm /
+// LONG-fire fixtures should be rebuilt against real chart data, not
+// hand-crafted brick sequences — the engine's pivot detector has enough
+// state-machine quirks that synthetic sequences are brittle to author.

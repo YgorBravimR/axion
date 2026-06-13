@@ -96,6 +96,14 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: Always write fallback chains inline. Bad: `const m = c.qualityGates?.aggression?.scoreMode; if (!m) { … read c.qualityGates?.aggressionMode … }`. Good: `const m = c.qualityGates?.aggression?.scoreMode ?? c.qualityGates?.aggressionMode ?? "off"`. Use the nullish-coalescing operator (`??`), not logical-OR (`||`), so falsy values (e.g. `0`, `false`) don't trigger fallback by mistake.
 - **Source**: 2026-06-01 session during hawks-quality-rules dual-mode refactor. The `resolveScoreMode` and `resolveBlockMode` methods initially only read the nested shape; the `pnpm check:dead-axes` gate caught that `aggressionMode` was unreferenced. Fix was one-liner: add `?? c.qualityGates?.aggressionMode` to the chain.
 
+### `src/db/drizzle.ts` has top-level `await import("ws")` — any tsx script transitively importing it dies on startup
+
+- **What**: `src/db/drizzle.ts` runs `await import("ws")` at module top level (Neon driver requires it for serverless). tsx (the dev TypeScript runner) defaults to CJS transform mode where top-level `await` outside an ESM module is a syntax error: `SyntaxError: Unexpected reserved word 'await'`. The script fails before any code runs. Anything that imports drizzle directly OR transitively (the candle-store factory `getCandleStore` does, and many helpers like `@/lib/indicators/daily-anchors` import the schema) inherits the failure.
+- **Symptom**: A new script in `scripts/` that only needs candle data (read parquet directly via DuckDB) suddenly crashes at startup because one transitively-imported helper reaches drizzle.
+- **What to do**: Two options. (a) Run the script via `tsx --tsconfig <esm-config>` or `node --import tsx <script>` so the module graph stays ESM. (b) Inline the helpers you need into the script itself — do NOT import from any module that pulls drizzle. Pattern in `scripts/audit-parallel.ts`: directly reads parquet via DuckDB Node API, inlines `candleTimestampToBrtDate`, queries `asset_session_anchors` via raw `neon()` sql template (no drizzle layer).
+- **Source**: `docs/postMorten/2026-06-12-hawks-engine-v0.8-archive.md` Section "What we shipped" point 4. Reproduced on `scripts/audit-parallel.ts` migration during the Phase-5 cutover.
+- **Date logged**: 2026-06-12.
+
 ---
 
 ## NextAuth / JWT Sessions
@@ -781,6 +789,28 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: When tracking structural anchors in the engine, always use the **most recently painted** pivot value as the current anchor, not just the first one after a direction change. Strict alternation checks in verification probes should log these as "same-dir updates" (info), not failures.
 - **Source**: `scripts/check-htf-pivots.ts`; Hawks Step-5 verification session 2026-05-27.
 - **Date logged**: 2026-05-27.
+
+### Hawks pivot detector v0.8 first-brick quirk: spurious FUNDO on bullish-bullish session open
+
+- **What**: The 2-brick FUNDO/TOPO detector in `src/lib/backtest/modules/entry/hawks-triple-screen.ts` (v0.8) treats the very first session brick as if it had a prior streak in the same direction. When the first two bricks of a session are both bullish, the detector confirms a "FUNDO" at brick 1's high — structurally wrong because no bearish brick has confirmed a low. A cleaner streak-based detector was tried (commit history) and produced a small reproduction regression (55.9% → 55.1% on 20-day audit), so the simpler / buggier version is intentionally kept and documented in the engine comment block.
+- **What to do**: Do NOT silently "fix" this detector. The spurious FUNDO correlates with real catalog LONG fires in a way the structurally-correct detector does not — the fix is observably worse against the current validation regime. If you change the pivot detector, re-run `pnpm tsx scripts/audit-parallel.ts 2026-03-02 2026-05-13` and treat any reproduction regression of >0.5pp as a vote against the change.
+- **Source**: `docs/postMorten/2026-06-12-hawks-engine-v0.8-archive.md` Hypothesis C. Engine: `src/lib/backtest/modules/entry/hawks-triple-screen.ts` lines ~440-490.
+- **Date logged**: 2026-06-12.
+
+### Hawks: candle-store has NO indicator-key alias layer → engine-side keys must match parquet columns verbatim
+
+- **What**: The candle store (`src/lib/candle-store/duckdb-impl.ts:fetchRange`) reads columns by exact name from the parquet. When a recipe's `requiredIndicators` lists a key not present in the parquet, the loader projects `NULL AS "key"` (line 245), and downstream rules silently emit `neutral` on every brick. There is NO rename / alias / mapping anywhere in the read or write path.
+- **Symptom**: Quality rule with `configFlag: true` produces zero effect on engine output. Audit before/after shows identical match counts. Easy to mistake for "the indicator doesn't help" when actually the indicator is reading `undefined`. Was hidden for months while the engine's silent-null rules sat in `main`: MACD (`"macd"` ≠ parquet `macd1_histo`), VWAP-S (`"vwap_s"` ≠ parquet `vwap_w`), Keltner inner/outer (`"keltner_inf_125"` etc ≠ parquet `kc1_inf` / `kc2_inf`), aggression (`"aggression_balance"` ≠ parquet `agr_saldo`), volume (`"volume"` ≠ parquet `volume_fin`). Six rules were dead. Fixed 2026-06-13 (Option A: rename engine-side literals to match parquet columns).
+- **What to do**: When adding a new rule that reads a per-brick indicator, cross-check the key against the live `hawk_5m_win/WIN.parquet` schema via `DESCRIBE SELECT * FROM read_parquet(...)`. The parquet column names ARE the vendor-native ProfitChart CSV headers (e.g. `agr_saldo`, `kc1_inf`, `macd1_histo`, `vwap_w`) — there is no semantic-rename layer. Add the new key to `requiredIndicators` in the preset to ensure the fetch projects it (else the column ships as null even though it exists in the parquet). Two parallel ingest pipelines (`scripts/load-hawks-bricks-by-size.ts` and `src/lib/csv-parsers/candle-header-mappings.ts`) use slightly different conventions; the live engine-facing parquet uses the load-hawks-bricks names, not the candle-header-mappings names.
+- **Source**: 2026-06-13 indicator-isolation rename pass. See also `docs/postMorten/2026-06-12-hawks-engine-v0.8-archive.md` — every quality-gate sweep in that session was probing rules that emitted `neutral` 100% of the time; v0.8 conclusions stand but the "quality gates don't help" finding now reads as "we never actually had quality gates running."
+- **Date logged**: 2026-06-13.
+
+### Hawks user-catalog: 9 of 20 dev days have no source CSV on disk → ~15% structural reproduction ceiling
+
+- **What**: The dev-fixture user catalogs in `data/hawks/user-entries/*.json` reference 20 trading days, but 9 of those days (2026-04-30, 2026-05-02, 2026-05-05, 2026-05-06, 2026-05-07, 2026-05-08, 2026-05-09, 2026-05-12, 2026-05-13) lack source files (`R61.csv`, `R91.csv`, `R114.csv`, etc.) on disk. The engine cannot materialize indicators for those days, so ~36 of 236 catalog entries are structurally unreachable. Any "reproduction rate" metric on the 20-day window has a hard ceiling around 85%.
+- **What to do**: When measuring reproduction rate, either (a) re-materialize the missing days from raw CSV sources before the audit run, or (b) report the metric on the 11 reachable days only, and treat the structurally-unreachable 36 entries as "data gap" rather than engine misses. Don't silently average them in — the ceiling shifts a 75% target into "actually achievable only on the subset".
+- **Source**: `docs/postMorten/2026-06-12-hawks-engine-v0.8-archive.md`. Verified via `ls data/hawks/user-entries/` cross-referenced against catalog JSON dates.
+- **Date logged**: 2026-06-12.
 
 ### Neon: `DATE()` in a SELECT returns a JS Date object — use `::text` cast to get `YYYY-MM-DD`
 
