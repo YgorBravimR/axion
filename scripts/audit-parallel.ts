@@ -322,7 +322,7 @@ const run = async () => {
 	const cooldownOverride = intArg("--cooldown")
 	const wave1Override = intArg("--wave1")
 	const retraceOverride = intArg("--retrace")
-	const knobOverrides: Record<string, number> = {}
+	const knobOverrides: Record<string, number | boolean> = {}
 	if (cooldownOverride !== undefined) {
 		knobOverrides.fireCooldownBricks = cooldownOverride
 	}
@@ -331,6 +331,10 @@ const run = async () => {
 	}
 	if (retraceOverride !== undefined) {
 		knobOverrides.retracementMinBricks = retraceOverride
+	}
+	const statefulHtf = process.argv.includes("--stateful-htf")
+	if (statefulHtf) {
+		knobOverrides.useStatefulHtfGate = true
 	}
 	const anyKnob = Object.keys(knobOverrides).length > 0
 

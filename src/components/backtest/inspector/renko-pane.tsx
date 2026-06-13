@@ -45,9 +45,19 @@ interface TradeOverlay {
 // second pane below the price pane sharing the time axis. Each data point can
 // carry its own color via `HistogramData.color` — caller decides what positive
 // vs. negative means (we don't impose semantics here).
+//
+// `lines` lets the caller paint line overlays ON the histogram pane (e.g.
+// rolling-mean / day-mean threshold for an aggression/volume evaluator).
+interface HistogramLineOverlay {
+	readonly key: string
+	readonly label: string
+	readonly color: string
+	readonly data: ReadonlyArray<{ time: UTCTimestamp; value: number }>
+}
 interface HistogramOverlay {
 	readonly label: string
 	readonly data: ReadonlyArray<HistogramData<UTCTimestamp>>
+	readonly lines?: ReadonlyArray<HistogramLineOverlay>
 }
 
 // "trade" (default): entry marker uses tradeBuy/tradeSell palette colored by
@@ -101,6 +111,9 @@ const RenkoPane = ({
 	const entryLineRef = useRef<ISeriesApi<"Line"> | null>(null)
 	const exitLineRef = useRef<ISeriesApi<"Line"> | null>(null)
 	const histogramSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null)
+	const histogramLineSeriesRef = useRef<Map<string, ISeriesApi<"Line">>>(
+		new Map()
+	)
 	const hlineRefs = useRef<Map<string, IPriceLine>>(new Map())
 	const trendlineRefs = useRef<Map<string, ISeriesApi<"Line">>>(new Map())
 	const seriesTimesRef = useRef<ReadonlyArray<number>>([])
@@ -349,6 +362,16 @@ const RenkoPane = ({
 		if (!chart) {
 			return
 		}
+		// Tear down line overlays first so subsequent histogram removal doesn't
+		// orphan them on a stale pane.
+		for (const [, line] of histogramLineSeriesRef.current) {
+			try {
+				chart.removeSeries(line)
+			} catch {
+				// already removed
+			}
+		}
+		histogramLineSeriesRef.current.clear()
 		if (histogramSeriesRef.current) {
 			try {
 				chart.removeSeries(histogramSeriesRef.current)
@@ -371,6 +394,23 @@ const RenkoPane = ({
 		)
 		hist.setData([...histogram.data])
 		histogramSeriesRef.current = hist
+		// Line overlays on the histogram pane (paneIndex 1).
+		for (const ln of histogram.lines ?? []) {
+			const series = chart.addSeries(
+				LineSeries,
+				{
+					color: ln.color,
+					lineWidth: 1,
+					priceLineVisible: false,
+					lastValueVisible: false,
+					crosshairMarkerVisible: false,
+					title: ln.label,
+				},
+				1
+			)
+			series.setData([...ln.data])
+			histogramLineSeriesRef.current.set(ln.key, series)
+		}
 		// Price pane: ~4/5 of the vertical space; MACD pane: ~1/5.
 		const panes = chart.panes()
 		if (panes.length >= 2 && panes[0] && panes[1]) {

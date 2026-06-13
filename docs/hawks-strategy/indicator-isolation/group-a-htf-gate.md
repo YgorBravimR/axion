@@ -1,8 +1,28 @@
 # Indicator-Isolation Audit — Group A: Higher-TF Trend (15m + 60m)
 
-**Status**: DRAFT — awaiting Ygor's right / wrong / partial verdict on each labeled paragraph below.
+**Status**: GRADED — **PARTIAL**, walker implemented behind opt-in flag (`config.useStatefulHtfGate`).
 **Date filed**: 2026-06-13.
-**Source code as of**: branch `main` post-rename pass.
+**Date graded**: 2026-06-13.
+**Date v0.9 walker landed**: 2026-06-13 (opt-in, default off — see `src/lib/backtest/hawks-htf-walker.ts`).
+**Source code as of**: engine v0.9 with stateful walker behind feature flag.
+
+---
+
+## Verdict — PARTIAL
+
+| Aspect                            | Status                                 | Evidence                                                                                                                                                                                                                |
+| --------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| EMA inequality wiring (the 4 `>`) | **CORRECT**                            | `DISAGREE_FLIP = 0` on both 15m and 60m across 13,876 bricks. When both detectors agree on a state, they agree on _which_ state.                                                                                        |
+| Sticky state machine              | **MISSING** (walker landed 2026-06-13) | Axion does 804 (15m) / 195 (60m) flips on transition flickers; methodology walker does 207 / 47. Axion flips ~4× too often. v0.9 walker behind `useStatefulHtfGate` flag.                                               |
+| Cross-session carry               | **MISSING** (walker landed)            | Same root cause as above — no state, so no carry. v0.9 walker handles this.                                                                                                                                             |
+| Transition behavior               | **WRONG** (walker landed)              | 23.2% (15m) / 22.9% (60m) of bricks fall in `DISAGREE_TRANSITION` post-fix: methodology emits the prior sticky state, Axion emits `mixed` (gate-OFF).                                                                   |
+| Data coverage                     | **RESOLVED 2026-06-13**                | `AXION_UNKNOWN` was 5.7% / 19.0% (with silent-NULL writes); after materializer skip-incomplete-week fix → **0.0% / 0.0%**. The 109 remaining `BOTH_PRESEEDED` 60m bricks are legitimate first-session pre-seed moments. |
+
+**Bottom line.** Axion's `readHtfGate` reads the right 4 inequalities and orients them the right way, but it is **memoryless** where methodology requires a sticky walker. Under the engine's hard-gate use, the engine blocks trades in ~20% of bricks where methodology would still emit BULL or BEAR. The fix is structural, not a value tweak: add a stateful walker, leave the stateless point-in-time reader for analytics.
+
+The 19% `AXION_UNKNOWN` on the 60m TF was traced to a **materializer silent-skip** combined with the fact that `hawks_renko_sizes` references 35 R-sizes that were never exported to WIN parquets (out-of-WIN-window weeks). The materializer was writing partial rows for weeks where some but not all 3 R-sources existed on disk → engine reads NULL HTF projections → `AXION_UNKNOWN`.
+
+**Resolved 2026-06-13** by making the materializer default to **skip any week where ≥1 of the 5m/15m/60m R-sources is missing** (legacy partial-write behavior preserved behind `--allow-partial`). After re-running, the parquet counts dropped (`hawk_5m_win`: 17,517 → 13,876 = -21%) and `AXION_UNKNOWN` collapsed to 0.0% on both timeframes. The full per-week coverage matrix is in `docs/scans/2026-06-13-hawks-coverage.md` — 20 of 124 weeks are CLEAN, all in the trading window. The 104 INCOMPLETE weeks are pre-trading-window weeks Ygor never exported R-sizes for; this is intentional and not a Ygor-side export task.
 
 ---
 

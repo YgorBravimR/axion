@@ -18,6 +18,26 @@
  *
  * Usage:
  *   pnpm tsx scripts/materialize-hawks-timeframes.ts
+ *   pnpm tsx scripts/materialize-hawks-timeframes.ts --strict
+ *   pnpm tsx scripts/materialize-hawks-timeframes.ts --allow-partial
+ *
+ * Default behavior (2026-06-13+): **skip any week where ANY of the three
+ * required R-sources (5m / 15m / 60m) is missing on disk.** Writing a partial
+ * week (e.g. 5m present, 60m absent) produces materialized rows with NULL
+ * `prev_60m_*` + `mme27_60m` + `mme55_60m` projections — which the Hawks
+ * engine reads as "indicator missing" and silently disables the 60m HTF
+ * gate. That silent-null cascade is the bug Group A's indicator-isolation
+ * audit surfaced (84% of weeks affected). Per Ygor's 2026-06-13 statement
+ * ("the only exported are the ones from hawks weekly; I will not export
+ * renko sizes not in there"), incomplete weeks are out-of-scope and should
+ * be skipped, not partial-materialized.
+ *
+ * `--strict` additionally throws at the end if any required R-source CSV is
+ * missing — use in CI / pre-deploy checks.
+ *
+ * `--allow-partial` restores the pre-2026-06-13 behavior (write whatever
+ * slices exist, even if a sibling TF is unavailable). Useful only for
+ * debugging the silent-null cascade itself; do not use for production runs.
  */
 
 import "dotenv/config"
@@ -212,6 +232,8 @@ const run = async () => {
 		console.error("DATABASE_URL missing")
 		process.exit(1)
 	}
+	const strict = process.argv.includes("--strict")
+	const allowPartial = process.argv.includes("--allow-partial")
 	// Use postgres-js over TCP. The neon-http driver in @neondatabase/serverless
 	// has aggressive read timeouts that abort on the 50K+-row SELECT we need
 	// to load all R<n> source candles in one pass.
@@ -310,6 +332,7 @@ const run = async () => {
 	])
 	const missingSizes = new Set<number>()
 	let weekSkippedNoData = 0
+	let weekSkippedIncomplete = 0
 
 	for (let i = 0; i < weeks.length; i++) {
 		const w = weeks[i]!
@@ -332,6 +355,14 @@ const run = async () => {
 		}
 		if (!r60) {
 			missingSizes.add(w.size_60m)
+		}
+
+		// Default: skip weeks with ANY missing R-source so the Hawks engine
+		// never reads partial rows with silent-NULL HTF projections. Pass
+		// --allow-partial to restore the legacy behavior (pre-2026-06-13).
+		if (!allowPartial && (!r5 || !r15 || !r60)) {
+			weekSkippedIncomplete++
+			continue
 		}
 
 		const sliceForWeek = (rows: RawCandle[] | undefined): RawCandle[] => {
@@ -451,6 +482,11 @@ const run = async () => {
 			`  ${weekSkippedNoData} week(s) skipped (no source candles in range)`
 		)
 	}
+	if (weekSkippedIncomplete > 0) {
+		console.log(
+			`  ${weekSkippedIncomplete} week(s) skipped (incomplete: ≥1 of 5m/15m/60m R-source missing on disk)`
+		)
+	}
 	if (missingSizes.size > 0) {
 		console.warn(
 			`⚠️  Brick sizes referenced by weeks but missing source CSV: ${[...missingSizes].sort((a, b) => a - b).join(", ")}`
@@ -520,10 +556,15 @@ const run = async () => {
 
 	console.log("")
 	console.log("=== MATERIALIZE SUMMARY ===")
-	console.log(`Hawk timeframes:  ${HAWK_TFS.length}`)
-	console.log(`Weeks processed:  ${weeks.length - weekSkippedNoData}`)
-	console.log(`Weeks skipped:    ${weekSkippedNoData} (no source candles)`)
-	console.log(`Candles written:  ${totalInserted}`)
+	console.log(`Hawk timeframes:    ${HAWK_TFS.length}`)
+	console.log(
+		`Weeks processed:    ${weeks.length - weekSkippedNoData - weekSkippedIncomplete}`
+	)
+	console.log(`Weeks skipped:      ${weekSkippedNoData} (no source candles)`)
+	console.log(
+		`Weeks incomplete:   ${weekSkippedIncomplete} (≥1 of 5m/15m/60m R-source missing)`
+	)
+	console.log(`Candles written:    ${totalInserted}`)
 	if (missingSizes.size > 0) {
 		console.log(
 			`⚠️  Missing brick-size source(s): ${[...missingSizes].sort((a, b) => a - b).join(", ")}`
@@ -531,6 +572,19 @@ const run = async () => {
 	}
 
 	await sql.end()
+
+	if (strict && missingSizes.size > 0) {
+		throw new Error(
+			`--strict: ${missingSizes.size} brick-size source CSV(s) missing — ${[
+				...missingSizes,
+			]
+				.sort((a, b) => a - b)
+				.map((s) => `R${s}`)
+				.join(
+					", "
+				)}. Load via scripts/load-hawks-bricks-by-size.ts after exporting from ProfitChart.`
+		)
+	}
 }
 
 run().catch((err) => {

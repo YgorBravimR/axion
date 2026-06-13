@@ -16,6 +16,7 @@ import {
 	Calendar,
 	CalendarClock,
 	Sparkles,
+	Activity,
 	type LucideIcon,
 } from "lucide-react"
 
@@ -34,6 +35,7 @@ type NavLabelKey =
 	| "backtest"
 	| "equityShield"
 	| "backtestOptimize"
+	| "indicatorLab"
 	| "settings"
 
 type NavGroupKey = "plans" | "simulation" | "reportsGroup"
@@ -111,6 +113,11 @@ const buildNavStructure = (now: Date): NavEntry[] => {
 					labelKey: "backtestOptimize",
 					href: "/backtest/optimize",
 					icon: GitCompareArrows,
+				},
+				{
+					labelKey: "indicatorLab",
+					href: "/indicator-lab",
+					icon: Activity,
 				},
 				{ labelKey: "equityShield", href: "/equity-shield", icon: Shield },
 			],

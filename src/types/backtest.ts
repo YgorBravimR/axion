@@ -209,6 +209,14 @@ interface HawksTripleScreenConfig {
 	fireCooldownBricks?: number // default 5 (post-fire 5m brick cooldown)
 	wave1MinBricks?: number // default 4 (wave-1 minimum bricks)
 	retracementMinBricks?: number // default 2 (wave-2 retracement minimum bricks)
+	// v0.9 HTF-gate stateful walker (per Group A indicator-isolation audit).
+	// Default `false` keeps the v0.8 stateless gate. When `true`, engine init
+	// precomputes a per-timestamp BULL/BEAR/NO_SIGNAL snapshot for the 15m and
+	// 60m timeframes via a sticky walker that flips only when ALL 4 EMA
+	// inequalities reverse. Replaces the stateless "all-4-must-align-on-this-
+	// brick" gate; preserves the both-timeframes-must-agree semantics.
+	// Methodology source: `docs/hawks-strategy/indicator-isolation/group-a-htf-gate.md`.
+	useStatefulHtfGate?: boolean // default false
 	// Optional user-toggleable quality gates. Each flag is independent and
 	// additive: when true, the engine refuses an otherwise-valid fire if the
 	// gate's condition holds. Default off ⇒ baseline engine behavior preserved.

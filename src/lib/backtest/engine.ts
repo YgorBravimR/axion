@@ -36,6 +36,11 @@ import { createTargetModule } from "./modules/target"
 import { createSizingModule } from "./modules/sizing"
 import { createReversalModule } from "./modules/reversal"
 import { computeMetrics, buildEquityCurve } from "./metrics"
+import {
+	buildHtfWalker,
+	lookupHtfGate,
+	type HtfWalkerSnapshot,
+} from "./hawks-htf-walker"
 
 /**
  * Compute the 1-indexed brick index (candle_index) where the entry occurred.
@@ -104,6 +109,17 @@ const runBacktest = (
 	let persistentHawksState: HawksState | null =
 		recipe.entry.type === "hawks_triple_screen"
 			? createInitialHawksState()
+			: null
+
+	// v0.9 HTF-gate stateful walker: precompute the per-timestamp BULL/BEAR
+	// snapshot for 15m and 60m once at engine init. O(N) walk; O(1) lookup
+	// per brick. Only built when the entry is hawks AND the opt-in flag
+	// `config.useStatefulHtfGate` is set — the default keeps the v0.8 stateless
+	// gate untouched so the change can be A/B'd cleanly against the baseline.
+	const htfWalker: Map<string, HtfWalkerSnapshot> | null =
+		recipe.entry.type === "hawks_triple_screen" &&
+		recipe.entry.config.useStatefulHtfGate === true
+			? buildHtfWalker(candles, recipe.entry.config)
 			: null
 
 	for (const dayKey of sortedDayKeys) {
@@ -300,12 +316,14 @@ const runBacktest = (
 				entryState = result.state
 				entrySignal = result.signal
 			} else if (recipe.entry.type === "hawks_triple_screen") {
+				const htfSnapshot = lookupHtfGate(htfWalker, candle)
 				const result = processHawksCandle(
 					candle,
 					entryState as HawksState,
 					ctx,
 					assetConfig.tickSize,
-					recipe.entry.config
+					recipe.entry.config,
+					htfWalker !== null ? htfSnapshot : null
 				)
 				entryState = result.state
 				entrySignal = result.signal
@@ -393,7 +411,12 @@ const getEngineVersionForRecipe = (
 	recipe: StrategyRecipe
 ): string | undefined => {
 	if (recipe.entry.type === "hawks_triple_screen") {
-		return "hawks-v0.8"
+		// v0.9 = v0.8 + opt-in stateful HTF walker (`useStatefulHtfGate: true`).
+		// When the flag is off, behavior is byte-identical to v0.8 — but stamp
+		// every run as v0.9 anyway so we can see in production telemetry which
+		// runs came after the walker module was deployed (even when the flag
+		// is off the walker code path is in the binary).
+		return "hawks-v0.9"
 	}
 	if (recipe.entry.type === "user_catalog") {
 		return "user-catalog-v1"

@@ -405,6 +405,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: `scripts/load-hawks-candles.ts` (the 15m FILES entry now writes `key: "macd"`); backfill ran 2026-05-26 to copy `macd_15m` → `macd` on existing rows.
 - **Date logged**: 2026-05-26.
 
+### Indicator-isolation audits: don't paste the Group A sticky-walker pattern without verifying the methodology requires stickiness
+
+- **What**: Group A (HTF gate) needs a sticky BULL/BEAR walker — flip only when all 4 EMA inequalities reverse. Group B (MACD) was audited with the same sticky-walker template, on the assumption that "all indicators should be sticky." The script run rejected the pre-registered hypothesis: methodology and axion produced the **identical 566 sign transitions on 17,517 5m bricks** because MACD sign flips on every strict-opposite cross, which is exactly what axion's stateless `readMacd` already does. The audit was wasted on the wrong question — the actual gap on Group B is the missing **slope** dimension and the missing per-TF wiring, not stickiness.
+- **What to do**: Before writing a wiring-audit script for a new indicator, re-read Ygor's methodology spec for that indicator specifically. Note which behaviors it implies — sticky vs flicker, single-TF vs per-TF, point-in-time vs walker, primary signal vs quality grade. Only port the Group A walker scaffold when those behaviors match Group A's. If they don't, the audit script needs a different shape. The Group A pattern is one template, not the universal template.
+- **Source**: `docs/hawks-strategy/indicator-isolation/group-b-macd.md` "Verdict — PARTIAL" section (2026-06-13 audit-result correction); `scripts/indicator-isolation/group-b-macd.ts`.
+- **Date logged**: 2026-06-13.
+
 ### Importing `price_candles` without upserting `price_data_versions` hides the data from the UI
 
 - **What**: The backtest page's asset/timeframe dropdown reads from `price_data_versions` (the catalog table), not from `price_candles` directly. If a script bulk-inserts candles but skips the catalog upsert, the dropdown stays empty even though `price_candles` is fully populated — the data is silently invisible to the UI. `scripts/load-hawks-candles.ts` had this gap until 2026-05-26: it wrote 6,467 candle rows but `price_data_versions` stayed empty, so `getAssetsWithPriceData()` in `src/app/actions/candle-query.ts` returned `[]`.
@@ -942,3 +949,21 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do**: Until a shared helper exists, audit ALL THREE cockpit pages whenever tier resolution logic changes: `annual-cockpit-grid.tsx`, `quarter-report.tsx`, `month-report.tsx`. Smoke-test on a real account whose `account.startingBalanceCents` differs from the seeded `yearlyPlans.initialCapitalCents` (e.g. Hawk T2 Live: account = R$ 5.000, yearly seed = R$ 1.500).
 - **Related**: `docs/postMorten/2026-06-12-quarterly-cockpit-stale-snapshot.md`.
 - **Date logged**: 2026-06-12.
+
+---
+
+## Hawks Indicator Isolation
+
+### BRT offset is hardcoded to -3 hours; DST not handled
+
+- **What**: `src/app/actions/hawks-isolation-data.ts` uses a constant `BRT_OFFSET_MS = -3 * 60 * 60 * 1000` to convert UTC timestamps to Brazil (São Paulo / Brasília) date keys. This offset is correct for BRT (Brasília Standard Time, UTC-3) but does not account for BRST (Brasília Summer Time, UTC-2) during daylight savings (~October–February). When a date range spans a DST transition, candles near the boundary can be mapped to the wrong date key, causing anchor enrichment and window filtering to miss some records or include wrong ones.
+- **Why it's easy to miss**: Hawks backtests are typically run on recent dates post-DST transition or within a stable timezone band. The issue only manifests in narrow date ranges that straddle Oct 1 or late Feb. The anchor query range (`anchorFromDate` / `anchorToDate`) can silently miss daily data if the UTC→BRT conversion drifts.
+- **What to do**: Replace the hardcoded offset with a proper timezone-aware conversion using `date-fns` or Node's `Intl.DateTimeFormat` with `timeZone: "America/Sao_Paulo"`. The asset is WIN (Índice Bovespa), a Brazilian equity index, so its session times are fixed to São Paulo business hours. Once DST-aware, verify anchor enrichment on test date ranges that cross Oct 1 and Feb 28.
+- **Date logged**: 2026-06-13.
+
+### Catalog JSON loading must validate all fields; malformed files crash the server action
+
+- **What**: `loadCatalogForDate()` previously did `JSON.parse(readFileSync(...)) as CatalogEntry[]` with no error handling or field validation. If a catalog JSON file was malformed (invalid JSON syntax, missing `brickIndex`, wrong `direction` value), the server action crashed before returning a response. The error propagated to the client with no fallback.
+- **Why it's easy to miss**: Catalog files are hand-edited or exported from a logging system. They live in `data/hawks/user-entries/`. If a file is accidentally saved with syntax errors or a script exports with a new schema that breaks the cast, the engine silently crashes.
+- **What to do**: Wrap JSON.parse in try-catch and validate each entry: `brickIndex` must be a number ≥ 1, `direction` must be "short" or "long". Missing or invalid fields are filtered out, and an empty catalog is safe (the chart renders with no trade markers). Fixed in commit that adds stricter parsing.
+- **Date logged**: 2026-06-13.

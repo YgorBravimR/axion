@@ -11,6 +11,10 @@ import {
 	type QualityContext,
 } from "./hawks-quality-rules"
 import { getHawksIndicatorsAtCandle } from "../../hawks-indicators"
+import {
+	type HtfWalkerSnapshot,
+	isHtfGateFavorable,
+} from "../../hawks-htf-walker"
 
 /**
  * Hawks triple-screen entry module (engine v0.8 — brick-wick retracement).
@@ -111,11 +115,33 @@ const FIRE_COOLDOWN_BRICKS = 5
 // Adding a new indicator means registering a rule there, not editing this
 // state machine.
 
+/**
+ * Higher-TF hard gate. Two paths:
+ *
+ * - **Stateful walker path** (when `htfSnapshot` is provided AND
+ *   `config.useStatefulHtfGate === true`): consults the precomputed
+ *   methodology-correct BULL/BEAR/NO_SIGNAL state for the 15m and 60m
+ *   walkers. Returns true iff BOTH walkers are on the favorable side for
+ *   `direction`. Mixed/transition bricks carry prior state — the engine
+ *   gets a stable signal across EMA flickers.
+ *
+ * - **Stateless path** (default): reads the 4 EMA inequalities on the
+ *   current brick only. Returns true iff all 4 align AND both timeframes
+ *   agree on `direction`. Any flicker → gate-off for this brick.
+ *
+ * The two paths are wire-compatible: same `(candle, config, direction) → boolean`
+ * contract from the caller's perspective. The walker is opt-in so the v0.9
+ * change can be A/B'd against the v0.8 baseline cleanly.
+ */
 const higherTfGate = (
 	candle: CandleRow,
 	config: HawksTripleScreenConfig,
-	direction: "short" | "long"
+	direction: "short" | "long",
+	htfSnapshot: HtfWalkerSnapshot | null
 ): boolean => {
+	if (config.useStatefulHtfGate === true && htfSnapshot !== null) {
+		return isHtfGateFavorable(htfSnapshot, direction)
+	}
 	const i = candle.indicators
 	const prev15Open = i[config.prev_15m_open_key]
 	const prev15Close = i[config.prev_15m_close_key]
@@ -169,7 +195,8 @@ const processHawksCandle = (
 	state: HawksState,
 	ctx: DayContext,
 	tickSize: number,
-	config: HawksTripleScreenConfig
+	config: HawksTripleScreenConfig,
+	htfSnapshot: HtfWalkerSnapshot | null = null
 ): { state: HawksState; signal: EntrySignal | null } => {
 	// Cross-day continuity: keep the prior TOPO/FUNDO anchors and pivot
 	// alternation, but clear the intraday retracement tracking so we don't
@@ -296,7 +323,7 @@ const processHawksCandle = (
 			retraceOk &&
 			cooldownOk &&
 			!qShort.blocked &&
-			higherTfGate(candle, config, "short")
+			higherTfGate(candle, config, "short", htfSnapshot)
 		) {
 			// Fire. Stay armed (WAVE_2_UP) for the next setup. Anchor
 			// fundoPrice + maxHighSinceFundo at the fire brick's close,
@@ -385,7 +412,7 @@ const processHawksCandle = (
 			retraceOk &&
 			cooldownOk &&
 			!qLong.blocked &&
-			higherTfGate(candle, config, "long")
+			higherTfGate(candle, config, "long", htfSnapshot)
 		) {
 			// Mirror of SHORT: anchor topoPrice + minLowSinceTopo at the
 			// fire brick's close. Re-fire requires a new lower trough (via
