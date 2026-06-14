@@ -207,6 +207,12 @@ export const loadHawksEngineLabData = async (
 		let pivotState = createStructuralPivotState()
 		let currentPivotBias: PivotBias = null
 
+		// Track prior-brick color for the VB (Virada de Box) entry constraint
+		// + last-gate-state for the gate-stability constraint. Both are
+		// per-day; reset at day boundary.
+		let priorBrickWasBullish: boolean | null = null
+		let priorGate60m: "BULL" | "BEAR" | "NO_SIGNAL" | null = null
+
 		for (let i = 0; i < dayCandles.length; i++) {
 			const candle = dayCandles[i]!
 			const ctx = buildDayContext(candle, dayKey, i)
@@ -266,11 +272,20 @@ export const loadHawksEngineLabData = async (
 			// while playbook stubs return null. Skipped automatically the
 			// moment a real playbook starts firing.
 			//
-			// Direction-vs-brick-direction guard: a real entry can only fire
-			// on a brick that moves IN the trade direction. LONGs require a
-			// bullish 5m brick (close > open); SHORTs require a bearish one.
-			// Firing a SHORT on a bullish brick would mean "we just saw price
-			// move up, so we sell" — structurally wrong. Mirror for LONG.
+			// Three hard constraints — all of these will carry over to
+			// real playbooks in step 4+:
+			//
+			//   1. Direction-vs-brick-direction: LONGs only on bullish 5m
+			//      bricks, SHORTs only on bearish.
+			//   2. VB (Virada de Box): the brick must be the COLOR FLIP,
+			//      not a continuation. SHORT requires prior brick bullish
+			//      (or doji), LONG requires prior brick bearish. Firing
+			//      mid-run is "chasing" — Hawks engine enters AT the box
+			//      reversal, not on the 3rd or 4th brick of an existing leg.
+			//   3. Gate stability: the 60m gate must have been in the same
+			//      direction on the PRIOR brick too. Firing on the brick
+			//      where the walker just flipped = entering on the news.
+			//      Requires at least 1 brick of gate confirmation.
 			const realFired = result.signal !== null
 			const isBullishBrick = candle.close > candle.open
 			const isBearishBrick = candle.close < candle.open
@@ -280,6 +295,21 @@ export const loadHawksEngineLabData = async (
 					: directionAllowed === "short"
 						? isBearishBrick
 						: false
+			// VB: prior brick must be opposite color (or doji). The first
+			// brick of the day has priorBrickWasBullish === null which
+			// blocks the demo fire — fine, no VB context yet anyway.
+			const isVB =
+				directionAllowed === "long"
+					? priorBrickWasBullish === false // prior bearish, now bullish
+					: directionAllowed === "short"
+						? priorBrickWasBullish === true // prior bullish, now bearish
+						: false
+			// Gate stability: prior brick's gate60m must match the current
+			// directionAllowed too. Blocks "entering on the flip".
+			const gateStable =
+				priorGate60m !== null &&
+				priorGate60m === (htfSnapshot?.gate60m ?? "NO_SIGNAL") &&
+				priorGate60m !== "NO_SIGNAL"
 			const canDemoFire =
 				DEMO_FIRES &&
 				!realFired &&
@@ -287,7 +317,9 @@ export const loadHawksEngineLabData = async (
 				directionAllowed !== null &&
 				inTradingWindow &&
 				!cooldownActive &&
-				brickDirectionAgrees
+				brickDirectionAgrees &&
+				isVB &&
+				gateStable
 			let fired = realFired
 			let direction = result.signal?.direction ?? null
 			let price = result.signal?.price ?? null
@@ -308,6 +340,16 @@ export const loadHawksEngineLabData = async (
 				tier = "B"
 				demoFireBricksLeftThisDay--
 			}
+
+			// Update trailing state for the NEXT brick's VB + gate-stability
+			// checks. priorBrickWasBullish stays null on dojis so a doji
+			// doesn't break a clean VB sequence — treat doji as neutral.
+			if (isBullishBrick) {
+				priorBrickWasBullish = true
+			} else if (isBearishBrick) {
+				priorBrickWasBullish = false
+			}
+			priorGate60m = htfSnapshot?.gate60m ?? "NO_SIGNAL"
 
 			bricks.push({
 				brickIndexInDay: i,
