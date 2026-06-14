@@ -89,6 +89,7 @@ interface HawksState {
 	// Track the last brick's direction and high/low to detect consecutive moves.
 	lastBrickWasBullish: boolean | null // true = bullish (close > open), false = bearish
 	priorExtremePrice: number | null // high of last bullish (for TOPO), low of last bearish (for FUNDO)
+	priorExtremeBrickIdx: number | null // index of the brick where priorExtremePrice was observed
 	// Carried across bricks for stateful quality rules (MACD slope, vol EMA).
 	qualityContext: QualityContext
 }
@@ -107,6 +108,7 @@ const createInitialHawksState = (): HawksState => ({
 	lastFireBrickIndex: null,
 	lastBrickWasBullish: null,
 	priorExtremePrice: null,
+	priorExtremeBrickIdx: null,
 	qualityContext: createQualityContext(),
 })
 
@@ -219,6 +221,7 @@ const processHawksCandle = (
 				lastFireBrickIndex: null,
 				lastBrickWasBullish: null,
 				priorExtremePrice: null,
+				priorExtremeBrickIdx: null,
 			}
 		: state
 
@@ -465,10 +468,16 @@ const processHawksCandle = (
 	const detectorState: StructuralPivotDetectorState = {
 		lastBrickWasBullish: next.lastBrickWasBullish,
 		priorExtremePrice: next.priorExtremePrice,
+		priorExtremeBrickIdx: next.priorExtremeBrickIdx,
 	}
-	const detectorResult = stepStructuralPivot(candle, detectorState)
+	const detectorResult = stepStructuralPivot(
+		candle,
+		ctx.candleIndexInDay,
+		detectorState
+	)
 	next.lastBrickWasBullish = detectorResult.state.lastBrickWasBullish
 	next.priorExtremePrice = detectorResult.state.priorExtremePrice
+	next.priorExtremeBrickIdx = detectorResult.state.priorExtremeBrickIdx
 	const structuralPivot = detectorResult.pivot
 
 	// Process structural pivot if detected.

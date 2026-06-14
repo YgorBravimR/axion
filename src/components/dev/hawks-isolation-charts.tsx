@@ -544,7 +544,10 @@ const HawksIsolationCharts = ({
 					lastFundo = m.price
 					fundoCount++
 				}
-				const pt = { time: m.brickIdx as UTCTimestamp, value: m.price }
+				// Plot at the ACTUAL peak/trough brick, not the confirmation
+				// brick — the line traces the visual swing structure, not the
+				// 2-brick-lagged detection events.
+				const pt = { time: m.peakBrickIdx as UTCTimestamp, value: m.price }
 				line.push(pt)
 				if (kind === "continuation") {
 					continuation.push(pt)

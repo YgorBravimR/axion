@@ -27,16 +27,26 @@ export interface StructuralPivotDetectorState {
 	// bearish. Used as the pivot value when 2 consecutive opposite-direction
 	// bricks confirm.
 	priorExtremePrice: number | null
+	// Brick index where the prior extreme was observed — i.e. the actual
+	// peak/trough brick. Used by `walkStructuralPivots` to emit
+	// `peakBrickIdx` for chart rendering (engine itself doesn't read this,
+	// it operates on price + the confirmation brick from the outer loop).
+	priorExtremeBrickIdx: number | null
 }
 
 export interface StructuralPivot {
 	type: "topo" | "fundo"
 	price: number
+	// Brick index where the actual peak/trough lives (the brick whose high
+	// is the TOPO price, or whose low is the FUNDO price). Always strictly
+	// less than the confirmation brick index by construction.
+	peakBrickIdx: number
 }
 
 export const createStructuralPivotState = (): StructuralPivotDetectorState => ({
 	lastBrickWasBullish: null,
 	priorExtremePrice: null,
+	priorExtremeBrickIdx: null,
 })
 
 export interface PivotBrick {
@@ -49,10 +59,14 @@ export interface PivotBrick {
 /**
  * Step the detector by one brick. Returns the updated state and an optional
  * pivot if this brick confirmed one. Behavior matches the inlined logic in
- * `hawks-triple-screen.ts:464-493` exactly — bit-identical to v0.8.
+ * `hawks-triple-screen.ts:464-493` for price + state transitions; additionally
+ * tracks `peakBrickIdx` (the brick where the actual peak/trough lives, not
+ * the confirmation brick) so renderers can position vertices on the visual
+ * swing point. Engine consumers can ignore `peakBrickIdx`.
  */
 export const stepStructuralPivot = (
 	brick: PivotBrick,
+	brickIdx: number,
 	state: StructuralPivotDetectorState
 ): {
 	state: StructuralPivotDetectorState
@@ -66,40 +80,52 @@ export const stepStructuralPivot = (
 	if (next.lastBrickWasBullish === true && isBearish) {
 		next.lastBrickWasBullish = false
 	} else if (next.lastBrickWasBullish === false && isBearish) {
-		if (next.priorExtremePrice !== null) {
-			pivot = { type: "topo", price: next.priorExtremePrice }
+		if (next.priorExtremePrice !== null && next.priorExtremeBrickIdx !== null) {
+			pivot = {
+				type: "topo",
+				price: next.priorExtremePrice,
+				peakBrickIdx: next.priorExtremeBrickIdx,
+			}
 		}
 		next.priorExtremePrice = brick.low
+		next.priorExtremeBrickIdx = brickIdx
 	} else if (next.lastBrickWasBullish === false && isBullish) {
 		next.lastBrickWasBullish = true
 	} else if (next.lastBrickWasBullish === true && isBullish) {
-		if (next.priorExtremePrice !== null) {
-			pivot = { type: "fundo", price: next.priorExtremePrice }
+		if (next.priorExtremePrice !== null && next.priorExtremeBrickIdx !== null) {
+			pivot = {
+				type: "fundo",
+				price: next.priorExtremePrice,
+				peakBrickIdx: next.priorExtremeBrickIdx,
+			}
 		}
 		next.priorExtremePrice = brick.high
+		next.priorExtremeBrickIdx = brickIdx
 	} else {
 		// Init / doji passthrough.
 		next.lastBrickWasBullish = isBullish
 		next.priorExtremePrice = isBullish ? brick.high : brick.low
+		next.priorExtremeBrickIdx = brickIdx
 	}
 
 	return { state: next, pivot }
 }
 
 export interface StructuralPivotMarker {
+	// Confirmation brick — where the 2-brick pattern completed and the pivot
+	// became known. Engine reads this for re-arm gating.
 	brickIdx: number
+	// Brick where the actual peak/trough sits. Always strictly before
+	// `brickIdx`. Use this for visual rendering on a chart.
+	peakBrickIdx: number
 	type: "topo" | "fundo"
 	price: number
 }
 
 /**
  * Walk a full brick sequence once and return every pivot confirmation in
- * order, paired with the brick index at which the confirmation fired.
- *
- * For Indicator Lab review use — engine consumes `stepStructuralPivot` so it
- * can interleave with phase / anchor management. Both call paths share the
- * step function so the page is verifying the same logic that fires in
- * backtest.
+ * order. Both indices reported: `brickIdx` (confirmation, engine-facing) and
+ * `peakBrickIdx` (actual peak/trough, render-facing).
  */
 export const walkStructuralPivots = (
 	bricks: ReadonlyArray<PivotBrick>
@@ -107,10 +133,15 @@ export const walkStructuralPivots = (
 	const out: StructuralPivotMarker[] = []
 	let state = createStructuralPivotState()
 	for (let i = 0; i < bricks.length; i++) {
-		const r = stepStructuralPivot(bricks[i]!, state)
+		const r = stepStructuralPivot(bricks[i]!, i, state)
 		state = r.state
 		if (r.pivot) {
-			out.push({ brickIdx: i, type: r.pivot.type, price: r.pivot.price })
+			out.push({
+				brickIdx: i,
+				peakBrickIdx: r.pivot.peakBrickIdx,
+				type: r.pivot.type,
+				price: r.pivot.price,
+			})
 		}
 	}
 	return out
