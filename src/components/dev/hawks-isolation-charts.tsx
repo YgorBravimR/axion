@@ -485,10 +485,11 @@ const HawksIsolationCharts = ({
 		}
 	}, [candles5m, candles15m, candles60m])
 
-	// Group G — structural pivot review. Single stream: period-2 confirmations
-	// only, no alternation/extension filtering. A TOPO can follow a TOPO (and a
-	// FUNDO can follow a FUNDO) — we plot every raw confirmation the detector
-	// emits. This is the engine's actual signal source; the page just shows it.
+	// Group G — period-2 structural pivots with strict type alternation. After a
+	// TOPO confirms, the next plotted pivot MUST be a FUNDO (and vice versa).
+	// Any same-type confirmation that fires before alternation is dropped. This
+	// enforces "after a high we mark the next low, then the next high" — clean
+	// zigzag visual.
 	const buildPivotOverlays = useCallback(
 		(
 			candles: HawksIsolationData["candles5m"]
@@ -511,13 +512,20 @@ const HawksIsolationCharts = ({
 			const markers = walkStructuralPivots(bricks)
 			const topo: Array<{ time: UTCTimestamp; value: number }> = []
 			const fundo: Array<{ time: UTCTimestamp; value: number }> = []
+			// Strict alternation: track the last emitted type and skip any same-
+			// type confirmation until the opposite type fires.
+			let lastEmittedType: "topo" | "fundo" | null = null
 			for (const m of markers) {
+				if (m.type === lastEmittedType) {
+					continue
+				}
 				const point = { time: m.brickIdx as UTCTimestamp, value: m.price }
 				if (m.type === "topo") {
 					topo.push(point)
 				} else {
 					fundo.push(point)
 				}
+				lastEmittedType = m.type
 			}
 			return {
 				topo,
@@ -2086,13 +2094,13 @@ const HawksIsolationCharts = ({
 				<TabsContent value="G">
 					<div className="text-tiny text-txt-300 mb-2 leading-relaxed">
 						Period-2 structural pivots from <code>walkStructuralPivots</code> —
-						bit-identical to the detector the engine consumes. Every detector
-						confirmation is plotted (no alternation filter): a TOPO can follow a
-						TOPO, a FUNDO can follow a FUNDO. Yellow = TOPO at the high of the
-						last bullish brick before 2 bearish closes; cyan = FUNDO at the low
-						of the last bearish brick before 2 bullish closes. Dots land at the
-						confirmation brick (2-brick lag from the actual peak/trough by
-						design).
+						bit-identical to the detector the engine consumes, with strict type
+						alternation applied at the page level: after a TOPO the next plotted
+						pivot is the next FUNDO; same-type confirmations in between are
+						dropped. Yellow = TOPO at the high of the last bullish brick before
+						2 bearish closes; cyan = FUNDO at the low of the last bearish brick
+						before 2 bullish closes. Dots land at the confirmation brick
+						(2-brick lag from the actual peak/trough by design).
 					</div>
 					<div className="text-small mb-2 flex items-center gap-2">
 						<span className="text-txt-300">TF:</span>
