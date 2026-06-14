@@ -213,6 +213,103 @@ export const loadHawksEngineLabData = async (
 		let priorBrickWasBullish: boolean | null = null
 		let priorGate60m: "BULL" | "BEAR" | "NO_SIGNAL" | null = null
 
+		// --- Leg-shape tracker (expansion ≥ 4, retraction ≥ 2, single-brick
+		// noise ignored). Operates over the per-day 5m brick stream.
+		//
+		// Vocabulary:
+		//   - "expansion" = run of bricks in the gate direction
+		//     (red for SHORT gate, green for LONG gate)
+		//   - "retraction" = run of bricks in the opposite direction
+		//
+		// We don't know the gate direction in advance and it can flip across
+		// the day, so we maintain two independent counters: one for a SHORT
+		// view (expansion = bearish bricks) and one for a LONG view
+		// (expansion = bullish bricks). At decision time we read the
+		// counter that matches the current 60m gate.
+		//
+		// "Noise" rule (user spec): a single isolated opposite-direction
+		// brick INSIDE an expansion is ignored — the expansion count keeps
+		// growing. Two consecutive opposite bricks = real retraction begins.
+		// We implement this via a 1-slot "tentative" buffer: when an
+		// opposite brick appears mid-expansion we hold it; if the next
+		// brick is back in gate-direction we extend expansion by +2
+		// (the noise brick + the new brick); if the next brick confirms
+		// the opposite direction we commit the retraction at length 2.
+		type LegSide = "short" | "long"
+		interface LegState {
+			expansion: number // length of current gate-direction run
+			retraction: number // length of current opposite run (≥ 2 to be real)
+			noiseHeld: boolean // a single opposite brick inside expansion, pending confirmation
+		}
+		const initLeg = (): LegState => ({
+			expansion: 0,
+			retraction: 0,
+			noiseHeld: false,
+		})
+		const legs: Record<LegSide, LegState> = {
+			short: initLeg(),
+			long: initLeg(),
+		}
+		// step both legs by one brick; called BEFORE the fire decision so
+		// the decision sees the pre-fire leg state (we want to fire at the
+		// VB itself — the first opposite brick after a real retraction).
+		const stepLeg = (
+			side: LegSide,
+			brickIsGateDirection: boolean,
+			brickIsOpposite: boolean
+		) => {
+			const l = legs[side]
+			if (brickIsGateDirection) {
+				if (l.retraction > 0) {
+					// We were in a retraction; this brick is the first flip
+					// back to gate direction = the VB. Reset and start a
+					// new expansion of length 1.
+					l.expansion = 1
+					l.retraction = 0
+					l.noiseHeld = false
+				} else if (l.noiseHeld) {
+					// Single opposite brick was just noise — count it +
+					// this brick into the existing expansion.
+					l.expansion += 2
+					l.noiseHeld = false
+				} else {
+					l.expansion += 1
+				}
+			} else if (brickIsOpposite) {
+				if (l.retraction > 0) {
+					// Already retracting → keep counting.
+					l.retraction += 1
+				} else if (l.noiseHeld) {
+					// Second consecutive opposite brick → noise upgraded to
+					// real retraction at length 2.
+					l.retraction = 2
+					l.noiseHeld = false
+				} else if (l.expansion > 0) {
+					// First opposite brick after an expansion — tentative.
+					l.noiseHeld = true
+				}
+				// else: no expansion to retract from; ignore.
+			}
+			// doji: no-op, hold state.
+		}
+		// Snapshot helper for "did the prior brick complete a real
+		// retraction of ≥ 2?" — read at fire-decision time. The fire brick
+		// itself is the VB flip back to gate-direction; at that point
+		// stepLeg has already converted retraction → fresh expansion=1,
+		// so we read a SHADOW of the prior state computed JUST BEFORE
+		// stepping.
+		let legPreStep!: { short: LegState; long: LegState }
+
+		// --- Soft 5m HH/LL gate.
+		// SHORT allowed when the LAST swing-high (topo) is LOWER than the
+		// prior swing-high. LONG allowed when the LAST swing-low (fundo)
+		// is HIGHER than the prior swing-low. Lows/highs of the OTHER side
+		// are ignored (user picked option B).
+		let lastTopoPrice: number | null = null
+		let priorTopoPrice: number | null = null
+		let lastFundoPrice: number | null = null
+		let priorFundoPrice: number | null = null
+
 		for (let i = 0; i < dayCandles.length; i++) {
 			const candle = dayCandles[i]!
 			const ctx = buildDayContext(candle, dayKey, i)
@@ -251,7 +348,30 @@ export const loadHawksEngineLabData = async (
 			pivotState = pivotStep.state
 			if (pivotStep.pivot) {
 				currentPivotBias = pivotStep.pivot.type
+				if (pivotStep.pivot.type === "topo") {
+					priorTopoPrice = lastTopoPrice
+					lastTopoPrice = pivotStep.pivot.price
+				} else {
+					priorFundoPrice = lastFundoPrice
+					lastFundoPrice = pivotStep.pivot.price
+				}
 			}
+
+			// Snapshot the PRE-step leg state for the fire decision below.
+			// We want the fire brick (the VB flip) to be evaluated against
+			// the leg shape that existed BEFORE it landed — i.e. is the
+			// expansion that just got retracted ≥ 4 and the retraction
+			// ≥ 2? After we step, retraction collapses to expansion=1.
+			legPreStep = {
+				short: { ...legs.short },
+				long: { ...legs.long },
+			}
+			// Advance the leg trackers. SHORT side: gate-direction = bearish
+			// brick. LONG side: gate-direction = bullish brick.
+			const isBullish = candle.close > candle.open
+			const isBearish = candle.close < candle.open
+			stepLeg("short", isBearish, isBullish)
+			stepLeg("long", isBullish, isBearish)
 
 			// Raw indicator status at this brick — feeds the cursor-reactive
 			// badge row in the lab. NOT direction-relative; alignment is
@@ -310,6 +430,29 @@ export const loadHawksEngineLabData = async (
 				priorGate60m !== null &&
 				priorGate60m === (htfSnapshot?.gate60m ?? "NO_SIGNAL") &&
 				priorGate60m !== "NO_SIGNAL"
+			// Leg-shape gate: the JUST-COMPLETED leg must show expansion ≥ 4
+			// (real impulse) AND retraction ≥ 2 (real pullback, not a
+			// single-brick wick). Read from the PRE-step snapshot since
+			// this brick IS the VB flip and stepLeg has already collapsed
+			// retraction → fresh expansion=1.
+			const legSide: LegSide | null = directionAllowed
+			const legSnap = legSide !== null ? legPreStep[legSide] : null
+			const legShapeOk =
+				legSnap !== null && legSnap.expansion >= 4 && legSnap.retraction >= 2
+			// Soft 5m HH/LL gate (user spec option B): SHORT requires last
+			// swing-high lower than prior swing-high; LONG requires last
+			// swing-low higher than prior swing-low. NULL on either pivot
+			// → not enough structure yet → fire blocked.
+			const fiveMinStructureOk =
+				directionAllowed === "short"
+					? lastTopoPrice !== null &&
+						priorTopoPrice !== null &&
+						lastTopoPrice < priorTopoPrice
+					: directionAllowed === "long"
+						? lastFundoPrice !== null &&
+							priorFundoPrice !== null &&
+							lastFundoPrice > priorFundoPrice
+						: false
 			const canDemoFire =
 				DEMO_FIRES &&
 				!realFired &&
@@ -318,7 +461,9 @@ export const loadHawksEngineLabData = async (
 				!cooldownActive &&
 				brickDirectionAgrees &&
 				isVB &&
-				gateStable
+				gateStable &&
+				legShapeOk &&
+				fiveMinStructureOk
 			let fired = realFired
 			let direction = result.signal?.direction ?? null
 			let price = result.signal?.price ?? null
