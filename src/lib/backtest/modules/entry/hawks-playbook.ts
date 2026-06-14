@@ -1,0 +1,202 @@
+/**
+ * Hawks engine v0.9 — playbook orchestrator.
+ *
+ * Replaces the v0.6 / v0.8 monolithic state machine
+ * (`hawks-triple-screen.ts`) with a thin per-brick orchestrator that
+ * delegates trigger detection to a registry of `Playbook` modules.
+ *
+ * Per-brick flow (matches spec §6):
+ *   1. Read `gate60m` from the HTF walker. If `NO_SIGNAL`, return null
+ *      immediately — no playbook may fire counter-gate or with no gate.
+ *   2. Derive trade `direction` from `gate60m` (BULL → long, BEAR → short).
+ *   3. Apply the 5-brick cooldown (carried from v0.6).
+ *   4. Iterate every registered playbook. Collect every one whose
+ *      `evaluate()` returns a fire.
+ *   5. If any fired: pick the primary playbook by `PLAYBOOK_PRIORITY`,
+ *      score the booster checklist (separate module), emit a single
+ *      `EntrySignal` with the primary playbook's stop reference,
+ *      and record `playbooksFired[]` on the trade quality metadata.
+ *
+ * State the orchestrator owns:
+ *   - `priorBricksToday` — running list of bricks in the current day,
+ *     reset on day boundary. Playbooks read from this for lookback.
+ *   - `lastFireBrickIndex` — index of last fire today, for cooldown.
+ *   - The cross-day persistent state is currently empty — v0.9 has no
+ *     anchor that carries across days (anchors are derived per-brick
+ *     from prior bricks). Kept as an exported interface anyway because
+ *     the engine wires it through `persistentHawksState`.
+ *
+ * Spec: docs/hawks-strategy/engine-v0.9-playbook-spec.md
+ */
+
+import type {
+	HawksTripleScreenConfig,
+	EntrySignal,
+	DayContext,
+	Direction,
+} from "@/types/backtest"
+import type { CandleRow } from "@/types/candle"
+import type { HtfWalkerSnapshot, HtfWalkerState } from "../../hawks-htf-walker"
+import { meanReversionPlaybook } from "./playbooks/mean-reversion"
+import { retracementPlaybook } from "./playbooks/retracement"
+import { vwapRejectionPlaybook } from "./playbooks/vwap-rejection"
+import {
+	type Playbook,
+	type PlaybookFire,
+	type PlaybookId,
+	type PlaybookIndicatorKeys,
+	PLAYBOOK_PRIORITY,
+} from "./playbooks/types"
+import { EMPTY_CHECKLIST, tierFromChecklist } from "./hawks-boosters"
+
+// Cooldown between consecutive fires on 5m (spec §2). Carried from v0.6
+// to prevent stacking on the same setup.
+const FIRE_COOLDOWN_BRICKS = 5
+
+const REGISTRY: ReadonlyArray<Playbook> = [
+	meanReversionPlaybook,
+	retracementPlaybook,
+	vwapRejectionPlaybook,
+]
+
+export interface HawksPlaybookState {
+	/** Bricks earlier today (excludes current brick). Cleared on day boundary. */
+	priorBricksToday: CandleRow[]
+	/** Index-in-day of last fire today. null = no fire yet today. */
+	lastFireBrickIndex: number | null
+}
+
+export const createInitialHawksPlaybookState = (): HawksPlaybookState => ({
+	priorBricksToday: [],
+	lastFireBrickIndex: null,
+})
+
+const directionFromGate = (gate: HtfWalkerState): Direction | null => {
+	if (gate === "BULL") {
+		return "long"
+	}
+	if (gate === "BEAR") {
+		return "short"
+	}
+	return null
+}
+
+const buildIndicatorKeys = (
+	config: HawksTripleScreenConfig
+): PlaybookIndicatorKeys => ({
+	// v0.9 reuses the v0.8 config shape (see HawksTripleScreenConfig).
+	// The 5m EMA keys are not yet a first-class field — v0.8 only carried
+	// HTF EMA keys. For the stub orchestrator we point at the HTF keys as
+	// a placeholder; playbook implementations (step 4+) will require the
+	// real 5m EMA keys to be added to the config.
+	ema_fast_5m_key: config.ema27_15m_key,
+	ema_slow_5m_key: config.ema55_15m_key,
+	vwap_d_key: config.vwap_d_key,
+})
+
+export const processHawksPlaybookCandle = (
+	candle: CandleRow,
+	state: HawksPlaybookState,
+	ctx: DayContext,
+	_tickSize: number,
+	config: HawksTripleScreenConfig,
+	htfSnapshot: HtfWalkerSnapshot | null
+): { state: HawksPlaybookState; signal: EntrySignal | null } => {
+	// Day boundary: reset intraday history. Cross-day persistent state is
+	// currently empty in v0.9 — no anchor carries over.
+	const dayBoundary = ctx.candleIndexInDay === 0
+	const base: HawksPlaybookState = dayBoundary
+		? createInitialHawksPlaybookState()
+		: state
+
+	// Trading window guard (matches v0.8 semantics).
+	if (ctx.brtHHMM < config.startTime || ctx.brtHHMM >= config.endTime) {
+		return appendPrior(base, candle)
+	}
+
+	// Gate: 60m only. No snapshot → no fire (engine wasn't initialised with
+	// stateful walker). NO_SIGNAL → no fire. Counter-gate is impossible
+	// because direction itself is derived from the gate.
+	if (htfSnapshot === null) {
+		return appendPrior(base, candle)
+	}
+	const direction = directionFromGate(htfSnapshot.gate60m)
+	if (direction === null) {
+		return appendPrior(base, candle)
+	}
+
+	// Cooldown (§2). 5-brick gap between fires.
+	const fireCooldown = config.fireCooldownBricks ?? FIRE_COOLDOWN_BRICKS
+	if (
+		base.lastFireBrickIndex !== null &&
+		ctx.candleIndexInDay - base.lastFireBrickIndex < fireCooldown
+	) {
+		return appendPrior(base, candle)
+	}
+
+	// Dispatch to all playbooks. Collect every fire; we'll pick a primary.
+	const bodySize = Math.abs(candle.close - candle.open)
+	const brickSize = bodySize > 0 ? bodySize : config.brickSize5mPoints
+	const playbookCtx = {
+		brick: candle,
+		priorBricks: base.priorBricksToday,
+		brickIndexInDay: ctx.candleIndexInDay,
+		direction,
+		brickSize,
+		indicatorKeys: buildIndicatorKeys(config),
+	}
+	const fires: Array<{ id: PlaybookId; fire: PlaybookFire }> = []
+	for (const pb of REGISTRY) {
+		const result = pb.evaluate(playbookCtx)
+		if (result !== null) {
+			fires.push({ id: pb.id, fire: result })
+		}
+	}
+
+	if (fires.length === 0) {
+		return appendPrior(base, candle)
+	}
+
+	// Primary playbook = first by PLAYBOOK_PRIORITY. All fires recorded
+	// in playbooksFired metadata for downstream cross-playbook stats.
+	const primary =
+		fires.find((f) =>
+			PLAYBOOK_PRIORITY.includes(f.id)
+				? f.id ===
+					PLAYBOOK_PRIORITY.find((pid) => fires.some((x) => x.id === pid))
+				: false
+		) ?? fires[0]!
+	const playbooksFired = fires.map((f) => f.id)
+
+	// Booster scoring — TODO step 3: read indicators and compute the
+	// checklist. For now we emit C-tier (empty checklist → tier B per
+	// the boosters module's collapse rule).
+	const checklist = EMPTY_CHECKLIST
+	const tier = tierFromChecklist(checklist)
+
+	const signal: EntrySignal = {
+		direction,
+		price: primary.fire.price,
+		stopReference: primary.fire.stopReference,
+		label: `${primary.fire.label} [${playbooksFired.join(",")}]`,
+		quality: {
+			tier,
+			score: 0,
+			contributions: [],
+		},
+	}
+
+	const next: HawksPlaybookState = {
+		priorBricksToday: [...base.priorBricksToday, candle],
+		lastFireBrickIndex: ctx.candleIndexInDay,
+	}
+	return { state: next, signal }
+}
+
+const appendPrior = (
+	state: HawksPlaybookState,
+	candle: CandleRow
+): { state: HawksPlaybookState; signal: EntrySignal | null } => ({
+	state: { ...state, priorBricksToday: [...state.priorBricksToday, candle] },
+	signal: null,
+})

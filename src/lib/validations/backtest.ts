@@ -218,7 +218,7 @@ const strategyRecipeSchema = z.object({
 			config: macdWmaConfigSchema,
 		}),
 		z.object({
-			type: z.literal("hawks_triple_screen"),
+			type: z.literal("hawks_playbook"),
 			config: hawksTripleScreenConfigSchema,
 		}),
 		z.object({

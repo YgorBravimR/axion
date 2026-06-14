@@ -24,9 +24,9 @@ import {
 	createInitialDezkState,
 	resetDezkForNewDay,
 	type DezkState,
-	processHawksCandle,
-	createInitialHawksState,
-	type HawksState,
+	processHawksPlaybookCandle,
+	createInitialHawksPlaybookState,
+	type HawksPlaybookState,
 	processUserCatalogCandle,
 	createInitialUserCatalogState,
 	type UserCatalogState,
@@ -106,19 +106,18 @@ const runBacktest = (
 	// days. The user's "TOPO ANTERIOR" for the morning's first setup is
 	// yesterday's last indicator-marked TOPO, so the engine must not reset
 	// on day boundary.
-	let persistentHawksState: HawksState | null =
-		recipe.entry.type === "hawks_triple_screen"
-			? createInitialHawksState()
+	let persistentHawksPlaybookState: HawksPlaybookState | null =
+		recipe.entry.type === "hawks_playbook"
+			? createInitialHawksPlaybookState()
 			: null
 
 	// v0.9 HTF-gate stateful walker: precompute the per-timestamp BULL/BEAR
 	// snapshot for 15m and 60m once at engine init. O(N) walk; O(1) lookup
-	// per brick. Only built when the entry is hawks AND the opt-in flag
-	// `config.useStatefulHtfGate` is set — the default keeps the v0.8 stateless
-	// gate untouched so the change can be A/B'd cleanly against the baseline.
+	// per brick. Always built for `hawks_playbook` — the playbook engine has
+	// no stateless gate fallback; 60m is the one and only directional filter
+	// (spec §1) and the walker is the only source of that signal.
 	const htfWalker: Map<string, HtfWalkerSnapshot> | null =
-		recipe.entry.type === "hawks_triple_screen" &&
-		recipe.entry.config.useStatefulHtfGate === true
+		recipe.entry.type === "hawks_playbook"
 			? buildHtfWalker(candles, recipe.entry.config)
 			: null
 
@@ -126,11 +125,15 @@ const runBacktest = (
 		const dayCandlesArr = days.get(dayKey)!
 		let position: Position | null = null
 		let reversalState = reversalModule.init()
-		let entryState: OrbState | DezkState | HawksState | UserCatalogState =
+		let entryState:
+			| OrbState
+			| DezkState
+			| HawksPlaybookState
+			| UserCatalogState =
 			recipe.entry.type === "orb_breakout"
 				? createInitialOrbState()
-				: recipe.entry.type === "hawks_triple_screen"
-					? persistentHawksState!
+				: recipe.entry.type === "hawks_playbook"
+					? persistentHawksPlaybookState!
 					: recipe.entry.type === "user_catalog"
 						? createInitialUserCatalogState()
 						: resetDezkForNewDay(persistentEntryState!)
@@ -315,15 +318,15 @@ const runBacktest = (
 				)
 				entryState = result.state
 				entrySignal = result.signal
-			} else if (recipe.entry.type === "hawks_triple_screen") {
+			} else if (recipe.entry.type === "hawks_playbook") {
 				const htfSnapshot = lookupHtfGate(htfWalker, candle)
-				const result = processHawksCandle(
+				const result = processHawksPlaybookCandle(
 					candle,
-					entryState as HawksState,
+					entryState as HawksPlaybookState,
 					ctx,
 					assetConfig.tickSize,
 					recipe.entry.config,
-					htfWalker !== null ? htfSnapshot : null
+					htfSnapshot
 				)
 				entryState = result.state
 				entrySignal = result.signal
@@ -384,8 +387,8 @@ const runBacktest = (
 		}
 		// Carry structural state across days for Hawks — yesterday's last
 		// TOPO/FUNDO anchors today's first setup ("TOPO ANTERIOR").
-		if (recipe.entry.type === "hawks_triple_screen") {
-			persistentHawksState = entryState as HawksState
+		if (recipe.entry.type === "hawks_playbook") {
+			persistentHawksPlaybookState = entryState as HawksPlaybookState
 		}
 
 		trades.push(...dayTrades)
@@ -410,7 +413,7 @@ const runBacktest = (
 const getEngineVersionForRecipe = (
 	recipe: StrategyRecipe
 ): string | undefined => {
-	if (recipe.entry.type === "hawks_triple_screen") {
+	if (recipe.entry.type === "hawks_playbook") {
 		// v0.9 = v0.8 + opt-in stateful HTF walker (`useStatefulHtfGate: true`).
 		// When the flag is off, behavior is byte-identical to v0.8 — but stamp
 		// every run as v0.9 anyway so we can see in production telemetry which

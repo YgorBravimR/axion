@@ -60,7 +60,7 @@ describe("recipeFromCombo — bundle handling", () => {
 			undefined
 		)
 		expect(
-			(recipe.entry.type === "hawks_triple_screen"
+			(recipe.entry.type === "hawks_playbook"
 				? (recipe.entry.config.qualityGates as Record<string, unknown>)
 				: {})["__bundle__"]
 		).toBe(undefined)
@@ -85,7 +85,7 @@ describe("recipeFromCombo — bundle handling", () => {
 
 		const recipe = recipeFromCombo(hawksV0, combos[0]!)
 		const strictGates = getQualityPresetBundle("strict")
-		if (recipe.entry.type === "hawks_triple_screen") {
+		if (recipe.entry.type === "hawks_playbook") {
 			expect(recipe.entry.config.qualityGates?.srLevelBlock).toBe(
 				strictGates.srLevelBlock
 			)

@@ -146,7 +146,7 @@ self.onmessage = (event: MessageEvent<StartMessage>) => {
 					oosRobust: isOosRobust(isResult.summary, oosResult.summary),
 					// Phase 3B match rate (if catalog provided and Hawks strategy)
 					...(referenceCatalog &&
-						recipe.entry.type === "hawks_triple_screen" && {
+						recipe.entry.type === "hawks_playbook" && {
 							matchRateIS: computeMatchRate(
 								isResult.trades,
 								referenceCatalog,
@@ -174,7 +174,7 @@ self.onmessage = (event: MessageEvent<StartMessage>) => {
 					trades: result.trades,
 					// Phase 3B match rate (if catalog provided and Hawks strategy)
 					...(referenceCatalog &&
-						recipe.entry.type === "hawks_triple_screen" && {
+						recipe.entry.type === "hawks_playbook" && {
 							matchRate: computeMatchRate(result.trades, referenceCatalog),
 						}),
 				}

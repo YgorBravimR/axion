@@ -317,7 +317,7 @@ interface UserCatalogConfig {
 type EntryModuleConfig =
 	| { type: "orb_breakout"; config: OrbEntryConfig }
 	| { type: "macd_wma_alignment"; config: MACDWMAConfig }
-	| { type: "hawks_triple_screen"; config: HawksTripleScreenConfig }
+	| { type: "hawks_playbook"; config: HawksTripleScreenConfig }
 	| { type: "user_catalog"; config: UserCatalogConfig }
 
 interface EntryModule {

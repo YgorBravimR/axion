@@ -11,7 +11,7 @@ const baseRun = (overrides: Partial<OptimizationRun>): OptimizationRun =>
 	({
 		id: "r1",
 		label: "Sweep #1",
-		recipe: { entry: { type: "hawks_triple_screen", config: {} } } as never,
+		recipe: { entry: { type: "hawks_playbook", config: {} } } as never,
 		summary: { profitFactor: 1 } as never,
 		equityCurve: [],
 		trades: [],
@@ -152,7 +152,7 @@ describe("migrateRun (v5 → v6)", () => {
 				presetId: "hawks_v0" as const,
 				displayName: "Hawks v0",
 				entry: {
-					type: "hawks_triple_screen" as const,
+					type: "hawks_playbook" as const,
 					config: {
 						ema27_60m_key: "mme27_60m",
 						ema55_60m_key: "mme55_60m",
@@ -182,7 +182,7 @@ describe("migrateRun (v5 → v6)", () => {
 		})
 		const migrated = migrateRun(v5Run)
 		const gatesConfig =
-			migrated.recipe.entry.type === "hawks_triple_screen"
+			migrated.recipe.entry.type === "hawks_playbook"
 				? migrated.recipe.entry.config.qualityGates
 				: undefined
 		expect(gatesConfig).toBeDefined()
@@ -197,7 +197,7 @@ describe("migrateRun (v5 → v6)", () => {
 				presetId: "hawks_v0" as const,
 				displayName: "Hawks v0",
 				entry: {
-					type: "hawks_triple_screen" as const,
+					type: "hawks_playbook" as const,
 					config: {
 						ema27_60m_key: "mme27_60m",
 						ema55_60m_key: "mme55_60m",
@@ -228,7 +228,7 @@ describe("migrateRun (v5 → v6)", () => {
 		})
 		const migrated = migrateRun(v5Run)
 		const gatesConfig =
-			migrated.recipe.entry.type === "hawks_triple_screen"
+			migrated.recipe.entry.type === "hawks_playbook"
 				? migrated.recipe.entry.config.qualityGates
 				: undefined
 		expect(gatesConfig?.macd).toEqual({
@@ -244,7 +244,7 @@ describe("migrateRun (v5 → v6)", () => {
 				presetId: "hawks_v0" as const,
 				displayName: "Hawks v0",
 				entry: {
-					type: "hawks_triple_screen" as const,
+					type: "hawks_playbook" as const,
 					config: {
 						ema27_60m_key: "mme27_60m",
 						ema55_60m_key: "mme55_60m",
@@ -275,7 +275,7 @@ describe("migrateRun (v5 → v6)", () => {
 		})
 		const migrated = migrateRun(v5Run)
 		const gatesConfig =
-			migrated.recipe.entry.type === "hawks_triple_screen"
+			migrated.recipe.entry.type === "hawks_playbook"
 				? migrated.recipe.entry.config.qualityGates
 				: undefined
 		expect(gatesConfig?.aggression).toEqual({
@@ -292,7 +292,7 @@ describe("migrateRun (v5 → v6)", () => {
 				presetId: "hawks_v0" as const,
 				displayName: "Hawks v0",
 				entry: {
-					type: "hawks_triple_screen" as const,
+					type: "hawks_playbook" as const,
 					config: {
 						ema27_60m_key: "mme27_60m",
 						ema55_60m_key: "mme55_60m",
@@ -323,7 +323,7 @@ describe("migrateRun (v5 → v6)", () => {
 		})
 		const migrated = migrateRun(v6Run)
 		const gatesConfig =
-			migrated.recipe.entry.type === "hawks_triple_screen"
+			migrated.recipe.entry.type === "hawks_playbook"
 				? migrated.recipe.entry.config.qualityGates
 				: undefined
 		// New field should be untouched (idempotent)
@@ -338,7 +338,7 @@ describe("migrateRun (v5 → v6)", () => {
 				presetId: "hawks_v0" as const,
 				displayName: "Hawks v0",
 				entry: {
-					type: "hawks_triple_screen" as const,
+					type: "hawks_playbook" as const,
 					config: {
 						ema27_60m_key: "mme27_60m",
 						ema55_60m_key: "mme55_60m",
@@ -365,7 +365,7 @@ describe("migrateRun (v5 → v6)", () => {
 		})
 		const migrated = migrateRun(noGates)
 		const gatesConfig =
-			migrated.recipe.entry.type === "hawks_triple_screen"
+			migrated.recipe.entry.type === "hawks_playbook"
 				? migrated.recipe.entry.config.qualityGates
 				: undefined
 		expect(gatesConfig).toBeUndefined()

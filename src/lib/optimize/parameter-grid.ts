@@ -38,7 +38,7 @@ type ParameterRange = NumericParameterRange | EnumParameterRange
 const STRATEGY_PARAMS_REGISTRY: Partial<Record<string, SweepableParam[]>> = {
 	orb_breakout: ORB_SWEEPABLE_PARAMS,
 	macd_wma_alignment: DEZK_SWEEPABLE_PARAMS,
-	hawks_triple_screen: HAWKS_SWEEPABLE_PARAMS,
+	hawks_playbook: HAWKS_SWEEPABLE_PARAMS,
 	user_catalog: HAWKS_SWEEPABLE_PARAMS,
 }
 

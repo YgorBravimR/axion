@@ -5,7 +5,7 @@ import type { StrategyRecipe } from "@/types/backtest"
 const baseRecipe = (overrides: Partial<StrategyRecipe> = {}): StrategyRecipe =>
 	({
 		displayName: "Hawks v0",
-		entry: { type: "hawks_triple_screen" },
+		entry: { type: "hawks_playbook" },
 		stop: { type: "fixed", riskPerTradeBRL: 100 },
 		target: { type: "fixed_r", multiple: 3 },
 		sizing: { type: "fixed_risk", riskPerTradeBRL: 100 },

@@ -53,7 +53,7 @@ const hawksV0: StrategyRecipe = {
 	presetId: "hawks_v0",
 	displayName: "Hawks v0 — Triple Screen",
 	entry: {
-		type: "hawks_triple_screen",
+		type: "hawks_playbook",
 		config: {
 			// HTF gate keys.
 			ema27_60m_key: "mme27_60m",
@@ -197,19 +197,19 @@ const hawksPresets: readonly [StrategyRecipe, ...StrategyRecipe[]] = [
 // Tier 3C (deferred): per-day regime, Fib bands, stayArmed flag.
 
 const isHawksTriple = (r: StrategyRecipe): boolean =>
-	r.entry.type === "hawks_triple_screen"
+	r.entry.type === "hawks_playbook"
 
 const mutateHawksConfig = (
 	recipe: StrategyRecipe,
 	mutator: (_cfg: HawksTripleScreenConfig) => HawksTripleScreenConfig
 ): StrategyRecipe => {
-	if (recipe.entry.type !== "hawks_triple_screen") {
+	if (recipe.entry.type !== "hawks_playbook") {
 		return recipe
 	}
 	return {
 		...recipe,
 		entry: {
-			type: "hawks_triple_screen",
+			type: "hawks_playbook",
 			config: mutator(recipe.entry.config),
 		},
 	}
@@ -389,7 +389,7 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 			},
 		],
 		getCurrentValue: (r) => {
-			if (r.entry.type !== "hawks_triple_screen") {
+			if (r.entry.type !== "hawks_playbook") {
 				return "off"
 			}
 			return r.entry.config.qualityGates?.[gateKey] ? "on" : "off"
@@ -429,7 +429,7 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 			},
 		],
 		getCurrentValue: (r) => {
-			if (r.entry.type !== "hawks_triple_screen") {
+			if (r.entry.type !== "hawks_playbook") {
 				return "off"
 			}
 			return r.entry.config.qualityGates?.aggressionMode ?? "off"
@@ -483,7 +483,7 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 			},
 		],
 		getCurrentValue: (r) => {
-			if (r.entry.type !== "hawks_triple_screen") {
+			if (r.entry.type !== "hawks_playbook") {
 				return "off"
 			}
 			return r.entry.config.qualityGates?.keltnerInner?.mode ?? "off"
@@ -533,7 +533,7 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 			},
 		],
 		getCurrentValue: (r) => {
-			if (r.entry.type !== "hawks_triple_screen") {
+			if (r.entry.type !== "hawks_playbook") {
 				return "off"
 			}
 			return r.entry.config.qualityGates?.macd?.mode ?? "off"
@@ -583,7 +583,7 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 			},
 		],
 		getCurrentValue: (r) => {
-			if (r.entry.type !== "hawks_triple_screen") {
+			if (r.entry.type !== "hawks_playbook") {
 				return "off"
 			}
 			return r.entry.config.qualityGates?.volume?.mode ?? "off"
@@ -624,7 +624,7 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 			},
 		],
 		getCurrentValue: (r) => {
-			if (r.entry.type !== "hawks_triple_screen") {
+			if (r.entry.type !== "hawks_playbook") {
 				return "off"
 			}
 			return r.entry.config.qualityGates?.aggression?.scoreMode ?? "off"
@@ -665,7 +665,7 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 			},
 		],
 		getCurrentValue: (r) => {
-			if (r.entry.type !== "hawks_triple_screen") {
+			if (r.entry.type !== "hawks_playbook") {
 				return "off"
 			}
 			return r.entry.config.qualityGates?.aggression?.blockMode ?? "off"
