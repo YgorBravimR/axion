@@ -485,19 +485,24 @@ const HawksIsolationCharts = ({
 		}
 	}, [candles5m, candles15m, candles60m])
 
-	// Group G — period-2 structural pivots with strict type alternation. After a
-	// TOPO confirms, the next plotted pivot MUST be a FUNDO (and vice versa).
-	// Any same-type confirmation that fires before alternation is dropped. This
-	// enforces "after a high we mark the next low, then the next high" — clean
-	// zigzag visual.
-	const buildPivotOverlays = useCallback(
+	// Group G — Dow-theory swing structure. Period-2 detector + strict type
+	// alternation yields a clean TOPO ↔ FUNDO zigzag. Render it as ONE
+	// connected swing-tape line; color each vertex by trend continuation:
+	//   - green vertex  = continuation (TOPO > prior TOPO, or FUNDO < prior FUNDO)
+	//   - red vertex    = trend break  (TOPO ≤ prior TOPO, or FUNDO ≥ prior FUNDO)
+	//   - neutral       = first vertex of each type (no prior to compare)
+	// Reading the tape: a run of green vertices = clean trend (HH+HL or LL+LH);
+	// a red vertex = roll-over moment. This is Dow theory rendered directly.
+	type VertexKind = "continuation" | "break" | "neutral"
+	const buildSwingStructure = useCallback(
 		(
 			candles: HawksIsolationData["candles5m"]
 		): {
-			topo: Array<{ time: UTCTimestamp; value: number }>
-			fundo: Array<{ time: UTCTimestamp; value: number }>
-			topoCount: number
-			fundoCount: number
+			line: Array<{ time: UTCTimestamp; value: number }>
+			continuation: Array<{ time: UTCTimestamp; value: number }>
+			breaks: Array<{ time: UTCTimestamp; value: number }>
+			neutral: Array<{ time: UTCTimestamp; value: number }>
+			counts: { topo: number; fundo: number; cont: number; brk: number }
 		} => {
 			const bricks: Array<{
 				open: number
@@ -510,43 +515,74 @@ const HawksIsolationCharts = ({
 				bricks[i] = { open: c.open, high: c.high, low: c.low, close: c.close }
 			}
 			const markers = walkStructuralPivots(bricks)
-			const topo: Array<{ time: UTCTimestamp; value: number }> = []
-			const fundo: Array<{ time: UTCTimestamp; value: number }> = []
-			// Strict alternation: track the last emitted type and skip any same-
-			// type confirmation until the opposite type fires.
-			let lastEmittedType: "topo" | "fundo" | null = null
+			const line: Array<{ time: UTCTimestamp; value: number }> = []
+			const continuation: Array<{ time: UTCTimestamp; value: number }> = []
+			const breaks: Array<{ time: UTCTimestamp; value: number }> = []
+			const neutral: Array<{ time: UTCTimestamp; value: number }> = []
+			let lastTopo: number | null = null
+			let lastFundo: number | null = null
+			let lastType: "topo" | "fundo" | null = null
+			let topoCount = 0
+			let fundoCount = 0
+			let contCount = 0
+			let brkCount = 0
 			for (const m of markers) {
-				if (m.type === lastEmittedType) {
+				if (m.type === lastType) {
 					continue
 				}
-				const point = { time: m.brickIdx as UTCTimestamp, value: m.price }
+				let kind: VertexKind = "neutral"
 				if (m.type === "topo") {
-					topo.push(point)
+					if (lastTopo !== null) {
+						kind = m.price > lastTopo ? "continuation" : "break"
+					}
+					lastTopo = m.price
+					topoCount++
 				} else {
-					fundo.push(point)
+					if (lastFundo !== null) {
+						kind = m.price < lastFundo ? "continuation" : "break"
+					}
+					lastFundo = m.price
+					fundoCount++
 				}
-				lastEmittedType = m.type
+				const pt = { time: m.brickIdx as UTCTimestamp, value: m.price }
+				line.push(pt)
+				if (kind === "continuation") {
+					continuation.push(pt)
+					contCount++
+				} else if (kind === "break") {
+					breaks.push(pt)
+					brkCount++
+				} else {
+					neutral.push(pt)
+				}
+				lastType = m.type
 			}
 			return {
-				topo,
-				fundo,
-				topoCount: topo.length,
-				fundoCount: fundo.length,
+				line,
+				continuation,
+				breaks,
+				neutral,
+				counts: {
+					topo: topoCount,
+					fundo: fundoCount,
+					cont: contCount,
+					brk: brkCount,
+				},
 			}
 		},
 		[]
 	)
-	const pivotData5m = useMemo(
-		() => buildPivotOverlays(candles5m),
-		[buildPivotOverlays, candles5m]
+	const swing5m = useMemo(
+		() => buildSwingStructure(candles5m),
+		[buildSwingStructure, candles5m]
 	)
-	const pivotData15m = useMemo(
-		() => buildPivotOverlays(candles15m),
-		[buildPivotOverlays, candles15m]
+	const swing15m = useMemo(
+		() => buildSwingStructure(candles15m),
+		[buildSwingStructure, candles15m]
 	)
-	const pivotData60m = useMemo(
-		() => buildPivotOverlays(candles60m),
-		[buildPivotOverlays, candles60m]
+	const swing60m = useMemo(
+		() => buildSwingStructure(candles60m),
+		[buildSwingStructure, candles60m]
 	)
 	const [pivotPaneEnabled, setPivotPaneEnabled] = useState<{
 		"5m": boolean
@@ -564,7 +600,7 @@ const HawksIsolationCharts = ({
 	)
 	const buildOverlaysForPane = useCallback(
 		(
-			data: ReturnType<typeof buildPivotOverlays>,
+			data: ReturnType<typeof buildSwingStructure>,
 			tfEnabled: boolean
 		): Overlay[] => {
 			if (!tfEnabled) {
@@ -572,34 +608,48 @@ const HawksIsolationCharts = ({
 			}
 			return [
 				{
-					key: "topo",
-					label: `TOPO (${data.topoCount})`,
-					color: "rgb(252, 211, 77)",
-					data: data.topo,
+					key: "swing-tape",
+					label: `Swing tape (${data.counts.topo} TOPO + ${data.counts.fundo} FUNDO)`,
+					color: "rgba(251, 191, 36, 0.55)",
+					data: data.line,
+					style: "line",
+				},
+				{
+					key: "vertex-continuation",
+					label: `Continuation (${data.counts.cont})`,
+					color: "rgb(52, 211, 153)",
+					data: data.continuation,
 					style: "points",
 				},
 				{
-					key: "fundo",
-					label: `FUNDO (${data.fundoCount})`,
-					color: "rgb(56, 189, 248)",
-					data: data.fundo,
+					key: "vertex-break",
+					label: `Trend break (${data.counts.brk})`,
+					color: "rgb(248, 113, 113)",
+					data: data.breaks,
+					style: "points",
+				},
+				{
+					key: "vertex-neutral",
+					label: `Seed`,
+					color: "rgb(190, 195, 205)",
+					data: data.neutral,
 					style: "points",
 				},
 			]
 		},
-		[buildPivotOverlays]
+		[]
 	)
 	const pivotOverlays5m = useMemo(
-		() => buildOverlaysForPane(pivotData5m, pivotPaneEnabled["5m"]),
-		[buildOverlaysForPane, pivotData5m, pivotPaneEnabled]
+		() => buildOverlaysForPane(swing5m, pivotPaneEnabled["5m"]),
+		[buildOverlaysForPane, swing5m, pivotPaneEnabled]
 	)
 	const pivotOverlays15m = useMemo(
-		() => buildOverlaysForPane(pivotData15m, pivotPaneEnabled["15m"]),
-		[buildOverlaysForPane, pivotData15m, pivotPaneEnabled]
+		() => buildOverlaysForPane(swing15m, pivotPaneEnabled["15m"]),
+		[buildOverlaysForPane, swing15m, pivotPaneEnabled]
 	)
 	const pivotOverlays60m = useMemo(
-		() => buildOverlaysForPane(pivotData60m, pivotPaneEnabled["60m"]),
-		[buildOverlaysForPane, pivotData60m, pivotPaneEnabled]
+		() => buildOverlaysForPane(swing60m, pivotPaneEnabled["60m"]),
+		[buildOverlaysForPane, swing60m, pivotPaneEnabled]
 	)
 
 	// Group A walker ribbon: pick one ribbon — composite if both gates agree
@@ -2093,14 +2143,25 @@ const HawksIsolationCharts = ({
 
 				<TabsContent value="G">
 					<div className="text-tiny text-txt-300 mb-2 leading-relaxed">
-						Period-2 structural pivots from <code>walkStructuralPivots</code> —
-						bit-identical to the detector the engine consumes, with strict type
-						alternation applied at the page level: after a TOPO the next plotted
-						pivot is the next FUNDO; same-type confirmations in between are
-						dropped. Yellow = TOPO at the high of the last bullish brick before
-						2 bearish closes; cyan = FUNDO at the low of the last bearish brick
-						before 2 bullish closes. Dots land at the confirmation brick
-						(2-brick lag from the actual peak/trough by design).
+						Dow-theory swing structure. Period-2 pivots from{" "}
+						<code>walkStructuralPivots</code> alternated TOPO ↔ FUNDO and
+						connected as one swing tape (amber). Each vertex colored by trend
+						continuation:{" "}
+						<span style={{ color: "rgb(52, 211, 153)" }}>
+							<strong>green</strong>
+						</span>{" "}
+						= continuation (TOPO higher than prior TOPO, or FUNDO lower than
+						prior FUNDO — HH/LL);{" "}
+						<span style={{ color: "rgb(248, 113, 113)" }}>
+							<strong>red</strong>
+						</span>{" "}
+						= break (LH or HL — trend roll-over);{" "}
+						<span style={{ color: "rgb(190, 195, 205)" }}>
+							<strong>gray</strong>
+						</span>{" "}
+						= seed (first of its type — nothing to compare yet). Vertices land
+						at the confirmation brick (2-brick lag from the actual peak/trough
+						by design).
 					</div>
 					<div className="text-small mb-2 flex items-center gap-2">
 						<span className="text-txt-300">TF:</span>
