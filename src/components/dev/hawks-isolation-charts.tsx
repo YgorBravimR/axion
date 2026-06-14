@@ -530,24 +530,46 @@ const HawksIsolationCharts = ({
 				if (m.type === lastType) {
 					continue
 				}
+				// Cosmetic refinement: the detector picks the last bullish close
+				// (or bearish close for FUNDO) as the pivot — but the actual
+				// visual extreme is often the wick of the first opposite-color
+				// brick that comes right after. Scan [peakBrickIdx, confirmBrickIdx)
+				// inclusive of the bridge bricks and pick the true high (or low)
+				// for rendering. Engine still consumes the unrefined price.
+				let renderIdx = m.peakBrickIdx
+				let renderPrice = m.price
+				if (m.type === "topo") {
+					for (let i = m.peakBrickIdx; i < m.brickIdx; i++) {
+						const h = bricks[i]?.high
+						if (h !== undefined && h > renderPrice) {
+							renderPrice = h
+							renderIdx = i
+						}
+					}
+				} else {
+					for (let i = m.peakBrickIdx; i < m.brickIdx; i++) {
+						const l = bricks[i]?.low
+						if (l !== undefined && l < renderPrice) {
+							renderPrice = l
+							renderIdx = i
+						}
+					}
+				}
 				let kind: VertexKind = "neutral"
 				if (m.type === "topo") {
 					if (lastTopo !== null) {
-						kind = m.price > lastTopo ? "continuation" : "break"
+						kind = renderPrice > lastTopo ? "continuation" : "break"
 					}
-					lastTopo = m.price
+					lastTopo = renderPrice
 					topoCount++
 				} else {
 					if (lastFundo !== null) {
-						kind = m.price < lastFundo ? "continuation" : "break"
+						kind = renderPrice < lastFundo ? "continuation" : "break"
 					}
-					lastFundo = m.price
+					lastFundo = renderPrice
 					fundoCount++
 				}
-				// Plot at the ACTUAL peak/trough brick, not the confirmation
-				// brick — the line traces the visual swing structure, not the
-				// 2-brick-lagged detection events.
-				const pt = { time: m.peakBrickIdx as UTCTimestamp, value: m.price }
+				const pt = { time: renderIdx as UTCTimestamp, value: renderPrice }
 				line.push(pt)
 				if (kind === "continuation") {
 					continuation.push(pt)
