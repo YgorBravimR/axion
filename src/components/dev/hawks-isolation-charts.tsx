@@ -509,8 +509,11 @@ const HawksIsolationCharts = ({
 			counts: { topo: number; fundo: number; cont: number; brk: number }
 			// Per-brick streams of structural state. Index = brick index;
 			// value = state of the most recent same-type pivot comparison
-			// observed at or before that brick (forward-fill). Badges read
-			// these streams at the crosshair position so they update live.
+			// whose CONFIRMATION brick is <= that index (forward-fill).
+			// Badges read these streams at the crosshair position so they
+			// update live AND remain causally honest: scrubbing to a brick
+			// before a pivot's confirmation shows the prior state, never
+			// the future knowledge from the pivot's peak position.
 			topoTrendByBrick: StructuralState[]
 			fundoTrendByBrick: StructuralState[]
 		} => {
@@ -573,8 +576,14 @@ const HawksIsolationCharts = ({
 				if (m.type === "topo") {
 					if (lastTopo !== null) {
 						kind = renderPrice > lastTopo ? "continuation" : "break"
+						// Causal honesty: trend events key off the CONFIRMATION
+						// brick (m.brickIdx), not the visual peak (renderIdx).
+						// Per-brick streams must reflect knowledge available
+						// only at confirmation — engines reading these streams
+						// cannot "see" a pivot retroactively from its earlier
+						// peak. Visual vertex still renders at the peak.
 						topoEvents.push({
-							at: renderIdx,
+							at: m.brickIdx,
 							state: renderPrice > lastTopo ? "higher" : "lower",
 						})
 					}
@@ -584,7 +593,7 @@ const HawksIsolationCharts = ({
 					if (lastFundo !== null) {
 						kind = renderPrice < lastFundo ? "continuation" : "break"
 						fundoEvents.push({
-							at: renderIdx,
+							at: m.brickIdx,
 							state: renderPrice < lastFundo ? "lower" : "higher",
 						})
 					}
