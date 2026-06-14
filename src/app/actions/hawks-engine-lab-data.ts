@@ -176,14 +176,29 @@ export const loadHawksEngineLabData = async (
 			// Demo-fire path: only used to validate the chart marker pipeline
 			// while playbook stubs return null. Skipped automatically the
 			// moment a real playbook starts firing.
+			//
+			// Direction-vs-brick-direction guard: a real entry can only fire
+			// on a brick that moves IN the trade direction. LONGs require a
+			// bullish 5m brick (close > open); SHORTs require a bearish one.
+			// Firing a SHORT on a bullish brick would mean "we just saw price
+			// move up, so we sell" — structurally wrong. Mirror for LONG.
 			const realFired = result.signal !== null
+			const isBullishBrick = candle.close > candle.open
+			const isBearishBrick = candle.close < candle.open
+			const brickDirectionAgrees =
+				directionAllowed === "long"
+					? isBullishBrick
+					: directionAllowed === "short"
+						? isBearishBrick
+						: false
 			const canDemoFire =
 				DEMO_FIRES &&
 				!realFired &&
 				demoFireBricksLeftThisDay > 0 &&
 				directionAllowed !== null &&
 				inTradingWindow &&
-				!cooldownActive
+				!cooldownActive &&
+				brickDirectionAgrees
 			let fired = realFired
 			let direction = result.signal?.direction ?? null
 			let price = result.signal?.price ?? null

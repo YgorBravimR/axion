@@ -25,13 +25,15 @@ import {
 import { RenkoPane } from "@/components/backtest/inspector/renko-pane"
 import { candlesToBrickSeriesNative } from "@/lib/renko/bricks-to-chart"
 
-// Indicator overlay colors — match the indicator-lab palette so the
-// engine lab and the lab share a visual vocabulary.
-const COLOR_EMA_FAST_60M = "rgb(94, 234, 212)" // teal — 60m fast EMA
-const COLOR_EMA_SLOW_60M = "rgb(20, 160, 160)" // teal dark — 60m slow EMA
-const COLOR_EMA_FAST_15M = "rgb(255, 165, 60)" // orange — 15m fast EMA
-const COLOR_EMA_SLOW_15M = "rgb(210, 130, 40)" // orange muted — 15m slow EMA
-const COLOR_VWAP_D = "rgb(168, 85, 247)" // purple — daily VWAP
+// Indicator overlay colors — match the canonical Hawks palette used in
+// /dev/hawks-isolation (see src/components/dev/hawks-isolation-charts.tsx
+// lines 411-414, 453). 60m EMAs = orange (the gate, the important color);
+// 15m EMAs = gray (booster, subtle); VWAP daily = teal-bright.
+const COLOR_EMA_FAST_60M = "rgb(255, 165, 60)" // ORANGE_BRIGHT — 60m EMA 27 (gate fast)
+const COLOR_EMA_SLOW_60M = "rgb(210, 130, 40)" // ORANGE_MUTED — 60m EMA 55 (gate slow)
+const COLOR_EMA_FAST_15M = "rgb(190, 195, 205)" // GRAY_LIGHT — 15m EMA 27 (booster fast)
+const COLOR_EMA_SLOW_15M = "rgb(130, 135, 145)" // GRAY_DARK — 15m EMA 55 (booster slow)
+const COLOR_VWAP_D = "rgb(94, 234, 212)" // TEAL_BRIGHT — VWAP daily
 const COLOR_FIRE_LONG = "rgb(52, 211, 153)" // green — LONG fire marker
 const COLOR_FIRE_SHORT = "rgb(248, 113, 113)" // red — SHORT fire marker
 
