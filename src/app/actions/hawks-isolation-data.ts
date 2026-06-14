@@ -163,7 +163,7 @@ export const fetchHawksIsolationData = async (
 		throw new Error("Invalid date format")
 	}
 
-	if (hawksV0.entry.type !== "hawks_triple_screen") {
+	if (hawksV0.entry.type !== "hawks_playbook") {
 		throw new Error("Preset misconfigured")
 	}
 	const config = hawksV0.entry.config

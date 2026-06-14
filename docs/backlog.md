@@ -71,6 +71,48 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Backtest / Inspector
 
+### Hawks engine — noise / chop discriminator per playbook (refine phase)
+
+- **Priority**: P2
+- **Effort**: M (1-2 days — exploratory: discriminator badge in lab, day-scrubbing pass with Ygor to mark "noise vs trade" bricks, then formalize the winning rule)
+- **Source**: 2026-06-14 — engine lab review (Image #12). Demo path fires SHORT B twice inside a clearly choppy box; both fires pass every coded rule (60m gate, leg-shape ≥4/≥2, VB, 5m HH/LL running-extreme) but Ygor would not take either trade. Engine isn't wrong against stated rules — humans see "chop" as a Gestalt the rules don't yet encode.
+- **What + Why**: build a noise/chop classifier the engine can read at fire-decision time. Three candidate rules — none obviously right, all need scrubbing against catalogued days:
+  1. **Brick-ATR ratio**: average brick range / net price displacement over last N bricks. High ratio = chop.
+  2. **Color-flip count**: number of color flips in last N bricks. ≥X flips in last 10 = chop.
+  3. **Range-bound test**: rolling high − rolling low over last 20 bricks ≤ K renko-sizes = chop.
+- **Build sequence**:
+  1. Add a "noise score" badge row to the engine lab (`/dev/hawks-engine-lab`) — three cursor-reactive badges for the three candidates above.
+  2. Day-scrub a catalog (~10 days) with Ygor marking each fire as "noise" or "OK".
+  3. Pick the rule (or combination) that minimises false-positive noise fires without killing real-signal fires.
+  4. Promote the chosen discriminator into each playbook's `evaluate()` (per the v0.9 spec, the noise rule lives INSIDE the playbook, not in the orchestrator). Each playbook gets its own threshold — `mean_reversion` may TREAT chop as signal (fires at the edges), `retracement` rejects chop entirely, `vwap_rejection` is orthogonal.
+- **Locked design call (2026-06-14, Ygor)**: only canonical universal rule is 60m gate direction. All other rules live inside individual playbooks — discriminator IS a per-playbook concern.
+- **Done when**: each playbook's `evaluate()` rejects fires that score "chop" by the chosen rule; Image #12-class fires no longer appear in the engine lab; a follow-up Ygor-led scrub of 10 days confirms no real-signal trades are killed.
+- **Date filed**: 2026-06-14.
+
+---
+
+### Hawks engine — per-playbook engine variant (today's orchestrator is shared)
+
+- **Priority**: P2
+- **Effort**: L (2-3 days — refactor orchestrator into composable per-playbook engines + per-playbook config blocks; migrate the lab UI to a playbook-switcher view; preserve current Hawks orchestrator as the "all playbooks" mode)
+- **Source**: 2026-06-14 — engine v0.9 review with Ygor. Today's `hawks-playbook` orchestrator (`src/lib/backtest/modules/entry/hawks-playbook.ts`) is a single state machine that dispatches to all 3 playbooks per brick. Ygor's manual-optimization workflow needs each playbook to be runnable in isolation (its own backtest, its own quality metrics, its own optimization knobs) without the others firing or contaminating the result.
+- **What + Why**: today `processHawksPlaybookCandle` evaluates ALL playbooks per brick and picks the highest-priority hit. For per-playbook optimization Ygor needs:
+  - **Per-playbook backtest preset** (`hawksV0_mean_reversion`, `hawksV0_retracement`, `hawksV0_vwap_rejection`) so each can be benchmarked alone.
+  - **Per-playbook entry-module config block** so quality thresholds, leg sizes, etc. can be tuned without affecting siblings.
+  - **Per-playbook engine state slot** — the shared orchestrator's `lastFireBrickIndex` cooldown is a single counter; running a single playbook should not be cooldown-coupled to fires from the others.
+  - **Lab UI playbook switcher** — `/dev/hawks-engine-lab` should toggle between "all playbooks" view (today's behavior) and a "just this playbook" view.
+- **Locked design call (2026-06-14, Ygor)**: 60m gate stays the universal rule across all variants. Each per-playbook engine still consumes the same `HtfWalker` snapshot.
+- **Build sequence**:
+  1. Extract each playbook's logic into its own `processSinglePlaybookCandle` entry function so it can run without the orchestrator.
+  2. Add `EntryModuleConfig` variants `hawks_mean_reversion`, `hawks_retracement`, `hawks_vwap_rejection`.
+  3. Add three presets to `hawks-presets.ts`.
+  4. Engine-lab page picks one preset; the page-level config becomes a dropdown.
+  5. The current `hawks_playbook` ("all playbooks" mode) stays as-is for the integrated view.
+- **Done when**: each playbook can be backtested alone with its own preset; `/dev/hawks-engine-lab` has a playbook switcher; per-playbook fire metrics are reportable in isolation; the "all playbooks" view still works as today.
+- **Date filed**: 2026-06-14.
+
+---
+
 ### Fractal-plan backfill tests — missing `computeROutcome` in r-snapshot mock (3 failing tests on main)
 
 - **Priority**: P2
