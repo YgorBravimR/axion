@@ -494,6 +494,10 @@ const HawksIsolationCharts = ({
 	// Reading the tape: a run of green vertices = clean trend (HH+HL or LL+LH);
 	// a red vertex = roll-over moment. This is Dow theory rendered directly.
 	type VertexKind = "continuation" | "break" | "neutral"
+	// Dow-theory structural state, evaluated on the most recent same-type
+	// pivot vs the one before it. `null` = not enough data yet (only one
+	// TOPO or one FUNDO so far in the window).
+	type StructuralState = "higher" | "lower" | null
 	const buildSwingStructure = useCallback(
 		(
 			candles: HawksIsolationData["candles5m"]
@@ -503,6 +507,10 @@ const HawksIsolationCharts = ({
 			breaks: Array<{ time: UTCTimestamp; value: number }>
 			neutral: Array<{ time: UTCTimestamp; value: number }>
 			counts: { topo: number; fundo: number; cont: number; brk: number }
+			// Latest TOPO-vs-prior-TOPO outcome ("higher" = HH, "lower" = LH).
+			topoTrend: StructuralState
+			// Latest FUNDO-vs-prior-FUNDO outcome ("lower" = LL, "higher" = HL).
+			fundoTrend: StructuralState
 		} => {
 			const bricks: Array<{
 				open: number
@@ -526,6 +534,8 @@ const HawksIsolationCharts = ({
 			let fundoCount = 0
 			let contCount = 0
 			let brkCount = 0
+			let topoTrend: StructuralState = null
+			let fundoTrend: StructuralState = null
 			for (const m of markers) {
 				if (m.type === lastType) {
 					continue
@@ -559,12 +569,14 @@ const HawksIsolationCharts = ({
 				if (m.type === "topo") {
 					if (lastTopo !== null) {
 						kind = renderPrice > lastTopo ? "continuation" : "break"
+						topoTrend = renderPrice > lastTopo ? "higher" : "lower"
 					}
 					lastTopo = renderPrice
 					topoCount++
 				} else {
 					if (lastFundo !== null) {
 						kind = renderPrice < lastFundo ? "continuation" : "break"
+						fundoTrend = renderPrice < lastFundo ? "lower" : "higher"
 					}
 					lastFundo = renderPrice
 					fundoCount++
@@ -593,6 +605,8 @@ const HawksIsolationCharts = ({
 					cont: contCount,
 					brk: brkCount,
 				},
+				topoTrend,
+				fundoTrend,
 			}
 		},
 		[]
@@ -2172,9 +2186,51 @@ const HawksIsolationCharts = ({
 							</button>
 						))}
 					</div>
+					<div className="text-tiny mb-2 grid grid-cols-3 gap-2">
+						{(
+							[
+								{ tf: "5m", swing: swing5m },
+								{ tf: "15m", swing: swing15m },
+								{ tf: "60m", swing: swing60m },
+							] as const
+						).map(({ tf, swing }) => {
+							const badge = (
+								label: string,
+								state: StructuralState,
+								greenWhen: "higher" | "lower"
+							) => {
+								const bg =
+									state === null
+										? GRAY_NEUTRAL
+										: state === greenWhen
+											? GREEN_FAINT
+											: RED_FAINT
+								return (
+									<span
+										key={label}
+										className="rounded-sm px-2 py-0.5 font-semibold"
+										style={{ background: bg, color: TEXT_BG }}
+									>
+										{label}{" "}
+										{state === null ? "—" : state === "higher" ? "↑" : "↓"}
+									</span>
+								)
+							}
+							return (
+								<div
+									key={tf}
+									className="border-bg-300 bg-bg-100/40 flex items-center gap-2 border px-2 py-1"
+								>
+									<span className="text-txt-300 font-mono">{tf}</span>
+									{badge("Highs", swing.topoTrend, "higher")}
+									{badge("Lows", swing.fundoTrend, "lower")}
+								</div>
+							)
+						})}
+					</div>
 					<div
 						className="grid grid-cols-1 gap-2 md:grid-cols-[3fr_2fr]"
-						style={{ height: "calc(100vh - 420px)", minHeight: "560px" }}
+						style={{ height: "calc(100vh - 480px)", minHeight: "520px" }}
 					>
 						<RenkoPane
 							className="h-full"
