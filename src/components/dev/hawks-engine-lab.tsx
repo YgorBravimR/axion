@@ -84,53 +84,72 @@ const HawksEngineLab = ({
 		[data, activeDayKey]
 	)
 
-	// Chart series + overlays for the active day. Built only when a day is
-	// selected — chart pane is hidden otherwise.
+	// Chart series + overlays for the FULL loaded window. The chart shows
+	// every day concatenated on a single brick-index axis (works because
+	// lightweight-charts uses brick-index, not wall-clock time, here).
+	// The day sidebar + table still operate per-day; the chart is global.
 	const chartPayload = useMemo(() => {
-		if (!activeDay) {
+		if (data.days.length === 0) {
 			return null
 		}
-		const series = candlesToBrickSeriesNative(activeDay.candles)
+		// Flatten candles across days while building a per-day brickIdx
+		// offset map so we can place FIRE markers at the right global index.
+		const allCandles: EngineLabDayPayload["candles"] = []
+		const dayOffsets: Array<{ dayKey: string; offset: number }> = []
+		for (const d of data.days) {
+			dayOffsets.push({ dayKey: d.dayKey, offset: allCandles.length })
+			for (const c of d.candles) {
+				allCandles.push(c)
+			}
+		}
+		const series = candlesToBrickSeriesNative(allCandles)
 		const indicators = [
 			overlayFromKey(
-				activeDay.candles,
+				allCandles,
 				"mme27_60m",
 				"60m EMA 27 (gate fast)",
 				COLOR_EMA_FAST_60M
 			),
 			overlayFromKey(
-				activeDay.candles,
+				allCandles,
 				"mme55_60m",
 				"60m EMA 55 (gate slow)",
 				COLOR_EMA_SLOW_60M
 			),
 			overlayFromKey(
-				activeDay.candles,
+				allCandles,
 				"mme27_15m",
 				"15m EMA 27 (booster fast)",
 				COLOR_EMA_FAST_15M
 			),
 			overlayFromKey(
-				activeDay.candles,
+				allCandles,
 				"mme55_15m",
 				"15m EMA 55 (booster slow)",
 				COLOR_EMA_SLOW_15M
 			),
-			overlayFromKey(activeDay.candles, "vwap_d", "VWAP daily", COLOR_VWAP_D),
+			overlayFromKey(allCandles, "vwap_d", "VWAP daily", COLOR_VWAP_D),
 		]
-		// FIRE markers as point overlays — one for long, one for short, so
-		// the chart distinguishes them by color.
+		// FIRE markers concatenated across all days. Per-day brickIdx +
+		// the day's offset = global x-axis position.
 		const longFires: Array<{ time: UTCTimestamp; value: number }> = []
 		const shortFires: Array<{ time: UTCTimestamp; value: number }> = []
-		for (const b of activeDay.bricks) {
-			if (!b.fired || b.price === null) {
-				continue
-			}
-			const pt = { time: b.brickIndexInDay as UTCTimestamp, value: b.price }
-			if (b.direction === "long") {
-				longFires.push(pt)
-			} else if (b.direction === "short") {
-				shortFires.push(pt)
+		for (let di = 0; di < data.days.length; di++) {
+			const day = data.days[di]!
+			const offset = dayOffsets[di]!.offset
+			for (const b of day.bricks) {
+				if (!b.fired || b.price === null) {
+					continue
+				}
+				const pt = {
+					time: (offset + b.brickIndexInDay) as UTCTimestamp,
+					value: b.price,
+				}
+				if (b.direction === "long") {
+					longFires.push(pt)
+				} else if (b.direction === "short") {
+					shortFires.push(pt)
+				}
 			}
 		}
 		const fireOverlays = [
@@ -149,8 +168,13 @@ const HawksEngineLab = ({
 				style: "points" as const,
 			},
 		]
-		return { series, indicators: [...indicators, ...fireOverlays] }
-	}, [activeDay])
+		return {
+			series,
+			indicators: [...indicators, ...fireOverlays],
+			totalDays: data.days.length,
+			totalBricks: allCandles.length,
+		}
+	}, [data])
 
 	const filteredBricks = useMemo(() => {
 		if (!activeDay) {
@@ -304,7 +328,7 @@ const HawksEngineLab = ({
 				</aside>
 
 				<div className="bg-bg-200 border-bg-300 space-y-s-300 rounded-md border p-3">
-					{activeDay && chartPayload && (
+					{chartPayload && (
 						<div className="space-y-s-200">
 							<div className="text-tiny text-txt-300 gap-s-300 flex flex-wrap items-center">
 								<LegendDot color={COLOR_EMA_FAST_60M} label="60m EMA27" />
@@ -316,11 +340,11 @@ const HawksEngineLab = ({
 								<LegendDot color={COLOR_FIRE_SHORT} label="SHORT fire" />
 							</div>
 							<RenkoPane
-								label={`${activeDay.dayKey} — 5m Renko`}
-								subLabel="60m EMAs = gate, 15m EMAs = booster, VWAP = vwap_rejection ref"
+								label={`${data.from} → ${data.to} — 5m Renko (${chartPayload.totalDays} days, ${chartPayload.totalBricks.toLocaleString()} bricks)`}
+								subLabel="60m EMAs = gate, 15m EMAs = booster, VWAP = vwap_rejection ref. Scroll/zoom the chart; day picker scopes the table only."
 								series={chartPayload.series}
 								indicators={chartPayload.indicators}
-								className="h-[420px]"
+								className="h-[480px]"
 							/>
 						</div>
 					)}

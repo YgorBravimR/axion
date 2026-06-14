@@ -2,6 +2,9 @@ import { loadHawksEngineLabData } from "@/app/actions/hawks-engine-lab-data"
 import { HawksEngineLab } from "@/components/dev/hawks-engine-lab"
 import { requireRole } from "@/lib/auth-utils"
 
+// Default window: 30 days, rendered as a single concatenated chart so
+// the user can scroll the entire month in one view. The day sidebar
+// scopes the per-brick table; the chart always shows all loaded days.
 const DEFAULT_FROM = "2026-05-01"
 const DEFAULT_TO = "2026-05-30"
 
