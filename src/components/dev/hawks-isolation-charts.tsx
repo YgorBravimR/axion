@@ -610,30 +610,9 @@ const HawksIsolationCharts = ({
 				{
 					key: "swing-tape",
 					label: `Swing tape (${data.counts.topo} TOPO + ${data.counts.fundo} FUNDO)`,
-					color: "rgba(251, 191, 36, 0.55)",
+					color: "rgb(56, 189, 248)",
 					data: data.line,
 					style: "line",
-				},
-				{
-					key: "vertex-continuation",
-					label: `Continuation (${data.counts.cont})`,
-					color: "rgb(52, 211, 153)",
-					data: data.continuation,
-					style: "points",
-				},
-				{
-					key: "vertex-break",
-					label: `Trend break (${data.counts.brk})`,
-					color: "rgb(248, 113, 113)",
-					data: data.breaks,
-					style: "points",
-				},
-				{
-					key: "vertex-neutral",
-					label: `Seed`,
-					color: "rgb(190, 195, 205)",
-					data: data.neutral,
-					style: "points",
 				},
 			]
 		},
@@ -2143,25 +2122,13 @@ const HawksIsolationCharts = ({
 
 				<TabsContent value="G">
 					<div className="text-tiny text-txt-300 mb-2 leading-relaxed">
-						Dow-theory swing structure. Period-2 pivots from{" "}
+						Dow-theory swing tape: period-2 pivots from{" "}
 						<code>walkStructuralPivots</code> alternated TOPO ↔ FUNDO and
-						connected as one swing tape (amber). Each vertex colored by trend
-						continuation:{" "}
-						<span style={{ color: "rgb(52, 211, 153)" }}>
-							<strong>green</strong>
-						</span>{" "}
-						= continuation (TOPO higher than prior TOPO, or FUNDO lower than
-						prior FUNDO — HH/LL);{" "}
-						<span style={{ color: "rgb(248, 113, 113)" }}>
-							<strong>red</strong>
-						</span>{" "}
-						= break (LH or HL — trend roll-over);{" "}
-						<span style={{ color: "rgb(190, 195, 205)" }}>
-							<strong>gray</strong>
-						</span>{" "}
-						= seed (first of its type — nothing to compare yet). Vertices land
-						at the confirmation brick (2-brick lag from the actual peak/trough
-						by design).
+						connected as a single cyan line. Read the line for trend structure:
+						ascending segments between consecutive TOPOs = higher highs;
+						descending segments between consecutive FUNDOs = lower lows.
+						Vertices land at the confirmation brick (2-brick lag from the actual
+						peak/trough by design).
 					</div>
 					<div className="text-small mb-2 flex items-center gap-2">
 						<span className="text-txt-300">TF:</span>
