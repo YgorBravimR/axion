@@ -57,6 +57,8 @@ describe("buildHtfWalker", () => {
 		expect(snapshot).toEqual<HtfWalkerSnapshot>({
 			gate15m: "NO_SIGNAL",
 			gate60m: "NO_SIGNAL",
+			lastTopo15m: null,
+			lastFundo15m: null,
 		})
 	})
 
@@ -206,6 +208,8 @@ describe("lookupHtfGate", () => {
 		expect(snapshot).toEqual<HtfWalkerSnapshot>({
 			gate15m: "NO_SIGNAL",
 			gate60m: "NO_SIGNAL",
+			lastTopo15m: null,
+			lastFundo15m: null,
 		})
 	})
 

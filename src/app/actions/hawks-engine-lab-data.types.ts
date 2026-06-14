@@ -48,6 +48,12 @@ export interface EngineLabBrick {
 	// Structural pivot bias: state forward-filled from the last
 	// confirmation. null = no pivot yet confirmed today.
 	pivotBias: PivotBias
+	// Last CONFIRMED 15m structural pivot prices forward-filled from
+	// the HtfWalker. These are the anchors the fibo measured-move
+	// target uses (spec §5). null when no pivot of that type has been
+	// confirmed yet in the walk.
+	lastTopo15m: number | null
+	lastFundo15m: number | null
 	// Orchestrator output:
 	fired: boolean
 	direction: Direction | null

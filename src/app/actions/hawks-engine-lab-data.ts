@@ -168,12 +168,10 @@ export const loadHawksEngineLabData = async (
 	const fromDate = new Date(`${from}T00:00:00Z`)
 	const toDate = new Date(`${to}T23:59:59Z`)
 
-	const candles5m = await fetchTfCandles(
-		"hawk_5m_win",
-		assetId,
-		fromDate,
-		toDate
-	)
+	const [candles5m, candles15m] = await Promise.all([
+		fetchTfCandles("hawk_5m_win", assetId, fromDate, toDate),
+		fetchTfCandles("hawk_15m_win", assetId, fromDate, toDate),
+	])
 
 	if (hawksV0.entry.type !== "hawks_playbook") {
 		throw new Error("hawksV0 preset is not hawks_playbook")
@@ -181,7 +179,9 @@ export const loadHawksEngineLabData = async (
 	const config = hawksV0.entry.config
 
 	// Precompute HTF walker over the full window once — same as engine.
-	const htfWalker = buildHtfWalker(candles5m, config)
+	// Phase C: pass 15m candles so the walker also tracks 15m structural
+	// pivots (anchors for the Phase E fibo measured-move targets).
+	const htfWalker = buildHtfWalker(candles5m, config, candles15m)
 
 	// Replay the orchestrator day-by-day, mirroring engine.ts.
 	const days = groupCandlesByDay(candles5m)
@@ -557,6 +557,8 @@ export const loadHawksEngineLabData = async (
 				ema5mSlope,
 				vwapSide,
 				pivotBias: currentPivotBias,
+				lastTopo15m: htfSnapshot?.lastTopo15m ?? null,
+				lastFundo15m: htfSnapshot?.lastFundo15m ?? null,
 				fired,
 				direction,
 				price,

@@ -676,6 +676,24 @@ const SignalsAtCursor = ({ brick, hovering }: SignalsAtCursorProps) => {
 					}
 				/>
 				<SignalBadge
+					label="15m topo"
+					value={
+						brick.lastTopo15m !== null
+							? brick.lastTopo15m.toLocaleString()
+							: "—"
+					}
+					tone="destructive"
+				/>
+				<SignalBadge
+					label="15m fundo"
+					value={
+						brick.lastFundo15m !== null
+							? brick.lastFundo15m.toLocaleString()
+							: "—"
+					}
+					tone="success"
+				/>
+				<SignalBadge
 					label="Allowed"
 					value={brick.directionAllowed ?? "—"}
 					tone={

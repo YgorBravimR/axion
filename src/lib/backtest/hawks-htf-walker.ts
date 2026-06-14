@@ -33,17 +33,36 @@
 
 import type { HawksTripleScreenConfig } from "@/types/backtest"
 import type { CandleRow } from "@/types/candle"
+import {
+	createStructuralPivotState,
+	stepStructuralPivot,
+} from "./hawks-structural-pivots"
 
 export type HtfWalkerState = "BULL" | "BEAR" | "NO_SIGNAL"
 
+/**
+ * Per-5m-brick snapshot of HTF state. Carries:
+ *   - `gate15m` / `gate60m` — methodology-correct sticky-state gates
+ *     (Phase A engine v0.9 contract).
+ *   - `lastTopo15m` / `lastFundo15m` — most recent CONFIRMED 15m
+ *     structural pivot price, deduped by topo↔fundo alternation per
+ *     the indicator-lab pattern (`hawks-isolation-charts.tsx:547`).
+ *     Used by the exit-management subsystem (spec §5, Phase E fibo
+ *     measured-move) to anchor the impulse size. null when no
+ *     confirmed pivot of that type has been seen yet in the walk.
+ */
 export interface HtfWalkerSnapshot {
 	gate15m: HtfWalkerState
 	gate60m: HtfWalkerState
+	lastTopo15m: number | null
+	lastFundo15m: number | null
 }
 
 const ALL_NO_SIGNAL: HtfWalkerSnapshot = {
 	gate15m: "NO_SIGNAL",
 	gate60m: "NO_SIGNAL",
+	lastTopo15m: null,
+	lastFundo15m: null,
 }
 
 const stepOneTf = (
@@ -90,20 +109,77 @@ const stepOneTf = (
 }
 
 /**
- * Walk the candle history end-to-end and produce a per-timestamp snapshot of
- * the methodology-correct HTF gate state.
+ * Walk the 5m candle history end-to-end and produce a per-timestamp snapshot
+ * of the methodology-correct HTF gate state PLUS the most recent confirmed
+ * 15m structural pivot prices.
  *
  * Candles MUST be sorted by timestamp ascending (engine guarantee). State is
  * seeded as NO_SIGNAL and carries forward across day boundaries.
  *
- * Returns a Map keyed by candle.timestamp. When two candles share a timestamp
- * (rare but possible with sub-second exports), the LAST one wins — same
- * behavior as iterating a JS Map with duplicate keys.
+ * The optional `candles15m` argument is a separate brick stream for the 15m
+ * timeframe. When provided, the structural-pivot detector runs on those
+ * bricks and the most recent confirmed topo/fundo is forward-filled into
+ * each 5m snapshot whose timestamp is ≥ that pivot's confirmation timestamp.
+ * Pass an empty array (or omit) to skip — `lastTopo15m` / `lastFundo15m`
+ * will be null in every snapshot.
+ *
+ * Returns a Map keyed by 5m candle.timestamp. When two candles share a
+ * timestamp the LAST one wins — same as iterating a JS Map with duplicate
+ * keys.
  */
 export const buildHtfWalker = (
 	candles: CandleRow[],
-	config: HawksTripleScreenConfig
+	config: HawksTripleScreenConfig,
+	candles15m: CandleRow[] = []
 ): Map<string, HtfWalkerSnapshot> => {
+	// Pre-walk the 15m structural pivots into a list of (timestamp, topo,
+	// fundo) where the topo/fundo prices are the LATEST confirmed value of
+	// that type at or before this timestamp. Deduped by topo↔fundo
+	// alternation (the detector emits noise topos during a bearish run with
+	// `price` = prior brick's low, etc — same quirk as 5m).
+	interface FifteenPivotRow {
+		timestamp: string
+		topo: number | null
+		fundo: number | null
+	}
+	const fifteenRows: FifteenPivotRow[] = []
+	{
+		let pivotState = createStructuralPivotState()
+		let lastTopo: number | null = null
+		let lastFundo: number | null = null
+		let lastAdoptedType: "topo" | "fundo" | null = null
+		for (let i = 0; i < candles15m.length; i++) {
+			const c = candles15m[i]!
+			const r = stepStructuralPivot(c, i, pivotState)
+			pivotState = r.state
+			if (r.pivot && r.pivot.type !== lastAdoptedType) {
+				lastAdoptedType = r.pivot.type
+				if (r.pivot.type === "topo") {
+					lastTopo = r.pivot.price
+				} else {
+					lastFundo = r.pivot.price
+				}
+			}
+			fifteenRows.push({
+				timestamp: c.timestamp,
+				topo: lastTopo,
+				fundo: lastFundo,
+			})
+		}
+	}
+	// Lookup helper: find the latest 15m row with timestamp ≤ ts via a
+	// running cursor (both candle streams are sorted ascending).
+	let cursor = -1
+	const advanceTo = (ts: string): FifteenPivotRow | null => {
+		while (
+			cursor + 1 < fifteenRows.length &&
+			fifteenRows[cursor + 1]!.timestamp <= ts
+		) {
+			cursor++
+		}
+		return cursor >= 0 ? fifteenRows[cursor]! : null
+	}
+
 	const out = new Map<string, HtfWalkerSnapshot>()
 	let state15m: HtfWalkerState = "NO_SIGNAL"
 	let state60m: HtfWalkerState = "NO_SIGNAL"
@@ -124,7 +200,13 @@ export const buildHtfWalker = (
 			config.ema55_60m_key,
 			candle
 		)
-		out.set(candle.timestamp, { gate15m: state15m, gate60m: state60m })
+		const fifteen = advanceTo(candle.timestamp)
+		out.set(candle.timestamp, {
+			gate15m: state15m,
+			gate60m: state60m,
+			lastTopo15m: fifteen?.topo ?? null,
+			lastFundo15m: fifteen?.fundo ?? null,
+		})
 	}
 	return out
 }
@@ -155,7 +237,7 @@ export const lookupHtfGate = (
  * zones where methodology would carry the prior state.
  */
 export const isHtfGateFavorable = (
-	snapshot: HtfWalkerSnapshot,
+	snapshot: Pick<HtfWalkerSnapshot, "gate15m" | "gate60m">,
 	direction: "short" | "long"
 ): boolean => {
 	if (direction === "short") {
