@@ -49,6 +49,38 @@ export interface PlaybookIndicatorKeys {
 	vwap_d_key: string
 }
 
+/**
+ * Per-playbook exit configuration. Each playbook carries its own
+ * preferred exit recipe; the engine's exit-management orchestrator
+ * consumes this to pick the right target rule and trail behaviour
+ * for the trade. Spec §9 (Phase F).
+ *
+ *   - `targetRule`:
+ *       "static3R" — fixed 3R (= 6 brick bodies) take-profit, OCO with
+ *         the static stop. The conservative default.
+ *       "fibo_T1" / "fibo_T2" / "fibo_T3" — 15m measured-move target
+ *         at 76.4 / 100 / 161.8% of the impulse, anchored at the
+ *         retracement peak (spec §5).
+ *       "trail_only" — no take-profit; only the trail-after-3R can
+ *         exit. Requires `trailAfter3R: true` (validated at
+ *         config-build time).
+ *   - `trailAfter3R`: when true, after net favor reaches 3R AND a
+ *     brick closes favorable, the static stop is replaced by a
+ *     2-brick-behind trail that ratchets favorable on each subsequent
+ *     brick close (spec §7).
+ */
+export type ExitTargetRule =
+	| "static3R"
+	| "fibo_T1"
+	| "fibo_T2"
+	| "fibo_T3"
+	| "trail_only"
+
+export interface PlaybookExitConfig {
+	targetRule: ExitTargetRule
+	trailAfter3R: boolean
+}
+
 export interface PlaybookFire {
 	/** Which playbook fired. */
 	id: PlaybookId
@@ -58,6 +90,24 @@ export interface PlaybookFire {
 	stopReference: number
 	/** Human-readable label for chart / debug. */
 	label: string
+	/**
+	 * Exit configuration this playbook prefers for this fire. The engine's
+	 * exit-management orchestrator consumes this; see spec §9.
+	 */
+	exitConfig: PlaybookExitConfig
+}
+
+/**
+ * Locked defaults for each playbook (spec §9, signed off 2026-06-14).
+ * Starting points only — Phase J's validation scrub is where the user
+ * may override per playbook.
+ */
+export const PLAYBOOK_EXIT_DEFAULTS: Readonly<
+	Record<PlaybookId, PlaybookExitConfig>
+> = {
+	mean_reversion: { targetRule: "static3R", trailAfter3R: false },
+	retracement: { targetRule: "fibo_T2", trailAfter3R: true },
+	vwap_rejection: { targetRule: "static3R", trailAfter3R: true },
 }
 
 export interface Playbook {
