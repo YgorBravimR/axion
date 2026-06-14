@@ -61,11 +61,15 @@ export interface EngineLabBrick {
 	stopReference: number | null
 	label: string | null
 	tier: QualityTier | null
-	// Post-entry trade lifecycle, populated only when fired === true.
-	// Simulated forward from the fire brick using the spec §2 net-distance
-	// breakeven primitive + the configured target rule (Mode 1 static 3R
-	// today; later phases will simulate Mode 2/3 as well).
-	lifecycle: TradeLifecycle | null
+	// Post-entry trade lifecycles, populated only when fired === true.
+	// Both modes are simulated for every fire so the lab can toggle
+	// between them without re-fetching. Spec §3 composition matrix:
+	//   - `lifecycleConservative` = Mode 1 (static 3R target, no trail).
+	//   - `lifecycleModerate` = Mode 2 (no target, trail activates at 3R,
+	//     runs forever).
+	// Phase E will add `lifecycleFibo` for Mode 3.
+	lifecycleConservative: TradeLifecycle | null
+	lifecycleModerate: TradeLifecycle | null
 }
 
 /**
@@ -74,17 +78,23 @@ export interface EngineLabBrick {
  * trail activations, and exit markers on the chart.
  */
 export interface TradeLifecycle {
-	exitMode: "conservative" // Mode 1 only in Phase B; Modes 2/3 added later.
+	exitMode: "conservative" | "moderate" // Mode 1 + Mode 2 (Phase B + Phase D).
 	// Breakeven event (when stop moved from initial to entry).
 	beTriggered: boolean
 	beBrickIndexInDay: number | null
+	// Trail activation event (Mode 2 only — when net favor reached 3R and
+	// a brick closed favorable). null in conservative mode and in moderate
+	// mode when stopped/exited before reaching 3R.
+	trailActivated: boolean
+	trailActivationBrickIndexInDay: number | null
 	// Exit event (the brick that closed the trade).
 	exitBrickIndexInDay: number
-	exitReason: "stop_initial" | "stop_be" | "target" | "eod"
+	exitReason: "stop_initial" | "stop_be" | "stop_trail" | "target" | "eod"
 	exitPrice: number
-	// Targets and stops at fire time, for chart overlay.
+	// Stop / target at fire time. `target` is null for modes without a
+	// take-profit (Mode 2 trail-only).
 	initialStop: number
-	target: number
+	target: number | null
 }
 
 /**

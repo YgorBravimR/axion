@@ -42,6 +42,9 @@ const COLOR_EXIT_TARGET = "rgb(132, 204, 22)" // lime — target hit (full win)
 const COLOR_EXIT_BE = "rgb(250, 204, 21)" // amber — BE stop hit (zero P&L)
 const COLOR_EXIT_STOP_INITIAL = "rgb(225, 29, 72)" // rose — initial stop (full loss)
 const COLOR_EXIT_EOD = "rgb(148, 163, 184)" // slate — EOD forced close
+// Phase D — trail-after-3R event palette.
+const COLOR_TRAIL_ACTIVE = "rgb(168, 85, 247)" // purple — trail just activated
+const COLOR_EXIT_TRAIL = "rgb(34, 197, 94)" // emerald — trail stop hit (locked profit)
 
 const overlayFromKey = (
 	candles: EngineLabDayPayload["candles"],
@@ -86,6 +89,9 @@ const HawksEngineLab = ({
 	)
 	const [filter, setFilter] = useState<FilterMode>("all")
 	const [hoveredGlobalIdx, setHoveredGlobalIdx] = useState<number | null>(null)
+	const [exitMode, setExitMode] = useState<"conservative" | "moderate">(
+		"conservative"
+	)
 	const [pending, startTransition] = useTransition()
 
 	const activeDay = useMemo(
@@ -169,33 +175,49 @@ const HawksEngineLab = ({
 					shape: isLong ? "arrowUp" : "arrowDown",
 					text: `${b.direction.toUpperCase()} ${b.tier ?? ""}`.trim(),
 				})
-				if (b.lifecycle) {
-					if (
-						b.lifecycle.beTriggered &&
-						b.lifecycle.beBrickIndexInDay !== null
-					) {
+				const lifecycle =
+					exitMode === "conservative"
+						? b.lifecycleConservative
+						: b.lifecycleModerate
+				if (lifecycle) {
+					if (lifecycle.beTriggered && lifecycle.beBrickIndexInDay !== null) {
 						fireMarkers.push({
-							time: (offset + b.lifecycle.beBrickIndexInDay) as UTCTimestamp,
+							time: (offset + lifecycle.beBrickIndexInDay) as UTCTimestamp,
 							position: isLong ? "belowBar" : "aboveBar",
 							color: isLong ? COLOR_FIRE_LONG : COLOR_FIRE_SHORT,
 							shape: "circle",
 							text: "BE",
 						})
 					}
+					if (
+						lifecycle.trailActivated &&
+						lifecycle.trailActivationBrickIndexInDay !== null
+					) {
+						fireMarkers.push({
+							time: (offset +
+								lifecycle.trailActivationBrickIndexInDay) as UTCTimestamp,
+							position: isLong ? "belowBar" : "aboveBar",
+							color: COLOR_TRAIL_ACTIVE,
+							shape: "circle",
+							text: "TRAIL",
+						})
+					}
 					const exitColor =
-						b.lifecycle.exitReason === "target"
+						lifecycle.exitReason === "target"
 							? COLOR_EXIT_TARGET
-							: b.lifecycle.exitReason === "stop_be"
+							: lifecycle.exitReason === "stop_be"
 								? COLOR_EXIT_BE
-								: b.lifecycle.exitReason === "eod"
-									? COLOR_EXIT_EOD
-									: COLOR_EXIT_STOP_INITIAL
+								: lifecycle.exitReason === "stop_trail"
+									? COLOR_EXIT_TRAIL
+									: lifecycle.exitReason === "eod"
+										? COLOR_EXIT_EOD
+										: COLOR_EXIT_STOP_INITIAL
 					fireMarkers.push({
-						time: (offset + b.lifecycle.exitBrickIndexInDay) as UTCTimestamp,
+						time: (offset + lifecycle.exitBrickIndexInDay) as UTCTimestamp,
 						position: isLong ? "belowBar" : "aboveBar",
 						color: exitColor,
 						shape: "square",
-						text: b.lifecycle.exitReason.toUpperCase().replace("_", " "),
+						text: lifecycle.exitReason.toUpperCase().replace("_", " "),
 					})
 				}
 			}
@@ -215,7 +237,7 @@ const HawksEngineLab = ({
 			totalBricks: allCandles.length,
 			totalFires,
 		}
-	}, [data])
+	}, [data, exitMode])
 
 	// Brick under the crosshair (or last brick when no hover). Drives the
 	// per-group badge row below.
@@ -312,6 +334,29 @@ const HawksEngineLab = ({
 						{pending && <Loader2 className="mr-s-200 h-4 w-4 animate-spin" />}
 						Reload
 					</Button>
+					<div className="space-y-s-100 flex flex-col">
+						<span className="text-tiny text-txt-300">Exit mode</span>
+						<div className="gap-s-100 flex">
+							<Button
+								id="lab-mode-conservative"
+								type="button"
+								variant={exitMode === "conservative" ? "default" : "outline"}
+								size="sm"
+								onClick={() => setExitMode("conservative")}
+							>
+								Conservative
+							</Button>
+							<Button
+								id="lab-mode-moderate"
+								type="button"
+								variant={exitMode === "moderate" ? "default" : "outline"}
+								size="sm"
+								onClick={() => setExitMode("moderate")}
+							>
+								Moderate
+							</Button>
+						</div>
+					</div>
 				</div>
 
 				<div className="gap-s-200 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">

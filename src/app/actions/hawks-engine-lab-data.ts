@@ -16,6 +16,7 @@ import {
 	createStructuralPivotState,
 	stepStructuralPivot,
 } from "@/lib/backtest/hawks-structural-pivots"
+import type { Direction } from "@/types/backtest"
 import type { CandleRow } from "@/types/candle"
 import type {
 	EmaSlope,
@@ -25,6 +26,7 @@ import type {
 	HawksEngineLabData,
 	MacdSign,
 	PivotBias,
+	TradeLifecycle,
 	VwapSide,
 } from "./hawks-engine-lab-data.types"
 
@@ -88,6 +90,106 @@ const slimCandle = (c: CandleRow): EngineLabCandle => ({
 	close: c.close,
 	indicators: c.indicators as Readonly<Record<string, number | null>>,
 })
+
+// Forward-simulate one trade lifecycle starting at the fire brick. Spec §8
+// engine flow — checks ordering per brick close: stop hit → target hit →
+// breakeven update → trail activation → trail ratchet. EOD forced-close
+// when no exit fires within the brick array.
+//
+//   - exitMode = "conservative": static 3R target, no trail.
+//   - exitMode = "moderate": no target, trail activates on 3R favorable
+//     close, then trails 2 brickBodies behind every brick close until
+//     stop is hit (spec §6, §7).
+const simulateLifecycle = (
+	bricks: ReadonlyArray<EngineLabBrick>,
+	fireIdx: number,
+	direction: Direction,
+	entryClose: number,
+	stopReference: number | null,
+	exitMode: "conservative" | "moderate"
+): TradeLifecycle => {
+	const initialStop = stopReference ?? entryClose
+	const brickBody = Math.abs(initialStop - entryClose) / 2
+	const target: number | null =
+		exitMode === "conservative"
+			? direction === "long"
+				? entryClose + 6 * brickBody
+				: entryClose - 6 * brickBody
+			: null
+	let beTriggered = false
+	let beBrickIndexInDay: number | null = null
+	let trailActivated = false
+	let trailActivationBrickIndexInDay: number | null = null
+	let currentStop = initialStop
+	let exitBrickIndexInDay = bricks.length - 1
+	let exitReason: TradeLifecycle["exitReason"] = "eod"
+	let exitPrice = bricks[bricks.length - 1]!.close
+	for (let j = fireIdx + 1; j < bricks.length; j++) {
+		const fb = bricks[j]!
+		const stopHit =
+			direction === "long" ? fb.close <= currentStop : fb.close >= currentStop
+		if (stopHit) {
+			exitBrickIndexInDay = j
+			exitReason = trailActivated
+				? "stop_trail"
+				: beTriggered
+					? "stop_be"
+					: "stop_initial"
+			exitPrice = currentStop
+			break
+		}
+		if (target !== null) {
+			const targetHit =
+				direction === "long" ? fb.close >= target : fb.close <= target
+			if (targetHit) {
+				exitBrickIndexInDay = j
+				exitReason = "target"
+				exitPrice = target
+				break
+			}
+		}
+		const netFavor =
+			direction === "long" ? fb.close - entryClose : entryClose - fb.close
+		const closedFavorable =
+			direction === "long" ? fb.close > fb.open : fb.close < fb.open
+		if (!beTriggered && closedFavorable && netFavor >= 2 * brickBody) {
+			beTriggered = true
+			beBrickIndexInDay = j
+			currentStop = entryClose
+		}
+		if (exitMode === "moderate") {
+			if (!trailActivated && closedFavorable && netFavor >= 6 * brickBody) {
+				trailActivated = true
+				trailActivationBrickIndexInDay = j
+			}
+			if (trailActivated) {
+				const candidateStop =
+					direction === "long"
+						? fb.close - 2 * brickBody
+						: fb.close + 2 * brickBody
+				const moreFavorable =
+					direction === "long"
+						? candidateStop > currentStop
+						: candidateStop < currentStop
+				if (moreFavorable) {
+					currentStop = candidateStop
+				}
+			}
+		}
+	}
+	return {
+		exitMode,
+		beTriggered,
+		beBrickIndexInDay,
+		trailActivated,
+		trailActivationBrickIndexInDay,
+		exitBrickIndexInDay,
+		exitReason,
+		exitPrice,
+		initialStop,
+		target,
+	}
+}
 
 const fetchTimeframeId = async (
 	tfCode: "hawk_5m_win" | "hawk_15m_win" | "hawk_60m_win"
@@ -565,16 +667,23 @@ export const loadHawksEngineLabData = async (
 				stopReference,
 				label,
 				tier,
-				lifecycle: null,
+				lifecycleConservative: null,
+				lifecycleModerate: null,
 			})
 		}
 
-		// Phase B — post-entry lifecycle simulator. For each fired brick,
-		// walk forward simulating Mode 1 Conservative exit:
-		//   - Initial stop at signal.stopReference (≈ entry ± 2 brickBodies)
-		//   - Breakeven trigger: net favorable price reaches 1R (= 2 ×
-		//     renkoSize) AND current brick closes favorable (spec §2).
-		//   - Static target at 3R favorable (entry ± 6 × renkoSize).
+		// Phase B + D — post-entry lifecycle simulator. For each fired
+		// brick, walk forward simulating BOTH conservative (Mode 1) and
+		// moderate (Mode 2) exits. The lab UI toggles which one to render.
+		//
+		//   - Initial stop at signal.stopReference (≈ entry ± 2 brickBodies).
+		//   - Breakeven trigger (universal): net favorable price reaches 1R
+		//     AND current brick closes favorable (spec §2).
+		//   - Mode 1 (conservative): static 3R target, no trail.
+		//   - Mode 2 (moderate): no target; trail activates at 3R (= 6 ×
+		//     renkoSize favorable AND favorable brick close) and from
+		//     there the stop trails `brick.close ± 2 × renkoSize` on every
+		//     brick close, never moving adversely (spec §7).
 		//   - EOD: forced close at the last brick of the day.
 		//
 		// The renkoSize per fire is derived from the entry brick's body
@@ -585,68 +694,26 @@ export const loadHawksEngineLabData = async (
 			if (!fire.fired || fire.direction === null || fire.price === null) {
 				continue
 			}
-			const entryClose = fire.price
-			const initialStop = fire.stopReference ?? entryClose
-			const brickBody = Math.abs(initialStop - entryClose) / 2
-			const target =
-				fire.direction === "long"
-					? entryClose + 6 * brickBody
-					: entryClose - 6 * brickBody
-			let beTriggered = false
-			let beBrickIndexInDay: number | null = null
-			let currentStop = initialStop
-			let exitBrickIndexInDay = bricks.length - 1
-			let exitReason: "stop_initial" | "stop_be" | "target" | "eod" = "eod"
-			let exitPrice = bricks[bricks.length - 1]!.close
-			for (let j = i + 1; j < bricks.length; j++) {
-				const fb = bricks[j]!
-				// 1. Stop hit by close? (Renko close-based — wicks don't fill.)
-				const stopHit =
-					fire.direction === "long"
-						? fb.close <= currentStop
-						: fb.close >= currentStop
-				if (stopHit) {
-					exitBrickIndexInDay = j
-					exitReason = beTriggered ? "stop_be" : "stop_initial"
-					exitPrice = currentStop
-					break
-				}
-				// 2. Target hit by close?
-				const targetHit =
-					fire.direction === "long" ? fb.close >= target : fb.close <= target
-				if (targetHit) {
-					exitBrickIndexInDay = j
-					exitReason = "target"
-					exitPrice = target
-					break
-				}
-				// 3. Breakeven check (spec §2 net-distance + favorable-close).
-				if (!beTriggered) {
-					const netFavor =
-						fire.direction === "long"
-							? fb.close - entryClose
-							: entryClose - fb.close
-					const closedFavorable =
-						fire.direction === "long" ? fb.close > fb.open : fb.close < fb.open
-					if (closedFavorable && netFavor >= 2 * brickBody) {
-						beTriggered = true
-						beBrickIndexInDay = j
-						currentStop = entryClose
-					}
-				}
-			}
+			const lifecycleConservative = simulateLifecycle(
+				bricks,
+				i,
+				fire.direction,
+				fire.price,
+				fire.stopReference,
+				"conservative"
+			)
+			const lifecycleModerate = simulateLifecycle(
+				bricks,
+				i,
+				fire.direction,
+				fire.price,
+				fire.stopReference,
+				"moderate"
+			)
 			bricks[i] = {
 				...fire,
-				lifecycle: {
-					exitMode: "conservative",
-					beTriggered,
-					beBrickIndexInDay,
-					exitBrickIndexInDay,
-					exitReason,
-					exitPrice,
-					initialStop,
-					target,
-				},
+				lifecycleConservative,
+				lifecycleModerate,
 			}
 		}
 
