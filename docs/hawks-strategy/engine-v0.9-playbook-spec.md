@@ -31,11 +31,11 @@ playbooks share the same direction filter (60m) and the same OCO exit.
 
 ## 1. Timeframe roles — hard rules
 
-| TF      | Role                          | Behaviour                                                                                                                                                                                                                  |
-| ------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **60m** | **The one and only gate**     | `gate60m === "BULL"` → engine may only fire LONGs. `gate60m === "BEAR"` → engine may only fire SHORTs. `gate60m === "NO_SIGNAL"` → no fires in either direction. Hard rule. No playbook can override it.                   |
-| **15m** | **Quality booster** (no gate) | If `gate15m` agrees with `gate60m` → +quality on every playbook trigger. If it disagrees or is `NO_SIGNAL` → no quality bump (but trade is **still allowed**). Also used post-entry for target & stop management — see §5. |
-| **5m**  | **Trigger timeframe**         | All entry triggers fire on 5m brick closes. Every playbook is a "5m brick close + condition X" rule. No intra-brick / wick triggers.                                                                                       |
+| TF      | Role                          | Behaviour                                                                                                                                                                                                |
+| ------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **60m** | **The one and only gate**     | `gate60m === "BULL"` → engine may only fire LONGs. `gate60m === "BEAR"` → engine may only fire SHORTs. `gate60m === "NO_SIGNAL"` → no fires in either direction. Hard rule. No playbook can override it. |
+| **15m** | **Quality booster** (no gate) | If `gate15m` agrees with `gate60m` → +quality on every playbook trigger. If it disagrees or is `NO_SIGNAL` → no quality bump (but trade is **still allowed**). No post-entry role in v0.9 — see §5.      |
+| **5m**  | **Trigger timeframe**         | All entry triggers fire on 5m brick closes. Every playbook is a "5m brick close + condition X" rule. No intra-brick / wick triggers.                                                                     |
 
 This is the macro skeleton. Everything else is confluence layered on top.
 
