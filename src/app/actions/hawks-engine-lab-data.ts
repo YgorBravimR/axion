@@ -577,7 +577,12 @@ export const loadHawksEngineLabData = async (
 			//      direction on the PRIOR brick too. Firing on the brick
 			//      where the walker just flipped = entering on the news.
 			//      Requires at least 1 brick of gate confirmation.
-			const realFired = result.signal !== null
+			// Apply the lab's methodology gates to REAL playbook fires the
+			// same way they're applied to demo fires (spec §10): VB, leg-shape,
+			// 5m HH/LL, gate-stability. Without this, mean_reversion (and
+			// later retracement / vwap_rejection) would fire mid-chop every
+			// few bricks.
+			const realFiredRaw = result.signal !== null
 			const isBullishBrick = candle.close > candle.open
 			const isBearishBrick = candle.close < candle.open
 			const brickDirectionAgrees =
@@ -632,9 +637,10 @@ export const loadHawksEngineLabData = async (
 							runningLowSinceLastFundo !== null &&
 							runningLowSinceLastFundo > lastFundoPrice
 						: false
-			const canDemoFire =
-				DEMO_FIRES &&
-				!realFired &&
+			// Real playbook fires must pass the same methodology gates as
+			// demo fires — spec §10. Without this layer, mean_reversion fires
+			// mid-chop every cooldown window.
+			const labGatesPass =
 				directionAllowed !== null &&
 				inTradingWindow &&
 				!cooldownActive &&
@@ -643,12 +649,16 @@ export const loadHawksEngineLabData = async (
 				gateStable &&
 				legShapeOk &&
 				fiveMinStructureOk
+			const realFired = realFiredRaw && labGatesPass
+			const canDemoFire = DEMO_FIRES && !realFired && labGatesPass
 			let fired = realFired
-			let direction = result.signal?.direction ?? null
-			let price = result.signal?.price ?? null
-			let stopReference = result.signal?.stopReference ?? null
-			let label = result.signal?.label ?? null
-			let tier = result.signal?.quality?.tier ?? null
+			let direction = realFired ? result.signal!.direction : null
+			let price = realFired ? result.signal!.price : null
+			let stopReference = realFired
+				? (result.signal!.stopReference ?? null)
+				: null
+			let label = realFired ? result.signal!.label : null
+			let tier = realFired ? (result.signal!.quality?.tier ?? null) : null
 			if (canDemoFire) {
 				fired = true
 				direction = directionAllowed

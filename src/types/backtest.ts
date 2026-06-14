@@ -180,6 +180,10 @@ interface HawksTripleScreenConfig {
 	prev_15m_close_key: string // default: "prev_15m_close"
 	prev_60m_open_key: string // default: "prev_60m_open"
 	prev_60m_close_key: string // default: "prev_60m_close"
+	// 5m EMA — the "mean" for the `mean_reversion` playbook (engine v0.10
+	// Phase G). Optional: when undefined, mean_reversion does not fire.
+	// Default preset value: "ema9".
+	ema_fast_5m_key?: string
 	// ── Quality indicators (read by hawks-quality-rules + hawks-indicators) ─
 	// Every per-brick indicator key is plumbed through config — no hardcoded
 	// literals in rule code. Adding a new column means: (a) add key here,

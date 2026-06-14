@@ -64,6 +64,8 @@ const hawksV0: StrategyRecipe = {
 			prev_15m_close_key: "prev_15m_close",
 			prev_60m_open_key: "prev_60m_open",
 			prev_60m_close_key: "prev_60m_close",
+			// 5m EMA — anchor for the mean_reversion playbook (engine v0.10).
+			ema_fast_5m_key: "ema9",
 			// Quality-indicator keys — every literal goes through config so
 			// vendor column renames are a one-line preset change, not a
 			// rule-code change. See `docs/gotchas.md` → "Hawks: candle-store

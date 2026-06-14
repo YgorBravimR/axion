@@ -84,12 +84,12 @@ const directionFromGate = (gate: HtfWalkerState): Direction | null => {
 const buildIndicatorKeys = (
 	config: HawksTripleScreenConfig
 ): PlaybookIndicatorKeys => ({
-	// v0.9 reuses the v0.8 config shape (see HawksTripleScreenConfig).
-	// The 5m EMA keys are not yet a first-class field — v0.8 only carried
-	// HTF EMA keys. For the stub orchestrator we point at the HTF keys as
-	// a placeholder; playbook implementations (step 4+) will require the
-	// real 5m EMA keys to be added to the config.
-	ema_fast_5m_key: config.ema27_15m_key,
+	// Phase G — 5m EMA wired via `ema_fast_5m_key` (preset default "ema9").
+	// When the config omits it, mean_reversion sees the empty string and
+	// bails (returns null) — defensive against legacy recipes that pre-date
+	// v0.10. Slow 5m EMA stays pinned at the 15m projection until a real
+	// playbook needs it.
+	ema_fast_5m_key: config.ema_fast_5m_key ?? "",
 	ema_slow_5m_key: config.ema55_15m_key,
 	vwap_d_key: config.vwap_d_key,
 })
