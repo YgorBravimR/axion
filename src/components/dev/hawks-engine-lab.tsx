@@ -1,0 +1,365 @@
+"use client"
+
+// i18n-exempt: developer debug tool (src/components/dev/**) — English strings
+// are intentional. Future /scan passes should skip dev-only components.
+
+import { useMemo, useState, useTransition } from "react"
+import { Loader2 } from "lucide-react"
+import { loadHawksEngineLabData } from "@/app/actions/hawks-engine-lab-data"
+import type {
+	HawksEngineLabData,
+	EngineLabBrick,
+} from "@/app/actions/hawks-engine-lab-data.types"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table"
+
+interface HawksEngineLabProps {
+	readonly initialData: HawksEngineLabData
+	readonly initialFrom: string
+	readonly initialTo: string
+}
+
+type FilterMode = "all" | "fires" | "gate-open" | "blocked"
+const FILTERS: ReadonlyArray<FilterMode> = [
+	"all",
+	"fires",
+	"gate-open",
+	"blocked",
+]
+
+const HawksEngineLab = ({
+	initialData,
+	initialFrom,
+	initialTo,
+}: HawksEngineLabProps) => {
+	const [data, setData] = useState<HawksEngineLabData>(initialData)
+	const [from, setFrom] = useState(initialFrom)
+	const [to, setTo] = useState(initialTo)
+	const [activeDayKey, setActiveDayKey] = useState<string | null>(
+		initialData.days[0]?.dayKey ?? null
+	)
+	const [filter, setFilter] = useState<FilterMode>("all")
+	const [pending, startTransition] = useTransition()
+
+	const activeDay = useMemo(
+		() => data.days.find((d) => d.dayKey === activeDayKey) ?? null,
+		[data, activeDayKey]
+	)
+
+	const filteredBricks = useMemo(() => {
+		if (!activeDay) {
+			return []
+		}
+		switch (filter) {
+			case "fires":
+				return activeDay.bricks.filter((b) => b.fired)
+			case "gate-open":
+				return activeDay.bricks.filter(
+					(b) =>
+						b.directionAllowed !== null &&
+						b.inTradingWindow &&
+						!b.cooldownActive
+				)
+			case "blocked":
+				return activeDay.bricks.filter(
+					(b) =>
+						b.directionAllowed === null ||
+						!b.inTradingWindow ||
+						b.cooldownActive
+				)
+			case "all":
+			default:
+				return activeDay.bricks
+		}
+	}, [activeDay, filter])
+
+	const handleReload = () => {
+		startTransition(async () => {
+			const next = await loadHawksEngineLabData(from, to)
+			setData(next)
+			setActiveDayKey(next.days[0]?.dayKey ?? null)
+		})
+	}
+
+	return (
+		<div className="space-y-m-500">
+			<header className="space-y-s-300">
+				<h1 className="text-h1 text-txt-100 font-semibold">
+					Hawks engine lab (v0.9)
+				</h1>
+				<p className="text-small text-txt-300 max-w-prose">
+					Per-brick trace of the v0.9 playbook orchestrator. Each row shows the
+					60m gate state, the trading-window guard, the cooldown, and whether
+					any playbook fired. With the current stubs all three playbooks return
+					null — the columns that move are the gate, the cooldown, and the
+					direction allowed.
+				</p>
+			</header>
+
+			<section className="bg-bg-200 border-bg-300 space-y-s-300 rounded-md border p-4">
+				<div className="gap-s-300 flex flex-wrap items-end">
+					<label htmlFor="lab-from" className="space-y-s-100 flex flex-col">
+						<span className="text-tiny text-txt-300">From (BRT)</span>
+						<Input
+							id="lab-from"
+							type="date"
+							value={from}
+							onChange={(e) => setFrom(e.target.value)}
+							className="w-40"
+						/>
+					</label>
+					<label htmlFor="lab-to" className="space-y-s-100 flex flex-col">
+						<span className="text-tiny text-txt-300">To (BRT)</span>
+						<Input
+							id="lab-to"
+							type="date"
+							value={to}
+							onChange={(e) => setTo(e.target.value)}
+							className="w-40"
+						/>
+					</label>
+					<Button
+						id="lab-reload"
+						type="button"
+						onClick={handleReload}
+						disabled={pending}
+					>
+						{pending && <Loader2 className="mr-s-200 h-4 w-4 animate-spin" />}
+						Reload
+					</Button>
+				</div>
+
+				<div className="gap-s-200 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+					<StatTile label="Days" value={data.stats.totalDays} />
+					<StatTile label="Bricks" value={data.stats.totalBricks} />
+					<StatTile
+						label="Fires"
+						value={data.stats.totalFires}
+						tone="success"
+					/>
+					<StatTile
+						label="60m BULL"
+						value={data.stats.bricksGateBull}
+						tone="success"
+					/>
+					<StatTile
+						label="60m BEAR"
+						value={data.stats.bricksGateBear}
+						tone="destructive"
+					/>
+					<StatTile
+						label="60m NO_SIGNAL"
+						value={data.stats.bricksGateNoSignal}
+						tone="warning"
+					/>
+				</div>
+			</section>
+
+			<section className="gap-m-400 grid grid-cols-1 lg:grid-cols-[200px_1fr]">
+				<aside className="bg-bg-200 border-bg-300 space-y-s-100 max-h-[600px] overflow-y-auto rounded-md border p-3">
+					<h2 className="text-small text-txt-100 mb-s-200 font-semibold">
+						Days
+					</h2>
+					{data.days.length === 0 ? (
+						<p className="text-tiny text-txt-300">No data</p>
+					) : (
+						data.days.map((d) => {
+							const fires = d.bricks.filter((b) => b.fired).length
+							const isActive = d.dayKey === activeDayKey
+							return (
+								<button
+									key={d.dayKey}
+									type="button"
+									onClick={() => setActiveDayKey(d.dayKey)}
+									className={`px-s-200 py-s-100 text-small w-full rounded-sm text-left transition-colors ${
+										isActive
+											? "bg-primary text-primary-foreground"
+											: "hover:bg-bg-300 text-txt-100"
+									}`}
+								>
+									<div className="flex items-center justify-between">
+										<span className="font-mono">{d.dayKey}</span>
+										{fires > 0 && (
+											<span
+												className={`text-tiny font-semibold ${
+													isActive
+														? "text-primary-foreground"
+														: "text-fb-success"
+												}`}
+											>
+												{fires}
+											</span>
+										)}
+									</div>
+								</button>
+							)
+						})
+					)}
+				</aside>
+
+				<div className="bg-bg-200 border-bg-300 space-y-s-300 rounded-md border p-3">
+					<div className="gap-s-200 flex flex-wrap items-center justify-between">
+						<h2 className="text-small text-txt-100 font-semibold">
+							{activeDay ? activeDay.dayKey : "Pick a day"}
+							{activeDay && (
+								<span className="text-tiny text-txt-300 ml-s-200 font-normal">
+									{filteredBricks.length} / {activeDay.bricks.length} bricks
+								</span>
+							)}
+						</h2>
+						<div className="gap-s-100 flex">
+							{FILTERS.map((m) => (
+								<Button
+									key={m}
+									id={`lab-filter-${m}`}
+									type="button"
+									size="sm"
+									variant={filter === m ? "default" : "outline"}
+									onClick={() => setFilter(m)}
+								>
+									{m}
+								</Button>
+							))}
+						</div>
+					</div>
+
+					{activeDay ? (
+						<div className="border-bg-300 overflow-x-auto rounded-sm border">
+							<Table>
+								<TableHeader>
+									<TableRow>
+										<TableHead className="w-10">#</TableHead>
+										<TableHead>Time</TableHead>
+										<TableHead className="text-right">Close</TableHead>
+										<TableHead>60m</TableHead>
+										<TableHead>15m</TableHead>
+										<TableHead>Allowed</TableHead>
+										<TableHead>Win</TableHead>
+										<TableHead>CD</TableHead>
+										<TableHead>Fired</TableHead>
+										<TableHead>Tier</TableHead>
+										<TableHead>Label</TableHead>
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{filteredBricks.map((b) => (
+										<BrickRow key={b.brickIndexInDay} brick={b} />
+									))}
+								</TableBody>
+							</Table>
+						</div>
+					) : (
+						<p className="text-tiny text-txt-300">Pick a day in the sidebar.</p>
+					)}
+				</div>
+			</section>
+		</div>
+	)
+}
+
+interface BrickRowProps {
+	readonly brick: EngineLabBrick
+}
+
+const BrickRow = ({ brick }: BrickRowProps) => {
+	const timePart = brick.timestamp.slice(11, 16) // HH:MM UTC
+	const blocked =
+		brick.directionAllowed === null ||
+		!brick.inTradingWindow ||
+		brick.cooldownActive
+	return (
+		<TableRow
+			className={brick.fired ? "bg-fb-success/10" : blocked ? "opacity-60" : ""}
+		>
+			<TableCell className="text-tiny font-mono">
+				{brick.brickIndexInDay}
+			</TableCell>
+			<TableCell className="text-tiny font-mono">{timePart}</TableCell>
+			<TableCell className="text-tiny text-right font-mono">
+				{brick.close.toFixed(0)}
+			</TableCell>
+			<TableCell>
+				<GateBadge state={brick.gate60m} />
+			</TableCell>
+			<TableCell>
+				<GateBadge state={brick.gate15m} muted />
+			</TableCell>
+			<TableCell className="text-tiny font-mono">
+				{brick.directionAllowed ?? "—"}
+			</TableCell>
+			<TableCell className="text-tiny">
+				{brick.inTradingWindow ? "✓" : "—"}
+			</TableCell>
+			<TableCell className="text-tiny">
+				{brick.cooldownActive ? "CD" : "—"}
+			</TableCell>
+			<TableCell className="font-semibold">
+				{brick.fired ? (
+					<span className="text-fb-success">FIRE</span>
+				) : (
+					<span className="text-txt-300">—</span>
+				)}
+			</TableCell>
+			<TableCell className="text-tiny font-mono">{brick.tier ?? "—"}</TableCell>
+			<TableCell className="text-tiny max-w-[280px] truncate">
+				{brick.label ?? "—"}
+			</TableCell>
+		</TableRow>
+	)
+}
+
+interface GateBadgeProps {
+	readonly state: "BULL" | "BEAR" | "NO_SIGNAL"
+	readonly muted?: boolean
+}
+
+const GateBadge = ({ state, muted = false }: GateBadgeProps) => {
+	const cls =
+		state === "BULL"
+			? "text-fb-success"
+			: state === "BEAR"
+				? "text-destructive"
+				: "text-txt-300"
+	return (
+		<span className={`text-tiny font-mono ${cls} ${muted ? "opacity-70" : ""}`}>
+			{state}
+		</span>
+	)
+}
+
+interface StatTileProps {
+	readonly label: string
+	readonly value: number
+	readonly tone?: "success" | "destructive" | "warning"
+}
+
+const StatTile = ({ label, value, tone }: StatTileProps) => {
+	const cls =
+		tone === "success"
+			? "text-fb-success"
+			: tone === "destructive"
+				? "text-destructive"
+				: tone === "warning"
+					? "text-warning"
+					: "text-txt-100"
+	return (
+		<div className="bg-bg-100 border-bg-300 rounded-sm border p-2">
+			<div className="text-tiny text-txt-300 tracking-wide uppercase">
+				{label}
+			</div>
+			<div className={`text-h3 font-mono font-semibold ${cls}`}>
+				{value.toLocaleString()}
+			</div>
+		</div>
+	)
+}
+
+export { HawksEngineLab }
