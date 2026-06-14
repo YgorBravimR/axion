@@ -12,13 +12,71 @@ import {
 	createInitialHawksPlaybookState,
 } from "@/lib/backtest/modules/entry/hawks-playbook"
 import { buildDayContext, groupCandlesByDay } from "@/lib/backtest/day-grouper"
+import {
+	createStructuralPivotState,
+	stepStructuralPivot,
+} from "@/lib/backtest/hawks-structural-pivots"
 import type { CandleRow } from "@/types/candle"
 import type {
+	EmaSlope,
 	EngineLabBrick,
 	EngineLabCandle,
 	EngineLabDayPayload,
 	HawksEngineLabData,
+	MacdSign,
+	PivotBias,
+	VwapSide,
 } from "./hawks-engine-lab-data.types"
+
+const macdSignOf = (v: number | null | undefined): MacdSign | null => {
+	if (typeof v !== "number") {
+		return null
+	}
+	if (v > 0) {
+		return "positive"
+	}
+	if (v < 0) {
+		return "negative"
+	}
+	return "zero"
+}
+
+const emaSlopeOf = (
+	fast: number | null | undefined,
+	slow: number | null | undefined
+): EmaSlope | null => {
+	if (typeof fast !== "number" || typeof slow !== "number") {
+		return null
+	}
+	if (fast > slow) {
+		return "up"
+	}
+	if (fast < slow) {
+		return "down"
+	}
+	return "flat"
+}
+
+const vwapSideOf = (
+	close: number,
+	vwap: number | null | undefined
+): VwapSide | null => {
+	if (typeof vwap !== "number") {
+		return null
+	}
+	if (close > vwap) {
+		return "above"
+	}
+	if (close < vwap) {
+		return "below"
+	}
+	return "at"
+}
+
+const numFromInd = (c: CandleRow, key: string): number | undefined => {
+	const v = c.indicators[key]
+	return typeof v === "number" ? v : undefined
+}
 
 const ASSET_SYMBOL = "WIN"
 
@@ -143,6 +201,12 @@ export const loadHawksEngineLabData = async (
 		const bricks: EngineLabBrick[] = []
 		let demoFireBricksLeftThisDay = DEMO_FIRES ? 1 : 0
 
+		// Per-day structural pivot detector (period-2 Dow theory) — same
+		// detector used by the engine + Indicator Lab. Resets at day
+		// boundary; bias forward-fills until the next confirmation.
+		let pivotState = createStructuralPivotState()
+		let currentPivotBias: PivotBias = null
+
 		for (let i = 0; i < dayCandles.length; i++) {
 			const candle = dayCandles[i]!
 			const ctx = buildDayContext(candle, dayKey, i)
@@ -172,6 +236,31 @@ export const loadHawksEngineLabData = async (
 				htfSnapshot
 			)
 			state = result.state
+
+			// Step the period-2 structural pivot detector; forward-fill the
+			// bias from the last confirmation. The detector is the same one
+			// the engine + Indicator Lab use, so the badge sequence here
+			// matches what the engine sees.
+			const pivotStep = stepStructuralPivot(candle, i, pivotState)
+			pivotState = pivotStep.state
+			if (pivotStep.pivot) {
+				currentPivotBias = pivotStep.pivot.type
+			}
+
+			// Raw indicator status at this brick — feeds the cursor-reactive
+			// badge row in the lab. NOT direction-relative; alignment is
+			// computed at render time.
+			const macdSign = macdSignOf(numFromInd(candle, config.macd_key))
+			// Using 15m EMA projection as the 5m EMA proxy until the spec's
+			// TBD step adds dedicated 5m EMA keys (spec §2 Group C).
+			const ema5mSlope = emaSlopeOf(
+				numFromInd(candle, config.ema27_15m_key),
+				numFromInd(candle, config.ema55_15m_key)
+			)
+			const vwapSide = vwapSideOf(
+				candle.close,
+				numFromInd(candle, config.vwap_d_key)
+			)
 
 			// Demo-fire path: only used to validate the chart marker pipeline
 			// while playbook stubs return null. Skipped automatically the
@@ -232,6 +321,10 @@ export const loadHawksEngineLabData = async (
 				inTradingWindow,
 				directionAllowed,
 				cooldownActive,
+				macdSign,
+				ema5mSlope,
+				vwapSide,
+				pivotBias: currentPivotBias,
 				fired,
 				direction,
 				price,

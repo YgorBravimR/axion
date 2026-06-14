@@ -79,6 +79,7 @@ const HawksEngineLab = ({
 		initialData.days[0]?.dayKey ?? null
 	)
 	const [filter, setFilter] = useState<FilterMode>("all")
+	const [hoveredGlobalIdx, setHoveredGlobalIdx] = useState<number | null>(null)
 	const [pending, startTransition] = useTransition()
 
 	const activeDay = useMemo(
@@ -94,14 +95,20 @@ const HawksEngineLab = ({
 		if (data.days.length === 0) {
 			return null
 		}
-		// Flatten candles across days while building a per-day brickIdx
-		// offset map so we can place FIRE markers at the right global index.
+		// Flatten candles AND bricks across days while building a per-day
+		// brickIdx offset map. The flat brick array is the cursor lookup
+		// table — `allBricks[hoveredGlobalIdx]` gives the per-brick state
+		// (gate, MACD sign, VWAP side, pivot bias) at the crosshair.
 		const allCandles: EngineLabDayPayload["candles"] = []
+		const allBricks: EngineLabDayPayload["bricks"] = []
 		const dayOffsets: Array<{ dayKey: string; offset: number }> = []
 		for (const d of data.days) {
 			dayOffsets.push({ dayKey: d.dayKey, offset: allCandles.length })
 			for (const c of d.candles) {
 				allCandles.push(c)
+			}
+			for (const b of d.bricks) {
+				allBricks.push(b)
 			}
 		}
 		const series = candlesToBrickSeriesNative(allCandles)
@@ -158,11 +165,26 @@ const HawksEngineLab = ({
 			series,
 			indicators,
 			extraMarkers: fireMarkers,
+			allBricks,
 			totalDays: data.days.length,
 			totalBricks: allCandles.length,
 			totalFires: fireMarkers.length,
 		}
 	}, [data])
+
+	// Brick under the crosshair (or last brick when no hover). Drives the
+	// per-group badge row below.
+	const cursorBrick = useMemo(() => {
+		if (!chartPayload || chartPayload.allBricks.length === 0) {
+			return null
+		}
+		const lastIdx = chartPayload.allBricks.length - 1
+		const idx =
+			hoveredGlobalIdx !== null
+				? Math.max(0, Math.min(hoveredGlobalIdx, lastIdx))
+				: lastIdx
+		return chartPayload.allBricks[idx] ?? null
+	}, [chartPayload, hoveredGlobalIdx])
 
 	const filteredBricks = useMemo(() => {
 		if (!activeDay) {
@@ -329,12 +351,20 @@ const HawksEngineLab = ({
 							</div>
 							<RenkoPane
 								label={`${data.from} → ${data.to} — 5m Renko (${chartPayload.totalDays} days, ${chartPayload.totalBricks.toLocaleString()} bricks, ${chartPayload.totalFires} fires)`}
-								subLabel="60m EMAs = gate, 15m EMAs = booster, VWAP = vwap_rejection ref. Arrow markers = engine fires (green up = LONG, red down = SHORT). Day picker scopes table only."
+								subLabel="60m EMAs = gate, 15m EMAs = booster, VWAP = vwap_rejection ref. Arrow markers = engine fires. Hover the chart to inspect per-brick signals below."
 								series={chartPayload.series}
 								indicators={chartPayload.indicators}
 								extraMarkers={chartPayload.extraMarkers}
+								emitsCrosshair
+								onCrosshairMove={setHoveredGlobalIdx}
 								className="h-[480px]"
 							/>
+							{cursorBrick && (
+								<SignalsAtCursor
+									brick={cursorBrick}
+									hovering={hoveredGlobalIdx !== null}
+								/>
+							)}
 						</div>
 					)}
 
@@ -508,5 +538,166 @@ const LegendDot = ({ color, label }: LegendDotProps) => (
 		<span>{label}</span>
 	</span>
 )
+
+interface SignalsAtCursorProps {
+	readonly brick: EngineLabBrick
+	readonly hovering: boolean
+}
+
+const SignalsAtCursor = ({ brick, hovering }: SignalsAtCursorProps) => {
+	const timePart = brick.timestamp.slice(0, 16).replace("T", " ")
+	return (
+		<div className="bg-bg-100 border-bg-300 space-y-s-200 rounded-sm border p-3">
+			<div className="text-tiny text-txt-300 gap-s-200 flex flex-wrap items-center">
+				<span className="font-semibold tracking-wide uppercase">
+					Signals at cursor
+				</span>
+				<span className="font-mono">
+					{hovering ? "" : "(last brick — hover the chart to scrub)"}
+				</span>
+				<span className="text-txt-100 font-mono">{timePart} UTC</span>
+				<span className="font-mono">close {brick.close.toFixed(0)}</span>
+			</div>
+			<div className="gap-s-200 flex flex-wrap items-center">
+				<SignalBadge
+					label="60m"
+					value={brick.gate60m}
+					tone={
+						brick.gate60m === "BULL"
+							? "success"
+							: brick.gate60m === "BEAR"
+								? "destructive"
+								: "muted"
+					}
+					emphasis
+				/>
+				<SignalBadge
+					label="15m"
+					value={brick.gate15m}
+					tone={
+						brick.gate15m === "BULL"
+							? "success"
+							: brick.gate15m === "BEAR"
+								? "destructive"
+								: "muted"
+					}
+				/>
+				<SignalBadge
+					label="MACD 5m"
+					value={brick.macdSign ?? "—"}
+					tone={
+						brick.macdSign === "positive"
+							? "success"
+							: brick.macdSign === "negative"
+								? "destructive"
+								: "muted"
+					}
+				/>
+				<SignalBadge
+					label="EMA 5m"
+					value={brick.ema5mSlope ?? "—"}
+					tone={
+						brick.ema5mSlope === "up"
+							? "success"
+							: brick.ema5mSlope === "down"
+								? "destructive"
+								: "muted"
+					}
+				/>
+				<SignalBadge
+					label="VWAP D"
+					value={brick.vwapSide ?? "—"}
+					tone={
+						brick.vwapSide === "above"
+							? "success"
+							: brick.vwapSide === "below"
+								? "destructive"
+								: "muted"
+					}
+				/>
+				<SignalBadge
+					label="Pivot"
+					value={brick.pivotBias ?? "—"}
+					tone={
+						brick.pivotBias === "fundo"
+							? "success"
+							: brick.pivotBias === "topo"
+								? "destructive"
+								: "muted"
+					}
+				/>
+				<SignalBadge
+					label="Allowed"
+					value={brick.directionAllowed ?? "—"}
+					tone={
+						brick.directionAllowed === "long"
+							? "success"
+							: brick.directionAllowed === "short"
+								? "destructive"
+								: "muted"
+					}
+					emphasis
+				/>
+				<SignalBadge
+					label="In window"
+					value={brick.inTradingWindow ? "yes" : "no"}
+					tone={brick.inTradingWindow ? "success" : "muted"}
+				/>
+				<SignalBadge
+					label="Cooldown"
+					value={brick.cooldownActive ? "ACTIVE" : "—"}
+					tone={brick.cooldownActive ? "warning" : "muted"}
+				/>
+				{brick.fired && (
+					<SignalBadge
+						label="Fire"
+						value={`${brick.direction?.toUpperCase() ?? "?"} ${brick.tier ?? ""}`.trim()}
+						tone={brick.direction === "long" ? "success" : "destructive"}
+						emphasis
+					/>
+				)}
+			</div>
+		</div>
+	)
+}
+
+type SignalTone = "success" | "destructive" | "warning" | "muted"
+
+interface SignalBadgeProps {
+	readonly label: string
+	readonly value: string
+	readonly tone: SignalTone
+	readonly emphasis?: boolean
+}
+
+const SignalBadge = ({
+	label,
+	value,
+	tone,
+	emphasis = false,
+}: SignalBadgeProps) => {
+	const valueCls =
+		tone === "success"
+			? "text-fb-success"
+			: tone === "destructive"
+				? "text-destructive"
+				: tone === "warning"
+					? "text-warning"
+					: "text-txt-300"
+	return (
+		<div
+			className={`bg-bg-200 border-bg-300 px-s-200 py-s-100 rounded-sm border ${
+				emphasis ? "border-bg-400" : ""
+			}`}
+		>
+			<div className="text-tiny text-txt-300 tracking-wide uppercase">
+				{label}
+			</div>
+			<div className={`text-small font-mono font-semibold ${valueCls}`}>
+				{value}
+			</div>
+		</div>
+	)
+}
 
 export { HawksEngineLab }
