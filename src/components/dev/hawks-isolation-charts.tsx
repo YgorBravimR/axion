@@ -487,97 +487,113 @@ const HawksIsolationCharts = ({
 	// Group G — structural pivot review. Runs the SAME `walkStructuralPivots`
 	// function the engine consumes (via `stepStructuralPivot`), so what's
 	// rendered here is bit-identical to what fires anchor updates in
-	// `hawks-triple-screen.ts`. Three overlays per pane:
-	//   - TOPO dots: yellow point at brick where a TOPO was confirmed
-	//   - FUNDO dots: cyan point at brick where a FUNDO was confirmed
-	//   - Active major anchors: faint horizontal line at topoMaior /
-	//     fundoMaior for every brick where it was the active anchor (engine's
-	//     mental model: "while this is set, this level is the wave-1 anchor")
-	const pivotMarkers = useMemo(() => {
-		const bricks = candles5m.map((c) => ({
-			open: c.open,
-			high: c.high,
-			low: c.low,
-			close: c.close,
-		}))
-		return walkStructuralPivots(bricks)
-	}, [candles5m])
-
-	const pivotOverlays5m = useMemo<Overlay[]>(() => {
-		// Per-brick point overlays — one value at the detection brick, gap
-		// elsewhere. Lightweight-charts treats missing keys as gaps so the dots
-		// render isolated.
-		const topoDots: Array<{ time: UTCTimestamp; value: number }> = []
-		const fundoDots: Array<{ time: UTCTimestamp; value: number }> = []
-		for (const m of pivotMarkers) {
-			if (m.type === "topo") {
-				topoDots.push({ time: m.brickIdx as UTCTimestamp, value: m.price })
-			} else {
-				fundoDots.push({ time: m.brickIdx as UTCTimestamp, value: m.price })
-			}
-		}
-		// Active-anchor lines: mirror the engine's anchor-roll-forward logic.
-		// `topoMaiorPrice` always updates to the latest confirmed TOPO; the
-		// alternation rule in the engine (only if isTopoPivot !== false) is
-		// preserved here.
-		const topoMaiorLine: Array<{ time: UTCTimestamp; value: number }> = []
-		const fundoMaiorLine: Array<{ time: UTCTimestamp; value: number }> = []
-		let topoMaior: number | null = null
-		let fundoMaior: number | null = null
-		let lastPivotPrice: number | null = null
-		const byBrick = new Map<number, (typeof pivotMarkers)[number]>()
-		for (const m of pivotMarkers) {
-			byBrick.set(m.brickIdx, m)
-		}
-		for (let i = 0; i < candles5m.length; i++) {
-			const m = byBrick.get(i)
-			if (m) {
-				const isTopoPivot =
-					lastPivotPrice === null ? null : m.price > lastPivotPrice
-				const isFundoPivot =
-					lastPivotPrice === null ? null : m.price < lastPivotPrice
-				lastPivotPrice = m.price
-				if (m.type === "topo" && isTopoPivot !== false) {
-					topoMaior = m.price
-				}
-				if (m.type === "fundo" && isFundoPivot !== false) {
-					fundoMaior = m.price
+	// `hawks-triple-screen.ts`. Pivots are computed on each TF independently
+	// from its OWN brick sequence — engine reads only the 5m stream today;
+	// 15m / 60m streams give a visual context check for cross-TF confluence.
+	const buildPivotOverlays = useCallback(
+		(candles: HawksIsolationData["candles5m"]): Overlay[] => {
+			const bricks = candles.map((c) => ({
+				open: c.open,
+				high: c.high,
+				low: c.low,
+				close: c.close,
+			}))
+			const markers = walkStructuralPivots(bricks)
+			const topoDots: Array<{ time: UTCTimestamp; value: number }> = []
+			const fundoDots: Array<{ time: UTCTimestamp; value: number }> = []
+			for (const m of markers) {
+				if (m.type === "topo") {
+					topoDots.push({ time: m.brickIdx as UTCTimestamp, value: m.price })
+				} else {
+					fundoDots.push({ time: m.brickIdx as UTCTimestamp, value: m.price })
 				}
 			}
-			if (topoMaior !== null) {
-				topoMaiorLine.push({ time: i as UTCTimestamp, value: topoMaior })
+			const topoMaiorLine: Array<{ time: UTCTimestamp; value: number }> = []
+			const fundoMaiorLine: Array<{ time: UTCTimestamp; value: number }> = []
+			let topoMaior: number | null = null
+			let fundoMaior: number | null = null
+			let lastPivotPrice: number | null = null
+			const byBrick = new Map<number, (typeof markers)[number]>()
+			for (const m of markers) {
+				byBrick.set(m.brickIdx, m)
 			}
-			if (fundoMaior !== null) {
-				fundoMaiorLine.push({ time: i as UTCTimestamp, value: fundoMaior })
+			for (let i = 0; i < candles.length; i++) {
+				const m = byBrick.get(i)
+				if (m) {
+					const isTopoPivot =
+						lastPivotPrice === null ? null : m.price > lastPivotPrice
+					const isFundoPivot =
+						lastPivotPrice === null ? null : m.price < lastPivotPrice
+					lastPivotPrice = m.price
+					if (m.type === "topo" && isTopoPivot !== false) {
+						topoMaior = m.price
+					}
+					if (m.type === "fundo" && isFundoPivot !== false) {
+						fundoMaior = m.price
+					}
+				}
+				if (topoMaior !== null) {
+					topoMaiorLine.push({ time: i as UTCTimestamp, value: topoMaior })
+				}
+				if (fundoMaior !== null) {
+					fundoMaiorLine.push({ time: i as UTCTimestamp, value: fundoMaior })
+				}
 			}
-		}
-		return [
-			{
-				key: "topo-maior",
-				label: "TOPO Maior (active anchor)",
-				color: "rgba(252, 211, 77, 0.7)",
-				data: topoMaiorLine,
-			},
-			{
-				key: "fundo-maior",
-				label: "FUNDO Maior (active anchor)",
-				color: "rgba(56, 189, 248, 0.7)",
-				data: fundoMaiorLine,
-			},
-			{
-				key: "topo-dots",
-				label: `TOPO confirmations (${topoDots.length})`,
-				color: "rgb(252, 211, 77)",
-				data: topoDots,
-			},
-			{
-				key: "fundo-dots",
-				label: `FUNDO confirmations (${fundoDots.length})`,
-				color: "rgb(56, 189, 248)",
-				data: fundoDots,
-			},
-		]
-	}, [candles5m, pivotMarkers])
+			return [
+				{
+					key: "topo-maior",
+					label: "TOPO Maior (active anchor)",
+					color: "rgba(252, 211, 77, 0.7)",
+					data: topoMaiorLine,
+				},
+				{
+					key: "fundo-maior",
+					label: "FUNDO Maior (active anchor)",
+					color: "rgba(56, 189, 248, 0.7)",
+					data: fundoMaiorLine,
+				},
+				{
+					key: "topo-dots",
+					label: `TOPO confirmations (${topoDots.length})`,
+					color: "rgb(252, 211, 77)",
+					data: topoDots,
+				},
+				{
+					key: "fundo-dots",
+					label: `FUNDO confirmations (${fundoDots.length})`,
+					color: "rgb(56, 189, 248)",
+					data: fundoDots,
+				},
+			]
+		},
+		[]
+	)
+	const pivotOverlays5m = useMemo(
+		() => buildPivotOverlays(candles5m),
+		[buildPivotOverlays, candles5m]
+	)
+	const pivotOverlays15m = useMemo(
+		() => buildPivotOverlays(candles15m),
+		[buildPivotOverlays, candles15m]
+	)
+	const pivotOverlays60m = useMemo(
+		() => buildPivotOverlays(candles60m),
+		[buildPivotOverlays, candles60m]
+	)
+	const [pivotPaneEnabled, setPivotPaneEnabled] = useState<{
+		"5m": boolean
+		"15m": boolean
+		"60m": boolean
+	}>({
+		"5m": true,
+		"15m": true,
+		"60m": true,
+	})
+	const togglePivotPane = useCallback(
+		(tf: "5m" | "15m" | "60m") =>
+			setPivotPaneEnabled((s) => ({ ...s, [tf]: !s[tf] })),
+		[]
+	)
 
 	// Group A walker ribbon: pick one ribbon — composite if both gates agree
 	// (BULL-BULL → +1 green, BEAR-BEAR → −1 red, otherwise gray). Mirrors how
@@ -2072,42 +2088,62 @@ const HawksIsolationCharts = ({
 					<div className="text-tiny text-txt-300 mb-2 leading-relaxed">
 						Structural pivots from <code>walkStructuralPivots</code> —
 						bit-identical to the detector the engine runs in{" "}
-						<code>hawks-triple-screen.ts</code>. Yellow line = TOPO Maior anchor
-						(active), cyan line = FUNDO Maior anchor (active), yellow dots =
-						every TOPO confirmation, cyan dots = every FUNDO confirmation. Major
-						anchors only roll forward when the new pivot extends in the right
-						direction (TOPO higher than prior pivot; FUNDO lower).{" "}
-						<strong>Known imperfection</strong>: on the first 2 bullish bricks
-						of a session a spurious FUNDO appears at brick 1&apos;s high — kept
-						on purpose (a stricter detector regressed reproduction 55.9% →
-						55.1%).
+						<code>hawks-triple-screen.ts</code>. Each timeframe is detected
+						independently from its own brick sequence (engine reads only 5m
+						today; HTF streams included for cross-TF confluence). Yellow line =
+						TOPO Maior anchor (active), cyan line = FUNDO Maior anchor (active),
+						yellow dots = every TOPO confirmation, cyan dots = every FUNDO
+						confirmation. Major anchors roll forward only when the new pivot
+						extends in the right direction (TOPO higher than prior; FUNDO
+						lower). <strong>Known imperfection</strong>: first 2 bullish bricks
+						of a session emit a spurious FUNDO at brick 1&apos;s high — kept on
+						purpose (a stricter detector regressed reproduction 55.9% → 55.1%).
+					</div>
+					<div className="text-small mb-2 flex items-center gap-2">
+						<span className="text-txt-300">Pivots on:</span>
+						{(["5m", "15m", "60m"] as const).map((tf) => (
+							<button
+								key={tf}
+								type="button"
+								onClick={() => togglePivotPane(tf)}
+								className={
+									pivotPaneEnabled[tf]
+										? "bg-acc-100 text-bg-100 rounded-sm px-2 py-0.5"
+										: "bg-bg-200 text-txt-100 rounded-sm px-2 py-0.5"
+								}
+							>
+								{tf}
+							</button>
+						))}
 					</div>
 					<div
 						className="grid grid-cols-1 gap-2 md:grid-cols-[3fr_2fr]"
-						style={{ height: "calc(100vh - 380px)", minHeight: "560px" }}
+						style={{ height: "calc(100vh - 420px)", minHeight: "560px" }}
 					>
 						<RenkoPane
 							className="h-full"
 							label="5m bricks + structural pivots"
 							subLabel="yellow=TOPO · cyan=FUNDO · faint lines=active major anchors"
 							series={series5m}
-							indicators={pivotOverlays5m}
+							indicators={pivotPaneEnabled["5m"] ? pivotOverlays5m : []}
 							emitsCrosshair
 							onCrosshairMove={handle5mCrosshair}
 						/>
 						<div className="grid grid-rows-2 gap-2">
 							<RenkoPane
 								className="h-full"
-								label="15m bricks (context only)"
-								subLabel="pivots detected on 5m bricks; HTF panes shown for context"
+								label="15m bricks + structural pivots"
+								subLabel="pivots detected from 15m brick sequence"
 								series={series15m}
+								indicators={pivotPaneEnabled["15m"] ? pivotOverlays15m : []}
 								externalCrosshair={synced.idx15m}
 							/>
 							<RenkoPane
 								className="h-full"
-								label="60m bricks (context only)"
-								subLabel="pivots detected on 5m bricks; HTF panes shown for context"
+								label="60m bricks + structural pivots"
+								subLabel="pivots detected from 60m brick sequence"
 								series={series60m}
+								indicators={pivotPaneEnabled["60m"] ? pivotOverlays60m : []}
 								externalCrosshair={synced.idx60m}
 							/>
 						</div>
