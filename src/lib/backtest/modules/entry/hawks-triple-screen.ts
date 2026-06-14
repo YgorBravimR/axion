@@ -15,6 +15,10 @@ import {
 	type HtfWalkerSnapshot,
 	isHtfGateFavorable,
 } from "../../hawks-htf-walker"
+import {
+	stepStructuralPivot,
+	type StructuralPivotDetectorState,
+} from "../../hawks-structural-pivots"
 
 /**
  * Hawks triple-screen entry module (engine v0.8 — brick-wick retracement).
@@ -455,42 +459,17 @@ const processHawksCandle = (
 	// buggier version is kept until we have data to explain why.
 	// ────────────────────────────────────────────────────────────────────
 
-	// Check for 2-brick confirmation pattern.
-	// priorExtremePrice stores the extreme (high for bullish, low for bearish) of
-	// the LAST brick of that direction. When we see 2 consecutive of the opposite
-	// direction, that extreme becomes the pivot value.
-	let structuralPivot: { type: "topo" | "fundo"; price: number } | null = null
-
-	if (next.lastBrickWasBullish === true && isBearish) {
-		// Transition from bullish to bearish. The prior bullish extreme is stored;
-		// if we see another bearish next, it becomes a TOPO. For now, update direction
-		// but keep the stored extreme.
-		next.lastBrickWasBullish = false
-		// Don't overwrite priorExtremePrice yet — it holds the last bullish high.
-	} else if (next.lastBrickWasBullish === false && isBearish) {
-		// Two consecutive bearish bricks. The stored bullish high is our TOPO.
-		if (next.priorExtremePrice !== null) {
-			structuralPivot = { type: "topo", price: next.priorExtremePrice }
-		}
-		// Update extreme to this bearish brick's low for potential FUNDO.
-		next.priorExtremePrice = candle.low
-	} else if (next.lastBrickWasBullish === false && isBullish) {
-		// Transition from bearish to bullish. The prior bearish extreme is stored;
-		// if we see another bullish next, it becomes a FUNDO. For now, just update direction.
-		next.lastBrickWasBullish = true
-		// Don't overwrite priorExtremePrice yet — it holds the last bearish low.
-	} else if (next.lastBrickWasBullish === true && isBullish) {
-		// Two consecutive bullish bricks. The stored bearish low is our FUNDO.
-		if (next.priorExtremePrice !== null) {
-			structuralPivot = { type: "fundo", price: next.priorExtremePrice }
-		}
-		// Update extreme to this bullish brick's high for potential TOPO.
-		next.priorExtremePrice = candle.high
-	} else {
-		// Initialize on first brick.
-		next.lastBrickWasBullish = isBullish
-		next.priorExtremePrice = isBullish ? candle.high : candle.low
+	// Structural pivot detector — delegated to the shared step function in
+	// `hawks-structural-pivots.ts` so the engine and the Indicator Lab review
+	// tab consume bit-identical logic.
+	const detectorState: StructuralPivotDetectorState = {
+		lastBrickWasBullish: next.lastBrickWasBullish,
+		priorExtremePrice: next.priorExtremePrice,
 	}
+	const detectorResult = stepStructuralPivot(candle, detectorState)
+	next.lastBrickWasBullish = detectorResult.state.lastBrickWasBullish
+	next.priorExtremePrice = detectorResult.state.priorExtremePrice
+	const structuralPivot = detectorResult.pivot
 
 	// Process structural pivot if detected.
 	if (structuralPivot !== null) {
