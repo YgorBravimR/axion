@@ -89,18 +89,6 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ---
 
-### Indicator Lab: catalog `brickIndex` upper-bound check
-
-- **Priority**: P2
-- **Effort**: XS
-- **Source**: 2026-06-13 — flagged during the `/finish-it` Codex pass on the Indicator Lab promotion (commit `9b404dd2`). The server action `loadCatalogForDate` validates `brickIndex >= 1` and direction enum, but does not bound-check against the actual 5m candle window length.
-- **What + Why**: In `src/app/actions/hawks-isolation-data.ts`, the loader resolves catalog brick refs via `offset + e.brickIndex - 1` and feeds the result to chart markers + the visible triggers/T1–T7 panel. If a catalog file references a brick beyond the rendered window (stale CSV after a window-shift, off-by-one in upstream extract, hand-edited file), the bad index silently maps to either the last candle or an out-of-range array slot, mislabeling visible trades on the chart. Today the validator catches type/direction errors but not range errors — the page renders an incorrect overlay with no console warning.
-- **Fix shape**: extend the per-entry validator in `loadCatalogForDate` to require `e.brickIndex <= candles5m.length - offset` (i.e. the resolved absolute index must fall inside `[offset, candles5m.length)`). Out-of-range entries are dropped and counted in a single `console.warn` like the existing JSON/shape failure path so the user knows something was skipped.
-- **Done when**: A catalog entry with `brickIndex` beyond the window length is silently dropped (not rendered) with a single aggregated `console.warn`. Existing valid catalogs render unchanged. No type-system change required.
-- **Date filed**: 2026-06-13.
-
----
-
 ### Indicator Lab: BRT offset hardcoded, ignores DST
 
 - **Priority**: P3
@@ -109,19 +97,7 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **What + Why**: Brazil dropped permanent DST in 2019, so for every date in the current parquet window the offset is correct and this is **purely a future-proofing concern**. But the constant is wrong-by-construction: if DST is ever reinstated (proposals surface every few years) or the asset definition shifts to a market that observes DST, every BRT-day boundary in the Indicator Lab will skew by one hour for half the year — Indicator Lab's catalog cross-references, day-so-far averages (rolling 200 / day-so-far), and 60m HTF gate slicing all silently drift. The bug is in the tool itself (admin-only `/indicator-lab` route), so blast radius is low, which is why it's P3 rather than P1.
 - **Fix shape**: replace the hardcoded ms-offset with `Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(ts)` to derive the BRT calendar date, then group candles by that string. Drops the constant entirely and is DST-correct for any future zone change.
 - **Done when**: `BRT_OFFSET_MS` is removed; `dateToBrt(ts)` returns a `YYYY-MM-DD` string via `Intl.DateTimeFormat`; Indicator Lab renders identically for every existing date in the parquet window (regression check against a sample of 2026-03/04/05/06 days).
-- **Date filed**: 2026-06-13.
-
----
-
-### Materializer: 15m projection staleness at the close boundary
-
-- **Priority**: P2
-- **Effort**: S
-- **Source**: 2026-06-13 — observed while comparing `mme27_15m` (projected onto 5m bricks by the materializer) against a native 15m EMA computed in-browser during the Indicator Lab build. On the brick that closes a 15m bar, the projected `mme27_15m` value in `hawk_5m_win` lags the freshly-closed native EMA by **~30–40 points on WIN** (one brick body). On the next brick (first brick of the new 15m bar) the values converge.
-- **What + Why**: `scripts/materialize-hawks-timeframes.ts` projects HTF indicators onto 5m bricks by carrying the last-known HTF value forward until the next HTF close. The current implementation includes the closing 5m brick in the _prior_ 15m bar's window, so on the boundary brick the 5m row reports the pre-close EMA, not the post-close EMA. Every Indicator Lab S/R magnet that uses `mme27_15m`/`mme55_15m`/`mme27_60m`/`mme55_60m` will therefore be off by one bar at exactly the brick where a 15m candle just closed — which is the brick most likely to trigger a magnet-rejection setup. Hawks autonomous engine reads from the same column when it ships, so this contaminates real production signal.
-- **Repro**: pick a date where the 15m boundary aligns with an active brick (e.g. any 09:15, 09:30 BRT brick on `hawk_5m_win`). Read `mme27_15m` for that brick from the parquet, then compute a 27-period EMA of 15m closes ending at that bar's close — compare. Delta = ~30–40pt on WIN, sign-stable per-trend-direction.
-- **Fix shape**: change the projection in `scripts/materialize-hawks-timeframes.ts` so the brick that _closes_ the 15m bar inherits the post-close HTF value (not the pre-close). Equivalent: align the projection window so `[t, t+15min)` carries the value computed at `t`, not at `t-15min`. Regenerate parquets and verify the delta drops to 0 at every boundary brick. Same fix applies to 60m projection columns.
-- **Done when**: a verifier script (`scripts/verify-htf-projection.ts`) iterates every 15m and 60m boundary brick in a sample window and asserts `|projected − native| < 1pt`. Indicator Lab re-renders with magnet levels that match the next-brick value at the boundary.
+- **2026-06-14 review (Ygor + Claude)**: deliberately deferred — the project guideline against "error handling, fallbacks, or validation for scenarios that can't happen" applies. Brazil has no DST since 2019 with no reinstatement on the horizon, the asset definition (WIN/WDO) is BRT-only, and the code path is admin-only. Promote to P1 the day either (a) Brazil announces DST reinstatement or (b) a DST-observing asset is added to the Indicator Lab.
 - **Date filed**: 2026-06-13.
 
 ---

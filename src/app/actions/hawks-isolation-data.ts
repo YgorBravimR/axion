@@ -266,14 +266,31 @@ export const fetchHawksIsolationData = async (
 		(c) => dateToBrt(new Date(c.timestamp)) === date
 	)
 	const offset = priorBrickCount === -1 ? 0 : priorBrickCount
-	const catalog: CatalogMarker[] = loadCatalogForDate(date).map((e) => ({
-		brickIndex: offset + e.brickIndex - 1,
-		label:
-			e.label ??
-			(e.tradeNumber !== undefined ? `T${String(e.tradeNumber)}` : "T?"),
-		direction: e.direction,
-		closePrice: typeof e.closePrice === "number" ? e.closePrice : null,
-	}))
+	const rawCatalog = loadCatalogForDate(date)
+	let droppedOutOfRange = 0
+	const catalog: CatalogMarker[] = rawCatalog.flatMap((e) => {
+		const absoluteIndex = offset + e.brickIndex - 1
+		if (absoluteIndex < offset || absoluteIndex >= candles5m.length) {
+			droppedOutOfRange++
+			return []
+		}
+		return [
+			{
+				brickIndex: absoluteIndex,
+				label:
+					e.label ??
+					(e.tradeNumber !== undefined ? `T${String(e.tradeNumber)}` : "T?"),
+				direction: e.direction,
+				closePrice: typeof e.closePrice === "number" ? e.closePrice : null,
+			},
+		]
+	})
+	if (droppedOutOfRange > 0) {
+		console.warn(
+			`[hawks-isolation] catalog ${date}: dropped ${droppedOutOfRange} out-of-range brickIndex ` +
+				`(window=[${offset}, ${candles5m.length}))`
+		)
+	}
 
 	return {
 		date,

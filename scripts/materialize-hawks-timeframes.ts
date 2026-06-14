@@ -199,6 +199,11 @@ const weekRange = (
 	return { start, end }
 }
 
+// Project the most-recently-closed HTF brick onto a target brick. The source's
+// `timestamp` is the brick CLOSE (ProfitChart Renko convention) — so when a
+// source brick and target brick share an exact timestamp (a fast-print event
+// that breached both Renko thresholds in the same instant), the source brick
+// IS closed at that moment and is the correct projection. Use `<=`-floor.
 const project = (
 	target: RawCandle,
 	source: RawCandle[] | undefined,
@@ -210,7 +215,7 @@ const project = (
 	if (!source || source.length === 0) {
 		return false
 	}
-	const idx = findFloorIndex(source, target.timestamp.getTime() - 1)
+	const idx = findFloorIndex(source, target.timestamp.getTime())
 	if (idx < 0) {
 		return false
 	}
