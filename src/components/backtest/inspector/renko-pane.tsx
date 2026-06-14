@@ -82,6 +82,12 @@ interface RenkoPaneProps {
 	readonly series: BrickChartSeries
 	readonly indicators?: ReadonlyArray<IndicatorOverlay>
 	readonly trade?: TradeOverlay | null
+	// Freeform marker array layered on top of the `trade` overlay's
+	// markers. Useful for engines that emit many fires across a window
+	// (engine lab) where the single-trade overlay model doesn't fit.
+	// Each marker uses the lightweight-charts `SeriesMarker` shape
+	// directly — caller controls position / shape / color / text.
+	readonly extraMarkers?: ReadonlyArray<SeriesMarker<UTCTimestamp>>
 	readonly histogram?: HistogramOverlay | null
 	readonly markerColorMode?: MarkerColorMode
 	readonly drawings?: ProjectedDrawings | null
@@ -98,6 +104,7 @@ const RenkoPane = ({
 	series,
 	indicators,
 	trade,
+	extraMarkers,
 	histogram,
 	markerColorMode = "trade",
 	drawings,
@@ -252,7 +259,26 @@ const RenkoPane = ({
 			markersPluginRef.current.setMarkers([])
 		}
 
-		if (!trade || !theme) {
+		// Caller may pass `extraMarkers` without a `trade` — still render them.
+		const hasExtra = (extraMarkers?.length ?? 0) > 0
+		if ((!trade && !hasExtra) || !theme) {
+			return
+		}
+
+		// Ensure plugin is mounted before either path uses it.
+		const candleSeriesForMarkers = candleSeriesRef.current
+		if (!markersPluginRef.current && candleSeriesForMarkers) {
+			markersPluginRef.current = createSeriesMarkers(
+				candleSeriesForMarkers
+			) as ISeriesMarkersPluginApi<UTCTimestamp>
+		}
+
+		// `trade`-less path: render extraMarkers and bail.
+		if (!trade) {
+			const eMarkers = [...(extraMarkers ?? [])].sort(
+				(m1, m2) => (m1.time as number) - (m2.time as number)
+			)
+			markersPluginRef.current?.setMarkers(eMarkers)
 			return
 		}
 
@@ -358,9 +384,10 @@ const RenkoPane = ({
 				text: `exit ${formatNumber(trade.exitPrice)}`,
 			},
 		]
-		markers.sort((m1, m2) => (m1.time as number) - (m2.time as number))
-		markersPluginRef.current.setMarkers(markers)
-	}, [trade, theme, markerColorMode, series, formatNumber])
+		const merged = [...markers, ...(extraMarkers ?? [])]
+		merged.sort((m1, m2) => (m1.time as number) - (m2.time as number))
+		markersPluginRef.current?.setMarkers(merged)
+	}, [trade, extraMarkers, theme, markerColorMode, series, formatNumber])
 
 	// Optional histogram sub-pane (e.g., MACD). Mounted at paneIndex 1 so it
 	// shares the time axis with the price pane above. Per-point `color` on each

@@ -80,9 +80,14 @@ const fetchTfCandles = async (
  *
  * Returns a per-day breakdown so the UI can scrub day-by-day.
  *
- * Note: with all 3 playbook stubs returning null, `fires` will be
- * empty on every brick. The interesting columns until steps 4-6 land
- * are `gate60m`, `gate15m`, `directionAllowed`, and `cooldownActive`.
+ * With all 3 playbook stubs returning null, the orchestrator never
+ * fires today. To exercise the chart's marker-rendering pipeline (so
+ * you can SEE how entries land on the chart before step 4 lands real
+ * trigger logic), the action synthesizes one demo fire per
+ * gate-allowed brick that satisfies a simple every-N-bricks pattern.
+ * Demo fires are clearly tagged `demo:<direction>` in the label and
+ * removed once any real playbook starts firing (i.e. when
+ * `result.signal` is non-null, the demo path is skipped for that brick).
  */
 export const loadHawksEngineLabData = async (
 	from: string,
@@ -127,9 +132,16 @@ export const loadHawksEngineLabData = async (
 	const dayPayloads: EngineLabDayPayload[] = []
 	let state = createInitialHawksPlaybookState()
 
+	// Demo-fire cadence: fire one synthetic entry per day for the first
+	// gate-allowed + cooldown-elapsed brick. One fire per day is enough
+	// to validate the marker pipeline visually without polluting the
+	// chart. Set to false to suppress.
+	const DEMO_FIRES = true
+
 	for (const dayKey of sortedDayKeys) {
 		const dayCandles = days.get(dayKey)!
 		const bricks: EngineLabBrick[] = []
+		let demoFireBricksLeftThisDay = DEMO_FIRES ? 1 : 0
 
 		for (let i = 0; i < dayCandles.length; i++) {
 			const candle = dayCandles[i]!
@@ -161,6 +173,38 @@ export const loadHawksEngineLabData = async (
 			)
 			state = result.state
 
+			// Demo-fire path: only used to validate the chart marker pipeline
+			// while playbook stubs return null. Skipped automatically the
+			// moment a real playbook starts firing.
+			const realFired = result.signal !== null
+			const canDemoFire =
+				DEMO_FIRES &&
+				!realFired &&
+				demoFireBricksLeftThisDay > 0 &&
+				directionAllowed !== null &&
+				inTradingWindow &&
+				!cooldownActive
+			let fired = realFired
+			let direction = result.signal?.direction ?? null
+			let price = result.signal?.price ?? null
+			let stopReference = result.signal?.stopReference ?? null
+			let label = result.signal?.label ?? null
+			let tier = result.signal?.quality?.tier ?? null
+			if (canDemoFire) {
+				fired = true
+				direction = directionAllowed
+				price = candle.close
+				// Stop ~1 brick body away in the adverse direction.
+				const adverseDelta =
+					direction === "long"
+						? -(Math.abs(candle.close - candle.open) || 100)
+						: Math.abs(candle.close - candle.open) || 100
+				stopReference = candle.close + adverseDelta
+				label = `demo:${direction}`
+				tier = "B"
+				demoFireBricksLeftThisDay--
+			}
+
 			bricks.push({
 				brickIndexInDay: i,
 				timestamp: candle.timestamp,
@@ -173,12 +217,12 @@ export const loadHawksEngineLabData = async (
 				inTradingWindow,
 				directionAllowed,
 				cooldownActive,
-				fired: result.signal !== null,
-				direction: result.signal?.direction ?? null,
-				price: result.signal?.price ?? null,
-				stopReference: result.signal?.stopReference ?? null,
-				label: result.signal?.label ?? null,
-				tier: result.signal?.quality?.tier ?? null,
+				fired,
+				direction,
+				price,
+				stopReference,
+				label,
+				tier,
 			})
 		}
 

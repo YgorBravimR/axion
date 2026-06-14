@@ -5,7 +5,7 @@
 
 import { useMemo, useState, useTransition } from "react"
 import { Loader2 } from "lucide-react"
-import type { UTCTimestamp } from "lightweight-charts"
+import type { SeriesMarker, UTCTimestamp } from "lightweight-charts"
 import { loadHawksEngineLabData } from "@/app/actions/hawks-engine-lab-data"
 import type {
 	HawksEngineLabData,
@@ -130,49 +130,35 @@ const HawksEngineLab = ({
 			),
 			overlayFromKey(allCandles, "vwap_d", "VWAP daily", COLOR_VWAP_D),
 		]
-		// FIRE markers concatenated across all days. Per-day brickIdx +
-		// the day's offset = global x-axis position.
-		const longFires: Array<{ time: UTCTimestamp; value: number }> = []
-		const shortFires: Array<{ time: UTCTimestamp; value: number }> = []
+		// FIRE markers: render as proper arrow markers (the same visual
+		// language as /backtest and /hawks-isolation). LONG = arrowUp below
+		// bar (green), SHORT = arrowDown above bar (red). Per-day brickIdx
+		// shifted by the day's offset = global chart x-axis position.
+		const fireMarkers: SeriesMarker<UTCTimestamp>[] = []
 		for (let di = 0; di < data.days.length; di++) {
 			const day = data.days[di]!
 			const offset = dayOffsets[di]!.offset
 			for (const b of day.bricks) {
-				if (!b.fired || b.price === null) {
+				if (!b.fired || b.price === null || b.direction === null) {
 					continue
 				}
-				const pt = {
+				const isLong = b.direction === "long"
+				fireMarkers.push({
 					time: (offset + b.brickIndexInDay) as UTCTimestamp,
-					value: b.price,
-				}
-				if (b.direction === "long") {
-					longFires.push(pt)
-				} else if (b.direction === "short") {
-					shortFires.push(pt)
-				}
+					position: isLong ? "belowBar" : "aboveBar",
+					color: isLong ? COLOR_FIRE_LONG : COLOR_FIRE_SHORT,
+					shape: isLong ? "arrowUp" : "arrowDown",
+					text: `${b.direction.toUpperCase()} ${b.tier ?? ""}`.trim(),
+				})
 			}
 		}
-		const fireOverlays = [
-			{
-				key: "fire-long",
-				label: "LONG fires",
-				color: COLOR_FIRE_LONG,
-				data: longFires,
-				style: "points" as const,
-			},
-			{
-				key: "fire-short",
-				label: "SHORT fires",
-				color: COLOR_FIRE_SHORT,
-				data: shortFires,
-				style: "points" as const,
-			},
-		]
 		return {
 			series,
-			indicators: [...indicators, ...fireOverlays],
+			indicators,
+			extraMarkers: fireMarkers,
 			totalDays: data.days.length,
 			totalBricks: allCandles.length,
+			totalFires: fireMarkers.length,
 		}
 	}, [data])
 
@@ -340,10 +326,11 @@ const HawksEngineLab = ({
 								<LegendDot color={COLOR_FIRE_SHORT} label="SHORT fire" />
 							</div>
 							<RenkoPane
-								label={`${data.from} → ${data.to} — 5m Renko (${chartPayload.totalDays} days, ${chartPayload.totalBricks.toLocaleString()} bricks)`}
-								subLabel="60m EMAs = gate, 15m EMAs = booster, VWAP = vwap_rejection ref. Scroll/zoom the chart; day picker scopes the table only."
+								label={`${data.from} → ${data.to} — 5m Renko (${chartPayload.totalDays} days, ${chartPayload.totalBricks.toLocaleString()} bricks, ${chartPayload.totalFires} fires)`}
+								subLabel="60m EMAs = gate, 15m EMAs = booster, VWAP = vwap_rejection ref. Arrow markers = engine fires (green up = LONG, red down = SHORT). Day picker scopes table only."
 								series={chartPayload.series}
 								indicators={chartPayload.indicators}
+								extraMarkers={chartPayload.extraMarkers}
 								className="h-[480px]"
 							/>
 						</div>
