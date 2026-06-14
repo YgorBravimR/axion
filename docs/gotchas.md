@@ -755,6 +755,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 
 ## Hawks Backtest Engine
 
+### Hawks: lab's universal entry gates over-filter retracement / vwap-rejection fires
+
+- **What**: The hawks engine lab applies four methodology gates to EVERY playbook fire — VB (color-flip), leg-shape (expansion ≥ 4 + retraction ≥ 2), 5m HH/LL, and gate-stability. These were calibrated against the mean_reversion / VB-style entry, where a snap-back FROM a multi-brick extension is the trigger. The leg-shape gate in particular requires the JUST-COMPLETED leg to show a real expansion + retraction, which describes the bricks BEFORE a mean-reversion fire. For `retracement` (resumption AFTER a retracement) and `vwap_rejection` (pierce-and-reject) the structural shape at fire-time is different, and the universal gates filter them out almost entirely. Across 20 May days only `mean_reversion` produced real fires (20/20 real fires were mean_reversion); H/I logic itself works in unit tests but never passes the lab gates.
+- **What to do**: Per-playbook entry gates are the right fix (planned for the per-playbook engine variants, `processHawksSinglePlaybookCandle` is the seam). Until then, when validating H/I in the lab you'll need to either (a) loosen the leg-shape requirement for those playbooks, or (b) inspect raw orchestrator output before the lab gates are applied.
+- **Source**: `src/app/actions/hawks-engine-lab-data.ts` (the lab's universal gate block); `src/lib/backtest/modules/entry/playbooks/{retracement,vwap-rejection}.ts`; engine v0.10 Phase H/I session 2026-06-14.
+- **Date logged**: 2026-06-14.
+
 ### Hawks: TOPOS E FUNDOS indicator confirmation lag (5m vs. higher-TF differ)
 
 - **What**: The ProfitChart TOPOS E FUNDOS indicator does **not** paint a pivot on the brick where the reversal begins. On the **5m chart**, it waits for **2 confirming bricks** in the opposite direction before painting the pivot. The painted pivot's _value_ is the prior extreme — `brick.high` for a TOPO, `brick.low` for a FUNDO — not the value of the confirming brick. On the **15m and 60m charts**, only **1 confirming brick** is required.
