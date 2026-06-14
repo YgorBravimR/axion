@@ -157,15 +157,13 @@ export const processHawksPlaybookCandle = (
 		return appendPrior(base, candle)
 	}
 
-	// Primary playbook = first by PLAYBOOK_PRIORITY. All fires recorded
-	// in playbooksFired metadata for downstream cross-playbook stats.
+	// Primary playbook = the first id in PLAYBOOK_PRIORITY that fired.
+	// All fires still recorded in playbooksFired for downstream stats.
+	const primaryId = PLAYBOOK_PRIORITY.find((pid) =>
+		fires.some((f) => f.id === pid)
+	)
 	const primary =
-		fires.find((f) =>
-			PLAYBOOK_PRIORITY.includes(f.id)
-				? f.id ===
-					PLAYBOOK_PRIORITY.find((pid) => fires.some((x) => x.id === pid))
-				: false
-		) ?? fires[0]!
+		fires.find((f) => f.id === primaryId) ?? /* unreachable */ fires[0]!
 	const playbooksFired = fires.map((f) => f.id)
 
 	// Booster scoring — TODO step 3: read indicators and compute the
