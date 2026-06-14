@@ -484,111 +484,46 @@ const HawksIsolationCharts = ({
 		}
 	}, [candles5m, candles15m, candles60m])
 
-	// Group G — structural pivot review. Three pivot grades, nested:
-	//   - Menor  = every confirmation the detector emits (raw stream)
-	//   - Médio  = confirmation whose price ALTERNATES correctly vs the prior
-	//              pivot price (TOPO > prior, FUNDO < prior). These pass the
-	//              engine's `isTopoPivot !== false` / `isFundoPivot !== false`
-	//              filter and roll the major anchor.
-	//   - Maior  = Médio that EXTENDS the prior same-type Maior in the
-	//              structural direction (new TOPO > prior TOPO Maior, new
-	//              FUNDO < prior FUNDO Maior).
-	// Each Maior is a Médio; each Médio is a Menor. Toggles hide layers
-	// independently. The engine consumes this same nesting implicitly via its
-	// anchor-rolling logic in `hawks-triple-screen.ts`.
-	type PivotGrade = "menor" | "medio" | "maior"
-	interface GradedPivotOverlays {
-		topoMenor: Array<{ time: UTCTimestamp; value: number }>
-		fundoMenor: Array<{ time: UTCTimestamp; value: number }>
-		topoMedio: Array<{ time: UTCTimestamp; value: number }>
-		fundoMedio: Array<{ time: UTCTimestamp; value: number }>
-		topoMaior: Array<{ time: UTCTimestamp; value: number }>
-		fundoMaior: Array<{ time: UTCTimestamp; value: number }>
-		topoMaiorLine: Array<{ time: UTCTimestamp; value: number }>
-		fundoMaiorLine: Array<{ time: UTCTimestamp; value: number }>
-		counts: { menor: number; medio: number; maior: number }
-	}
+	// Group G — structural pivot review. Single stream: period-2 confirmations
+	// only, no alternation/extension filtering. A TOPO can follow a TOPO (and a
+	// FUNDO can follow a FUNDO) — we plot every raw confirmation the detector
+	// emits. This is the engine's actual signal source; the page just shows it.
 	const buildPivotOverlays = useCallback(
-		(candles: HawksIsolationData["candles5m"]): GradedPivotOverlays => {
-			const bricks = candles.map((c) => ({
-				open: c.open,
-				high: c.high,
-				low: c.low,
-				close: c.close,
-			}))
-			const markers = walkStructuralPivots(bricks)
-			const byBrick = new Map<number, (typeof markers)[number]>()
-			for (const m of markers) {
-				byBrick.set(m.brickIdx, m)
-			}
-			const out: GradedPivotOverlays = {
-				topoMenor: [],
-				fundoMenor: [],
-				topoMedio: [],
-				fundoMedio: [],
-				topoMaior: [],
-				fundoMaior: [],
-				topoMaiorLine: [],
-				fundoMaiorLine: [],
-				counts: { menor: 0, medio: 0, maior: 0 },
-			}
-			let lastPivotPrice: number | null = null
-			let topoMaiorPrice: number | null = null
-			let fundoMaiorPrice: number | null = null
+		(
+			candles: HawksIsolationData["candles5m"]
+		): {
+			topo: Array<{ time: UTCTimestamp; value: number }>
+			fundo: Array<{ time: UTCTimestamp; value: number }>
+			topoCount: number
+			fundoCount: number
+		} => {
+			const bricks: Array<{
+				open: number
+				high: number
+				low: number
+				close: number
+			}> = new Array(candles.length)
 			for (let i = 0; i < candles.length; i++) {
-				const m = byBrick.get(i)
-				if (m) {
-					out.counts.menor++
-					const time = i as UTCTimestamp
-					if (m.type === "topo") {
-						out.topoMenor.push({ time, value: m.price })
-					} else {
-						out.fundoMenor.push({ time, value: m.price })
-					}
-					const isTopoPivot =
-						lastPivotPrice === null ? null : m.price > lastPivotPrice
-					const isFundoPivot =
-						lastPivotPrice === null ? null : m.price < lastPivotPrice
-					lastPivotPrice = m.price
-					// Médio = alternation passes (or first pivot, where both filters are
-					// null — treat as Médio so the first observation isn't lost).
-					const isMedio =
-						(m.type === "topo" && isTopoPivot !== false) ||
-						(m.type === "fundo" && isFundoPivot !== false)
-					if (isMedio) {
-						out.counts.medio++
-						if (m.type === "topo") {
-							out.topoMedio.push({ time, value: m.price })
-							// Maior = extends prior TOPO Maior (strictly higher).
-							if (topoMaiorPrice === null || m.price > topoMaiorPrice) {
-								topoMaiorPrice = m.price
-								out.topoMaior.push({ time, value: m.price })
-								out.counts.maior++
-							}
-						} else {
-							out.fundoMedio.push({ time, value: m.price })
-							if (fundoMaiorPrice === null || m.price < fundoMaiorPrice) {
-								fundoMaiorPrice = m.price
-								out.fundoMaior.push({ time, value: m.price })
-								out.counts.maior++
-							}
-						}
-					}
-				}
-				if (topoMaiorPrice !== null) {
-					out.topoMaiorLine.push({
-						time: i as UTCTimestamp,
-						value: topoMaiorPrice,
-					})
-				}
-				if (fundoMaiorPrice !== null) {
-					out.fundoMaiorLine.push({
-						time: i as UTCTimestamp,
-						value: fundoMaiorPrice,
-					})
+				const c = candles[i]!
+				bricks[i] = { open: c.open, high: c.high, low: c.low, close: c.close }
+			}
+			const markers = walkStructuralPivots(bricks)
+			const topo: Array<{ time: UTCTimestamp; value: number }> = []
+			const fundo: Array<{ time: UTCTimestamp; value: number }> = []
+			for (const m of markers) {
+				const point = { time: m.brickIdx as UTCTimestamp, value: m.price }
+				if (m.type === "topo") {
+					topo.push(point)
+				} else {
+					fundo.push(point)
 				}
 			}
-			return out
+			return {
+				topo,
+				fundo,
+				topoCount: topo.length,
+				fundoCount: fundo.length,
+			}
 		},
 		[]
 	)
@@ -613,99 +548,35 @@ const HawksIsolationCharts = ({
 		"15m": true,
 		"60m": true,
 	})
-	const [pivotGradeEnabled, setPivotGradeEnabled] = useState<
-		Record<PivotGrade, boolean>
-	>({
-		menor: true,
-		medio: true,
-		maior: true,
-	})
 	const togglePivotPane = useCallback(
 		(tf: "5m" | "15m" | "60m") =>
 			setPivotPaneEnabled((s) => ({ ...s, [tf]: !s[tf] })),
 		[]
 	)
-	const togglePivotGrade = useCallback(
-		(grade: PivotGrade) =>
-			setPivotGradeEnabled((s) => ({ ...s, [grade]: !s[grade] })),
-		[]
-	)
 	const buildOverlaysForPane = useCallback(
-		(data: GradedPivotOverlays, tfEnabled: boolean): Overlay[] => {
+		(
+			data: ReturnType<typeof buildPivotOverlays>,
+			tfEnabled: boolean
+		): Overlay[] => {
 			if (!tfEnabled) {
 				return []
 			}
-			const out: Overlay[] = []
-			// Layer order: anchor lines first (rendered underneath), then dots
-			// from least-bright (Menor) to brightest (Maior) so Maior dots draw
-			// on top.
-			if (pivotGradeEnabled.maior) {
-				out.push(
-					{
-						key: "topo-maior-line",
-						label: `TOPO Maior anchor (${data.counts.maior})`,
-						color: "rgba(252, 211, 77, 0.85)",
-						data: data.topoMaiorLine,
-					},
-					{
-						key: "fundo-maior-line",
-						label: `FUNDO Maior anchor`,
-						color: "rgba(56, 189, 248, 0.85)",
-						data: data.fundoMaiorLine,
-					}
-				)
-			}
-			if (pivotGradeEnabled.menor) {
-				out.push(
-					{
-						key: "topo-menor",
-						label: `TOPO Menor (${data.counts.menor})`,
-						color: "rgba(252, 211, 77, 0.35)",
-						data: data.topoMenor,
-					},
-					{
-						key: "fundo-menor",
-						label: `FUNDO Menor`,
-						color: "rgba(56, 189, 248, 0.35)",
-						data: data.fundoMenor,
-					}
-				)
-			}
-			if (pivotGradeEnabled.medio) {
-				out.push(
-					{
-						key: "topo-medio",
-						label: `TOPO Médio (${data.counts.medio})`,
-						color: "rgba(252, 211, 77, 0.7)",
-						data: data.topoMedio,
-					},
-					{
-						key: "fundo-medio",
-						label: `FUNDO Médio`,
-						color: "rgba(56, 189, 248, 0.7)",
-						data: data.fundoMedio,
-					}
-				)
-			}
-			if (pivotGradeEnabled.maior) {
-				out.push(
-					{
-						key: "topo-maior-dot",
-						label: `TOPO Maior dots`,
-						color: "rgb(255, 223, 90)",
-						data: data.topoMaior,
-					},
-					{
-						key: "fundo-maior-dot",
-						label: `FUNDO Maior dots`,
-						color: "rgb(96, 211, 255)",
-						data: data.fundoMaior,
-					}
-				)
-			}
-			return out
+			return [
+				{
+					key: "topo",
+					label: `TOPO (${data.topoCount})`,
+					color: "rgb(252, 211, 77)",
+					data: data.topo,
+				},
+				{
+					key: "fundo",
+					label: `FUNDO (${data.fundoCount})`,
+					color: "rgb(56, 189, 248)",
+					data: data.fundo,
+				},
+			]
 		},
-		[pivotGradeEnabled]
+		[buildPivotOverlays]
 	)
 	const pivotOverlays5m = useMemo(
 		() => buildOverlaysForPane(pivotData5m, pivotPaneEnabled["5m"]),
@@ -2211,60 +2082,31 @@ const HawksIsolationCharts = ({
 
 				<TabsContent value="G">
 					<div className="text-tiny text-txt-300 mb-2 leading-relaxed">
-						Structural pivots from <code>walkStructuralPivots</code> —
-						bit-identical to the detector the engine runs. Three nested grades:{" "}
-						<strong>Menor</strong> (every detector confirmation),{" "}
-						<strong>Médio</strong> (alternates correctly vs the prior pivot —
-						these roll the engine&apos;s anchor), <strong>Maior</strong>{" "}
-						(extends the prior same-type Maior; new highest TOPO or new lowest
-						FUNDO). Each Maior is a Médio; each Médio is a Menor. Anchor lines
-						hold the most-recent Maior price forward; dots mark the brick where
-						each pivot was confirmed. <strong>Known imperfection</strong>: first
-						2 bullish bricks of a session emit a spurious FUNDO at brick
-						1&apos;s high — kept on purpose (stricter detector regressed
-						reproduction 55.9% → 55.1%).
+						Period-2 structural pivots from <code>walkStructuralPivots</code> —
+						bit-identical to the detector the engine consumes. Every detector
+						confirmation is plotted (no alternation filter): a TOPO can follow a
+						TOPO, a FUNDO can follow a FUNDO. Yellow = TOPO at the high of the
+						last bullish brick before 2 bearish closes; cyan = FUNDO at the low
+						of the last bearish brick before 2 bullish closes. Dots land at the
+						confirmation brick (2-brick lag from the actual peak/trough by
+						design).
 					</div>
-					<div className="text-small mb-2 flex flex-wrap items-center gap-3">
-						<div className="flex items-center gap-2">
-							<span className="text-txt-300">TF:</span>
-							{(["5m", "15m", "60m"] as const).map((tf) => (
-								<button
-									key={tf}
-									type="button"
-									onClick={() => togglePivotPane(tf)}
-									className={
-										pivotPaneEnabled[tf]
-											? "bg-acc-100 text-bg-100 rounded-sm px-2 py-0.5"
-											: "bg-bg-200 text-txt-100 rounded-sm px-2 py-0.5"
-									}
-								>
-									{tf}
-								</button>
-							))}
-						</div>
-						<div className="flex items-center gap-2">
-							<span className="text-txt-300">Grade:</span>
-							{(
-								[
-									{ k: "menor", label: "Menor" },
-									{ k: "medio", label: "Médio" },
-									{ k: "maior", label: "Maior" },
-								] as Array<{ k: PivotGrade; label: string }>
-							).map(({ k, label }) => (
-								<button
-									key={k}
-									type="button"
-									onClick={() => togglePivotGrade(k)}
-									className={
-										pivotGradeEnabled[k]
-											? "bg-acc-100 text-bg-100 rounded-sm px-2 py-0.5"
-											: "bg-bg-200 text-txt-100 rounded-sm px-2 py-0.5"
-									}
-								>
-									{label}
-								</button>
-							))}
-						</div>
+					<div className="text-small mb-2 flex items-center gap-2">
+						<span className="text-txt-300">TF:</span>
+						{(["5m", "15m", "60m"] as const).map((tf) => (
+							<button
+								key={tf}
+								type="button"
+								onClick={() => togglePivotPane(tf)}
+								className={
+									pivotPaneEnabled[tf]
+										? "bg-acc-100 text-bg-100 rounded-sm px-2 py-0.5"
+										: "bg-bg-200 text-txt-100 rounded-sm px-2 py-0.5"
+								}
+							>
+								{tf}
+							</button>
+						))}
 					</div>
 					<div
 						className="grid grid-cols-1 gap-2 md:grid-cols-[3fr_2fr]"
@@ -2273,7 +2115,7 @@ const HawksIsolationCharts = ({
 						<RenkoPane
 							className="h-full"
 							label="5m bricks + structural pivots"
-							subLabel="faint=Menor · mid=Médio · bright=Maior · lines=Maior anchor"
+							subLabel="yellow=TOPO · cyan=FUNDO · 2-brick confirmation lag"
 							series={series5m}
 							indicators={pivotOverlays5m}
 							emitsCrosshair
