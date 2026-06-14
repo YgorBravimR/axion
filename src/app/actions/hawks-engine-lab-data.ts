@@ -23,6 +23,8 @@ import type {
 	EngineLabBrick,
 	EngineLabCandle,
 	EngineLabDayPayload,
+	ExitMode,
+	FiboAnchors,
 	HawksEngineLabData,
 	MacdSign,
 	PivotBias,
@@ -96,26 +98,25 @@ const slimCandle = (c: CandleRow): EngineLabCandle => ({
 // breakeven update → trail activation → trail ratchet. EOD forced-close
 // when no exit fires within the brick array.
 //
-//   - exitMode = "conservative": static 3R target, no trail.
-//   - exitMode = "moderate": no target, trail activates on 3R favorable
-//     close, then trails 2 brickBodies behind every brick close until
-//     stop is hit (spec §6, §7).
+// The simulator is parameterised by:
+//   - `targetPrice` — absolute price for take-profit. null = no target
+//     (Mode 2 trail-only). For Mode 1 this is entry ± 3R; for Mode 3a/3b
+//     it's the chosen fib T1/T2/T3 price.
+//   - `trailAfter3R` — if true, the trail-after-3R primitive arms once
+//     net favor reaches 3R AND a brick closes favorable, then ratchets
+//     `close ± 2 × renkoSize` on every favorable update.
 const simulateLifecycle = (
 	bricks: ReadonlyArray<EngineLabBrick>,
 	fireIdx: number,
 	direction: Direction,
 	entryClose: number,
 	stopReference: number | null,
-	exitMode: "conservative" | "moderate"
+	exitMode: ExitMode,
+	targetPrice: number | null,
+	trailAfter3R: boolean
 ): TradeLifecycle => {
 	const initialStop = stopReference ?? entryClose
 	const brickBody = Math.abs(initialStop - entryClose) / 2
-	const target: number | null =
-		exitMode === "conservative"
-			? direction === "long"
-				? entryClose + 6 * brickBody
-				: entryClose - 6 * brickBody
-			: null
 	let beTriggered = false
 	let beBrickIndexInDay: number | null = null
 	let trailActivated = false
@@ -138,13 +139,13 @@ const simulateLifecycle = (
 			exitPrice = currentStop
 			break
 		}
-		if (target !== null) {
+		if (targetPrice !== null) {
 			const targetHit =
-				direction === "long" ? fb.close >= target : fb.close <= target
+				direction === "long" ? fb.close >= targetPrice : fb.close <= targetPrice
 			if (targetHit) {
 				exitBrickIndexInDay = j
 				exitReason = "target"
-				exitPrice = target
+				exitPrice = targetPrice
 				break
 			}
 		}
@@ -157,7 +158,7 @@ const simulateLifecycle = (
 			beBrickIndexInDay = j
 			currentStop = entryClose
 		}
-		if (exitMode === "moderate") {
+		if (trailAfter3R) {
 			if (!trailActivated && closedFavorable && netFavor >= 6 * brickBody) {
 				trailActivated = true
 				trailActivationBrickIndexInDay = j
@@ -187,7 +188,41 @@ const simulateLifecycle = (
 		exitReason,
 		exitPrice,
 		initialStop,
-		target,
+		target: targetPrice,
+	}
+}
+
+// Compute the three fibo measured-move target prices per spec §5.
+// Returns null when no valid 15m anchor pair is available — caller
+// must fall back to trail-only or block the fire.
+const computeFiboAnchors = (
+	direction: Direction,
+	retracementPeak: number | null,
+	lastTopo15m: number | null,
+	lastFundo15m: number | null
+): FiboAnchors | null => {
+	if (
+		retracementPeak === null ||
+		lastTopo15m === null ||
+		lastFundo15m === null
+	) {
+		return null
+	}
+	const impulseSize = Math.abs(lastTopo15m - lastFundo15m)
+	if (impulseSize <= 0) {
+		return null
+	}
+	// SHORT: impulse went down (topo → fundo); projection subtracts from peak.
+	// LONG: impulse went up (fundo → topo); projection adds to peak.
+	const sign = direction === "short" ? -1 : 1
+	return {
+		retracementPeak,
+		impulseStartPrice: direction === "short" ? lastTopo15m : lastFundo15m,
+		impulseEndPrice: direction === "short" ? lastFundo15m : lastTopo15m,
+		impulseSize,
+		t1: retracementPeak + sign * impulseSize * 0.764,
+		t2: retracementPeak + sign * impulseSize * 1.0,
+		t3: retracementPeak + sign * impulseSize * 1.618,
 	}
 }
 
@@ -643,6 +678,22 @@ export const loadHawksEngineLabData = async (
 			}
 			priorGate60m = htfSnapshot?.gate60m ?? "NO_SIGNAL"
 
+			// Capture retracement-peak anchor at fire time (spec §5).
+			// SHORT entry uses runningHighSinceLastTopo, LONG uses
+			// runningLowSinceLastFundo. The 15m anchors come from the HtfWalker.
+			let fiboAnchors: FiboAnchors | null = null
+			if (fired && direction !== null) {
+				const retracementPeak =
+					direction === "short"
+						? runningHighSinceLastTopo
+						: runningLowSinceLastFundo
+				fiboAnchors = computeFiboAnchors(
+					direction,
+					retracementPeak,
+					htfSnapshot?.lastTopo15m ?? null,
+					htfSnapshot?.lastFundo15m ?? null
+				)
+			}
 			bricks.push({
 				brickIndexInDay: i,
 				timestamp: candle.timestamp,
@@ -669,6 +720,13 @@ export const loadHawksEngineLabData = async (
 				tier,
 				lifecycleConservative: null,
 				lifecycleModerate: null,
+				lifecycleFiboT1: null,
+				lifecycleFiboT2: null,
+				lifecycleFiboT3: null,
+				lifecycleFiboT1Trail: null,
+				lifecycleFiboT2Trail: null,
+				lifecycleFiboT3Trail: null,
+				fiboAnchors,
 			})
 		}
 
@@ -694,13 +752,21 @@ export const loadHawksEngineLabData = async (
 			if (!fire.fired || fire.direction === null || fire.price === null) {
 				continue
 			}
+			const initialStop = fire.stopReference ?? fire.price
+			const brickBody = Math.abs(initialStop - fire.price) / 2
+			const static3RTarget =
+				fire.direction === "long"
+					? fire.price + 6 * brickBody
+					: fire.price - 6 * brickBody
 			const lifecycleConservative = simulateLifecycle(
 				bricks,
 				i,
 				fire.direction,
 				fire.price,
 				fire.stopReference,
-				"conservative"
+				"conservative",
+				static3RTarget,
+				false
 			)
 			const lifecycleModerate = simulateLifecycle(
 				bricks,
@@ -708,12 +774,47 @@ export const loadHawksEngineLabData = async (
 				fire.direction,
 				fire.price,
 				fire.stopReference,
-				"moderate"
+				"moderate",
+				null,
+				true
 			)
+			// Phase E — fibo measured-move modes. 3a (target only) and 3b
+			// (target + trail). When the 15m anchors are missing we omit
+			// the fibo lifecycles entirely (the UI shows N/A); we don't
+			// auto-fall-back to trail-only here so the user can see when
+			// fibo anchors were unavailable.
+			const fa = fire.fiboAnchors
+			const fiboLifecycle = (
+				targetPrice: number,
+				exitMode: ExitMode,
+				withTrail: boolean
+			): TradeLifecycle =>
+				simulateLifecycle(
+					bricks,
+					i,
+					fire.direction!,
+					fire.price!,
+					fire.stopReference,
+					exitMode,
+					targetPrice,
+					withTrail
+				)
 			bricks[i] = {
 				...fire,
 				lifecycleConservative,
 				lifecycleModerate,
+				lifecycleFiboT1: fa ? fiboLifecycle(fa.t1, "fibo_T1", false) : null,
+				lifecycleFiboT2: fa ? fiboLifecycle(fa.t2, "fibo_T2", false) : null,
+				lifecycleFiboT3: fa ? fiboLifecycle(fa.t3, "fibo_T3", false) : null,
+				lifecycleFiboT1Trail: fa
+					? fiboLifecycle(fa.t1, "fibo_T1_trail", true)
+					: null,
+				lifecycleFiboT2Trail: fa
+					? fiboLifecycle(fa.t2, "fibo_T2_trail", true)
+					: null,
+				lifecycleFiboT3Trail: fa
+					? fiboLifecycle(fa.t3, "fibo_T3_trail", true)
+					: null,
 			}
 		}
 

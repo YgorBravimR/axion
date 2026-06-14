@@ -62,14 +62,48 @@ export interface EngineLabBrick {
 	label: string | null
 	tier: QualityTier | null
 	// Post-entry trade lifecycles, populated only when fired === true.
-	// Both modes are simulated for every fire so the lab can toggle
+	// Every mode is simulated for every fire so the lab can toggle
 	// between them without re-fetching. Spec §3 composition matrix:
 	//   - `lifecycleConservative` = Mode 1 (static 3R target, no trail).
 	//   - `lifecycleModerate` = Mode 2 (no target, trail activates at 3R,
 	//     runs forever).
-	// Phase E will add `lifecycleFibo` for Mode 3.
+	//   - `lifecycleFibo*` = Mode 3a (T1/T2/T3 measured-move target, no
+	//     trail) and Mode 3b (same + trail-after-3R composition).
+	// Anchors captured at fire time so the lab can render the fib
+	// overlay (T1/T2/T3 horizontal lines + dashed retracement peak)
+	// without re-deriving them per render.
 	lifecycleConservative: TradeLifecycle | null
 	lifecycleModerate: TradeLifecycle | null
+	lifecycleFiboT1: TradeLifecycle | null
+	lifecycleFiboT2: TradeLifecycle | null
+	lifecycleFiboT3: TradeLifecycle | null
+	lifecycleFiboT1Trail: TradeLifecycle | null
+	lifecycleFiboT2Trail: TradeLifecycle | null
+	lifecycleFiboT3Trail: TradeLifecycle | null
+	fiboAnchors: FiboAnchors | null
+}
+
+/**
+ * Fibo measured-move anchors captured at fire time. Spec §5:
+ *   - `retracementPeak` is the local high (SHORT) / low (LONG) of the
+ *     corrective rally we're entering against, snapshotted at the fire
+ *     brick.
+ *   - `impulseStartPrice` / `impulseEndPrice` are the 15m structural
+ *     pivots that bound the prior impulse leg.
+ *   - `impulseSize = |impulseEndPrice - impulseStartPrice|`.
+ *   - `t1` / `t2` / `t3` are the three projection prices at 76.4 / 100 /
+ *     161.8% of impulse size, anchored at `retracementPeak`, signed by
+ *     trade direction. null when no valid 15m pair was available at
+ *     fire time (spec §5 "Insufficient 15m anchors" branch).
+ */
+export interface FiboAnchors {
+	retracementPeak: number
+	impulseStartPrice: number
+	impulseEndPrice: number
+	impulseSize: number
+	t1: number
+	t2: number
+	t3: number
 }
 
 /**
@@ -77,14 +111,24 @@ export interface EngineLabBrick {
  * key transition points so the lab UI can render breakeven moves,
  * trail activations, and exit markers on the chart.
  */
+export type ExitMode =
+	| "conservative"
+	| "moderate"
+	| "fibo_T1"
+	| "fibo_T2"
+	| "fibo_T3"
+	| "fibo_T1_trail"
+	| "fibo_T2_trail"
+	| "fibo_T3_trail"
+
 export interface TradeLifecycle {
-	exitMode: "conservative" | "moderate" // Mode 1 + Mode 2 (Phase B + Phase D).
+	exitMode: ExitMode
 	// Breakeven event (when stop moved from initial to entry).
 	beTriggered: boolean
 	beBrickIndexInDay: number | null
-	// Trail activation event (Mode 2 only — when net favor reached 3R and
-	// a brick closed favorable). null in conservative mode and in moderate
-	// mode when stopped/exited before reaching 3R.
+	// Trail activation event — populated when the mode has trail-after-3R
+	// enabled (Moderate, Fibo+Trail) AND net favor reached 3R on a
+	// favorable close. null otherwise.
 	trailActivated: boolean
 	trailActivationBrickIndexInDay: number | null
 	// Exit event (the brick that closed the trade).
@@ -92,7 +136,8 @@ export interface TradeLifecycle {
 	exitReason: "stop_initial" | "stop_be" | "stop_trail" | "target" | "eod"
 	exitPrice: number
 	// Stop / target at fire time. `target` is null for modes without a
-	// take-profit (Mode 2 trail-only).
+	// take-profit (Mode 2 trail-only). For fibo modes target is the
+	// selected T1/T2/T3 price.
 	initialStop: number
 	target: number | null
 }

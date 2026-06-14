@@ -13,6 +13,7 @@ import type {
 	EngineLabDayPayload,
 } from "@/app/actions/hawks-engine-lab-data.types"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import {
 	Table,
@@ -45,6 +46,11 @@ const COLOR_EXIT_EOD = "rgb(148, 163, 184)" // slate — EOD forced close
 // Phase D — trail-after-3R event palette.
 const COLOR_TRAIL_ACTIVE = "rgb(168, 85, 247)" // purple — trail just activated
 const COLOR_EXIT_TRAIL = "rgb(34, 197, 94)" // emerald — trail stop hit (locked profit)
+// Phase E — fibo measured-move overlay palette.
+const COLOR_FIB_T1 = "rgb(56, 189, 248)" // sky — T1 (76.4%)
+const COLOR_FIB_T2 = "rgb(14, 165, 233)" // sky-darker — T2 (100%)
+const COLOR_FIB_T3 = "rgb(2, 132, 199)" // sky-deepest — T3 (161.8%)
+const COLOR_FIB_ANCHOR = "rgb(248, 250, 252)" // slate-light — retracement-peak dashed anchor
 
 const overlayFromKey = (
 	candles: EngineLabDayPayload["candles"],
@@ -89,9 +95,19 @@ const HawksEngineLab = ({
 	)
 	const [filter, setFilter] = useState<FilterMode>("all")
 	const [hoveredGlobalIdx, setHoveredGlobalIdx] = useState<number | null>(null)
-	const [exitMode, setExitMode] = useState<"conservative" | "moderate">(
-		"conservative"
-	)
+	type ExitModeUi =
+		| "conservative"
+		| "moderate"
+		| "fibo_T1"
+		| "fibo_T2"
+		| "fibo_T3"
+		| "fibo_T1_trail"
+		| "fibo_T2_trail"
+		| "fibo_T3_trail"
+	const [exitMode, setExitMode] = useState<ExitModeUi>("conservative")
+	// Fibo sub-controls — surfaced when exitMode starts with "fibo".
+	const [fiboTier, setFiboTier] = useState<"T1" | "T2" | "T3">("T2")
+	const [fiboTrail, setFiboTrail] = useState<boolean>(false)
 	const [pending, startTransition] = useTransition()
 
 	const activeDay = useMemo(
@@ -124,7 +140,12 @@ const HawksEngineLab = ({
 			}
 		}
 		const series = candlesToBrickSeriesNative(allCandles)
-		const indicators = [
+		const indicators: Array<{
+			key: string
+			label: string
+			color: string
+			data: Array<{ time: UTCTimestamp; value: number }>
+		}> = [
 			overlayFromKey(
 				allCandles,
 				"mme27_60m",
@@ -151,6 +172,108 @@ const HawksEngineLab = ({
 			),
 			overlayFromKey(allCandles, "vwap_d", "VWAP daily", COLOR_VWAP_D),
 		]
+		// Phase E — fibo overlay. For each fire that has `fiboAnchors`, draw
+		// 3 horizontal segments at T1/T2/T3 prices + 1 dashed retracement-peak
+		// anchor, each spanning fire→exit brick of the ACTIVE fibo lifecycle.
+		// We only render this when the lab is in a fibo mode so we don't
+		// litter the chart in Conservative/Moderate views.
+		//
+		// Scope: ACTIVE DAY only. Drawing every fire's fib lines across the
+		// full window would (a) tank perf with N indicator series per fire
+		// and (b) collide on time-axis dedup when fires overlap. Active day
+		// = at most ~15 fires, no overlap chaos.
+		const activeDayIdx = data.days.findIndex((d) => d.dayKey === activeDayKey)
+		if (exitMode.startsWith("fibo") && activeDayIdx >= 0) {
+			const pickLifecycle = (b: EngineLabBrick) =>
+				exitMode === "fibo_T1"
+					? b.lifecycleFiboT1
+					: exitMode === "fibo_T2"
+						? b.lifecycleFiboT2
+						: exitMode === "fibo_T3"
+							? b.lifecycleFiboT3
+							: exitMode === "fibo_T1_trail"
+								? b.lifecycleFiboT1Trail
+								: exitMode === "fibo_T2_trail"
+									? b.lifecycleFiboT2Trail
+									: b.lifecycleFiboT3Trail
+			const t1Data: Array<{ time: UTCTimestamp; value: number }> = []
+			const t2Data: Array<{ time: UTCTimestamp; value: number }> = []
+			const t3Data: Array<{ time: UTCTimestamp; value: number }> = []
+			const anchorData: Array<{ time: UTCTimestamp; value: number }> = []
+			const day = data.days[activeDayIdx]!
+			const offset = dayOffsets[activeDayIdx]!.offset
+			for (const b of day.bricks) {
+				if (!b.fired || !b.fiboAnchors) {
+					continue
+				}
+				const lc = pickLifecycle(b)
+				const exitIdx = lc?.exitBrickIndexInDay ?? b.brickIndexInDay
+				const startTime = (offset + b.brickIndexInDay) as UTCTimestamp
+				const endTime = (offset + exitIdx) as UTCTimestamp
+				t1Data.push({ time: startTime, value: b.fiboAnchors.t1 })
+				t1Data.push({ time: endTime, value: b.fiboAnchors.t1 })
+				t2Data.push({ time: startTime, value: b.fiboAnchors.t2 })
+				t2Data.push({ time: endTime, value: b.fiboAnchors.t2 })
+				t3Data.push({ time: startTime, value: b.fiboAnchors.t3 })
+				t3Data.push({ time: endTime, value: b.fiboAnchors.t3 })
+				anchorData.push({
+					time: startTime,
+					value: b.fiboAnchors.retracementPeak,
+				})
+				anchorData.push({
+					time: endTime,
+					value: b.fiboAnchors.retracementPeak,
+				})
+			}
+			// lightweight-charts requires per-series data to be asc-sorted
+			// by time and unique. Overlapping fires can push out-of-order
+			// pairs (entry of fire 2 lands BEFORE exit of fire 1 when fire 1
+			// rides to EOD). Sort + de-dup-by-time (last write wins) per
+			// overlay before handing off.
+			const sortDedup = (
+				rows: Array<{ time: UTCTimestamp; value: number }>
+			): Array<{ time: UTCTimestamp; value: number }> => {
+				const sorted = [...rows].sort(
+					(a, b) => (a.time as number) - (b.time as number)
+				)
+				const out: Array<{ time: UTCTimestamp; value: number }> = []
+				for (const r of sorted) {
+					const last = out[out.length - 1]
+					if (last && last.time === r.time) {
+						last.value = r.value
+					} else {
+						out.push({ time: r.time, value: r.value })
+					}
+				}
+				return out
+			}
+			if (t1Data.length > 0) {
+				indicators.push({
+					key: "fib-t1",
+					label: "Fib T1 (76.4%)",
+					color: COLOR_FIB_T1,
+					data: sortDedup(t1Data),
+				})
+				indicators.push({
+					key: "fib-t2",
+					label: "Fib T2 (100%)",
+					color: COLOR_FIB_T2,
+					data: sortDedup(t2Data),
+				})
+				indicators.push({
+					key: "fib-t3",
+					label: "Fib T3 (161.8%)",
+					color: COLOR_FIB_T3,
+					data: sortDedup(t3Data),
+				})
+				indicators.push({
+					key: "fib-anchor",
+					label: "Retracement peak",
+					color: COLOR_FIB_ANCHOR,
+					data: sortDedup(anchorData),
+				})
+			}
+		}
 		// FIRE markers: render as proper arrow markers (the same visual
 		// language as /backtest and /hawks-isolation). LONG = arrowUp below
 		// bar (green), SHORT = arrowDown above bar (red). Per-day brickIdx
@@ -178,7 +301,19 @@ const HawksEngineLab = ({
 				const lifecycle =
 					exitMode === "conservative"
 						? b.lifecycleConservative
-						: b.lifecycleModerate
+						: exitMode === "moderate"
+							? b.lifecycleModerate
+							: exitMode === "fibo_T1"
+								? b.lifecycleFiboT1
+								: exitMode === "fibo_T2"
+									? b.lifecycleFiboT2
+									: exitMode === "fibo_T3"
+										? b.lifecycleFiboT3
+										: exitMode === "fibo_T1_trail"
+											? b.lifecycleFiboT1Trail
+											: exitMode === "fibo_T2_trail"
+												? b.lifecycleFiboT2Trail
+												: b.lifecycleFiboT3Trail
 				if (lifecycle) {
 					if (lifecycle.beTriggered && lifecycle.beBrickIndexInDay !== null) {
 						fireMarkers.push({
@@ -237,7 +372,7 @@ const HawksEngineLab = ({
 			totalBricks: allCandles.length,
 			totalFires,
 		}
-	}, [data, exitMode])
+	}, [data, exitMode, activeDayKey])
 
 	// Brick under the crosshair (or last brick when no hover). Drives the
 	// per-group badge row below.
@@ -355,7 +490,66 @@ const HawksEngineLab = ({
 							>
 								Moderate
 							</Button>
+							<Button
+								id="lab-mode-fibo"
+								type="button"
+								variant={exitMode.startsWith("fibo") ? "default" : "outline"}
+								size="sm"
+								onClick={() => {
+									setExitMode(
+										fiboTrail
+											? (`fibo_${fiboTier}_trail` as ExitModeUi)
+											: (`fibo_${fiboTier}` as ExitModeUi)
+									)
+								}}
+							>
+								Fibo
+							</Button>
 						</div>
+						{exitMode.startsWith("fibo") && (
+							<div className="gap-s-100 mt-s-100 flex items-center">
+								<div className="gap-s-100 flex">
+									{(["T1", "T2", "T3"] as const).map((tier) => (
+										<Button
+											key={tier}
+											id={`lab-mode-fibo-${tier}`}
+											type="button"
+											variant={fiboTier === tier ? "default" : "outline"}
+											size="sm"
+											onClick={() => {
+												setFiboTier(tier)
+												setExitMode(
+													fiboTrail
+														? (`fibo_${tier}_trail` as ExitModeUi)
+														: (`fibo_${tier}` as ExitModeUi)
+												)
+											}}
+										>
+											{tier}
+										</Button>
+									))}
+								</div>
+								<label
+									htmlFor="lab-mode-fibo-trail"
+									className="gap-s-100 text-tiny text-txt-300 ml-s-200 flex items-center"
+								>
+									<Checkbox
+										id="lab-mode-fibo-trail"
+										checked={fiboTrail}
+										onCheckedChange={(v) => {
+											const next = v === true
+											setFiboTrail(next)
+											setExitMode(
+												next
+													? (`fibo_${fiboTier}_trail` as ExitModeUi)
+													: (`fibo_${fiboTier}` as ExitModeUi)
+											)
+										}}
+									/>
+									+ trail-after-3R
+								</label>
+							</div>
+						)}
 					</div>
 				</div>
 
