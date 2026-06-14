@@ -190,16 +190,16 @@ export const loadHawksEngineLabData = async (
 	const dayPayloads: EngineLabDayPayload[] = []
 	let state = createInitialHawksPlaybookState()
 
-	// Demo-fire cadence: fire one synthetic entry per day for the first
-	// gate-allowed + cooldown-elapsed brick. One fire per day is enough
-	// to validate the marker pipeline visually without polluting the
-	// chart. Set to false to suppress.
+	// Demo-fire cadence: fire on EVERY qualifying brick (VB +
+	// gate-stable + brick-direction-match + in-window). The 5-brick
+	// cooldown naturally spaces them. This shows the user every entry
+	// the engine considers a candidate, which surfaces missing fires
+	// the per-day cap previously hid. Set to false to suppress.
 	const DEMO_FIRES = true
 
 	for (const dayKey of sortedDayKeys) {
 		const dayCandles = days.get(dayKey)!
 		const bricks: EngineLabBrick[] = []
-		let demoFireBricksLeftThisDay = DEMO_FIRES ? 1 : 0
 
 		// Per-day structural pivot detector (period-2 Dow theory) — same
 		// detector used by the engine + Indicator Lab. Resets at day
@@ -313,7 +313,6 @@ export const loadHawksEngineLabData = async (
 			const canDemoFire =
 				DEMO_FIRES &&
 				!realFired &&
-				demoFireBricksLeftThisDay > 0 &&
 				directionAllowed !== null &&
 				inTradingWindow &&
 				!cooldownActive &&
@@ -338,7 +337,11 @@ export const loadHawksEngineLabData = async (
 				stopReference = candle.close + adverseDelta
 				label = `demo:${direction}`
 				tier = "B"
-				demoFireBricksLeftThisDay--
+				// Sync the orchestrator's cooldown tracker so the next 5 bricks
+				// are honestly marked `cooldownActive`. Without this, the demo
+				// path bypasses the cooldown the orchestrator owns and we'd
+				// fire on every qualifying brick back-to-back.
+				state = { ...state, lastFireBrickIndex: ctx.candleIndexInDay }
 			}
 
 			// Update trailing state for the NEXT brick's VB + gate-stability

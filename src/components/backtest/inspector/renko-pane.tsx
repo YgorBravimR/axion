@@ -161,6 +161,25 @@ const RenkoPane = ({
 				visible: true,
 				timeVisible: false,
 				secondsVisible: false,
+				// Renko bricks use brick-INDEX as the time axis (0, 1, 2, …) —
+				// not a real timestamp. Default lightweight-charts formatting
+				// reads "0" as Unix epoch and prints "01 Jan '70". Translate
+				// the index back to the real brick close timestamp via
+				// `seriesTimesRef` and format as BRT YYYY-MM-DD HH:MM.
+				tickMarkFormatter: (time: unknown) => {
+					const idx = typeof time === "number" ? time : Number(time)
+					const epochMs = seriesTimesRef.current[idx]
+					if (typeof epochMs !== "number" || Number.isNaN(epochMs)) {
+						return ""
+					}
+					// BRT = UTC - 3h. Shift then format.
+					const d = new Date(epochMs - 3 * 60 * 60 * 1000)
+					const mm = String(d.getUTCMonth() + 1).padStart(2, "0")
+					const dd = String(d.getUTCDate()).padStart(2, "0")
+					const hh = String(d.getUTCHours()).padStart(2, "0")
+					const mi = String(d.getUTCMinutes()).padStart(2, "0")
+					return `${mm}-${dd} ${hh}:${mi}`
+				},
 			},
 			crosshair: { mode: CrosshairMode.Normal },
 		})

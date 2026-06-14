@@ -432,7 +432,11 @@ interface BrickRowProps {
 }
 
 const BrickRow = ({ brick }: BrickRowProps) => {
-	const timePart = brick.timestamp.slice(11, 16) // HH:MM UTC
+	// Show HH:MM:SS instead of HH:MM. Renko bricks close on tick events,
+	// not minute boundaries — many bricks can close within the same
+	// minute. Showing seconds makes adjacent rows distinguishable for
+	// debugging.
+	const timePart = brick.timestamp.slice(11, 19) // HH:MM:SS UTC
 	const blocked =
 		brick.directionAllowed === null ||
 		!brick.inTradingWindow ||
