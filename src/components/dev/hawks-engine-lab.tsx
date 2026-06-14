@@ -5,10 +5,12 @@
 
 import { useMemo, useState, useTransition } from "react"
 import { Loader2 } from "lucide-react"
+import type { UTCTimestamp } from "lightweight-charts"
 import { loadHawksEngineLabData } from "@/app/actions/hawks-engine-lab-data"
 import type {
 	HawksEngineLabData,
 	EngineLabBrick,
+	EngineLabDayPayload,
 } from "@/app/actions/hawks-engine-lab-data.types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +22,34 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table"
+import { RenkoPane } from "@/components/backtest/inspector/renko-pane"
+import { candlesToBrickSeriesNative } from "@/lib/renko/bricks-to-chart"
+
+// Indicator overlay colors — match the indicator-lab palette so the
+// engine lab and the lab share a visual vocabulary.
+const COLOR_EMA_FAST_60M = "rgb(94, 234, 212)" // teal — 60m fast EMA
+const COLOR_EMA_SLOW_60M = "rgb(20, 160, 160)" // teal dark — 60m slow EMA
+const COLOR_EMA_FAST_15M = "rgb(255, 165, 60)" // orange — 15m fast EMA
+const COLOR_EMA_SLOW_15M = "rgb(210, 130, 40)" // orange muted — 15m slow EMA
+const COLOR_VWAP_D = "rgb(168, 85, 247)" // purple — daily VWAP
+const COLOR_FIRE_LONG = "rgb(52, 211, 153)" // green — LONG fire marker
+const COLOR_FIRE_SHORT = "rgb(248, 113, 113)" // red — SHORT fire marker
+
+const overlayFromKey = (
+	candles: EngineLabDayPayload["candles"],
+	key: string,
+	label: string,
+	color: string
+) => {
+	const data: Array<{ time: UTCTimestamp; value: number }> = []
+	for (let i = 0; i < candles.length; i++) {
+		const v = candles[i]!.indicators[key]
+		if (typeof v === "number") {
+			data.push({ time: i as UTCTimestamp, value: v })
+		}
+	}
+	return { key, label, color, data } as const
+}
 
 interface HawksEngineLabProps {
 	readonly initialData: HawksEngineLabData
@@ -53,6 +83,74 @@ const HawksEngineLab = ({
 		() => data.days.find((d) => d.dayKey === activeDayKey) ?? null,
 		[data, activeDayKey]
 	)
+
+	// Chart series + overlays for the active day. Built only when a day is
+	// selected — chart pane is hidden otherwise.
+	const chartPayload = useMemo(() => {
+		if (!activeDay) {
+			return null
+		}
+		const series = candlesToBrickSeriesNative(activeDay.candles)
+		const indicators = [
+			overlayFromKey(
+				activeDay.candles,
+				"mme27_60m",
+				"60m EMA 27 (gate fast)",
+				COLOR_EMA_FAST_60M
+			),
+			overlayFromKey(
+				activeDay.candles,
+				"mme55_60m",
+				"60m EMA 55 (gate slow)",
+				COLOR_EMA_SLOW_60M
+			),
+			overlayFromKey(
+				activeDay.candles,
+				"mme27_15m",
+				"15m EMA 27 (booster fast)",
+				COLOR_EMA_FAST_15M
+			),
+			overlayFromKey(
+				activeDay.candles,
+				"mme55_15m",
+				"15m EMA 55 (booster slow)",
+				COLOR_EMA_SLOW_15M
+			),
+			overlayFromKey(activeDay.candles, "vwap_d", "VWAP daily", COLOR_VWAP_D),
+		]
+		// FIRE markers as point overlays — one for long, one for short, so
+		// the chart distinguishes them by color.
+		const longFires: Array<{ time: UTCTimestamp; value: number }> = []
+		const shortFires: Array<{ time: UTCTimestamp; value: number }> = []
+		for (const b of activeDay.bricks) {
+			if (!b.fired || b.price === null) {
+				continue
+			}
+			const pt = { time: b.brickIndexInDay as UTCTimestamp, value: b.price }
+			if (b.direction === "long") {
+				longFires.push(pt)
+			} else if (b.direction === "short") {
+				shortFires.push(pt)
+			}
+		}
+		const fireOverlays = [
+			{
+				key: "fire-long",
+				label: "LONG fires",
+				color: COLOR_FIRE_LONG,
+				data: longFires,
+				style: "points" as const,
+			},
+			{
+				key: "fire-short",
+				label: "SHORT fires",
+				color: COLOR_FIRE_SHORT,
+				data: shortFires,
+				style: "points" as const,
+			},
+		]
+		return { series, indicators: [...indicators, ...fireOverlays] }
+	}, [activeDay])
 
 	const filteredBricks = useMemo(() => {
 		if (!activeDay) {
@@ -206,6 +304,27 @@ const HawksEngineLab = ({
 				</aside>
 
 				<div className="bg-bg-200 border-bg-300 space-y-s-300 rounded-md border p-3">
+					{activeDay && chartPayload && (
+						<div className="space-y-s-200">
+							<div className="text-tiny text-txt-300 gap-s-300 flex flex-wrap items-center">
+								<LegendDot color={COLOR_EMA_FAST_60M} label="60m EMA27" />
+								<LegendDot color={COLOR_EMA_SLOW_60M} label="60m EMA55" />
+								<LegendDot color={COLOR_EMA_FAST_15M} label="15m EMA27" />
+								<LegendDot color={COLOR_EMA_SLOW_15M} label="15m EMA55" />
+								<LegendDot color={COLOR_VWAP_D} label="VWAP D" />
+								<LegendDot color={COLOR_FIRE_LONG} label="LONG fire" />
+								<LegendDot color={COLOR_FIRE_SHORT} label="SHORT fire" />
+							</div>
+							<RenkoPane
+								label={`${activeDay.dayKey} — 5m Renko`}
+								subLabel="60m EMAs = gate, 15m EMAs = booster, VWAP = vwap_rejection ref"
+								series={chartPayload.series}
+								indicators={chartPayload.indicators}
+								className="h-[420px]"
+							/>
+						</div>
+					)}
+
 					<div className="gap-s-200 flex flex-wrap items-center justify-between">
 						<h2 className="text-small text-txt-100 font-semibold">
 							{activeDay ? activeDay.dayKey : "Pick a day"}
@@ -361,5 +480,20 @@ const StatTile = ({ label, value, tone }: StatTileProps) => {
 		</div>
 	)
 }
+
+interface LegendDotProps {
+	readonly color: string
+	readonly label: string
+}
+
+const LegendDot = ({ color, label }: LegendDotProps) => (
+	<span className="gap-s-100 inline-flex items-center">
+		<span
+			className="inline-block h-2 w-2 rounded-full"
+			style={{ backgroundColor: color }}
+		/>
+		<span>{label}</span>
+	</span>
+)
 
 export { HawksEngineLab }

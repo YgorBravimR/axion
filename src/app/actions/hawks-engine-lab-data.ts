@@ -15,11 +15,21 @@ import { buildDayContext, groupCandlesByDay } from "@/lib/backtest/day-grouper"
 import type { CandleRow } from "@/types/candle"
 import type {
 	EngineLabBrick,
+	EngineLabCandle,
 	EngineLabDayPayload,
 	HawksEngineLabData,
 } from "./hawks-engine-lab-data.types"
 
 const ASSET_SYMBOL = "WIN"
+
+const slimCandle = (c: CandleRow): EngineLabCandle => ({
+	timestamp: c.timestamp,
+	open: c.open,
+	high: c.high,
+	low: c.low,
+	close: c.close,
+	indicators: c.indicators as Readonly<Record<string, number | null>>,
+})
 
 const fetchTimeframeId = async (
 	tfCode: "hawk_5m_win" | "hawk_15m_win" | "hawk_60m_win"
@@ -175,6 +185,7 @@ export const loadHawksEngineLabData = async (
 		dayPayloads.push({
 			dayKey,
 			bricks,
+			candles: dayCandles.map(slimCandle),
 		})
 	}
 
