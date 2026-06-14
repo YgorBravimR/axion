@@ -507,10 +507,12 @@ const HawksIsolationCharts = ({
 			breaks: Array<{ time: UTCTimestamp; value: number }>
 			neutral: Array<{ time: UTCTimestamp; value: number }>
 			counts: { topo: number; fundo: number; cont: number; brk: number }
-			// Latest TOPO-vs-prior-TOPO outcome ("higher" = HH, "lower" = LH).
-			topoTrend: StructuralState
-			// Latest FUNDO-vs-prior-FUNDO outcome ("lower" = LL, "higher" = HL).
-			fundoTrend: StructuralState
+			// Per-brick streams of structural state. Index = brick index;
+			// value = state of the most recent same-type pivot comparison
+			// observed at or before that brick (forward-fill). Badges read
+			// these streams at the crosshair position so they update live.
+			topoTrendByBrick: StructuralState[]
+			fundoTrendByBrick: StructuralState[]
 		} => {
 			const bricks: Array<{
 				open: number
@@ -534,8 +536,10 @@ const HawksIsolationCharts = ({
 			let fundoCount = 0
 			let contCount = 0
 			let brkCount = 0
-			let topoTrend: StructuralState = null
-			let fundoTrend: StructuralState = null
+			// Events: { atBrickIdx, state } sorted by atBrickIdx ascending. We
+			// expand into per-brick forward-filled arrays after the loop.
+			const topoEvents: Array<{ at: number; state: StructuralState }> = []
+			const fundoEvents: Array<{ at: number; state: StructuralState }> = []
 			for (const m of markers) {
 				if (m.type === lastType) {
 					continue
@@ -569,14 +573,20 @@ const HawksIsolationCharts = ({
 				if (m.type === "topo") {
 					if (lastTopo !== null) {
 						kind = renderPrice > lastTopo ? "continuation" : "break"
-						topoTrend = renderPrice > lastTopo ? "higher" : "lower"
+						topoEvents.push({
+							at: renderIdx,
+							state: renderPrice > lastTopo ? "higher" : "lower",
+						})
 					}
 					lastTopo = renderPrice
 					topoCount++
 				} else {
 					if (lastFundo !== null) {
 						kind = renderPrice < lastFundo ? "continuation" : "break"
-						fundoTrend = renderPrice < lastFundo ? "lower" : "higher"
+						fundoEvents.push({
+							at: renderIdx,
+							state: renderPrice < lastFundo ? "lower" : "higher",
+						})
 					}
 					lastFundo = renderPrice
 					fundoCount++
@@ -594,6 +604,32 @@ const HawksIsolationCharts = ({
 				}
 				lastType = m.type
 			}
+			// Forward-fill events into per-brick streams. Events are already in
+			// ascending `at` order by construction (loop processes markers in
+			// time order). After event[i], the stream carries event[i].state
+			// until event[i+1].at.
+			const topoTrendByBrick: StructuralState[] = new Array(
+				candles.length
+			).fill(null)
+			const fundoTrendByBrick: StructuralState[] = new Array(
+				candles.length
+			).fill(null)
+			let ti = 0
+			let fi = 0
+			let curTopo: StructuralState = null
+			let curFundo: StructuralState = null
+			for (let i = 0; i < candles.length; i++) {
+				while (ti < topoEvents.length && topoEvents[ti]!.at <= i) {
+					curTopo = topoEvents[ti]!.state
+					ti++
+				}
+				while (fi < fundoEvents.length && fundoEvents[fi]!.at <= i) {
+					curFundo = fundoEvents[fi]!.state
+					fi++
+				}
+				topoTrendByBrick[i] = curTopo
+				fundoTrendByBrick[i] = curFundo
+			}
 			return {
 				line,
 				continuation,
@@ -605,8 +641,8 @@ const HawksIsolationCharts = ({
 					cont: contCount,
 					brk: brkCount,
 				},
-				topoTrend,
-				fundoTrend,
+				topoTrendByBrick,
+				fundoTrendByBrick,
 			}
 		},
 		[]
@@ -2189,11 +2225,28 @@ const HawksIsolationCharts = ({
 					<div className="text-tiny mb-2 grid grid-cols-3 gap-2">
 						{(
 							[
-								{ tf: "5m", swing: swing5m },
-								{ tf: "15m", swing: swing15m },
-								{ tf: "60m", swing: swing60m },
+								{
+									tf: "5m",
+									swing: swing5m,
+									idx: hoveredIdx5m ?? candles5m.length - 1,
+								},
+								{
+									tf: "15m",
+									swing: swing15m,
+									idx: synced.idx15m ?? candles15m.length - 1,
+								},
+								{
+									tf: "60m",
+									swing: swing60m,
+									idx: synced.idx60m ?? candles60m.length - 1,
+								},
 							] as const
-						).map(({ tf, swing }) => {
+						).map(({ tf, swing, idx }) => {
+							const len = swing.topoTrendByBrick.length
+							const safeIdx =
+								idx === null || idx < 0 ? len - 1 : Math.min(idx, len - 1)
+							const topoState = swing.topoTrendByBrick[safeIdx] ?? null
+							const fundoState = swing.fundoTrendByBrick[safeIdx] ?? null
 							const badge = (
 								label: string,
 								state: StructuralState,
@@ -2222,8 +2275,8 @@ const HawksIsolationCharts = ({
 									className="border-bg-300 bg-bg-100/40 flex items-center gap-2 border px-2 py-1"
 								>
 									<span className="text-txt-300 font-mono">{tf}</span>
-									{badge("Highs", swing.topoTrend, "higher")}
-									{badge("Lows", swing.fundoTrend, "lower")}
+									{badge("Highs", topoState, "higher")}
+									{badge("Lows", fundoState, "lower")}
 								</div>
 							)
 						})}
