@@ -30,6 +30,10 @@ interface IndicatorOverlay {
 	readonly label: string
 	readonly color: string
 	readonly data: ReadonlyArray<{ time: UTCTimestamp; value: number }>
+	// When "points", the overlay renders as isolated dots — no connecting
+	// line between sparse data points (useful for pivot markers, event
+	// glyphs). Default = "line".
+	readonly style?: "line" | "points"
 }
 
 interface TradeOverlay {
@@ -209,11 +213,15 @@ const RenkoPane = ({
 		for (const ind of indicators ?? []) {
 			let s = existing.get(ind.key)
 			if (!s) {
+				const isPoints = ind.style === "points"
 				s = chart.addSeries(LineSeries, {
 					color: ind.color,
 					lineWidth: 1,
 					priceLineVisible: false,
 					lastValueVisible: false,
+					lineVisible: !isPoints,
+					pointMarkersVisible: isPoints,
+					pointMarkersRadius: isPoints ? 4 : undefined,
 				})
 				existing.set(ind.key, s)
 			}

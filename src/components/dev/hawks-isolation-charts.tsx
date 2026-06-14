@@ -50,6 +50,7 @@ type Overlay = {
 	label: string
 	color: string
 	data: ReadonlyArray<{ time: UTCTimestamp; value: number }>
+	style?: "line" | "points"
 }
 
 const overlayFromKey = (
@@ -567,12 +568,14 @@ const HawksIsolationCharts = ({
 					label: `TOPO (${data.topoCount})`,
 					color: "rgb(252, 211, 77)",
 					data: data.topo,
+					style: "points",
 				},
 				{
 					key: "fundo",
 					label: `FUNDO (${data.fundoCount})`,
 					color: "rgb(56, 189, 248)",
 					data: data.fundo,
+					style: "points",
 				},
 			]
 		},
