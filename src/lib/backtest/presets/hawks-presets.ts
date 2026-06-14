@@ -107,8 +107,12 @@ const hawksV0: StrategyRecipe = {
 	stop: {
 		// points=0 activates signal.stopReference escape hatch — stop = 2·open − close = 2 bricks back
 		initial: { type: "fixed_points", points: 0 },
-		// Pedro's rule: when price moves 1R in favor (100% of risk distance), shift stop to BE
+		// Spec §2 (exit-management-spec.md): BE fires when NET favorable price
+		// distance reaches 1R (= 2 brick bodies) AND the current brick closes
+		// favorable. triggerMode: "brick_close" enforces the second condition —
+		// intra-brick wicks do NOT count, only confirmed closes.
 		breakeven: { type: "on_pct_risk", triggerPct: 100 },
+		triggerMode: "brick_close",
 	},
 	target: {
 		type: "fixed_levels",

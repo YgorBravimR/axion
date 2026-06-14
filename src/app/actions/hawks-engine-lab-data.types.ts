@@ -55,6 +55,30 @@ export interface EngineLabBrick {
 	stopReference: number | null
 	label: string | null
 	tier: QualityTier | null
+	// Post-entry trade lifecycle, populated only when fired === true.
+	// Simulated forward from the fire brick using the spec §2 net-distance
+	// breakeven primitive + the configured target rule (Mode 1 static 3R
+	// today; later phases will simulate Mode 2/3 as well).
+	lifecycle: TradeLifecycle | null
+}
+
+/**
+ * Forward-simulated trade lifecycle for a single fire. Records the
+ * key transition points so the lab UI can render breakeven moves,
+ * trail activations, and exit markers on the chart.
+ */
+export interface TradeLifecycle {
+	exitMode: "conservative" // Mode 1 only in Phase B; Modes 2/3 added later.
+	// Breakeven event (when stop moved from initial to entry).
+	beTriggered: boolean
+	beBrickIndexInDay: number | null
+	// Exit event (the brick that closed the trade).
+	exitBrickIndexInDay: number
+	exitReason: "stop_initial" | "stop_be" | "target" | "eod"
+	exitPrice: number
+	// Targets and stops at fire time, for chart overlay.
+	initialStop: number
+	target: number
 }
 
 /**

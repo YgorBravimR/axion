@@ -516,11 +516,11 @@ export const loadHawksEngineLabData = async (
 				fired = true
 				direction = directionAllowed
 				price = candle.close
-				// Stop ~1 brick body away in the adverse direction.
+				// Stop = 2 brick bodies adverse (spec §1: 1R = 2 brick bodies).
+				// Matches the real engine: stopReference = 2·open − close.
+				const brickBody = Math.abs(candle.close - candle.open) || 100
 				const adverseDelta =
-					direction === "long"
-						? -(Math.abs(candle.close - candle.open) || 100)
-						: Math.abs(candle.close - candle.open) || 100
+					direction === "long" ? -(2 * brickBody) : 2 * brickBody
 				stopReference = candle.close + adverseDelta
 				label = `demo:${direction}`
 				tier = "B"
@@ -563,7 +563,89 @@ export const loadHawksEngineLabData = async (
 				stopReference,
 				label,
 				tier,
+				lifecycle: null,
 			})
+		}
+
+		// Phase B — post-entry lifecycle simulator. For each fired brick,
+		// walk forward simulating Mode 1 Conservative exit:
+		//   - Initial stop at signal.stopReference (≈ entry ± 2 brickBodies)
+		//   - Breakeven trigger: net favorable price reaches 1R (= 2 ×
+		//     renkoSize) AND current brick closes favorable (spec §2).
+		//   - Static target at 3R favorable (entry ± 6 × renkoSize).
+		//   - EOD: forced close at the last brick of the day.
+		//
+		// The renkoSize per fire is derived from the entry brick's body
+		// (close-to-open). Hawks bricks have constant body magnitude per
+		// triple, so this is a stable per-fire constant.
+		for (let i = 0; i < bricks.length; i++) {
+			const fire = bricks[i]!
+			if (!fire.fired || fire.direction === null || fire.price === null) {
+				continue
+			}
+			const entryClose = fire.price
+			const initialStop = fire.stopReference ?? entryClose
+			const brickBody = Math.abs(initialStop - entryClose) / 2
+			const target =
+				fire.direction === "long"
+					? entryClose + 6 * brickBody
+					: entryClose - 6 * brickBody
+			let beTriggered = false
+			let beBrickIndexInDay: number | null = null
+			let currentStop = initialStop
+			let exitBrickIndexInDay = bricks.length - 1
+			let exitReason: "stop_initial" | "stop_be" | "target" | "eod" = "eod"
+			let exitPrice = bricks[bricks.length - 1]!.close
+			for (let j = i + 1; j < bricks.length; j++) {
+				const fb = bricks[j]!
+				// 1. Stop hit by close? (Renko close-based — wicks don't fill.)
+				const stopHit =
+					fire.direction === "long"
+						? fb.close <= currentStop
+						: fb.close >= currentStop
+				if (stopHit) {
+					exitBrickIndexInDay = j
+					exitReason = beTriggered ? "stop_be" : "stop_initial"
+					exitPrice = currentStop
+					break
+				}
+				// 2. Target hit by close?
+				const targetHit =
+					fire.direction === "long" ? fb.close >= target : fb.close <= target
+				if (targetHit) {
+					exitBrickIndexInDay = j
+					exitReason = "target"
+					exitPrice = target
+					break
+				}
+				// 3. Breakeven check (spec §2 net-distance + favorable-close).
+				if (!beTriggered) {
+					const netFavor =
+						fire.direction === "long"
+							? fb.close - entryClose
+							: entryClose - fb.close
+					const closedFavorable =
+						fire.direction === "long" ? fb.close > fb.open : fb.close < fb.open
+					if (closedFavorable && netFavor >= 2 * brickBody) {
+						beTriggered = true
+						beBrickIndexInDay = j
+						currentStop = entryClose
+					}
+				}
+			}
+			bricks[i] = {
+				...fire,
+				lifecycle: {
+					exitMode: "conservative",
+					beTriggered,
+					beBrickIndexInDay,
+					exitBrickIndexInDay,
+					exitReason,
+					exitPrice,
+					initialStop,
+					target,
+				},
+			}
 		}
 
 		dayPayloads.push({

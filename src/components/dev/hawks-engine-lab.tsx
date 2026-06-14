@@ -36,6 +36,12 @@ const COLOR_EMA_SLOW_15M = "rgb(130, 135, 145)" // GRAY_DARK — 15m EMA 55 (boo
 const COLOR_VWAP_D = "rgb(94, 234, 212)" // TEAL_BRIGHT — VWAP daily
 const COLOR_FIRE_LONG = "rgb(52, 211, 153)" // green — LONG fire marker
 const COLOR_FIRE_SHORT = "rgb(248, 113, 113)" // red — SHORT fire marker
+// Exit-marker palette (Phase B). Distinguishes the four exit reasons
+// at a glance during catalog scrubbing.
+const COLOR_EXIT_TARGET = "rgb(132, 204, 22)" // lime — target hit (full win)
+const COLOR_EXIT_BE = "rgb(250, 204, 21)" // amber — BE stop hit (zero P&L)
+const COLOR_EXIT_STOP_INITIAL = "rgb(225, 29, 72)" // rose — initial stop (full loss)
+const COLOR_EXIT_EOD = "rgb(148, 163, 184)" // slate — EOD forced close
 
 const overlayFromKey = (
 	candles: EngineLabDayPayload["candles"],
@@ -143,6 +149,10 @@ const HawksEngineLab = ({
 		// language as /backtest and /hawks-isolation). LONG = arrowUp below
 		// bar (green), SHORT = arrowDown above bar (red). Per-day brickIdx
 		// shifted by the day's offset = global chart x-axis position.
+		//
+		// Phase B also overlays the trade lifecycle: a "BE" circle marker
+		// where breakeven triggered (stop moved to entry), and an exit
+		// marker (square) at the closing brick, color-coded by exit reason.
 		const fireMarkers: SeriesMarker<UTCTimestamp>[] = []
 		for (let di = 0; di < data.days.length; di++) {
 			const day = data.days[di]!
@@ -159,8 +169,43 @@ const HawksEngineLab = ({
 					shape: isLong ? "arrowUp" : "arrowDown",
 					text: `${b.direction.toUpperCase()} ${b.tier ?? ""}`.trim(),
 				})
+				if (b.lifecycle) {
+					if (
+						b.lifecycle.beTriggered &&
+						b.lifecycle.beBrickIndexInDay !== null
+					) {
+						fireMarkers.push({
+							time: (offset + b.lifecycle.beBrickIndexInDay) as UTCTimestamp,
+							position: isLong ? "belowBar" : "aboveBar",
+							color: isLong ? COLOR_FIRE_LONG : COLOR_FIRE_SHORT,
+							shape: "circle",
+							text: "BE",
+						})
+					}
+					const exitColor =
+						b.lifecycle.exitReason === "target"
+							? COLOR_EXIT_TARGET
+							: b.lifecycle.exitReason === "stop_be"
+								? COLOR_EXIT_BE
+								: b.lifecycle.exitReason === "eod"
+									? COLOR_EXIT_EOD
+									: COLOR_EXIT_STOP_INITIAL
+					fireMarkers.push({
+						time: (offset + b.lifecycle.exitBrickIndexInDay) as UTCTimestamp,
+						position: isLong ? "belowBar" : "aboveBar",
+						color: exitColor,
+						shape: "square",
+						text: b.lifecycle.exitReason.toUpperCase().replace("_", " "),
+					})
+				}
 			}
 		}
+		// Count ACTUAL fires (entries) — fireMarkers also contains BE + EXIT
+		// lifecycle markers, so fireMarkers.length overcounts ~3× per fire.
+		const totalFires = data.days.reduce(
+			(acc, d) => acc + d.bricks.filter((b) => b.fired).length,
+			0
+		)
 		return {
 			series,
 			indicators,
@@ -168,7 +213,7 @@ const HawksEngineLab = ({
 			allBricks,
 			totalDays: data.days.length,
 			totalBricks: allCandles.length,
-			totalFires: fireMarkers.length,
+			totalFires,
 		}
 	}, [data])
 

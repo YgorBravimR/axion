@@ -26,10 +26,10 @@ Rather than encode "Conservative", "Moderate", "Fibo" as 3 monolithic modes, thi
 
 Throughout this spec, **R is measured in bricks**, not points. The renko size for WIN is the brick size of the active hawks-renko-sizes triple (`bricksizes` row for the trade date). Two consequences:
 
-- **1R = 2 bricks** of price movement (favorable or adverse).
-- **All distance measurements are brick-close based**, never raw price-tick. A "brick in favor for SHORT" is a brick that closes lower than it opens; a "brick in favor for LONG" is one that closes higher than it opens.
-- **The stop is always 2 bricks adverse of entry**. For a SHORT at brick X's close, stop = `X.close + (2 × renkoSize)`. Symmetric for LONG.
-- **3R favor = 6 favorable bricks**.
+- **1R = 2 brick bodies = `2 × renkoSize`** of net price movement (favorable or adverse).
+- **All distance measurements are brick-close based** (net price distance since entry), never raw price-tick. Triggers fire only on bricks that close favorable.
+- **The stop is always 2 brick bodies adverse of entry**. For a SHORT at brick X's close, stop = `X.close + (2 × renkoSize)`. Symmetric for LONG.
+- **3R favor = `6 × renkoSize` net favorable price distance** measured at a favorable brick close.
 
 Ygor's exact spec phrase (2026-06-14): _"always in brick sizes, always Renko close-based, never fixed points."_
 
@@ -39,28 +39,28 @@ Ygor's exact spec phrase (2026-06-14): _"always in brick sizes, always Renko clo
 
 **Applies to every exit mode**, no opt-out.
 
-### Rule
+### Rule (locked 2026-06-14 — net-distance semantics)
 
-When the count of **favorable bricks since entry** reaches 2 (= 1R), the stop is moved to the entry price.
+When the **net favorable price distance since entry** reaches 1R (= 2 brick bodies = `2 × renkoSize`) AND the current brick closes favorable, the stop is moved to the entry price.
 
-### Counting "favorable bricks"
+> **Why net-distance, not favorable-brick count.** Pedro's rule mirrors how a broker bracket order evaluates: when realized P&L equals R in your favor, lock breakeven. Counting favorable bricks while ignoring adverse ones would trigger BE in mixed sequences (red→green→red→red) before the trade is net-favorable, which doesn't reflect real exposure. Net distance + favorable-close gate gives Renko-correct semantics: ticks don't move the stop, only confirmed brick closes do, and only when the net move is fully 1R.
 
-A brick is "favorable" if its close is in the trade direction:
+### Mechanics
 
-- **SHORT trade:** favorable brick = `brick.close < brick.open` (red brick).
-- **LONG trade:** favorable brick = `brick.close > brick.open` (green brick).
+- **SHORT:** trigger when `currentBrick.close ≤ entry.close − (2 × renkoSize)` AND `currentBrick.close < currentBrick.open`.
+- **LONG:** trigger when `currentBrick.close ≥ entry.close + (2 × renkoSize)` AND `currentBrick.close > currentBrick.open`.
 
-Counter increments only on brick-close events. Adverse or doji bricks are not subtracted — they're ignored. The count is a **monotonic favorable-brick count from entry**, not a directional offset.
-
-### When the move happens
-
-The stop relocation fires on the brick-close event that brings the count from 1 → 2. From that brick onward, the stop is locked at entry until either (a) it gets hit (zero P&L exit), (b) a later trailing rule moves it further favorable, or (c) the target is hit.
+On trigger, `stop = entry.close`. From that brick onward, the stop is locked at entry until either (a) it gets hit (zero P&L exit), (b) a later trailing rule moves it further favorable, or (c) the target is hit.
 
 ### Edge cases
 
 - **Brick that takes you to 2R or 3R from a 1-brick start.** Renko cannot move 2 bricks in a single tick — a brick fully forms only when price moves a full brick-size. So this can't happen by construction. Skip handling it.
 - **Adverse brick after breakeven trigger.** Stop already at entry; if the adverse brick hits the stop, you exit at 0 P&L. Working as intended.
-- **Trade entered exactly at the close of an unfavorable brick.** First favorable brick must form after entry. The entry brick itself does NOT count.
+- **Trade entered exactly at the close of an unfavorable brick.** First favorable brick must form after entry. The entry brick itself does NOT count toward distance.
+
+### Implementation note
+
+This is the existing `on_pct_risk` breakeven config (`triggerPct: 100`) in `src/lib/backtest/modules/stop/breakeven.ts`, combined with `triggerMode: "brick_close"`. Phase B wires the trigger-mode into the hawks preset; no new module needed.
 
 ---
 
@@ -182,7 +182,7 @@ Requires `trailAfter3R: true`. Combination `targetRule: "trail_only" + trailAfte
 
 Two things must be true:
 
-1. Favorable-brick count since entry has reached **6 bricks (= 3R)**.
+1. Net favorable price distance since entry has reached **`6 × renkoSize` (= 3R)** AND the current brick closed favorable. (Same net-distance + favorable-close semantics as §2.)
 2. The take-profit has NOT yet fired (always true in Mode 2 by construction; in Mode 3b, the trail may activate before the chosen Fib target is hit, depending on order).
 
 On activation, **the static stop is replaced** by a trailing stop.
@@ -218,13 +218,17 @@ on every 5m brick close for an open trade:
   2. Has the take-profit target been hit during this brick?
      → exit at target price, close trade.
 
-  3. Update favorable-brick-count since entry.
-     - If brick.close is in trade direction, count++.
+  3. Compute net favorable distance:
+     - SHORT: netFavor = entry.close − brick.close
+     - LONG:  netFavor = brick.close − entry.close
+     (Negative means brick is net-adverse vs entry.)
 
-  4. If count has just reached 2 (= 1R) AND stop is still at original:
+  4. If breakeven not yet triggered AND brick closed favorable AND
+     netFavor ≥ (2 × renkoSize):
      → move stop to entry price (breakeven primitive).
 
-  5. If count has just reached 6 (= 3R) AND trailAfter3R is true:
+  5. If trailAfter3R is true AND trail not yet active AND brick closed
+     favorable AND netFavor ≥ (6 × renkoSize):
      → activate trail; replace static stop with trailing stop computed
        from this brick's close.
 
