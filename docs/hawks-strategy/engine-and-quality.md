@@ -1,5 +1,12 @@
 # Hawks engine v0.6 — state machine + quality registry
 
+> **Superseded by [`engine-v0.9-playbook-spec.md`](./engine-v0.9-playbook-spec.md)**.
+> The v0.6 engine treated 15m + 60m as symmetric gates and used a single
+> monolithic state machine. v0.9 makes 60m the only gate, demotes 15m to
+> a booster + post-entry stop manager, and replaces the state machine with
+> three independent playbooks. This file is retained for historical
+> reference and for the quality-rule registry, which v0.9 reuses.
+
 Source-of-truth doc for the autonomous Hawks Triple-Screen entry engine and
 its quality-scoring layer. Companion to:
 
