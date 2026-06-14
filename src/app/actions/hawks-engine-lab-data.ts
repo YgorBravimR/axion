@@ -197,21 +197,36 @@ export const loadHawksEngineLabData = async (
 	// the per-day cap previously hid. Set to false to suppress.
 	const DEMO_FIRES = true
 
+	// --- Cross-day trackers. Renko bricks have no time gap on day
+	// boundaries (gaps fill with renko-sized synthetic bricks), so
+	// structure carries across days. Pivot detector, topo/fundo memory,
+	// running highs/lows since last confirmation, VB color, and prior
+	// gate state all live outside the per-day loop and persist.
+	let pivotState = createStructuralPivotState()
+	let currentPivotBias: PivotBias = null
+	// Last CONFIRMED swing pivots from the period-2 detector. The
+	// detector emits noise topos during a continuing bearish run (and
+	// noise fundos during a bullish run), so we dedup by alternating
+	// type — same pattern as `hawks-isolation-charts.tsx:547`.
+	let lastTopoPrice: number | null = null
+	let lastFundoPrice: number | null = null
+	let lastAdoptedPivotType: "topo" | "fundo" | null = null
+	// Running extremes since the last confirmation. SHORT gate compares
+	// runningHighSinceLastTopo against lastTopoPrice — if price has
+	// already broken above the last topo, we know the NEXT confirmed
+	// topo will be higher, so we block the short pre-emptively (per
+	// user spec: "even though the indicator did not mark the last high,
+	// the price already broke its value, so it's 100% the next pivot
+	// will be a higher high").
+	let runningHighSinceLastTopo: number | null = null
+	let runningLowSinceLastFundo: number | null = null
+	// VB + gate-stability trackers (cross-day too).
+	let priorBrickWasBullish: boolean | null = null
+	let priorGate60m: "BULL" | "BEAR" | "NO_SIGNAL" | null = null
+
 	for (const dayKey of sortedDayKeys) {
 		const dayCandles = days.get(dayKey)!
 		const bricks: EngineLabBrick[] = []
-
-		// Per-day structural pivot detector (period-2 Dow theory) — same
-		// detector used by the engine + Indicator Lab. Resets at day
-		// boundary; bias forward-fills until the next confirmation.
-		let pivotState = createStructuralPivotState()
-		let currentPivotBias: PivotBias = null
-
-		// Track prior-brick color for the VB (Virada de Box) entry constraint
-		// + last-gate-state for the gate-stability constraint. Both are
-		// per-day; reset at day boundary.
-		let priorBrickWasBullish: boolean | null = null
-		let priorGate60m: "BULL" | "BEAR" | "NO_SIGNAL" | null = null
 
 		// --- Leg-shape tracker (expansion ≥ 4, retraction ≥ 2, single-brick
 		// noise ignored). Operates over the per-day 5m brick stream.
@@ -300,16 +315,6 @@ export const loadHawksEngineLabData = async (
 		// stepping.
 		let legPreStep!: { short: LegState; long: LegState }
 
-		// --- Soft 5m HH/LL gate.
-		// SHORT allowed when the LAST swing-high (topo) is LOWER than the
-		// prior swing-high. LONG allowed when the LAST swing-low (fundo)
-		// is HIGHER than the prior swing-low. Lows/highs of the OTHER side
-		// are ignored (user picked option B).
-		let lastTopoPrice: number | null = null
-		let priorTopoPrice: number | null = null
-		let lastFundoPrice: number | null = null
-		let priorFundoPrice: number | null = null
-
 		for (let i = 0; i < dayCandles.length; i++) {
 			const candle = dayCandles[i]!
 			const ctx = buildDayContext(candle, dayKey, i)
@@ -348,13 +353,42 @@ export const loadHawksEngineLabData = async (
 			pivotState = pivotStep.state
 			if (pivotStep.pivot) {
 				currentPivotBias = pivotStep.pivot.type
-				if (pivotStep.pivot.type === "topo") {
-					priorTopoPrice = lastTopoPrice
-					lastTopoPrice = pivotStep.pivot.price
-				} else {
-					priorFundoPrice = lastFundoPrice
-					lastFundoPrice = pivotStep.pivot.price
+				// Detector quirk: during a continuing bearish run, it
+				// emits a fresh TOPO on every brick (each subsequent
+				// event's `price` being the prior brick's low — noise).
+				// The REAL topo is the FIRST emission of the run; same-
+				// type repeats are noise. Indicator Lab dedups via
+				// `if (m.type === lastType) continue` — apply that here.
+				if (pivotStep.pivot.type !== lastAdoptedPivotType) {
+					lastAdoptedPivotType = pivotStep.pivot.type
+					if (pivotStep.pivot.type === "topo") {
+						lastTopoPrice = pivotStep.pivot.price
+						runningHighSinceLastTopo = null
+					} else {
+						lastFundoPrice = pivotStep.pivot.price
+						runningLowSinceLastFundo = null
+					}
 				}
+			}
+			// Accumulate running extremes on EVERY brick since the last
+			// pivot confirmation. The accumulator runs AFTER the pivot
+			// reset above, so the confirmation brick's high/low is the
+			// first sample of the new up/down-leg measurement. The detector
+			// confirms after 2 opposite bricks, so on the confirmation
+			// brick the price has clearly moved away from the peak — these
+			// initial samples are far enough from the prior topo/fundo
+			// to seed the tracker on the "safe" side.
+			if (
+				runningHighSinceLastTopo === null ||
+				candle.high > runningHighSinceLastTopo
+			) {
+				runningHighSinceLastTopo = candle.high
+			}
+			if (
+				runningLowSinceLastFundo === null ||
+				candle.low < runningLowSinceLastFundo
+			) {
+				runningLowSinceLastFundo = candle.low
 			}
 
 			// Snapshot the PRE-step leg state for the fire decision below.
@@ -439,19 +473,27 @@ export const loadHawksEngineLabData = async (
 			const legSnap = legSide !== null ? legPreStep[legSide] : null
 			const legShapeOk =
 				legSnap !== null && legSnap.expansion >= 4 && legSnap.retraction >= 2
-			// Soft 5m HH/LL gate (user spec option B): SHORT requires last
-			// swing-high lower than prior swing-high; LONG requires last
-			// swing-low higher than prior swing-low. NULL on either pivot
-			// → not enough structure yet → fire blocked.
+			// 5m HH/LL gate (running-extreme version): we don't wait for
+			// the period-2 detector to stamp a new pivot — if price has
+			// ALREADY broken above the last confirmed topo (for SHORT) or
+			// below the last confirmed fundo (for LONG), the next pivot
+			// is guaranteed to be a higher-high / lower-low and we should
+			// not fire. Per user spec (2026-06-14): "even though the
+			// indicator did not mark the last high, the price already
+			// broke its value, so it's 100% the next pivot will be a
+			// higher high".
+			//
+			// Gate passes when the running extreme is STRICTLY on the
+			// allowed side of the last confirmed pivot.
 			const fiveMinStructureOk =
 				directionAllowed === "short"
 					? lastTopoPrice !== null &&
-						priorTopoPrice !== null &&
-						lastTopoPrice < priorTopoPrice
+						runningHighSinceLastTopo !== null &&
+						runningHighSinceLastTopo < lastTopoPrice
 					: directionAllowed === "long"
 						? lastFundoPrice !== null &&
-							priorFundoPrice !== null &&
-							lastFundoPrice > priorFundoPrice
+							runningLowSinceLastFundo !== null &&
+							runningLowSinceLastFundo > lastFundoPrice
 						: false
 			const canDemoFire =
 				DEMO_FIRES &&
