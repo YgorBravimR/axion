@@ -71,17 +71,18 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Backtest / Inspector
 
-### Hawks engine — `keltnerOuterBlock` veto window (decide same-brick vs N-brick lookback)
+### Hawks engine — `keltnerOuterBlock` veto window (needs methodology spec from Ygor)
 
-- **Priority**: P2
-- **Effort**: S (1 hour — change one constant, re-run the A/B, decide)
-- **Source**: 2026-06-15 A/B audit at `docs/scans/2026-06-15-keltner-outer-block-ab.md`. The veto is wired and methodology-correct under a 1-brick window, but it fires ZERO times across the full 8,280-brick catalog. Engine fires (331) and KC outer rejects (13) live on completely disjoint brick sets.
-- **What + Why**: Decide whether the gate is dead-code-in-practice (Read A) or mis-scoped (Read B). Specifically: (1) confirm with Ygor whether the methodology intends a 1-brick window or a wider lookback ("don't enter for the next N bricks after an exhaustion"); (2) re-run `scripts/audit-keltner-outer-block-ab.ts` with 3- and 5-brick lookback variants; (3) if all variants stay at zero or near-zero impact, REMOVE the wiring rather than ship inert code; (4) if a wider window produces real PnL impact, decide whether to default-on or leave behind the flag.
-- **Open questions**:
-  1. Does the methodology intend a "veto for N bricks after the reject" window, or strictly the same brick?
-  2. Should the veto also block on plain `TOUCH_KC2_*` (no confirmed reject yet)? Currently only confirmed rejects veto.
-  3. If we ship the wider-window variant, is `keltnerNearBricks` (already in config) the natural place to store the lookback?
-- **Pointers**: `src/lib/backtest/modules/entry/hawks-playbook.ts:79-105` (`isKeltnerOuterVeto` — extend to take a brick history slice for the wider-window variant), `scripts/audit-keltner-outer-block-ab.ts` (A/B harness — extend to take a `--lookback N` arg).
+- **Priority**: P2 — blocked on a methodology clarification from Ygor
+- **Effort**: S once the spec answer is in (~30 min — change the lookback constant, update tests, ship)
+- **Source**: 2026-06-15 A/B audit (`docs/scans/2026-06-15-keltner-outer-block-ab.md`) found N=1 produces 0 vetoes. Window-sweep audit (`docs/scans/2026-06-15-keltner-window-sweep.md`) tested N=1..20 and found vetoes start firing at N=4, accumulate to 5 vetoes / R$ +346 by N=20. **Every vetoed trade across all window sizes is a stop-out or BE — zero winners removed.**
+- **The result is tantalising but statistically insignificant**: only 5 trades caught across 8,280 bricks, cluster into 2 trading days. 100%-precision shape is what you'd expect if the methodology is real, but n=5 won't pass any honest stats bar.
+- **Blocking question for Ygor**: Does the methodology's "outer-band exhaustion" signal imply a 1-brick veto (same brick only) or a wider "no entries for ~5-10 bricks after the exhaustion" zone? The book/Pedro's teaching is the source of truth — if the book says wider, ship wider even at low sample. If the book says same-brick only, remove the wiring (the audit shows the narrow interpretation is dead in practice).
+- **Open questions** beyond the window-size answer:
+  1. Should the veto also block on plain `TOUCH_KC2_*` (no confirmed reject)? Currently only confirmed rejects veto.
+  2. If we ship the wider-window variant, is `keltnerNearBricks` (already in config, default 2) the natural place to store the lookback, or do we add `keltnerOuterBlockLookback`?
+  3. Once spec is resolved and code lands, do we need a forward-test or more historical data before promoting the flag default-on?
+- **Pointers**: `src/lib/backtest/modules/entry/hawks-playbook.ts:79-105` (`isKeltnerOuterVeto` — extend to take a brick history slice for the wider-window variant), `scripts/audit-keltner-outer-block-ab.ts` (the 1-brick A/B harness), `scripts/audit-keltner-outer-block-window-sweep.ts` (the lookback sweep).
 
 ### Hawks engine — fibo retracement anchor logic (deferred)
 
