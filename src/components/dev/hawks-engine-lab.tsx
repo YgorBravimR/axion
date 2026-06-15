@@ -39,8 +39,14 @@ const COLOR_FIRE_LONG = "rgb(52, 211, 153)" // green — LONG fire marker
 const COLOR_FIRE_SHORT = "rgb(248, 113, 113)" // red — SHORT fire marker
 // Exit-marker palette (Phase B). Distinguishes the four exit reasons
 // at a glance during catalog scrubbing.
+//
+// UNIVERSAL RULE (2026-06-15): anything that represents a BREAKEVEN
+// event renders YELLOW — the BE activation marker AND the exit-on-BE
+// stop marker share `COLOR_BREAKEVEN`. Other exit reasons keep their
+// outcome colors (green win, red loss, emerald trail-locked profit,
+// slate EOD).
+const COLOR_BREAKEVEN = "rgb(250, 204, 21)" // amber/yellow — universal BE color
 const COLOR_EXIT_TARGET = "rgb(132, 204, 22)" // lime — target hit (full win)
-const COLOR_EXIT_BE = "rgb(250, 204, 21)" // amber — BE stop hit (zero P&L)
 const COLOR_EXIT_STOP_INITIAL = "rgb(225, 29, 72)" // rose — initial stop (full loss)
 const COLOR_EXIT_EOD = "rgb(148, 163, 184)" // slate — EOD forced close
 // Phase D — trail-after-3R event palette.
@@ -50,7 +56,9 @@ const COLOR_EXIT_TRAIL = "rgb(34, 197, 94)" // emerald — trail stop hit (locke
 const COLOR_FIB_T1 = "rgb(56, 189, 248)" // sky — T1 (76.4%)
 const COLOR_FIB_T2 = "rgb(14, 165, 233)" // sky-darker — T2 (100%)
 const COLOR_FIB_T3 = "rgb(2, 132, 199)" // sky-deepest — T3 (161.8%)
-const COLOR_FIB_ANCHOR = "rgb(248, 250, 252)" // slate-light — retracement-peak dashed anchor
+const COLOR_FIB_ANCHOR = "rgb(248, 250, 252)" // slate-light — retracement-pe
+const COLOR_FIB_ANCHOR_START = "rgb(217, 70, 239)" // fuchsia — impulse start (15m pivot)
+const COLOR_FIB_ANCHOR_END = "rgb(168, 85, 247)" // purple — impulse end (15m pivot)ak dashed anchor
 
 const overlayFromKey = (
 	candles: EngineLabDayPayload["candles"],
@@ -108,6 +116,9 @@ const HawksEngineLab = ({
 	// Fibo sub-controls — surfaced when exitMode starts with "fibo".
 	const [fiboTier, setFiboTier] = useState<"T1" | "T2" | "T3">("T2")
 	const [fiboTrail, setFiboTrail] = useState<boolean>(false)
+	// Fibo focus mode — hides EMA/VWAP overlays so only the fib geometry
+	// (T-level + retracement peak + impulse anchors) is visible.
+	const [fiboFocus, setFiboFocus] = useState<boolean>(false)
 	const [pending, startTransition] = useTransition()
 
 	const activeDay = useMemo(
@@ -145,33 +156,35 @@ const HawksEngineLab = ({
 			label: string
 			color: string
 			data: Array<{ time: UTCTimestamp; value: number }>
-		}> = [
-			overlayFromKey(
-				allCandles,
-				"mme27_60m",
-				"60m EMA 27 (gate fast)",
-				COLOR_EMA_FAST_60M
-			),
-			overlayFromKey(
-				allCandles,
-				"mme55_60m",
-				"60m EMA 55 (gate slow)",
-				COLOR_EMA_SLOW_60M
-			),
-			overlayFromKey(
-				allCandles,
-				"mme27_15m",
-				"15m EMA 27 (booster fast)",
-				COLOR_EMA_FAST_15M
-			),
-			overlayFromKey(
-				allCandles,
-				"mme55_15m",
-				"15m EMA 55 (booster slow)",
-				COLOR_EMA_SLOW_15M
-			),
-			overlayFromKey(allCandles, "vwap_d", "VWAP daily", COLOR_VWAP_D),
-		]
+		}> = fiboFocus
+			? []
+			: [
+					overlayFromKey(
+						allCandles,
+						"mme27_60m",
+						"60m EMA 27 (gate fast)",
+						COLOR_EMA_FAST_60M
+					),
+					overlayFromKey(
+						allCandles,
+						"mme55_60m",
+						"60m EMA 55 (gate slow)",
+						COLOR_EMA_SLOW_60M
+					),
+					overlayFromKey(
+						allCandles,
+						"mme27_15m",
+						"15m EMA 27 (booster fast)",
+						COLOR_EMA_FAST_15M
+					),
+					overlayFromKey(
+						allCandles,
+						"mme55_15m",
+						"15m EMA 55 (booster slow)",
+						COLOR_EMA_SLOW_15M
+					),
+					overlayFromKey(allCandles, "vwap_d", "VWAP daily", COLOR_VWAP_D),
+				]
 		// Phase E — fibo overlay. For each fire that has `fiboAnchors`, draw
 		// 3 horizontal segments at T1/T2/T3 prices + 1 dashed retracement-peak
 		// anchor, each spanning fire→exit brick of the ACTIVE fibo lifecycle.
@@ -184,52 +197,64 @@ const HawksEngineLab = ({
 		// = at most ~15 fires, no overlap chaos.
 		const activeDayIdx = data.days.findIndex((d) => d.dayKey === activeDayKey)
 		if (exitMode.startsWith("fibo") && activeDayIdx >= 0) {
-			const pickLifecycle = (b: EngineLabBrick) =>
-				exitMode === "fibo_T1"
-					? b.lifecycleFiboT1
-					: exitMode === "fibo_T2"
-						? b.lifecycleFiboT2
-						: exitMode === "fibo_T3"
-							? b.lifecycleFiboT3
-							: exitMode === "fibo_T1_trail"
-								? b.lifecycleFiboT1Trail
-								: exitMode === "fibo_T2_trail"
-									? b.lifecycleFiboT2Trail
-									: b.lifecycleFiboT3Trail
-			const t1Data: Array<{ time: UTCTimestamp; value: number }> = []
-			const t2Data: Array<{ time: UTCTimestamp; value: number }> = []
-			const t3Data: Array<{ time: UTCTimestamp; value: number }> = []
+			const tData: Array<{ time: UTCTimestamp; value: number }> = []
 			const anchorData: Array<{ time: UTCTimestamp; value: number }> = []
+			const impulseStartData: Array<{ time: UTCTimestamp; value: number }> = []
+			const impulseEndData: Array<{ time: UTCTimestamp; value: number }> = []
 			const day = data.days[activeDayIdx]!
 			const offset = dayOffsets[activeDayIdx]!.offset
+			const dayMaxIdx = day.bricks.length - 1
+			// Per-fire short horizontal stubs (±FIB_RADIUS bricks around
+			// the fire) at the SELECTED T-level + the three anchor levels:
+			// retracement peak, impulse start, impulse end. Stubs make each
+			// fire's fib geometry visible right next to the entry arrow,
+			// even when multiple fires overlap on the same day.
+			const FIB_RADIUS = 3
+			const pickT = (anchors: NonNullable<EngineLabBrick["fiboAnchors"]>) =>
+				fiboTier === "T1"
+					? anchors.t1
+					: fiboTier === "T2"
+						? anchors.t2
+						: anchors.t3
 			for (const b of day.bricks) {
 				if (!b.fired || !b.fiboAnchors) {
 					continue
 				}
-				const lc = pickLifecycle(b)
-				const exitIdx = lc?.exitBrickIndexInDay ?? b.brickIndexInDay
-				const startTime = (offset + b.brickIndexInDay) as UTCTimestamp
-				const endTime = (offset + exitIdx) as UTCTimestamp
-				t1Data.push({ time: startTime, value: b.fiboAnchors.t1 })
-				t1Data.push({ time: endTime, value: b.fiboAnchors.t1 })
-				t2Data.push({ time: startTime, value: b.fiboAnchors.t2 })
-				t2Data.push({ time: endTime, value: b.fiboAnchors.t2 })
-				t3Data.push({ time: startTime, value: b.fiboAnchors.t3 })
-				t3Data.push({ time: endTime, value: b.fiboAnchors.t3 })
+				const lo = Math.max(0, b.brickIndexInDay - FIB_RADIUS)
+				const hi = Math.min(dayMaxIdx, b.brickIndexInDay + FIB_RADIUS)
+				const loT = (offset + lo) as UTCTimestamp
+				const hiT = (offset + hi) as UTCTimestamp
+				const tVal = pickT(b.fiboAnchors)
+				tData.push({ time: loT, value: tVal })
+				tData.push({ time: hiT, value: tVal })
 				anchorData.push({
-					time: startTime,
+					time: loT,
 					value: b.fiboAnchors.retracementPeak,
 				})
 				anchorData.push({
-					time: endTime,
+					time: hiT,
 					value: b.fiboAnchors.retracementPeak,
+				})
+				impulseStartData.push({
+					time: loT,
+					value: b.fiboAnchors.impulseStartPrice,
+				})
+				impulseStartData.push({
+					time: hiT,
+					value: b.fiboAnchors.impulseStartPrice,
+				})
+				impulseEndData.push({
+					time: loT,
+					value: b.fiboAnchors.impulseEndPrice,
+				})
+				impulseEndData.push({
+					time: hiT,
+					value: b.fiboAnchors.impulseEndPrice,
 				})
 			}
 			// lightweight-charts requires per-series data to be asc-sorted
 			// by time and unique. Overlapping fires can push out-of-order
-			// pairs (entry of fire 2 lands BEFORE exit of fire 1 when fire 1
-			// rides to EOD). Sort + de-dup-by-time (last write wins) per
-			// overlay before handing off.
+			// pairs; sort + de-dup-by-time (last write wins) per series.
 			const sortDedup = (
 				rows: Array<{ time: UTCTimestamp; value: number }>
 			): Array<{ time: UTCTimestamp; value: number }> => {
@@ -247,24 +272,24 @@ const HawksEngineLab = ({
 				}
 				return out
 			}
-			if (t1Data.length > 0) {
+			if (tData.length > 0) {
+				const tColor =
+					fiboTier === "T1"
+						? COLOR_FIB_T1
+						: fiboTier === "T2"
+							? COLOR_FIB_T2
+							: COLOR_FIB_T3
+				const tLabel =
+					fiboTier === "T1"
+						? "Fib T1 (76.4%)"
+						: fiboTier === "T2"
+							? "Fib T2 (100%)"
+							: "Fib T3 (161.8%)"
 				indicators.push({
-					key: "fib-t1",
-					label: "Fib T1 (76.4%)",
-					color: COLOR_FIB_T1,
-					data: sortDedup(t1Data),
-				})
-				indicators.push({
-					key: "fib-t2",
-					label: "Fib T2 (100%)",
-					color: COLOR_FIB_T2,
-					data: sortDedup(t2Data),
-				})
-				indicators.push({
-					key: "fib-t3",
-					label: "Fib T3 (161.8%)",
-					color: COLOR_FIB_T3,
-					data: sortDedup(t3Data),
+					key: `fib-${fiboTier.toLowerCase()}`,
+					label: tLabel,
+					color: tColor,
+					data: sortDedup(tData),
 				})
 				indicators.push({
 					key: "fib-anchor",
@@ -272,17 +297,154 @@ const HawksEngineLab = ({
 					color: COLOR_FIB_ANCHOR,
 					data: sortDedup(anchorData),
 				})
+				indicators.push({
+					key: "fib-impulse-start",
+					label: "15m impulse start",
+					color: COLOR_FIB_ANCHOR_START,
+					data: sortDedup(impulseStartData),
+				})
+				indicators.push({
+					key: "fib-impulse-end",
+					label: "15m impulse end",
+					color: COLOR_FIB_ANCHOR_END,
+					data: sortDedup(impulseEndData),
+				})
 			}
 		}
-		// FIRE markers: render as proper arrow markers (the same visual
-		// language as /backtest and /hawks-isolation). LONG = arrowUp below
-		// bar (green), SHORT = arrowDown above bar (red). Per-day brickIdx
-		// shifted by the day's offset = global chart x-axis position.
+		// Per-fire entry + exit dashed price lines, /backtest style. Scope:
+		// ACTIVE DAY only (same reason as the fib overlay — many overlapping
+		// fires across 20 days would clutter the chart). Each fire pushes
+		// two short 7-brick segments (±3 around entry / ±3 around exit), all
+		// merged into ONE entry-line series + ONE exit-line series. Drawing
+		// per-fire as separate series would tank perf; merging works because
+		// lightweight-charts treats gaps in `time` as line breaks when the
+		// values jump — and we explicitly emit identical (time, value) pairs
+		// so each ±3 segment renders as a flat horizontal stub.
+		const lifecyclePickerForActive = (b: EngineLabBrick) =>
+			exitMode === "conservative"
+				? b.lifecycleConservative
+				: exitMode === "moderate"
+					? b.lifecycleModerate
+					: exitMode === "fibo_T1"
+						? b.lifecycleFiboT1
+						: exitMode === "fibo_T2"
+							? b.lifecycleFiboT2
+							: exitMode === "fibo_T3"
+								? b.lifecycleFiboT3
+								: exitMode === "fibo_T1_trail"
+									? b.lifecycleFiboT1Trail
+									: exitMode === "fibo_T2_trail"
+										? b.lifecycleFiboT2Trail
+										: b.lifecycleFiboT3Trail
+		if (activeDayIdx >= 0) {
+			const RADIUS = 3
+			const day = data.days[activeDayIdx]!
+			const offsetA = dayOffsets[activeDayIdx]!.offset
+			const dayMaxBrickIdx = day.bricks.length - 1
+			const entryLongData: Array<{ time: UTCTimestamp; value: number }> = []
+			const entryShortData: Array<{ time: UTCTimestamp; value: number }> = []
+			const exitData: Array<{ time: UTCTimestamp; value: number }> = []
+			const exitBeData: Array<{ time: UTCTimestamp; value: number }> = []
+			for (const b of day.bricks) {
+				if (!b.fired || b.price === null || b.direction === null) {
+					continue
+				}
+				const lc = lifecyclePickerForActive(b)
+				const lo = Math.max(0, b.brickIndexInDay - RADIUS)
+				const hi = Math.min(dayMaxBrickIdx, b.brickIndexInDay + RADIUS)
+				const entryArr = b.direction === "long" ? entryLongData : entryShortData
+				entryArr.push({
+					time: (offsetA + lo) as UTCTimestamp,
+					value: b.price,
+				})
+				entryArr.push({
+					time: (offsetA + hi) as UTCTimestamp,
+					value: b.price,
+				})
+				if (lc) {
+					const exLo = Math.max(0, lc.exitBrickIndexInDay - RADIUS)
+					const exHi = Math.min(dayMaxBrickIdx, lc.exitBrickIndexInDay + RADIUS)
+					const target = lc.exitReason === "stop_be" ? exitBeData : exitData
+					target.push({
+						time: (offsetA + exLo) as UTCTimestamp,
+						value: lc.exitPrice,
+					})
+					target.push({
+						time: (offsetA + exHi) as UTCTimestamp,
+						value: lc.exitPrice,
+					})
+				}
+			}
+			const sortDedup2 = (
+				rows: Array<{ time: UTCTimestamp; value: number }>
+			) => {
+				const sorted = [...rows].sort(
+					(a, b) => (a.time as number) - (b.time as number)
+				)
+				const out: Array<{ time: UTCTimestamp; value: number }> = []
+				for (const r of sorted) {
+					const last = out[out.length - 1]
+					if (last && last.time === r.time) {
+						last.value = r.value
+					} else {
+						out.push({ time: r.time, value: r.value })
+					}
+				}
+				return out
+			}
+			if (entryLongData.length > 0) {
+				indicators.push({
+					key: "entry-long-line",
+					label: "Entry (LONG)",
+					color: COLOR_FIRE_LONG,
+					data: sortDedup2(entryLongData),
+				})
+			}
+			if (entryShortData.length > 0) {
+				indicators.push({
+					key: "entry-short-line",
+					label: "Entry (SHORT)",
+					color: COLOR_FIRE_SHORT,
+					data: sortDedup2(entryShortData),
+				})
+			}
+			if (exitData.length > 0) {
+				indicators.push({
+					key: "exit-line",
+					label: "Exit",
+					color: COLOR_EXIT_EOD,
+					data: sortDedup2(exitData),
+				})
+			}
+			if (exitBeData.length > 0) {
+				indicators.push({
+					key: "exit-be-line",
+					label: "Exit (BE)",
+					color: COLOR_BREAKEVEN,
+					data: sortDedup2(exitBeData),
+				})
+			}
+		}
+		// Fire / lifecycle markers — match the /backtest visual language:
+		//   - Entry  = arrow IN gate direction, on the favorable side of the
+		//              bar, colored by direction, text `entry <price>`.
+		//   - BE     = small circle on the favorable side, ALWAYS YELLOW
+		//              (universal breakeven rule, 2026-06-15).
+		//   - TRAIL  = small circle on the favorable side, purple.
+		//   - Exit   = arrow CLOSING the position (opposite direction of the
+		//              entry arrow), on the OPPOSITE side of the bar from the
+		//              entry, colored by outcome. BE-stop exits = yellow per
+		//              the universal rule.
 		//
-		// Phase B also overlays the trade lifecycle: a "BE" circle marker
-		// where breakeven triggered (stop moved to entry), and an exit
-		// marker (square) at the closing brick, color-coded by exit reason.
+		// Per-day brickIdx is shifted by the day's offset = global chart
+		// x-axis position.
+		const formatPrice = (p: number) =>
+			p.toLocaleString("pt-BR", { maximumFractionDigits: 2 })
 		const fireMarkers: SeriesMarker<UTCTimestamp>[] = []
+		// Stable per-fire enumeration matching the 15m chart's `#N` labels.
+		// Iterate in the SAME order as the 15m payload (day → brick) so
+		// fire-1 here is fire-1 there.
+		let fireSeq = 0
 		for (let di = 0; di < data.days.length; di++) {
 			const day = data.days[di]!
 			const offset = dayOffsets[di]!.offset
@@ -291,12 +453,13 @@ const HawksEngineLab = ({
 					continue
 				}
 				const isLong = b.direction === "long"
+				const seq = ++fireSeq
 				fireMarkers.push({
 					time: (offset + b.brickIndexInDay) as UTCTimestamp,
 					position: isLong ? "belowBar" : "aboveBar",
 					color: isLong ? COLOR_FIRE_LONG : COLOR_FIRE_SHORT,
 					shape: isLong ? "arrowUp" : "arrowDown",
-					text: `${b.direction.toUpperCase()} ${b.tier ?? ""}`.trim(),
+					text: `#${seq} entry ${formatPrice(b.price)}`,
 				})
 				const lifecycle =
 					exitMode === "conservative"
@@ -319,7 +482,7 @@ const HawksEngineLab = ({
 						fireMarkers.push({
 							time: (offset + lifecycle.beBrickIndexInDay) as UTCTimestamp,
 							position: isLong ? "belowBar" : "aboveBar",
-							color: isLong ? COLOR_FIRE_LONG : COLOR_FIRE_SHORT,
+							color: COLOR_BREAKEVEN,
 							shape: "circle",
 							text: "BE",
 						})
@@ -341,7 +504,7 @@ const HawksEngineLab = ({
 						lifecycle.exitReason === "target"
 							? COLOR_EXIT_TARGET
 							: lifecycle.exitReason === "stop_be"
-								? COLOR_EXIT_BE
+								? COLOR_BREAKEVEN
 								: lifecycle.exitReason === "stop_trail"
 									? COLOR_EXIT_TRAIL
 									: lifecycle.exitReason === "eod"
@@ -349,10 +512,13 @@ const HawksEngineLab = ({
 										: COLOR_EXIT_STOP_INITIAL
 					fireMarkers.push({
 						time: (offset + lifecycle.exitBrickIndexInDay) as UTCTimestamp,
-						position: isLong ? "belowBar" : "aboveBar",
+						// Exit arrow sits OPPOSITE the entry (closing the trade).
+						position: isLong ? "aboveBar" : "belowBar",
 						color: exitColor,
-						shape: "square",
-						text: lifecycle.exitReason.toUpperCase().replace("_", " "),
+						// LONG exit (above bar): arrowDown points DOWN into the bar.
+						// SHORT exit (below bar): arrowUp points UP into the bar.
+						shape: isLong ? "arrowDown" : "arrowUp",
+						text: `exit ${formatPrice(lifecycle.exitPrice)}`,
 					})
 				}
 			}
@@ -372,7 +538,174 @@ const HawksEngineLab = ({
 			totalBricks: allCandles.length,
 			totalFires,
 		}
-	}, [data, exitMode, activeDayKey])
+	}, [data, exitMode, activeDayKey, fiboTier, fiboFocus])
+
+	// 15m chart payload — only built when in Fibo mode. Spans the FULL
+	// loaded window (all days, concatenated) so the user has plenty of
+	// 15m context to verify impulse start/end pivots that anchor the
+	// fibo measured-move targets.
+	//
+	// For each fire (across every day) with fiboAnchors, we emit THREE
+	// short horizontal stubs centered on the fire's nearest 15m brick:
+	//   - impulse start (fuchsia) at `impulseStartPrice`
+	//   - impulse end (purple) at `impulseEndPrice`
+	//   - retracement peak (slate-white) at `retracementPeak`
+	// Each stub is ±FIB_RADIUS_15M bricks wide so it sits visually on
+	// the retrace+impulse combo without extending across unrelated price
+	// action.
+	const chart15mPayload = useMemo(() => {
+		if (!exitMode.startsWith("fibo")) {
+			return null
+		}
+		// Concat 15m candles across the full loaded window. We locate
+		// each fire on the 15m axis by binary-searching its timestamp.
+		const all15: EngineLabDayPayload["candles15m"] = []
+		for (const d of data.days) {
+			for (const c of d.candles15m) {
+				all15.push(c)
+			}
+		}
+		if (all15.length === 0) {
+			return null
+		}
+		const series15 = candlesToBrickSeriesNative(all15)
+		const FIB_RADIUS_15M = 3
+		const max15Idx = all15.length - 1
+		const ts15: number[] = all15.map((c) => new Date(c.timestamp).getTime())
+		// Locate the 15m brick at-or-before timestamp `t` (binary search).
+		// All three anchors (impulse-start, impulse-end, retracement-peak)
+		// now carry the timestamp of the 15m brick that defined them, so
+		// we just look that brick up — no price-matching guesswork.
+		const findNearest15 = (timestamp: string): number => {
+			const t = new Date(timestamp).getTime()
+			let lo = 0
+			let hi = ts15.length - 1
+			while (lo < hi) {
+				const mid = (lo + hi) >> 1
+				if (ts15[mid]! < t) {
+					lo = mid + 1
+				} else {
+					hi = mid
+				}
+			}
+			return lo
+		}
+		// One series PER fire PER anchor type so each ±FIB_RADIUS_15M stub
+		// renders as its own short horizontal segment. If we merged them
+		// into 3 global series (one per anchor type), lightweight-charts
+		// would draw a single polyline connecting every fire's stub
+		// end-to-end — creating the diagonal "snake" that hides the
+		// actual horizontal levels.
+		const indicators15: Array<{
+			key: string
+			label: string
+			color: string
+			data: Array<{ time: UTCTimestamp; value: number }>
+		}> = []
+		const markers15: Array<SeriesMarker<UTCTimestamp>> = []
+		// Global fire sequence — same numbering as the 5m chart's `#N`
+		// entry markers. We increment for EVERY fire (even those without
+		// fiboAnchors) so a #N on the 15m chart always matches the same
+		// #N on the 5m chart.
+		let fireGlobalSeq = 0
+		let fireCounter = 0
+		for (const d of data.days) {
+			for (const b of d.bricks) {
+				if (!b.fired || b.direction === null) {
+					continue
+				}
+				fireGlobalSeq++
+				if (!b.fiboAnchors) {
+					continue
+				}
+				// Each anchor carries its defining 15m brick timestamp
+				// (impulse start/end) or the 5m brick timestamp where the
+				// running extreme was last updated (retracement peak).
+				// In both cases we map to the nearest 15m brick.
+				const startIdx = findNearest15(b.fiboAnchors.impulseStartAtTimestamp)
+				const endIdx = findNearest15(b.fiboAnchors.impulseEndAtTimestamp)
+				const peakIdx = findNearest15(b.fiboAnchors.retracementPeakAtTimestamp)
+				const stubAround = (i: number) => {
+					const lo = Math.max(0, i - FIB_RADIUS_15M)
+					const hi = Math.min(max15Idx, i + FIB_RADIUS_15M)
+					return [lo as UTCTimestamp, hi as UTCTimestamp] as const
+				}
+				const [sLo, sHi] = stubAround(startIdx)
+				const [eLo, eHi] = stubAround(endIdx)
+				const [pLo, pHi] = stubAround(peakIdx)
+				const id = fireCounter++
+				// Numbered markers on the 15m chart — one per anchor stub.
+				// All three carry the SAME `#N` as the matching arrow on
+				// the 5m chart (via `fireGlobalSeq`) so each fire's three
+				// lines (impulse-start fuchsia, impulse-end purple,
+				// retracement-peak white) can be visually grouped.
+				//
+				// Position rules:
+				//   - retracementPeak text sits on the side AWAY from the
+				//     price action it captures: SHORT peaks above bar,
+				//     LONG peaks below bar.
+				//   - impulse start/end texts go on the side toward the
+				//     pivot type — TOPO (high) markers above bar, FUNDO
+				//     (low) markers below bar — so the label hugs the wick.
+				const startIsTopo = b.direction === "short"
+				const endIsTopo = b.direction !== "short"
+				markers15.push({
+					time: startIdx as UTCTimestamp,
+					position: startIsTopo ? "aboveBar" : "belowBar",
+					shape: "text",
+					color: COLOR_FIB_ANCHOR_START,
+					text: `#${fireGlobalSeq}`,
+				})
+				markers15.push({
+					time: endIdx as UTCTimestamp,
+					position: endIsTopo ? "aboveBar" : "belowBar",
+					shape: "text",
+					color: COLOR_FIB_ANCHOR_END,
+					text: `#${fireGlobalSeq}`,
+				})
+				markers15.push({
+					time: peakIdx as UTCTimestamp,
+					position: b.direction === "short" ? "aboveBar" : "belowBar",
+					shape: "text",
+					color: COLOR_FIB_ANCHOR,
+					text: `#${fireGlobalSeq}`,
+				})
+				indicators15.push({
+					key: `i15-start-${id}`,
+					label: "15m impulse start",
+					color: COLOR_FIB_ANCHOR_START,
+					data: [
+						{ time: sLo, value: b.fiboAnchors.impulseStartPrice },
+						{ time: sHi, value: b.fiboAnchors.impulseStartPrice },
+					],
+				})
+				indicators15.push({
+					key: `i15-end-${id}`,
+					label: "15m impulse end",
+					color: COLOR_FIB_ANCHOR_END,
+					data: [
+						{ time: eLo, value: b.fiboAnchors.impulseEndPrice },
+						{ time: eHi, value: b.fiboAnchors.impulseEndPrice },
+					],
+				})
+				indicators15.push({
+					key: `i15-peak-${id}`,
+					label: "Retracement peak",
+					color: COLOR_FIB_ANCHOR,
+					data: [
+						{ time: pLo, value: b.fiboAnchors.retracementPeak },
+						{ time: pHi, value: b.fiboAnchors.retracementPeak },
+					],
+				})
+			}
+		}
+		return {
+			series: series15,
+			indicators: indicators15,
+			markers: markers15,
+			totalBricks: all15.length,
+		}
+	}, [exitMode, data])
 
 	// Brick under the crosshair (or last brick when no hover). Drives the
 	// per-group badge row below.
@@ -548,6 +881,19 @@ const HawksEngineLab = ({
 									/>
 									+ trail-after-3R
 								</label>
+								<label
+									htmlFor="lab-mode-fibo-focus"
+									className="gap-s-100 text-tiny text-txt-300 ml-s-200 flex items-center"
+								>
+									<Checkbox
+										id="lab-mode-fibo-focus"
+										checked={fiboFocus}
+										onCheckedChange={(v) => {
+											setFiboFocus(v === true)
+										}}
+									/>
+									Fibo focus (hide EMAs / VWAP)
+								</label>
 							</div>
 						)}
 					</div>
@@ -649,6 +995,31 @@ const HawksEngineLab = ({
 									hovering={hoveredGlobalIdx !== null}
 								/>
 							)}
+							{chart15mPayload && (
+								<div className="space-y-s-100 mt-s-200">
+									<div className="text-tiny text-txt-300 gap-s-300 flex flex-wrap items-center">
+										<LegendDot
+											color={COLOR_FIB_ANCHOR_START}
+											label="15m impulse start"
+										/>
+										<LegendDot
+											color={COLOR_FIB_ANCHOR_END}
+											label="15m impulse end"
+										/>
+										<LegendDot
+											color={COLOR_FIB_ANCHOR}
+											label="Retracement peak"
+										/>
+									</div>
+									<RenkoPane
+										label={`${data.from} → ${data.to} — 15m Renko (${chart15mPayload.totalBricks.toLocaleString()} bricks). Stubs = anchors captured by each fire (impulse + retrace combo). #N matches the entry arrow on the 5m chart.`}
+										series={chart15mPayload.series}
+										indicators={chart15mPayload.indicators}
+										extraMarkers={chart15mPayload.markers}
+										className="h-[320px]"
+									/>
+								</div>
+							)}
 						</div>
 					)}
 
@@ -685,6 +1056,7 @@ const HawksEngineLab = ({
 										<TableHead className="w-10">#</TableHead>
 										<TableHead>Time</TableHead>
 										<TableHead className="text-right">Close</TableHead>
+										<TableHead className="text-right">Brick (pts)</TableHead>
 										<TableHead>60m</TableHead>
 										<TableHead>15m</TableHead>
 										<TableHead>Allowed</TableHead>
@@ -735,6 +1107,9 @@ const BrickRow = ({ brick }: BrickRowProps) => {
 			<TableCell className="text-tiny font-mono">{timePart}</TableCell>
 			<TableCell className="text-tiny text-right font-mono">
 				{brick.close.toFixed(0)}
+			</TableCell>
+			<TableCell className="text-tiny text-right font-mono">
+				{brick.renkoSize.toFixed(0)}
 			</TableCell>
 			<TableCell>
 				<GateBadge state={brick.gate60m} />

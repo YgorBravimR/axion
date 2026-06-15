@@ -95,6 +95,12 @@ interface RenkoPaneProps {
 	readonly externalCrosshair?: number | null
 	readonly onCrosshairMove?: (_brickIdx: number | null) => void
 	readonly emitsCrosshair?: boolean
+	// When set, the chart's visible logical range is constrained to
+	// [focusBrickIdx - focusBrickRadius, focusBrickIdx + focusBrickRadius]
+	// instead of fitting the entire series. Used by the engine lab to
+	// zoom around the currently-selected trade across a long timeline.
+	readonly focusBrickIdx?: number | null
+	readonly focusBrickRadius?: number
 	readonly className?: string
 }
 
@@ -112,6 +118,8 @@ const RenkoPane = ({
 	externalCrosshair,
 	onCrosshairMove,
 	emitsCrosshair = false,
+	focusBrickIdx = null,
+	focusBrickRadius = 30,
 	className,
 }: RenkoPaneProps) => {
 	const containerRef = useRef<HTMLDivElement>(null)
@@ -214,9 +222,27 @@ const RenkoPane = ({
 			return
 		}
 		candleSeries.setData(series.data)
-		chart.timeScale().fitContent()
+		if (focusBrickIdx === null) {
+			chart.timeScale().fitContent()
+		}
 		seriesTimesRef.current = series.times
-	}, [series])
+	}, [series, focusBrickIdx])
+
+	// Focus window — re-applies when the selected anchor changes,
+	// independently of the series data lifecycle.
+	useEffect(() => {
+		const chart = chartRef.current
+		if (!chart || focusBrickIdx === null) {
+			return
+		}
+		const last = series.data.length - 1
+		if (last < 0) {
+			return
+		}
+		const from = Math.max(0, focusBrickIdx - focusBrickRadius)
+		const to = Math.min(last, focusBrickIdx + focusBrickRadius)
+		chart.timeScale().setVisibleLogicalRange({ from, to })
+	}, [focusBrickIdx, focusBrickRadius, series])
 
 	// Indicator overlays — recreate on change
 	useEffect(() => {

@@ -1,27 +1,34 @@
 /**
  * Hawks structural pivot detector — extracted from `hawks-triple-screen.ts`.
  *
- * The methodology paints a TOPO when 2 consecutive bearish bricks close after
- * a bullish sequence (value = high of the last bullish brick), and a FUNDO
- * when 2 consecutive bullish bricks close after a bearish sequence (value =
- * low of the last bearish brick). This is the v0.7 structural replacement of
- * the CSV-sourced `topos_fundos` column (which stopped being populated after
- * the 2026-06-05 Phase-5 migration).
+ * The methodology paints a TOPO when 2 consecutive bearish bricks confirm
+ * after a bullish sequence (value = high of the last bullish brick), and a
+ * FUNDO when 2 consecutive bullish bricks confirm after a bearish sequence
+ * (value = low of the last bearish brick).
  *
- * **Known imperfection** kept on purpose (per `hawks-triple-screen.ts`
- * comment): on the FIRST two bricks of a session when both are bullish, the
- * detector emits a "FUNDO" at brick 1's high — structurally wrong (no
- * bearish brick has confirmed a low yet) but a cleaner streak-based detector
- * regressed 20-day reproduction 55.9% → 55.1%. The spurious anchor evidently
- * correlates with user-catalog LONG fires in a way the structurally-correct
- * detector does not.
+ * **WICK-BASED direction** (2026-06-15 user directive): brick direction is
+ * classified by WICK EXTREMES relative to the prior brick, NOT by
+ * `close > open`. This is the "movements use highs and lows" rule the user
+ * locked in during the engine v0.10 lab scrub:
+ *   - bullish brick = `brick.high > priorBrick.high`
+ *   - bearish brick = `brick.low  < priorBrick.low`
+ *   - otherwise = NEUTRAL (treated as a passthrough — direction doesn't flip)
+ *
+ * This makes the visible swing on the chart (which the user reads off wicks,
+ * not bodies) the same one the engine sees. A doji body with a strong wick
+ * still registers as the direction the wick implies.
+ *
+ * Pivots are still stored at `brick.high` (TOPO) and `brick.low` (FUNDO) —
+ * those have always been wick extremes; only the direction classifier
+ * changed.
  *
  * Both the entry engine and the Indicator Lab pivot review tab consume this
  * — single source of truth, no parallel implementations.
  */
 
 export interface StructuralPivotDetectorState {
-	// True = last brick was bullish (close > open), false = bearish, null = init.
+	// True = last brick was bullish (high > prior high), false = bearish
+	// (low < prior low), null = init / neutral.
 	lastBrickWasBullish: boolean | null
 	// Extreme of the last brick of that direction: high for bullish, low for
 	// bearish. Used as the pivot value when 2 consecutive opposite-direction
@@ -32,6 +39,10 @@ export interface StructuralPivotDetectorState {
 	// `peakBrickIdx` for chart rendering (engine itself doesn't read this,
 	// it operates on price + the confirmation brick from the outer loop).
 	priorExtremeBrickIdx: number | null
+	// Last brick's high / low — needed for wick-based direction
+	// classification on the NEXT brick. Init = null.
+	lastHigh: number | null
+	lastLow: number | null
 }
 
 export interface StructuralPivot {
@@ -47,6 +58,8 @@ export const createStructuralPivotState = (): StructuralPivotDetectorState => ({
 	lastBrickWasBullish: null,
 	priorExtremePrice: null,
 	priorExtremeBrickIdx: null,
+	lastHigh: null,
+	lastLow: null,
 })
 
 export interface PivotBrick {
@@ -72,10 +85,17 @@ export const stepStructuralPivot = (
 	state: StructuralPivotDetectorState
 	pivot: StructuralPivot | null
 } => {
-	const isBullish = brick.close > brick.open
-	const isBearish = brick.close < brick.open
+	// WICK-based direction classifier (see header). On the first brick of
+	// the walk both `lastHigh` and `lastLow` are null — we treat that as
+	// init (no direction yet) and just record the brick's extremes.
+	const lastH = state.lastHigh
+	const lastL = state.lastLow
+	const isBullish = lastH !== null && brick.high > lastH
+	const isBearish = lastL !== null && brick.low < lastL
 	let pivot: StructuralPivot | null = null
 	const next: StructuralPivotDetectorState = { ...state }
+	next.lastHigh = brick.high
+	next.lastLow = brick.low
 
 	if (next.lastBrickWasBullish === true && isBearish) {
 		next.lastBrickWasBullish = false
@@ -101,12 +121,17 @@ export const stepStructuralPivot = (
 		}
 		next.priorExtremePrice = brick.high
 		next.priorExtremeBrickIdx = brickIdx
-	} else {
-		// Init / doji passthrough.
-		next.lastBrickWasBullish = isBullish
-		next.priorExtremePrice = isBullish ? brick.high : brick.low
+	} else if (next.lastBrickWasBullish === null) {
+		// Init: record the first brick's direction relative to itself —
+		// fall back to body since there's no prior brick to compare wicks
+		// against on the very first sample.
+		const initBullish = brick.close >= brick.open
+		next.lastBrickWasBullish = initBullish
+		next.priorExtremePrice = initBullish ? brick.high : brick.low
 		next.priorExtremeBrickIdx = brickIdx
 	}
+	// Else (neutral / inside brick): direction doesn't flip, priorExtreme
+	// stays — the swing tracker carries the prior bullish/bearish run.
 
 	return { state: next, pivot }
 }

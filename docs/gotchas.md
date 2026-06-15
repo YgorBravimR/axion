@@ -755,12 +755,43 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 
 ## Hawks Backtest Engine
 
+### Hawks structural pivots: direction is WICK-BASED, not close-based
+
+- **What**: The TOPO/FUNDO detector in `src/lib/backtest/hawks-structural-pivots.ts` classifies each brick's direction by **wick extremes relative to the prior brick**, NOT by `close > open`. Bullish = `brick.high > priorBrick.high`; bearish = `brick.low < priorBrick.low`; otherwise neutral (no direction flip). Pivot prices are stored at `brick.high` (TOPO) and `brick.low` (FUNDO) — always wick-based; only the direction classifier changed.
+- **Why**: The visible swing on the chart (what the user reads) sits at the wick. A doji body with a strong wick must register as the direction the wick implies — otherwise the engine sees a different swing than the user.
+- **What to do**: Don't revert to close/open classification "to match the old methodology". This detector is the single source of truth — `hawks-htf-walker.ts`, `retracement.ts`, the engine lab, and isolation charts all consume it. Tests against legacy fixtures will shift; that's expected.
+- **Source**: 2026-06-15 engine v0.10 lab scrub — "We must have the wicks, on all charts, they are part of the setup." Codified in [`CLAUDE.md`](../CLAUDE.md) rule #0a and global memory.
+- **Date logged**: 2026-06-15.
+
+### Hawks: `R<N>` brick = `(N − 1)` ticks (NON-NEGOTIABLE)
+
+- **What**: An `R<N>` Renko brick has body = `(N − 1)` ticks. 1 WIN tick = 5 points. So `R<N>` in **points = `(N − 1) × 5`**. The `hawks_renko_sizes.size_5m` / `size_15m` / `size_60m` columns store the **R number `N`**, NOT the tick count and NOT the point count. The source CSVs (`hawk-renkos(Renkos).csv`) and the per-size brick files (`20R.csv`, `21R.csv`, …) use the same `R<N>` convention.
+- **Examples**: R20 → 19 ticks → **95 points**; R21 → 20 → 100 pts; R24 → 23 → 115 pts; R34 → 33 → 165 pts.
+- **What to do**: Every R-math computation (1R hard stop = `2 × renkoSize`, BE threshold = `2 × renkoSize` net favorable, 3R target = `6 × renkoSize`, trail-after-3R stop = `close ± 2 × renkoSize`, fibo measured-moves) MUST convert via `renkoSizePoints = (sizeColumn − 1) × 5` before use. Never assume `size_5m` is already ticks-or-points.
+- **Source**: 2026-06-15 engine v0.10 lab scrub. I iteratively assumed `size_5m` was points, then ticks, then ticks-×-5 — all wrong because the `N − 1` offset was missing. Codified in [`CLAUDE.md`](../CLAUDE.md) rule #0 and the global memory.
+- **Date logged**: 2026-06-15.
+
+### Hawks: Renko brick body changes WEEKLY — never hardcode 100 / config.brickSize5mPoints
+
+- **What**: The `hawks_renko_sizes` table stores per-ISO-week brick sizes as `R<N>` numbers (see preceding gotcha for the conversion). The R can change every Monday. The preset constant `HawksTripleScreenConfig.brickSize5mPoints = 100` is a fallback, NOT a universal truth — most weeks land near 95-100 points but some weeks are 115+ or different. Any R-math that hardcodes 100 (or even reads only the preset constant) silently mis-sizes stops/targets/trails on weeks with a different brick size.
+- **What to do**: Look up the per-day canonical size from `hawks_renko_sizes` (where `effective_date ≤ dayKey`, latest), then convert `(size_5m − 1) × 5` to get the brick body in raw points. Apply that one value to ALL R math for fires on that day. Don't derive from candle bodies — Renko occasionally emits "gap bricks" whose body is N × the canonical size.
+- **Source**: `src/db/schema.ts` (`hawksRenkoSizes` table); `src/lib/renko/weekly-walk.ts`; `src/app/actions/hawks-engine-lab-data.ts` lifecycle simulator; engine v0.10 lab scrub session 2026-06-15.
+- **Date logged**: 2026-06-15.
+
 ### Hawks: lab's universal entry gates over-filter retracement / vwap-rejection fires
 
 - **What**: The hawks engine lab applies four methodology gates to EVERY playbook fire — VB (color-flip), leg-shape (expansion ≥ 4 + retraction ≥ 2), 5m HH/LL, and gate-stability. These were calibrated against the mean_reversion / VB-style entry, where a snap-back FROM a multi-brick extension is the trigger. The leg-shape gate in particular requires the JUST-COMPLETED leg to show a real expansion + retraction, which describes the bricks BEFORE a mean-reversion fire. For `retracement` (resumption AFTER a retracement) and `vwap_rejection` (pierce-and-reject) the structural shape at fire-time is different, and the universal gates filter them out almost entirely. Across 20 May days only `mean_reversion` produced real fires (20/20 real fires were mean_reversion); H/I logic itself works in unit tests but never passes the lab gates.
 - **What to do**: Per-playbook entry gates are the right fix (planned for the per-playbook engine variants, `processHawksSinglePlaybookCandle` is the seam). Until then, when validating H/I in the lab you'll need to either (a) loosen the leg-shape requirement for those playbooks, or (b) inspect raw orchestrator output before the lab gates are applied.
 - **Source**: `src/app/actions/hawks-engine-lab-data.ts` (the lab's universal gate block); `src/lib/backtest/modules/entry/playbooks/{retracement,vwap-rejection}.ts`; engine v0.10 Phase H/I session 2026-06-14.
 - **Date logged**: 2026-06-14.
+
+### Hawks: fibo `findDominantImpulse` — running-extreme-as-peak is fundamentally wrong; impulse-end must be ≥1 brick before peak
+
+- **What**: Two iterations of `findDominantImpulse` failed before settling on the current shape: (1) using the 5m running-high-since-last-topo as the retracement peak — this peak can sit BEFORE the impulse-end in time, because the running-high tracks a 5m leg while the impulse-end is a 15m fundo; (2) requiring post-reversal confirmation for the impulse-end brick — the fire is often AT the impulse-end with no future bricks, so the function returned null on every legitimate setup at the live edge. The working shape (still deferred, not promoted to engine yet): compute retracement peak as the highest high STRICTLY AFTER `fundoIdx`; `requirePostReversal=false` for impulse-end; require `peakHigh - fundoLow ≥ 2 × renkoSize` so fires aren't taken on the very fundo with zero retracement.
+- **What to do**: When designing measured-move anchors, never source the peak from a per-brick running extreme that lives in a different state stream than the impulse pivots. Either both extremes come from the SAME structural-pivot detector, or the peak is derived from the bricks AFTER the impulse-end (geometric, not state-machine). Also: the impulse-end and retracement-peak must be on different bricks — `peakIdx ≥ fundoIdx + 1` strictly. The "if no peak yet, use the last high" fallback uses the brick adjacent to the fundo, which can be ≤ minSwing above it — guard with the `≥ 2 × renkoSize` retracement check.
+- **What to also know**: the production engine has NOT promoted this finder yet. It lives in `src/app/actions/hawks-engine-lab-data.ts:findDominantImpulse` for the lab. Promotion is tracked in [`docs/backlog.md`](backlog.md) — "Hawks engine — fibo retracement anchor logic (deferred)".
+- **Source**: 2026-06-15 fibo-lab session; user image #57 (peak back in time from impulse end) and #60 (peak on the same brick as impulse end).
+- **Date logged**: 2026-06-15.
 
 ### Hawks: TOPOS E FUNDOS indicator confirmation lag (5m vs. higher-TF differ)
 

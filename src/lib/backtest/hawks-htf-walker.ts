@@ -56,6 +56,19 @@ export interface HtfWalkerSnapshot {
 	gate60m: HtfWalkerState
 	lastTopo15m: number | null
 	lastFundo15m: number | null
+	// ISO timestamp of the 15m brick that DEFINED the pivot (the
+	// `peakBrickIdx` brick from the detector — strictly before the
+	// confirmation brick). null if the pivot hasn't been confirmed yet.
+	// Used by the lab to render anchor stubs at the correct 15m brick.
+	lastTopo15mAtTimestamp: string | null
+	lastFundo15mAtTimestamp: string | null
+	// Which pivot type was MOST RECENTLY adopted (after the topo↔fundo
+	// alternation dedup). Used by the exit-management subsystem to know
+	// whether the impulse leg points up (last = topo) or down (last =
+	// fundo). For SHORT to have a valid down-impulse, this must be
+	// "fundo" — meaning the leg is topo → fundo, completed, and the
+	// retracement is now in progress. Vice versa for LONG.
+	lastAdoptedType15m: "topo" | "fundo" | null
 }
 
 const ALL_NO_SIGNAL: HtfWalkerSnapshot = {
@@ -63,6 +76,9 @@ const ALL_NO_SIGNAL: HtfWalkerSnapshot = {
 	gate60m: "NO_SIGNAL",
 	lastTopo15m: null,
 	lastFundo15m: null,
+	lastTopo15mAtTimestamp: null,
+	lastFundo15mAtTimestamp: null,
+	lastAdoptedType15m: null,
 }
 
 const stepOneTf = (
@@ -141,12 +157,17 @@ export const buildHtfWalker = (
 		timestamp: string
 		topo: number | null
 		fundo: number | null
+		topoAtTimestamp: string | null
+		fundoAtTimestamp: string | null
+		lastAdoptedType: "topo" | "fundo" | null
 	}
 	const fifteenRows: FifteenPivotRow[] = []
 	{
 		let pivotState = createStructuralPivotState()
 		let lastTopo: number | null = null
 		let lastFundo: number | null = null
+		let lastTopoAt: string | null = null
+		let lastFundoAt: string | null = null
 		let lastAdoptedType: "topo" | "fundo" | null = null
 		for (let i = 0; i < candles15m.length; i++) {
 			const c = candles15m[i]!
@@ -154,16 +175,24 @@ export const buildHtfWalker = (
 			pivotState = r.state
 			if (r.pivot && r.pivot.type !== lastAdoptedType) {
 				lastAdoptedType = r.pivot.type
+				// `peakBrickIdx` is the brick where the actual extreme
+				// sits (strictly before the confirmation brick `i`).
+				const peakTs = candles15m[r.pivot.peakBrickIdx]?.timestamp ?? null
 				if (r.pivot.type === "topo") {
 					lastTopo = r.pivot.price
+					lastTopoAt = peakTs
 				} else {
 					lastFundo = r.pivot.price
+					lastFundoAt = peakTs
 				}
 			}
 			fifteenRows.push({
 				timestamp: c.timestamp,
 				topo: lastTopo,
 				fundo: lastFundo,
+				topoAtTimestamp: lastTopoAt,
+				fundoAtTimestamp: lastFundoAt,
+				lastAdoptedType,
 			})
 		}
 	}
@@ -206,6 +235,9 @@ export const buildHtfWalker = (
 			gate60m: state60m,
 			lastTopo15m: fifteen?.topo ?? null,
 			lastFundo15m: fifteen?.fundo ?? null,
+			lastTopo15mAtTimestamp: fifteen?.topoAtTimestamp ?? null,
+			lastFundo15mAtTimestamp: fifteen?.fundoAtTimestamp ?? null,
+			lastAdoptedType15m: fifteen?.lastAdoptedType ?? null,
 		})
 	}
 	return out

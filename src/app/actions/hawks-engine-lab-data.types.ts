@@ -54,6 +54,10 @@ export interface EngineLabBrick {
 	// confirmed yet in the walk.
 	lastTopo15m: number | null
 	lastFundo15m: number | null
+	// Canonical 5m Renko brick size for THIS brick's ISO week, in raw
+	// point units (the same units as `open`/`close`). Looked up from
+	// `hawks_renko_sizes.size_5m` (ticks) × 5 (points/tick).
+	renkoSize: number
 	// Orchestrator output:
 	fired: boolean
 	direction: Direction | null
@@ -81,6 +85,24 @@ export interface EngineLabBrick {
 	lifecycleFiboT2Trail: TradeLifecycle | null
 	lifecycleFiboT3Trail: TradeLifecycle | null
 	fiboAnchors: FiboAnchors | null
+	// Per-brick gate-trace for the lab's "0 fires?" debugger.
+	// Populated only on bricks where the lab's bearish/bullish VB lined
+	// up (i.e. a fire was being attempted). Each boolean = true if THAT
+	// individual gate passed in isolation. Lets the user see which gate
+	// blocked a setup. null when no fire attempt happened at this brick.
+	gateTrace: {
+		brickDirectionAgrees: boolean
+		isVB: boolean
+		gateStable: boolean
+		legShapeOk: boolean
+		fiveMinStructureOk: boolean
+		fifteenMinStructureOk: boolean
+		inTradingWindow: boolean
+		notCooldown: boolean
+		labGatesPass: boolean
+		canDemoFire: boolean
+		realFiredRaw: boolean
+	} | null
 }
 
 /**
@@ -98,8 +120,20 @@ export interface EngineLabBrick {
  */
 export interface FiboAnchors {
 	retracementPeak: number
+	// ISO timestamp of the 15m brick whose high (SHORT) / low (LONG)
+	// IS the retracement peak. Computed by walking the 15m bricks
+	// AFTER impulse-end up to the fire — so always time-ordered after
+	// impulse-end. When no clear rally has formed yet, this falls
+	// through to the "last high before fire" brick.
+	retracementPeakAtTimestamp: string
 	impulseStartPrice: number
 	impulseEndPrice: number
+	// ISO timestamp of the 15m brick that DEFINED each impulse pivot
+	// (the `peakBrickIdx` from the detector). Used to anchor stubs on
+	// the correct 15m brick in the lab — bypasses price-matching, which
+	// can mis-locate when multiple bricks share a high/low.
+	impulseStartAtTimestamp: string
+	impulseEndAtTimestamp: string
 	impulseSize: number
 	t1: number
 	t2: number
@@ -162,6 +196,10 @@ export interface EngineLabDayPayload {
 	dayKey: string
 	bricks: EngineLabBrick[]
 	candles: EngineLabCandle[]
+	// 15m Renko bricks for THIS day. Used in the lab to render a
+	// secondary chart so the user can visually verify the 15m
+	// structural pivots that anchor the fibo measured-move targets.
+	candles15m: EngineLabCandle[]
 }
 
 export interface HawksEngineLabData {

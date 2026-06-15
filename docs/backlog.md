@@ -71,6 +71,31 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Backtest / Inspector
 
+### Hawks engine — fibo retracement anchor logic (deferred)
+
+- **Priority**: P2
+- **Effort**: M (1-2 days — needs another day-scrubbing pass with Ygor to pin down what "the right impulse" actually is across enough days to formalize the rule)
+- **Source**: 2026-06-15 engine v0.10 fibo-lab session. We iterated through several `findDominantImpulse` heuristics — global deepest-low, most-recent local pivot pair with post-reversal confirmation, etc. — and ended at "most recent local FUNDO with `LOCAL_WINDOW=2` neighbors + impulse-start TOPO with `≥ minSwing` post-drop + retracement-peak strictly AFTER impulse-end + `≥ 2 × renkoSize` minimum retracement". The geometry is now usually right, but it's still wrong often enough on real days that we don't trust the T1/T2/T3 measured-move projections for production yet. The lab page (`/dev/fibo-lab`) renders all 10 days continuously with a global trade picker so the work is resumable.
+- **What + Why**: the fibo measured-move target (Mode 3a/3b exit modes per spec §5) needs reliable `impulseStart → impulseEnd → retracementPeak` anchors at fire-time. Open questions:
+  1. Should the impulse leg always be picked on **15m bricks**, or on a higher TF (60m) when the 60m leg is visible? Today's code uses 15m only.
+  2. Is "most recent local pivot pair" the right semantic, or should we use the engine's **confirmed structural pivots** (the period-2 detector in `hawks-structural-pivots.ts`) and just pick the latest topo→fundo pair?
+  3. The `requirePostReversal` toggle is currently asymmetric (impulse-end skips it, impulse-start requires it). On the rightmost edge of the data this is necessary, but it produces some odd anchors mid-day. May want a unified rule.
+  4. The "last high fallback" (when no rally has formed yet) currently uses the brick AT/AFTER the fundo. When the fire IS the fundo brick the setup is rejected entirely — but should it use the fire brick's high instead?
+- **Build sequence**:
+  1. Use `/dev/fibo-lab` to scrub another 10 days, marking each trade's anchors as "correct" or "wrong" (and labeling WHY they're wrong — wrong leg, wrong peak, etc.).
+  2. From the catalog, choose between (a) keep the current geometric local-pivot finder with tweaked thresholds, or (b) switch to the structural-pivot detector's output and forward-fill the latest topo→fundo pair.
+  3. Promote the chosen logic from the lab action (`src/app/actions/hawks-engine-lab-data.ts:findDominantImpulse`) into the engine proper (`src/lib/backtest/hawks-htf-walker.ts` or a new module) so Mode 3a/3b lifecycle can consume it.
+  4. Wire production fibo target into `simulateLifecycle` (currently the lifecycle simulator accepts a `targetPrice` parameter but no caller supplies a fibo-derived value yet).
+- **What's already shipped on this work**:
+  - `/dev/fibo-lab` page with global trade picker, focus-zoom around the selected trade, side-by-side 5m + 15m charts, crosshair sync, gate-trace diagnostic, demo-fire suppression when `findDominantImpulse` returns null. Keep this wired — it's the day-scrubbing tool.
+  - Wick-based structural pivot direction classifier (engine-wide, see [`docs/gotchas.md`](gotchas.md) "Hawks structural pivots: direction is WICK-BASED").
+  - R<N> brick-size convention codified ([`CLAUDE.md`](../CLAUDE.md) rule #0) — anchors and targets correctly convert `(size_5m − 1) × 5` to points.
+  - Lab gates for the fibo-lab loosened from production thresholds: 5m/15m structure guards disabled, `legShapeOk` kept at production `≥4/≥2`. Production engine path retains all gates.
+- **Done when**: real `mean_reversion` / `retracement` / `vwap_rejection` fires get reliable fibo target prices; Mode 3a/3b exit modes consume them in `simulateLifecycle`; the lab page shows the SAME anchors the engine uses (no lab-only finder); Ygor signs off after a fresh 10-day scrub.
+- **Date filed**: 2026-06-15.
+
+---
+
 ### Hawks engine — noise / chop discriminator per playbook (refine phase)
 
 - **Priority**: P2
