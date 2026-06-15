@@ -243,6 +243,13 @@ interface QualityGatesConfig {
 	// a confirmed outer-band touch+reject against the trade direction (SHORT
 	// vetoed by REJECT_KC2_INF_*, LONG by REJECT_KC2_SUP_*). The remaining
 	// keltner* fields below are still UI-only pending similar audits.
+	//
+	// HOLD: the gate is intentionally NOT promoted to default-on. The 2026-06-15
+	// A/B + window-sweep audits showed the narrow (1-brick) interpretation fires
+	// 0 times across 8,280 catalog bricks, and the wider (~5-10 brick) variant
+	// catches only 5 trades clustering into 2 days — statistically insignificant.
+	// Decision is blocked on a methodology spec answer (see backlog "keltnerOuterBlock
+	// veto window"). Do NOT change defaults without that answer.
 	keltnerOuterBlock?: boolean
 	keltnerInnerPenalty?: boolean // -weight when price past 125 band on trade side (legacy, see keltnerInner)
 	// ── Group C: MACD (planned) ───────────────────────────────────────────
