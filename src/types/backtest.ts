@@ -237,8 +237,13 @@ interface QualityGatesConfig {
 	srLevelBlock?: boolean
 	// SCORE +weight per S/R level BEHIND trade within srFavorRangeBricks.
 	srLevelFavor?: boolean
-	// ── Group B: Keltner (planned, not yet wired) ─────────────────────────
-	keltnerOuterBlock?: boolean // hard reject when 165 band acts as floor/ceiling
+	// ── Group B: Keltner ───────────────────────────────────────────────────
+	// `keltnerOuterBlock` is WIRED as of engine v0.10 (Group C audit): when
+	// true, the playbook orchestrator vetoes a fire if the current 5m brick is
+	// a confirmed outer-band touch+reject against the trade direction (SHORT
+	// vetoed by REJECT_KC2_INF_*, LONG by REJECT_KC2_SUP_*). The remaining
+	// keltner* fields below are still UI-only pending similar audits.
+	keltnerOuterBlock?: boolean
 	keltnerInnerPenalty?: boolean // -weight when price past 125 band on trade side (legacy, see keltnerInner)
 	// ── Group C: MACD (planned) ───────────────────────────────────────────
 	macdAlignmentScore?: boolean // ±weight by sign + slope streak (legacy, see macd)

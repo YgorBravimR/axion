@@ -22,6 +22,7 @@ import type {
 } from "@/types/backtest"
 import type { CandleRow } from "@/types/candle"
 import type { HtfWalkerSnapshot } from "../../hawks-htf-walker"
+import type { KeltnerWalkerSnapshot } from "../../hawks-keltner-walker"
 import {
 	processHawksPlaybookCandle,
 	type HawksPlaybookState,
@@ -35,6 +36,7 @@ export const processHawksSinglePlaybookCandle = (
 	tickSize: number,
 	config: HawksTripleScreenConfig,
 	htfSnapshot: HtfWalkerSnapshot | null,
+	keltnerSnapshot: KeltnerWalkerSnapshot | null,
 	playbookId: PlaybookId
 ): { state: HawksPlaybookState; signal: EntrySignal | null } => {
 	const result = processHawksPlaybookCandle(
@@ -43,7 +45,8 @@ export const processHawksSinglePlaybookCandle = (
 		ctx,
 		tickSize,
 		config,
-		htfSnapshot
+		htfSnapshot,
+		keltnerSnapshot
 	)
 	if (result.signal === null) {
 		return result

@@ -1,6 +1,6 @@
 # Indicator-Isolation Audit — Group C: Keltner Bands (Touch + Reject)
 
-**Status**: GRADED — **NOT WIRED**. The engine does not read Keltner anywhere; the only consumers are the visual isolation lab and the UI quality-gate toggles, which are dead code at the engine layer.
+**Status**: GRADED — **PARTIALLY WIRED** as of 2026-06-15 engine v0.10. `keltnerOuterBlock` is now consumed by the playbook orchestrator: when enabled, a 5m brick classified as `REJECT_KC2_INF_*` vetoes SHORT fires, and `REJECT_KC2_SUP_*` vetoes LONG fires. The walker is built only when the flag is on (zero overhead in default sweeps). Inner-band toggles (`keltnerInnerPenalty`, `keltnerNearBricks`, `keltnerInner.mode`) remain UI-only — see follow-ups below.
 **Date filed**: 2026-06-15.
 **Date graded**: 2026-06-15.
 **Source code as of**: branch `main` post-rename pass, engine v0.10 with the fibo-lab page just landed.

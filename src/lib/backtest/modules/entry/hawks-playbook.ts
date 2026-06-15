@@ -37,6 +37,7 @@ import type {
 } from "@/types/backtest"
 import type { CandleRow } from "@/types/candle"
 import type { HtfWalkerSnapshot, HtfWalkerState } from "../../hawks-htf-walker"
+import type { KeltnerWalkerSnapshot } from "../../hawks-keltner-walker"
 import { meanReversionPlaybook } from "./playbooks/mean-reversion"
 import { retracementPlaybook } from "./playbooks/retracement"
 import { vwapRejectionPlaybook } from "./playbooks/vwap-rejection"
@@ -71,6 +72,38 @@ export const createInitialHawksPlaybookState = (): HawksPlaybookState => ({
 	lastFireBrickIndex: null,
 })
 
+/**
+ * `keltnerOuterBlock` quality gate. When enabled, vetoes a playbook fire if
+ * the current 5m brick is a confirmed methodology touch+reject of the outer
+ * Keltner band on the side that contradicts the trade direction:
+ *
+ *   SHORT vetoed by REJECT_KC2_INF_* (bearish exhaustion against the trend).
+ *   LONG  vetoed by REJECT_KC2_SUP_* (bullish exhaustion against the trend).
+ *
+ * Touch-only classes (TOUCH_KC2_*) and inner-band rejects (KC1) do NOT veto —
+ * the outer band is the exhaustion-grade signal per the Group C audit
+ * (`docs/hawks-strategy/indicator-isolation/group-c-keltner.md`). Outer
+ * touch+reject fires on ~0.4% of 5m bricks in the catalog so the veto is
+ * intentionally rare-and-strong.
+ */
+const isKeltnerOuterVeto = (
+	snapshot: KeltnerWalkerSnapshot | null,
+	direction: Direction
+): boolean => {
+	if (snapshot === null) {
+		return false
+	}
+	const cls = snapshot.touchReject
+	if (direction === "short") {
+		return (
+			cls === "REJECT_KC2_INF_SAME_BRICK" || cls === "REJECT_KC2_INF_NEXT_BRICK"
+		)
+	}
+	return (
+		cls === "REJECT_KC2_SUP_SAME_BRICK" || cls === "REJECT_KC2_SUP_NEXT_BRICK"
+	)
+}
+
 const directionFromGate = (gate: HtfWalkerState): Direction | null => {
 	if (gate === "BULL") {
 		return "long"
@@ -100,7 +133,8 @@ export const processHawksPlaybookCandle = (
 	ctx: DayContext,
 	_tickSize: number,
 	config: HawksTripleScreenConfig,
-	htfSnapshot: HtfWalkerSnapshot | null
+	htfSnapshot: HtfWalkerSnapshot | null,
+	keltnerSnapshot: KeltnerWalkerSnapshot | null
 ): { state: HawksPlaybookState; signal: EntrySignal | null } => {
 	// Day boundary: reset intraday history. Cross-day persistent state is
 	// currently empty in v0.9 — no anchor carries over.
@@ -154,6 +188,16 @@ export const processHawksPlaybookCandle = (
 	}
 
 	if (fires.length === 0) {
+		return appendPrior(base, candle)
+	}
+
+	// Quality-gate vetoes — applied AFTER playbooks fire so the gate-killed
+	// fires don't burn cooldown (the trade never happened, the next valid
+	// setup shouldn't be penalised). Today only `keltnerOuterBlock` is wired;
+	// the other `qualityGates.*` flags remain UI-only until similar audits
+	// promote them.
+	const keltnerOuterBlock = config.qualityGates?.keltnerOuterBlock === true
+	if (keltnerOuterBlock && isKeltnerOuterVeto(keltnerSnapshot, direction)) {
 		return appendPrior(base, candle)
 	}
 

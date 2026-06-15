@@ -41,6 +41,10 @@ import {
 	lookupHtfGate,
 	type HtfWalkerSnapshot,
 } from "./hawks-htf-walker"
+import {
+	buildKeltnerWalker,
+	type KeltnerWalkerSnapshot,
+} from "./hawks-keltner-walker"
 
 /**
  * Compute the 1-indexed brick index (candle_index) where the entry occurred.
@@ -119,6 +123,16 @@ const runBacktest = (
 	const htfWalker: Map<string, HtfWalkerSnapshot> | null =
 		recipe.entry.type === "hawks_playbook"
 			? buildHtfWalker(candles, recipe.entry.config)
+			: null
+
+	// v0.10 Keltner walker — only built when the `keltnerOuterBlock` quality
+	// gate is enabled (default off). Skipping the build keeps optimize sweeps
+	// that don't touch KC cheap. Per Group C indicator-isolation audit, the
+	// walker is the first methodology-correct KC consumer in the engine.
+	const keltnerWalker: Map<string, KeltnerWalkerSnapshot> | null =
+		recipe.entry.type === "hawks_playbook" &&
+		recipe.entry.config.qualityGates?.keltnerOuterBlock === true
+			? buildKeltnerWalker(candles, recipe.entry.config)
 			: null
 
 	for (const dayKey of sortedDayKeys) {
@@ -320,13 +334,15 @@ const runBacktest = (
 				entrySignal = result.signal
 			} else if (recipe.entry.type === "hawks_playbook") {
 				const htfSnapshot = lookupHtfGate(htfWalker, candle)
+				const keltnerSnapshot = keltnerWalker?.get(candle.timestamp) ?? null
 				const result = processHawksPlaybookCandle(
 					candle,
 					entryState as HawksPlaybookState,
 					ctx,
 					assetConfig.tickSize,
 					recipe.entry.config,
-					htfSnapshot
+					htfSnapshot,
+					keltnerSnapshot
 				)
 				entryState = result.state
 				entrySignal = result.signal
