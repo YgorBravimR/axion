@@ -2373,6 +2373,68 @@ export const assetSessionAnchors = pgTable(
 )
 
 // ═══════════════════════════════════════════════════════════════════
+// Asset Pivots — precomputed structural pivots per (asset, timeframe, N)
+// ═══════════════════════════════════════════════════════════════════
+//
+// Persisted swing-sequence for every Renko candle source. Indexed by
+// (asset_id, timeframe_id, confirmation_n, brick_index). Both the engine
+// (entry filters, Fib gates) and the chart (overlays, Fib boxes) read
+// from this table — single canonical answer per (asset, tf, N).
+//
+// Detection lives in `src/lib/pivots/detect-renko.ts` (single source of
+// truth, "pivots-v1"). Backfill via `scripts/backfill-pivots.ts`;
+// per-ingest writer triggers after `price_candles` reload.
+//
+// Pivot price always equals `candles[brick_index].high` (TOPO) or `.low`
+// (FUNDO) — asserted at write time. Subset invariant doesn't hold (see
+// detect-renko header); count-monotonicity does:
+// `|pivots(N=k+1)| ≤ |pivots(N=k)|`.
+export const pivotTypeEnum = pgEnum("pivot_type", ["topo", "fundo"])
+
+export const assetPivots = pgTable(
+	"asset_pivots",
+	{
+		assetId: uuid("asset_id")
+			.notNull()
+			.references(() => assets.id, { onDelete: "cascade" }),
+		timeframeId: uuid("timeframe_id")
+			.notNull()
+			.references(() => timeframes.id, { onDelete: "cascade" }),
+		confirmationN: smallint("confirmation_n").notNull(),
+		brickIndex: integer("brick_index").notNull(),
+		pivotType: pivotTypeEnum("pivot_type").notNull(),
+		pivotPrice: numeric("pivot_price", { precision: 20, scale: 8 }).notNull(),
+		pivotTimestamp: timestamp("pivot_timestamp", {
+			withTimezone: true,
+		}).notNull(),
+		algorithmVersion: varchar("algorithm_version", { length: 32 }).notNull(),
+		computedAt: timestamp("computed_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		primaryKey({
+			columns: [
+				table.assetId,
+				table.timeframeId,
+				table.confirmationN,
+				table.brickIndex,
+			],
+		}),
+		check(
+			"asset_pivots_confirmation_n_range",
+			sql`${table.confirmationN} between 1 and 6`
+		),
+		index("asset_pivots_seq_idx").on(
+			table.assetId,
+			table.timeframeId,
+			table.confirmationN,
+			table.brickIndex
+		),
+	]
+)
+
+// ═══════════════════════════════════════════════════════════════════
 // Hawks Weekly OCO — One-Cancels-Other order config per (account, week, asset)
 // ═══════════════════════════════════════════════════════════════════
 

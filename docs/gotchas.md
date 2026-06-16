@@ -825,6 +825,20 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: 2026-06-15 engine v0.10 lab scrub — "We must have the wicks, on all charts, they are part of the setup." Codified in [`CLAUDE.md`](../CLAUDE.md) rule #0a and global memory.
 - **Date logged**: 2026-06-15.
 
+### Hawks pivots: clean-swing subset invariant `pivots(N=k+1) ⊆ pivots(N=k)` does NOT hold — only count-monotonicity does
+
+- **What**: The naive math intuition is that with MORE confirmation (`N=k+1`) the detector can only DROP pivots from `N=k`'s output. That's false for clean-swing semantics in `src/lib/pivots/detect-renko.ts`. More confirmation extends the active run further — and the recognized peak can shift to a different brick than the one chosen by the early-flip at lower N. Concrete example: at N=1 a flip locks the peak at brick X and the new run starts at X+1; at N=2 the same direction extends through brick X+2 and the peak is now at X+2 (a different price, a different brick). The two output streams differ in MEMBERSHIP, not just count.
+- **What to do**: Test the **count-monotonicity invariant** instead — `|pivots(N=k+1)| ≤ |pivots(N=k)|` always holds and IS asserted in tests + the backfill script. Anyone writing a UI cross-N filter or a Fib feature spanning multiple N values must NOT assume "step up = strict subset" — re-derive per N, don't filter `N=k`'s rows.
+- **Source**: 2026-06-16 — pivot detector generalization to N=1..6 (`src/lib/pivots/detect-renko.ts`, `src/__tests__/lib/pivots/detect-renko.test.ts`). The subset claim was in the original backlog spec and the schema doc; it survived because no one had run the random-fixture test that breaks it.
+- **Date logged**: 2026-06-16.
+
+### Hawks pivots: ambiguous-wick bricks (high > priorHigh AND low < priorLow) need a body tiebreaker
+
+- **What**: A single Renko brick can satisfy BOTH wick conditions simultaneously — its high punches above the prior brick's high AND its low punches below the prior brick's low ("outside brick"). With a pure wick classifier the brick reads as bullish AND bearish at the same time, and whichever code branch fires first wins arbitrarily. In the `detect-renko.ts` state machine this manifested as: on a bullish run, an outside-brick reversal-confirm correctly fires (good), but the NEW bearish run's extreme then snaps to that brick's own LOW (often the deepest point on the bearish leg, OK) — UNLESS the outside-brick is actually the FIRST brick of the NEW bullish swing-up (`close > open` strongly), in which case calling its low the new fundo is wrong by definition.
+- **What to do**: When both wick conditions hold, fall back to the **body** (`close >= open` → bullish, else bearish) and suppress the opposite-side classification for THIS brick. The new detector at `src/lib/pivots/detect-renko.ts` (lines around the `isBullishWick`/`isBearishWick` resolution) does this; the legacy single-N detector at `src/lib/backtest/hawks-structural-pivots.ts` does NOT — it picks whichever state-machine branch comes first in the if/else chain, which happens to be the bullish→bearish flip, so it happens to "work" but is not principled. If you ever port detection logic elsewhere, copy the ambiguity guard.
+- **Source**: 2026-06-16 — found while writing detect-renko tests. The hand-built fixture's bullish→bearish→bullish swing emitted FUNDO at price 99 instead of the expected 100, because the first brick of the new bullish-up run (`close > open`, big `high > priorHigh`) also happened to have `low < priorLow` (matched the still-active bearish run's wick test) and the bearish state extended one brick further than it should.
+- **Date logged**: 2026-06-16.
+
 ### Hawks: `R<N>` brick = `(N − 1)` ticks (NON-NEGOTIABLE)
 
 - **What**: An `R<N>` Renko brick has body = `(N − 1)` ticks. 1 WIN tick = 5 points. So `R<N>` in **points = `(N − 1) × 5`**. The `hawks_renko_sizes.size_5m` / `size_15m` / `size_60m` columns store the **R number `N`**, NOT the tick count and NOT the point count. The source CSVs (`hawk-renkos(Renkos).csv`) and the per-size brick files (`20R.csv`, `21R.csv`, …) use the same `R<N>` convention.
