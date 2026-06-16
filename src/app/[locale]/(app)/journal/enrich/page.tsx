@@ -2,11 +2,7 @@ import { Suspense } from "react"
 import { setRequestLocale } from "next-intl/server"
 import { eq, and, inArray } from "drizzle-orm"
 import { db } from "@/db/drizzle"
-import {
-	trades,
-	tradeEnrichmentSnapshots,
-	type TradingAccount,
-} from "@/db/schema"
+import { trades, tradeEnrichmentSnapshots } from "@/db/schema"
 import { requireAuth } from "@/app/actions/auth"
 import { EnrichLanding } from "@/components/journal/enrich/enrich-landing"
 import { LoadingSpinner } from "@/components/shared"
@@ -20,8 +16,9 @@ const EnrichPage = async ({ params }: EnrichPageProps) => {
 	setRequestLocale(locale)
 
 	const authContext = await requireAuth()
-	const userAccounts = authContext.accounts as TradingAccount[]
-	const accountIds = userAccounts.map((acc) => acc.id)
+	const accountIds = authContext.showAllAccounts
+		? authContext.allAccountIds
+		: [authContext.accountId]
 
 	// Query for draft snapshots belonging to user's accounts
 	const draftSnapshot = await db.query.tradeEnrichmentSnapshots.findFirst({

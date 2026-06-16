@@ -51,6 +51,7 @@ const dataPhases = [
 const selfSeedingPhases = [
 	{ name: "live-trading-status", testMatch: /live-trading-status\.spec\.ts/ },
 	{ name: "auth-security", testMatch: /auth-security\.spec\.ts/ },
+	{ name: "enrichment", testMatch: /enrichment\.spec\.ts/ },
 ]
 
 /**
