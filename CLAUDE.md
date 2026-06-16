@@ -79,6 +79,15 @@ This file is a **router**. Read it fully every session. Only mandatory rules and
 
     The orchestrator is responsible for committing/branching between waves of parallel subagents. Subagents only do file edits inside their scope.
 
+12. **Always simplify before commit — no exceptions.** Every commit (manual, `/finish-it`, `/ship`, ad-hoc, or subagent-driven) MUST run a simplifier pass over the uncommitted diff BEFORE staging. The pass is behavior-preserving cleanup of the whole diff: drop redundant code, dead branches, defensive checks for impossible conditions, comments that restate the code, debug logging, half-finished abstractions, premature generality. Does NOT refactor unrelated code, change public APIs, or optimize for performance.
+
+    **How to run it**:
+    - **Inside `/finish-it`**: Phase 1 already does this — never skip it. `without review` only skips Phase 2 external reviews; Phases 1 (simplify) and 3 (commit) stay mandatory.
+    - **Outside `/finish-it`** (direct commit, ad-hoc commits mid-feature): before invoking `git-commit-helper`, run the pass yourself. Diff < ~50 lines → review inline in the orchestrator. Diff ≥ 50 lines → delegate to a `general-purpose` subagent with the `/finish-it` Phase 1 prompt. State in your reply that you ran the pass and what it changed (or "no changes" if clean).
+    - `/simplify` on a single file is a targeted refactor — it does NOT replace the whole-diff pre-commit pass.
+
+    **Why**: agent diffs accumulate cruft (over-explaining comments, defensive nulls, restated types, leftover probes). The pass catches it before it lands. `main` auto-deploys, so cruft in `main` is cruft in prod. Added 2026-06-16 after `/finish-it without external reviews` was misread as "skip Phase 1 too".
+
 ---
 
 ## Protected paths (refuse to modify without explicit user request)
