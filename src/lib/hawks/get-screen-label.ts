@@ -7,7 +7,7 @@ interface ScreenLabel {
 const getScreenLabel = (
 	key: ScreenLabel["key"],
 	bias: "long" | "short" | "neutral",
-	t: (key: string) => string
+	t: (_key: string) => string
 ): ScreenLabel => {
 	const baseKey = {
 		renko60: "screenRenko60",

@@ -1969,6 +1969,119 @@
 			},
 			"tradeCreated": "Trade criado com sucesso",
 			"createFailed": "Falha ao criar trade"
+		},
+		"enrichment": {
+			"landing": {
+				"title": "Enriquecer Diário",
+				"description": "Revise e enriqueça operações pendentes do seu diário.",
+				"pendingLabel": "Operações pendentes de enriquecimento",
+				"dateRangeLabel": "Período",
+				"dateFrom": "De",
+				"dateTo": "Até",
+				"uploadCsvLabel": "CSV de Operações Profit Pro (opcional)",
+				"uploadCsvHint": "Carregue sua exportação de operações Profit para ativar a reconciliação com CSV.",
+				"uploadParsing": "Analisando...",
+				"uploadParsed": "{count} operações analisadas",
+				"uploadError": "Erro na análise: {message}",
+				"candleStatusLabel": "Status de dados de candles",
+				"candleStatusPlaceholder": "Verificação de cobertura de candles em breve",
+				"runDryRun": "Executar pré-execução de enriquecimento",
+				"cancel": "Cancelar",
+				"startError": "Falha ao iniciar pré-execução",
+				"startedToast": "Pré-execução iniciada ({count} operações)"
+			},
+			"resume": {
+				"bannerText": "Você tem operações de rascunho pendentes de revisão de uma sessão anterior.",
+				"resumeButton": "Continuar",
+				"abandonButton": "Abandonar",
+				"abandonConfirmTitle": "Abandonar pré-execução?",
+				"abandonConfirmBody": "Todos os enriquecimentos de rascunho nesta execução serão descartados. Isto não pode ser desfeito.",
+				"abandonConfirm": "Abandonar",
+				"abandonCancel": "Continuar revisando",
+				"abandonedToast": "Pré-execução abandonada",
+				"abandonError": "Falha ao abandonar pré-execução"
+			},
+			"review": {
+				"header": "Revisar enriquecimento",
+				"tradeOf": "Operação {current} de {total}",
+				"saveAndNext": "Salvar e próximo",
+				"skip": "Pular",
+				"prev": "Anterior",
+				"abandonRun": "Abandonar execução",
+				"commitError": "Falha ao confirmar operação",
+				"commitSuccess": "Operação enriquecida",
+				"stalenessTitle": "Alguns campos foram alterados",
+				"stalenessBody": "{count} campos mudaram desde que a pré-execução iniciou. Decida campo por campo antes de salvar.",
+				"stalenessField": "{field}: era {baseline}, agora {current}",
+				"acceptAnyway": "Salvar restantes (pular alterados)",
+				"helpTitle": "Atalhos do teclado",
+				"helpClose": "Fechar",
+				"abandonConfirm": "Abandonar",
+				"abandonCancel": "Continuar revisão",
+				"abandonedToast": "Dry-run abandonado",
+				"abandonError": "Falha ao abandonar dry-run",
+				"shortcuts": {
+					"nextLabel": "Próxima operação",
+					"prevLabel": "Operação anterior",
+					"saveLabel": "Salvar e avançar",
+					"skipLabel": "Pular operação atual",
+					"acceptAllLabel": "Aceitar todos os campos de alta confiança",
+					"rejectAllLabel": "Rejeitar todas as mudanças",
+					"editLabel": "Editar campo inline",
+					"helpLabel": "Mostrar este overlay"
+				},
+				"sidebar": {
+					"statusCurrent": "Atual",
+					"statusCommitted": "Confirmada",
+					"statusSkipped": "Pulada",
+					"statusPending": "Ainda não revisada"
+				}
+			},
+			"passNames": {
+				"operations": "CSV de Operações",
+				"candleMath": "Cálculo de candles",
+				"indicatorReadout": "Leitura de indicadores",
+				"deterministicSlTarget": "SL/alvo determinístico"
+			},
+			"passStatus": {
+				"succeeded": "Sucesso",
+				"skipped": "Pulada: {reason}",
+				"failed": "Falha: {error}"
+			},
+			"confidence": {
+				"high": "Alta",
+				"medium": "Média",
+				"low": "Baixa"
+			},
+			"fieldStates": {
+				"accepted": "Aceita",
+				"rejected": "Rejeitada",
+				"conflict": "Conflita com atual"
+			},
+			"fieldNames": {
+				"entryPrice": "Preço de entrada",
+				"exitPrice": "Preço de saída",
+				"positionSize": "Tamanho da posição",
+				"pnl": "P&L",
+				"mfe": "MFE",
+				"mae": "MAE",
+				"holdingMs": "Tempo de holding",
+				"stopLoss": "Stop loss",
+				"takeProfit": "Alvo",
+				"indicatorReadout": "Leitura de indicadores",
+				"setupRank": "Ranking de setup"
+			},
+			"passActions": {
+				"acceptAll": "Aceitar todos",
+				"rejectAll": "Rejeitar todos"
+			},
+			"success": {
+				"enriched": "{count, plural, =0 {Nenhuma operação enriquecida} =1 {Enriquecida 1 operação} other {Enriquecidas # operações}}",
+				"skipped": "{count, plural, =0 {} =1 {Pulada 1 operação} other {Puladas # operações}}",
+				"snapshotSaved": "Snapshot salvo.",
+				"viewDashboard": "Ver dashboard",
+				"backToJournal": "Voltar para diário"
+			}
 		}
 	},
 	"analytics": {

@@ -1969,6 +1969,119 @@
 			},
 			"tradeCreated": "Trade created successfully",
 			"createFailed": "Failed to create trade"
+		},
+		"enrichment": {
+			"landing": {
+				"title": "Enrich Journal",
+				"description": "Review and enrich pending trades from your journal.",
+				"pendingLabel": "Pending trades to enrich",
+				"dateRangeLabel": "Date range",
+				"dateFrom": "From",
+				"dateTo": "To",
+				"uploadCsvLabel": "Profit Pro Operações CSV (optional)",
+				"uploadCsvHint": "Upload your Profit operations export to enable Operations CSV reconciliation.",
+				"uploadParsing": "Parsing...",
+				"uploadParsed": "{count} operations parsed",
+				"uploadError": "Parse error: {message}",
+				"candleStatusLabel": "Candle data status",
+				"candleStatusPlaceholder": "Candle coverage check coming soon",
+				"runDryRun": "Run dry-run enrichment",
+				"cancel": "Cancel",
+				"startError": "Failed to start dry-run",
+				"startedToast": "Dry-run started ({count} trades)"
+			},
+			"resume": {
+				"bannerText": "You have draft trades pending review from a previous session.",
+				"resumeButton": "Resume",
+				"abandonButton": "Abandon",
+				"abandonConfirmTitle": "Abandon dry-run?",
+				"abandonConfirmBody": "All draft enrichments in this run will be discarded. This cannot be undone.",
+				"abandonConfirm": "Abandon",
+				"abandonCancel": "Keep reviewing",
+				"abandonedToast": "Dry-run abandoned",
+				"abandonError": "Failed to abandon dry-run"
+			},
+			"review": {
+				"header": "Review enrichment",
+				"tradeOf": "Trade {current} of {total}",
+				"saveAndNext": "Save & next",
+				"skip": "Skip",
+				"prev": "Previous",
+				"abandonRun": "Abandon run",
+				"commitError": "Failed to commit trade",
+				"commitSuccess": "Trade enriched",
+				"stalenessTitle": "Some fields have changed",
+				"stalenessBody": "{count} fields drifted since dry-run started. Decide per-field before saving.",
+				"stalenessField": "{field}: was {baseline}, now {current}",
+				"acceptAnyway": "Save remaining (skip drifted)",
+				"helpTitle": "Keyboard shortcuts",
+				"helpClose": "Close",
+				"abandonConfirm": "Abandon",
+				"abandonCancel": "Keep reviewing",
+				"abandonedToast": "Dry-run abandoned",
+				"abandonError": "Failed to abandon dry-run",
+				"shortcuts": {
+					"nextLabel": "Next trade",
+					"prevLabel": "Previous trade",
+					"saveLabel": "Save & advance",
+					"skipLabel": "Skip current trade",
+					"acceptAllLabel": "Accept all high-confidence fields",
+					"rejectAllLabel": "Reject all changes",
+					"editLabel": "Edit field inline",
+					"helpLabel": "Show this overlay"
+				},
+				"sidebar": {
+					"statusCurrent": "Current",
+					"statusCommitted": "Committed",
+					"statusSkipped": "Skipped",
+					"statusPending": "Not yet reviewed"
+				}
+			},
+			"passNames": {
+				"operations": "Operations CSV",
+				"candleMath": "Candle math",
+				"indicatorReadout": "Indicator readout",
+				"deterministicSlTarget": "Deterministic SL/target"
+			},
+			"passStatus": {
+				"succeeded": "Succeeded",
+				"skipped": "Skipped: {reason}",
+				"failed": "Failed: {error}"
+			},
+			"confidence": {
+				"high": "High",
+				"medium": "Medium",
+				"low": "Low"
+			},
+			"fieldStates": {
+				"accepted": "Accepted",
+				"rejected": "Rejected",
+				"conflict": "Conflicts with current"
+			},
+			"fieldNames": {
+				"entryPrice": "Entry price",
+				"exitPrice": "Exit price",
+				"positionSize": "Position size",
+				"pnl": "P&L",
+				"mfe": "MFE",
+				"mae": "MAE",
+				"holdingMs": "Holding time",
+				"stopLoss": "Stop loss",
+				"takeProfit": "Take profit",
+				"indicatorReadout": "Indicator readout",
+				"setupRank": "Setup rank"
+			},
+			"passActions": {
+				"acceptAll": "Accept all",
+				"rejectAll": "Reject all"
+			},
+			"success": {
+				"enriched": "{count, plural, =0 {No trades enriched} =1 {Enriched 1 trade} other {Enriched # trades}}",
+				"skipped": "{count, plural, =0 {} =1 {Skipped 1 trade} other {Skipped # trades}}",
+				"snapshotSaved": "Snapshot saved.",
+				"viewDashboard": "View dashboard",
+				"backToJournal": "Back to journal"
+			}
 		}
 	},
 	"analytics": {

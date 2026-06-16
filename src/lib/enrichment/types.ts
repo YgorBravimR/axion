@@ -39,7 +39,10 @@ interface EnrichmentContext {
 	pointValue: number
 }
 
-type EnrichmentPass = (trade: Trade, ctx: EnrichmentContext) => EnrichmentDelta
+type EnrichmentPass = (
+	_trade: Trade,
+	_ctx: EnrichmentContext
+) => EnrichmentDelta
 
 interface DryRunPasses {
 	operations: EnrichmentDelta
