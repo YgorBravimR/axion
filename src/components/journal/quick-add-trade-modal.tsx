@@ -33,6 +33,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select"
+import type { Asset } from "@/db/schema"
 
 const quickAddTradeSchema = z.object({
 	asset: z
@@ -55,6 +56,7 @@ type QuickAddTradeFormInput = z.infer<typeof quickAddTradeSchema>
 interface QuickAddTradeModalProps {
 	isOpen: boolean
 	onClose: () => void
+	availableAssets: Asset[]
 	lastAsset?: string
 	lastDirection?: "long" | "short"
 }
@@ -62,6 +64,7 @@ interface QuickAddTradeModalProps {
 export const QuickAddTradeModal = ({
 	isOpen,
 	onClose,
+	availableAssets,
 	lastAsset,
 	lastDirection,
 }: QuickAddTradeModalProps) => {
@@ -153,14 +156,33 @@ export const QuickAddTradeModal = ({
 										<FormLabel htmlFor="quick-add-asset">
 											{t("labels.asset")}
 										</FormLabel>
-										<FormControl>
-											<Input
-												id="quick-add-asset"
-												placeholder="e.g., WIN"
-												{...field}
-												disabled={isSubmitting}
-											/>
-										</FormControl>
+										<Select
+											onValueChange={field.onChange}
+											value={field.value}
+											disabled={isSubmitting || availableAssets.length === 0}
+										>
+											<FormControl>
+												<SelectTrigger id="quick-add-asset">
+													<SelectValue
+														placeholder={
+															availableAssets.length === 0
+																? "No assets configured"
+																: "Select an asset"
+														}
+													/>
+												</SelectTrigger>
+											</FormControl>
+											<SelectContent>
+												{availableAssets.map((asset) => (
+													<SelectItem key={asset.id} value={asset.symbol}>
+														<span className="font-mono">{asset.symbol}</span>
+														<span className="text-txt-300 ml-s-200">
+															{asset.name}
+														</span>
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
 										<FormMessage />
 									</FormItem>
 								)}

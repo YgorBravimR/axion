@@ -4,13 +4,16 @@ import { useState } from "react"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { QuickAddTradeModal } from "./quick-add-trade-modal"
+import type { Asset } from "@/db/schema"
 
 interface QuickAddTradeFabProps {
+	availableAssets: Asset[]
 	lastAsset?: string
 	lastDirection?: "long" | "short"
 }
 
 export const QuickAddTradeFab = ({
+	availableAssets,
 	lastAsset,
 	lastDirection,
 }: QuickAddTradeFabProps) => {
@@ -30,6 +33,7 @@ export const QuickAddTradeFab = ({
 			<QuickAddTradeModal
 				isOpen={isOpen}
 				onClose={() => setIsOpen(false)}
+				availableAssets={availableAssets}
 				lastAsset={lastAsset}
 				lastDirection={lastDirection}
 			/>

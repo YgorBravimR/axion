@@ -288,7 +288,7 @@ const CommandCenterContent = ({
 			)}
 
 			{/* Quick Add Trade FAB — visible only on today's view */}
-			{isToday && <QuickAddTradeFab />}
+			{isToday && <QuickAddTradeFab availableAssets={availableAssets} />}
 		</div>
 	)
 }

@@ -26,6 +26,7 @@ import {
 import type { DryRunSnapshotHydrated } from "@/app/actions/enrichment.types"
 import { useEnrichShortcuts } from "@/hooks/use-enrich-shortcuts"
 import { EnrichSidebar } from "./enrich-sidebar"
+import { EnrichTradeCard } from "./enrich-trade-card"
 
 interface EnrichReviewProps {
 	runId: string
@@ -85,30 +86,31 @@ export const EnrichReview = ({
 		}
 	}, [currentIndex])
 
-	// Field toggle handlers — used by edit mode (5.D)
-	const _handleToggleField = useCallback(
-		(fieldName: string, action: "accept" | "reject") => {
+	const handleToggleField = useCallback(
+		(fieldName: string, state: "accepted" | "rejected" | "neither") => {
 			const snapshotId = currentSnapshot.snapshotId
 			setFieldSelections((prev) => {
-				const selection = prev.get(snapshotId)
-				if (!selection) {
-					return prev
+				const selection = prev.get(snapshotId) ?? {
+					accepted: new Set<string>(),
+					rejected: new Set<string>(),
 				}
-
 				const newSelection = {
 					accepted: new Set(selection.accepted),
 					rejected: new Set(selection.rejected),
 				}
-
-				if (action === "accept") {
+				if (state === "accepted") {
 					newSelection.accepted.add(fieldName)
 					newSelection.rejected.delete(fieldName)
-				} else {
+				} else if (state === "rejected") {
 					newSelection.rejected.add(fieldName)
 					newSelection.accepted.delete(fieldName)
+				} else {
+					newSelection.accepted.delete(fieldName)
+					newSelection.rejected.delete(fieldName)
 				}
-
-				return prev.set(snapshotId, newSelection)
+				const map = new Map(prev)
+				map.set(snapshotId, newSelection)
+				return map
 			})
 		},
 		[currentSnapshot.snapshotId]
@@ -235,7 +237,7 @@ export const EnrichReview = ({
 
 			showToast("success", t("abandonedToast"))
 			router.push("/journal/enrich")
-		} catch (_err) {
+		} catch {
 			showToast("error", t("abandonError"))
 		}
 	}, [runId, t, showToast, router])
@@ -308,21 +310,16 @@ export const EnrichReview = ({
 
 				{/* Content area */}
 				<div className="flex flex-1 flex-col overflow-y-auto">
-					{/* Trade card area (placeholder for 5.D) */}
 					<div className="flex-1 p-6">
-						<div className="mx-auto max-w-3xl space-y-6">
-							{/* TODO: import and render EnrichTradeCard from 5.D */}
-							<div className="bg-muted text-small text-muted-foreground rounded-lg p-4">
-								Trade card component (5.D) to be imported here
-							</div>
-
-							{/* Quick info */}
-							<div className="text-small text-muted-foreground">
-								<p>
-									Trade {currentIndex + 1} of {totalCount}
-								</p>
-								<p>Status: {currentSnapshot.status}</p>
-							</div>
+						<div className="mx-auto max-w-3xl">
+							<EnrichTradeCard
+								snapshot={currentSnapshot}
+								acceptedFields={currentSelection.accepted}
+								rejectedFields={currentSelection.rejected}
+								onToggleField={handleToggleField}
+								onAcceptAll={handleAcceptAll}
+								onRejectAll={handleRejectAll}
+							/>
 						</div>
 					</div>
 

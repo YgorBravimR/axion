@@ -7,7 +7,7 @@ import { formatTimeForReview, getStatusIcon } from "@/lib/enrichment/ui-helpers"
 interface EnrichSidebarProps {
 	snapshots: DryRunSnapshotHydrated[]
 	currentIndex: number
-	onSelect: (index: number) => void
+	onSelect: (_index: number) => void
 }
 
 interface DayGroup {

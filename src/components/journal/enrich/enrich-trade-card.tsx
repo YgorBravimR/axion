@@ -56,10 +56,13 @@ export const EnrichTradeCard = ({
 	const dryRun = snapshot.dryRun
 
 	const direction = trade.direction?.toUpperCase() || "—"
-	const entryTime = formatTime(new Date(trade.entryAt))
-	const exitTime = trade.exitAt ? formatTime(new Date(trade.exitAt)) : "—"
-	const pnlValue = trade.pnl ?? 0
+	const entryTime = trade.entryDate
+		? formatTime(new Date(trade.entryDate))
+		: "—"
+	const exitTime = trade.exitDate ? formatTime(new Date(trade.exitDate)) : "—"
+	const pnlValue = trade.pnl != null ? Number(trade.pnl) : 0
 	const pnlFormatted = formatPnL(pnlValue)
+	const qty = trade.positionSize != null ? Number(trade.positionSize) : null
 
 	// Determine state for each pass
 	const passNames = [
@@ -84,9 +87,9 @@ export const EnrichTradeCard = ({
 								>
 									{direction}
 								</Badge>
-								{trade.qty && (
+								{qty != null && (
 									<span className="text-small text-txt-200">
-										qty {new Intl.NumberFormat("pt-BR").format(trade.qty)}
+										qty {new Intl.NumberFormat("pt-BR").format(qty)}
 									</span>
 								)}
 							</div>

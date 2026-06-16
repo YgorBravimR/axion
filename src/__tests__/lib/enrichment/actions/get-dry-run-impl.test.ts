@@ -10,22 +10,37 @@ vi.mock("@/app/actions/auth", () => ({
 	}),
 }))
 
-// Hoisted mock for DB
-const { mockFindMany } = vi.hoisted(() => ({
-	mockFindMany: vi.fn(),
+// Hoisted mock for DB chained builder
+const { mockWhere } = vi.hoisted(() => ({
+	mockWhere: vi.fn(),
 }))
 
-vi.mock("@/db/drizzle", () => ({
-	db: {
-		query: {
-			tradeEnrichmentSnapshots: {
-				findMany: mockFindMany,
-			},
-		},
-	},
-}))
+vi.mock("@/db/drizzle", () => {
+	const chain = {
+		select: vi.fn().mockReturnThis(),
+		from: vi.fn().mockReturnThis(),
+		innerJoin: vi.fn().mockReturnThis(),
+		where: mockWhere,
+	}
+	return { db: chain }
+})
 
 import { getDryRunImpl } from "@/lib/enrichment/actions/get-dry-run-impl"
+
+interface MockSnapshot {
+	snapshot: {
+		id: string
+		tradeId: string
+		version: number
+		status: string
+		enrichedAt: Date
+		dryRunOutput: {
+			result: Record<string, unknown>
+			baseline: Record<string, unknown>
+		} | null
+	}
+	tradeAccountId: string
+}
 
 describe("getDryRunImpl", () => {
 	beforeEach(() => {
@@ -43,7 +58,7 @@ describe("getDryRunImpl", () => {
 	})
 
 	it("returns empty snapshots list when no draft snapshots exist", async () => {
-		mockFindMany.mockResolvedValueOnce([])
+		mockWhere.mockResolvedValueOnce([])
 
 		const result = await getDryRunImpl("nonexistent-run-id")
 
@@ -53,56 +68,54 @@ describe("getDryRunImpl", () => {
 	})
 
 	it("returns hydrated snapshots for a draft run", async () => {
-		const snapshots = [
+		const rows: MockSnapshot[] = [
 			{
-				id: "snap-1",
-				tradeId: "trade-1",
-				version: 1,
-				status: "draft",
-				enrichedAt: new Date("2026-01-15T10:00:00Z"),
-				dryRunOutput: {
-					result: {
-						trade: { id: "trade-1" },
-						passes: {},
-						mergedFields: {},
-						computedStatus: "no-changes",
-					},
-					baseline: {
-						stopLoss: "74500",
-						takeProfit: "75500",
+				snapshot: {
+					id: "snap-1",
+					tradeId: "trade-1",
+					version: 1,
+					status: "draft",
+					enrichedAt: new Date("2026-01-15T10:00:00Z"),
+					dryRunOutput: {
+						result: {
+							trade: { id: "trade-1" },
+							passes: {},
+							mergedFields: {},
+							computedStatus: "no-changes",
+						},
+						baseline: {
+							stopLoss: "74500",
+							takeProfit: "75500",
+						},
 					},
 				},
-				trade: {
-					id: "trade-1",
-					accountId: "acc-1",
-				},
+				tradeAccountId: "acc-1",
 			},
 			{
-				id: "snap-2",
-				tradeId: "trade-2",
-				version: 1,
-				status: "draft",
-				enrichedAt: new Date("2026-01-20T11:00:00Z"),
-				dryRunOutput: {
-					result: {
-						trade: { id: "trade-2" },
-						passes: {},
-						mergedFields: {},
-						computedStatus: "partial",
-					},
-					baseline: {
-						stopLoss: "4900",
-						takeProfit: "5100",
+				snapshot: {
+					id: "snap-2",
+					tradeId: "trade-2",
+					version: 1,
+					status: "draft",
+					enrichedAt: new Date("2026-01-20T11:00:00Z"),
+					dryRunOutput: {
+						result: {
+							trade: { id: "trade-2" },
+							passes: {},
+							mergedFields: {},
+							computedStatus: "partial",
+						},
+						baseline: {
+							stopLoss: "4900",
+							takeProfit: "5100",
+						},
 					},
 				},
-				trade: {
-					id: "trade-2",
-					accountId: "acc-1",
-				},
+				tradeAccountId: "acc-1",
 			},
 		]
 
-		mockFindMany.mockResolvedValueOnce(snapshots)
+		mockWhere.mockResolvedValueOnce(rows)
 
 		const result = await getDryRunImpl("run-uuid")
 
@@ -115,35 +128,23 @@ describe("getDryRunImpl", () => {
 		expect(result.data?.snapshots[0].baseline.stopLoss).toBe("74500")
 	})
 
-	it("filters out snapshots for foreign accounts", async () => {
-		const snapshots = [
+	it("filters out snapshots for foreign accounts via SQL where clause", async () => {
+		// SQL filtering means the mock only returns snapshots for allowed accounts
+		const rows: MockSnapshot[] = [
 			{
-				id: "snap-1",
-				tradeId: "trade-1",
-				version: 1,
-				status: "draft",
-				enrichedAt: new Date(),
-				dryRunOutput: { result: {}, baseline: {} },
-				trade: {
-					id: "trade-1",
-					accountId: "acc-1",
+				snapshot: {
+					id: "snap-1",
+					tradeId: "trade-1",
+					version: 1,
+					status: "draft",
+					enrichedAt: new Date(),
+					dryRunOutput: { result: {}, baseline: {} },
 				},
-			},
-			{
-				id: "snap-2",
-				tradeId: "trade-2",
-				version: 1,
-				status: "draft",
-				enrichedAt: new Date(),
-				dryRunOutput: { result: {}, baseline: {} },
-				trade: {
-					id: "trade-2",
-					accountId: "acc-2", // Foreign account
-				},
+				tradeAccountId: "acc-1",
 			},
 		]
 
-		mockFindMany.mockResolvedValueOnce(snapshots)
+		mockWhere.mockResolvedValueOnce(rows)
 
 		const result = await getDryRunImpl("run-uuid")
 
@@ -161,28 +162,32 @@ describe("getDryRunImpl", () => {
 			allAccountIds: ["acc-1", "acc-2"],
 		})
 
-		const snapshots = [
+		const rows: MockSnapshot[] = [
 			{
-				id: "snap-1",
-				tradeId: "trade-1",
-				version: 1,
-				status: "draft",
-				enrichedAt: new Date(),
-				dryRunOutput: { result: {}, baseline: {} },
-				trade: { id: "trade-1", accountId: "acc-1" },
+				snapshot: {
+					id: "snap-1",
+					tradeId: "trade-1",
+					version: 1,
+					status: "draft",
+					enrichedAt: new Date(),
+					dryRunOutput: { result: {}, baseline: {} },
+				},
+				tradeAccountId: "acc-1",
 			},
 			{
-				id: "snap-2",
-				tradeId: "trade-2",
-				version: 1,
-				status: "draft",
-				enrichedAt: new Date(),
-				dryRunOutput: { result: {}, baseline: {} },
-				trade: { id: "trade-2", accountId: "acc-2" },
+				snapshot: {
+					id: "snap-2",
+					tradeId: "trade-2",
+					version: 1,
+					status: "draft",
+					enrichedAt: new Date(),
+					dryRunOutput: { result: {}, baseline: {} },
+				},
+				tradeAccountId: "acc-2",
 			},
 		]
 
-		mockFindMany.mockResolvedValueOnce(snapshots)
+		mockWhere.mockResolvedValueOnce(rows)
 
 		const result = await getDryRunImpl("run-uuid")
 
@@ -190,20 +195,9 @@ describe("getDryRunImpl", () => {
 		expect(result.data?.snapshots).toHaveLength(2)
 	})
 
-	it("handles null trade reference gracefully", async () => {
-		const snapshots = [
-			{
-				id: "snap-1",
-				tradeId: "trade-1",
-				version: 1,
-				status: "draft",
-				enrichedAt: new Date(),
-				dryRunOutput: { result: {}, baseline: {} },
-				trade: null,
-			},
-		]
-
-		mockFindMany.mockResolvedValueOnce(snapshots)
+	it("handles empty result set from database", async () => {
+		// innerJoin guarantees no null trades, so empty result means no matching snapshots
+		mockWhere.mockResolvedValueOnce([])
 
 		const result = await getDryRunImpl("run-uuid")
 
@@ -212,19 +206,21 @@ describe("getDryRunImpl", () => {
 	})
 
 	it("handles missing dryRunOutput gracefully", async () => {
-		const snapshots = [
+		const rows: MockSnapshot[] = [
 			{
-				id: "snap-1",
-				tradeId: "trade-1",
-				version: 1,
-				status: "draft",
-				enrichedAt: new Date(),
-				dryRunOutput: null,
-				trade: { id: "trade-1", accountId: "acc-1" },
+				snapshot: {
+					id: "snap-1",
+					tradeId: "trade-1",
+					version: 1,
+					status: "draft",
+					enrichedAt: new Date(),
+					dryRunOutput: null,
+				},
+				tradeAccountId: "acc-1",
 			},
 		]
 
-		mockFindMany.mockResolvedValueOnce(snapshots)
+		mockWhere.mockResolvedValueOnce(rows)
 
 		const result = await getDryRunImpl("run-uuid")
 
@@ -235,7 +231,7 @@ describe("getDryRunImpl", () => {
 	})
 
 	it("returns correct runId in response", async () => {
-		mockFindMany.mockResolvedValueOnce([])
+		mockWhere.mockResolvedValueOnce([])
 
 		const testRunId = "test-run-uuid-12345"
 		const result = await getDryRunImpl(testRunId)
@@ -245,19 +241,21 @@ describe("getDryRunImpl", () => {
 	})
 
 	it("includes correct snapshot status enum values", async () => {
-		const snapshots = [
+		const rows: MockSnapshot[] = [
 			{
-				id: "snap-1",
-				tradeId: "trade-1",
-				version: 1,
-				status: "draft",
-				enrichedAt: new Date(),
-				dryRunOutput: { result: {}, baseline: {} },
-				trade: { id: "trade-1", accountId: "acc-1" },
+				snapshot: {
+					id: "snap-1",
+					tradeId: "trade-1",
+					version: 1,
+					status: "draft",
+					enrichedAt: new Date(),
+					dryRunOutput: { result: {}, baseline: {} },
+				},
+				tradeAccountId: "acc-1",
 			},
 		]
 
-		mockFindMany.mockResolvedValueOnce(snapshots)
+		mockWhere.mockResolvedValueOnce(rows)
 
 		const result = await getDryRunImpl("run-uuid")
 

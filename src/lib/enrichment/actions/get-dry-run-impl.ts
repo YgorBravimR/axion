@@ -1,6 +1,6 @@
-import { and, eq } from "drizzle-orm"
+import { and, eq, inArray } from "drizzle-orm"
 import { db } from "@/db/drizzle"
-import { tradeEnrichmentSnapshots } from "@/db/schema"
+import { tradeEnrichmentSnapshots, trades } from "@/db/schema"
 import { requireAuth } from "@/app/actions/auth"
 import { isFrameworkSignal } from "@/lib/error-utils"
 import type { ActionResponse } from "@/types"
@@ -15,48 +15,41 @@ const getDryRunImpl = async (
 ): Promise<ActionResponse<GetDryRunOutput>> => {
 	try {
 		const authContext = await requireAuth()
+		const accountIds = authContext.showAllAccounts
+			? authContext.allAccountIds
+			: [authContext.accountId]
 
-		// Query snapshots by runId with draft status
-		const snapshots = await db.query.tradeEnrichmentSnapshots.findMany({
-			where: and(
-				eq(tradeEnrichmentSnapshots.runId, runId as unknown as string),
-				eq(tradeEnrichmentSnapshots.status, "draft")
-			),
-			with: {
-				trade: true,
-			},
+		const rows = await db
+			.select({
+				snapshot: tradeEnrichmentSnapshots,
+				tradeAccountId: trades.accountId,
+			})
+			.from(tradeEnrichmentSnapshots)
+			.innerJoin(trades, eq(trades.id, tradeEnrichmentSnapshots.tradeId))
+			.where(
+				and(
+					eq(tradeEnrichmentSnapshots.runId, runId),
+					eq(tradeEnrichmentSnapshots.status, "draft"),
+					inArray(trades.accountId, accountIds)
+				)
+			)
+
+		const hydrated: DryRunSnapshotHydrated[] = rows.map(({ snapshot }) => {
+			const dryRunOutput = snapshot.dryRunOutput as {
+				result: DryRunResult
+				baseline: Record<string, unknown>
+			} | null
+
+			return {
+				snapshotId: snapshot.id,
+				tradeId: snapshot.tradeId,
+				version: snapshot.version,
+				status: snapshot.status as "draft" | "committed" | "abandoned",
+				enrichedAt: snapshot.enrichedAt,
+				dryRun: dryRunOutput?.result ?? ({} as DryRunResult),
+				baseline: dryRunOutput?.baseline ?? {},
+			}
 		})
-
-		// Filter to only snapshots where trade belongs to user's account(s)
-		const authorizedSnapshots = snapshots.filter((snap) => {
-			if (!snap.trade) {
-				return false
-			}
-			if (authContext.showAllAccounts) {
-				return authContext.allAccountIds.includes(snap.trade.accountId)
-			}
-			return snap.trade.accountId === authContext.accountId
-		})
-
-		// Hydrate snapshots
-		const hydrated: DryRunSnapshotHydrated[] = authorizedSnapshots.map(
-			(snap) => {
-				const dryRunOutput = snap.dryRunOutput as {
-					result: DryRunResult
-					baseline: Record<string, unknown>
-				} | null
-
-				return {
-					snapshotId: snap.id,
-					tradeId: snap.tradeId,
-					version: snap.version,
-					status: snap.status as "draft" | "committed" | "abandoned",
-					enrichedAt: snap.enrichedAt,
-					dryRun: dryRunOutput?.result ?? ({} as DryRunResult),
-					baseline: dryRunOutput?.baseline ?? {},
-				}
-			}
-		)
 
 		return {
 			status: "success",

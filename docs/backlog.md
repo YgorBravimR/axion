@@ -43,30 +43,6 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Journaling Workflow
 
-### Two-phase journaling: thin daily entry + periodic enrichment
-
-- **Priority**: P1
-- **Effort**: M (~7.5 days, see plan doc for step-by-step breakdown — Steps 1-7 plus 5b)
-- **Source**: 2026-06-12 — brainstorm session with Arch. Full session captured at [`docs/plans/two-phase-journaling-with-enrichment.md`](plans/two-phase-journaling-with-enrichment.md). The plan doc has the spec locked across 6 phase appendices (A–F: schema, parser, enrichment passes, review UI, build sequence, definition of done). All design decisions are locked; only execution remains.
-- **Sequencing**: **Blocked behind** the "Hawks autonomous engine: reproduction 51% → improve via quality gates" P1 entry below. Do not start until Hawks reproduction > ~70%; the indicator-readout enrichment pass is reliable now, but the design bundles all enrichment passes into one shipped feature.
-- **What + Why**: Hand-typing every trade's SL, target, BE moment, tier, gate state, indicator alignment, MFE/MAE every day is the friction that kills journaling discipline today. Two-phase design splits the work: a **thin daily form** captures only the execution facts the Zod schema marks mandatory (entry/exit times, side, qty, prices, asset — ~30 seconds per trade), and a **weekly enrichment ritual** auto-derives all methodology context from candles + the Profit Pro `orders.csv` (authoritative for executed numbers) + Hawks indicator readout + deterministic OCO SL/target rule. Trader reviews each enriched trade in a stepped, day-grouped UI, accepts/edits per field, commits. Re-runnable: every enrichment writes a snapshot so when Hawks engine improves the trader can re-enrich and diff.
-- **Locked decisions** (read [`docs/plans/two-phase-journaling-with-enrichment.md`](plans/two-phase-journaling-with-enrichment.md) for full context, including the rationale for each):
-  1. Daily mandatory set = whatever the Zod schema at [`src/lib/validations/trade.ts`](../src/lib/validations/trade.ts) marks non-optional. **One form**, no fork.
-  2. Playbook is optional at entry-time, editable at enrichment-time, can stay empty. Trader's call.
-  3. SL is **deterministic** per OCO rule (one global formula, e.g. Hawks = entry ± 2×brickSize favorable / 1×brickSize against). Trader **never** moves stop — this is locked.
-  4. `orders.csv` is **source of truth** for execution numbers (entry/exit times, qty, prices, P&L, MFE, MAE, drawdown). Axion's candle-derived calculations are sanity checks; on disagreement, orders.csv wins and the diff is logged.
-  5. Hawks engine in enrichment = **indicator readout only** (15m gate, 60m gate, MACD, VWAP, AJUSTE — each tagged favorable/contrary). State-machine tier classification deferred until reproduction > 70%; trader hand-tags tier in the meantime.
-  6. Review UI: stepped, trade-by-trade, day-grouped headers, prev/next keyboard navigation. **No** approve-entire-day-at-once.
-  7. Enrichment is re-runnable with a snapshot history table (`trade_enrichment_snapshots`). Three trigger modes: bulk by date range, single trade, all pending.
-  8. **Out of scope** (decided, not deferred): boletas (`test.csv`) parsing, Profit DLL bridge (R$4k/mo paywall), audio capture, real-time enrichment, multi-tenant, "quick-add" simplified form variant.
-- **Open at build kickoff** (🟡 in the plan doc's decision log):
-  - Enrichment-snapshots table schema shape
-  - Where the Enrich button lives in nav
-  - Account scoping from `Conta:` header in `orders.csv`
-  - Conflict resolution default (proposed: orders.csv overwrites, diff banner shown once)
-- **Done when**: trader's average time-to-journal-a-trading-day drops from ~15-20 min daily to ~2 min daily + ~10 min weekly review; all enriched trades carry full methodology context with no hand-typed SL/target/MFE/MAE/indicator-quality fields; `orders.csv` numbers and Axion's stored numbers match for ≥95% of trades; re-enrichment after Hawks engine improvement produces a sensible diff view without data corruption.
-- **Date filed**: 2026-06-12.
-
 ### Enrichment cleanup job scheduling (wire cron route)
 
 - **Priority**: P3

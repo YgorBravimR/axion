@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { setRequestLocale } from "next-intl/server"
-import { eq, and, inArray } from "drizzle-orm"
+import { eq, and, inArray, sql } from "drizzle-orm"
 import { db } from "@/db/drizzle"
 import { trades, tradeEnrichmentSnapshots } from "@/db/schema"
 import { requireAuth } from "@/app/actions/auth"
@@ -39,9 +39,8 @@ const EnrichPage = async ({ params }: EnrichPageProps) => {
 
 	const resumeRunId = draftSnapshot?.runId ?? null
 
-	// Count trades with pending enrichment status
 	const [pendingCountResult] = await db
-		.select({ count: db.$count(trades.id) })
+		.select({ count: sql<number>`count(*)::int` })
 		.from(trades)
 		.where(
 			and(
