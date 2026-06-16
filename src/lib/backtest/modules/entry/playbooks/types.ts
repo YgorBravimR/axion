@@ -23,7 +23,7 @@
 import type { CandleRow } from "@/types/candle"
 import type { Direction } from "@/types/backtest"
 
-export type PlaybookId = "mean_reversion" | "retracement" | "vwap_rejection"
+export type PlaybookId = "mean_reversion" | "retracement" | "vwap_dip_recover"
 
 export interface PlaybookContext {
 	/** The brick that just closed. Trigger evaluation is at this brick's close. */
@@ -45,7 +45,7 @@ export interface PlaybookIndicatorKeys {
 	ema_fast_5m_key: string
 	/** 5m slow EMA key. */
 	ema_slow_5m_key: string
-	/** Daily VWAP key. Used by vwap_rejection. */
+	/** Daily VWAP key. Used by vwap_dip_recover. */
 	vwap_d_key: string
 }
 
@@ -107,7 +107,7 @@ export const PLAYBOOK_EXIT_DEFAULTS: Readonly<
 > = {
 	mean_reversion: { targetRule: "static3R", trailAfter3R: false },
 	retracement: { targetRule: "fibo_T2", trailAfter3R: true },
-	vwap_rejection: { targetRule: "static3R", trailAfter3R: true },
+	vwap_dip_recover: { targetRule: "static3R", trailAfter3R: true },
 }
 
 export interface Playbook {
@@ -122,6 +122,6 @@ export interface Playbook {
  */
 export const PLAYBOOK_PRIORITY: readonly PlaybookId[] = [
 	"retracement",
-	"vwap_rejection",
+	"vwap_dip_recover",
 	"mean_reversion",
 ]

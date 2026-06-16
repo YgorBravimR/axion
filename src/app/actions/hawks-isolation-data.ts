@@ -232,7 +232,8 @@ export const fetchHawksIsolationData = async (
 	mergeAnchors(raw60m, anchorsByDate)
 
 	const all5mSorted = sortByTimestamp(all5m)
-	const walker = buildHtfWalker(all5mSorted, config)
+	const all15mSorted = sortByTimestamp(raw15m)
+	const walker = buildHtfWalker(all5mSorted, config, all15mSorted)
 
 	const windowed5m = all5mSorted.filter((c) =>
 		includedDays.has(dateToBrt(new Date(c.timestamp)))

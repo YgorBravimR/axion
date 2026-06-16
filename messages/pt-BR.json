@@ -5124,6 +5124,7 @@
 				"groups": {
 					"sr": "Níveis S/R (4 MMEs HTF + VWAP + ajuste)",
 					"keltner": "Bandas Keltner",
+					"vwapWick": "VWAP — Pavio Toca+Rejeita",
 					"macd": "MACD",
 					"aggression": "Agressão",
 					"volume": "Volume",
@@ -5156,6 +5157,10 @@
 				"keltnerNearBricks": {
 					"label": "Distância \"perto\" da banda (bricks)",
 					"hint": "Distância considerada \"perto\" da banda."
+				},
+				"vwapWickRejectBlock": {
+					"label": "Bloqueio: pavio do VWAP toca+rejeita contra a direção",
+					"hint": "Recusa a entrada quando o brick atual de 5m é um toque-e-rejeição metodologicamente correto do vwap_d no lado oposto à direção do trade. Distinto do gatilho de fechamento do playbook vwap_dip_recover."
 				},
 				"macdAlignmentScore": {
 					"label": "Score: alinhamento do MACD",
@@ -5382,6 +5387,8 @@
 			"hawksSrFavorToggle": "Favorecimento S/R ativo",
 			"hawksKeltnerBlockToggle": "Bloqueio Keltner ativo",
 			"hawksKeltnerPenaltyToggle": "Penalidade Keltner ativa",
+			"hawksVwapWickRejectBlockToggle": "Bloqueio VWAP pavio rejeita ativo",
+			"hawksColorStreakFavorToggle": "Favor VB (cor) ativo",
 			"hawksMacdToggle": "Pontuação MACD ativa",
 			"hawksVolumeToggle": "Pontuação de volume ativa",
 			"hawksHtfMaBlockToggle": "Bloqueio MA HTF ativo",
@@ -5628,6 +5635,8 @@
 			"hawksSrFavorRange": "Faixa do favorecimento S/R (tijolos)",
 			"hawksKeltnerBlockToggle": "Bloqueio Keltner externo",
 			"hawksKeltnerPenaltyToggle": "Penalidade Keltner interno",
+			"hawksVwapWickRejectBlockToggle": "Bloqueio VWAP pavio rejeita",
+			"hawksColorStreakFavorToggle": "Favor VB (cor do tijolo)",
 			"hawksKeltnerNear": "Distância Keltner (tijolos)",
 			"hawksMacdToggle": "Score de alinhamento MACD",
 			"hawksMacdSlope": "Janela de inclinação MACD",

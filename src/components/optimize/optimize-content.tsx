@@ -170,6 +170,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 	// ── Data state (fetched once, reused for all runs) ────────────
 	const candlesRef = useRef<CandleRow[]>([])
+	const candles15mRef = useRef<CandleRow[]>([])
 	const assetConfigRef = useRef<AssetConfig | null>(null)
 	const catalogRef = useRef<UserEntry[] | undefined>(undefined)
 	const [candleCount, setCandleCount] = useState(0)
@@ -523,6 +524,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		if (nextIndex !== selectedSourceIndex) {
 			setSelectedSourceIndex(nextIndex)
 			candlesRef.current = []
+			candles15mRef.current = []
 			assetConfigRef.current = null
 			setCandleCount(0)
 		}
@@ -536,6 +538,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		const index = parseInt(value, 10)
 		setSelectedSourceIndex(index)
 		candlesRef.current = []
+		candles15mRef.current = []
 		assetConfigRef.current = null
 		setCandleCount(0)
 		const source = dataSources[index]
@@ -581,6 +584,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 		setDateRange({ from, to: now })
 		candlesRef.current = []
+		candles15mRef.current = []
 		assetConfigRef.current = null
 		setCandleCount(0)
 	}
@@ -589,6 +593,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		setDateRange(range)
 		setQuickRangeKey("custom")
 		candlesRef.current = []
+		candles15mRef.current = []
 		assetConfigRef.current = null
 		setCandleCount(0)
 	}
@@ -607,6 +612,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			timeframeId: selectedSource.timeframeId,
 			dateRange: { from: dateFrom, to: dateTo },
 			requiredIndicators: recipe.requiredIndicators,
+			includeHtf15m: recipe.entry.type === "hawks_playbook",
 		})
 
 		hideLoading()
@@ -614,6 +620,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 		if (response.success && response.data) {
 			candlesRef.current = response.data.candles
+			candles15mRef.current = response.data.candles15m ?? []
 			assetConfigRef.current = response.data.assetConfig
 			setCandleCount(response.data.candles.length)
 			showToast(
@@ -769,7 +776,8 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					sweepHandleRef.current = null
 					showToast("error", t("sweepError", { message }))
 				},
-			}
+			},
+			candles15mRef.current
 		)
 
 		sweepHandleRef.current = handle
@@ -988,7 +996,8 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 				const result = runBacktest(
 					candlesRef.current,
 					run.recipe,
-					assetConfigRef.current!
+					assetConfigRef.current!,
+					candles15mRef.current
 				)
 				return {
 					...run,

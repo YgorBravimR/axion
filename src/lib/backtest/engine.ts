@@ -45,6 +45,15 @@ import {
 	buildKeltnerWalker,
 	type KeltnerWalkerSnapshot,
 } from "./hawks-keltner-walker"
+import { buildSrWalker, type SrWalkerSnapshot } from "./hawks-sr-walker"
+import {
+	buildVwapTouchRejectWalker,
+	type VwapTouchRejectSnapshot,
+} from "./hawks-vwap-walker"
+import {
+	buildVolumeEmaWalker,
+	type VolumeEmaSnapshot,
+} from "./hawks-volume-walker"
 
 /**
  * Compute the 1-indexed brick index (candle_index) where the entry occurred.
@@ -79,7 +88,8 @@ const getEntryBrickIndex = (
 const runBacktest = (
 	candles: CandleRow[],
 	recipe: StrategyRecipe,
-	assetConfig: AssetConfig
+	assetConfig: AssetConfig,
+	candles15m: CandleRow[] = []
 ): BacktestResult => {
 	const days = groupCandlesByDay(candles)
 	const sortedDayKeys = [...days.keys()].sort()
@@ -122,7 +132,7 @@ const runBacktest = (
 	// (spec §1) and the walker is the only source of that signal.
 	const htfWalker: Map<string, HtfWalkerSnapshot> | null =
 		recipe.entry.type === "hawks_playbook"
-			? buildHtfWalker(candles, recipe.entry.config)
+			? buildHtfWalker(candles, recipe.entry.config, candles15m)
 			: null
 
 	// v0.10 Keltner walker — only built when the `keltnerOuterBlock` quality
@@ -133,6 +143,42 @@ const runBacktest = (
 		recipe.entry.type === "hawks_playbook" &&
 		recipe.entry.config.qualityGates?.keltnerOuterBlock === true
 			? buildKeltnerWalker(candles, recipe.entry.config)
+			: null
+
+	// v0.11 S/R proximity walker — only built when `srLevelBlock` or
+	// `srLevelFavor` is enabled. Group E audit found ~30% catalog-wide block
+	// rate; the orchestrator consumes the snapshot via the composable
+	// veto evaluator in `hawks-playbook.ts`.
+	const srWalker: Map<string, SrWalkerSnapshot> | null =
+		recipe.entry.type === "hawks_playbook" &&
+		(recipe.entry.config.qualityGates?.srLevelBlock === true ||
+			recipe.entry.config.qualityGates?.srLevelFavor === true)
+			? buildSrWalker(candles, recipe.entry.config)
+			: null
+
+	// v0.11 VWAP wick touch+reject walker — only built when
+	// `vwapWickRejectBlock` is enabled. Methodology-correct VWAP rejection
+	// reader per Group D audit (distinct from the close-based
+	// `vwap_dip_recover` playbook trigger).
+	const vwapWalker: Map<string, VwapTouchRejectSnapshot> | null =
+		recipe.entry.type === "hawks_playbook" &&
+		recipe.entry.config.qualityGates?.vwapWickRejectBlock === true
+			? buildVwapTouchRejectWalker(candles, recipe.entry.config)
+			: null
+
+	// v0.11 Volume EMA walker — built whenever `volume.mode` is non-"off".
+	// "score" / "both" populate `quality.contributions[].volume`; "block" /
+	// "both" feed the veto evaluator. Implements the per-spec polarity
+	// (below-EMA = block); see Group G audit for the empirical caveat.
+	const volumeMode =
+		recipe.entry.type === "hawks_playbook"
+			? recipe.entry.config.qualityGates?.volume?.mode
+			: undefined
+	const volumeWalker: Map<string, VolumeEmaSnapshot> | null =
+		recipe.entry.type === "hawks_playbook" &&
+		volumeMode !== undefined &&
+		volumeMode !== "off"
+			? buildVolumeEmaWalker(candles, recipe.entry.config)
 			: null
 
 	for (const dayKey of sortedDayKeys) {
@@ -335,6 +381,9 @@ const runBacktest = (
 			} else if (recipe.entry.type === "hawks_playbook") {
 				const htfSnapshot = lookupHtfGate(htfWalker, candle)
 				const keltnerSnapshot = keltnerWalker?.get(candle.timestamp) ?? null
+				const srSnapshot = srWalker?.get(candle.timestamp) ?? null
+				const vwapSnapshot = vwapWalker?.get(candle.timestamp) ?? null
+				const volumeSnapshot = volumeWalker?.get(candle.timestamp) ?? null
 				const result = processHawksPlaybookCandle(
 					candle,
 					entryState as HawksPlaybookState,
@@ -342,7 +391,10 @@ const runBacktest = (
 					assetConfig.tickSize,
 					recipe.entry.config,
 					htfSnapshot,
-					keltnerSnapshot
+					keltnerSnapshot,
+					srSnapshot,
+					vwapSnapshot,
+					volumeSnapshot
 				)
 				entryState = result.state
 				entrySignal = result.signal

@@ -252,16 +252,33 @@ interface QualityGatesConfig {
 	// veto window"). Do NOT change defaults without that answer.
 	keltnerOuterBlock?: boolean
 	keltnerInnerPenalty?: boolean // -weight when price past 125 band on trade side (legacy, see keltnerInner)
+	// ── VWAP wick touch+reject (methodology-correct, separate from the
+	// `vwap_dip_recover` playbook which is a close-based dip-and-recover
+	// trigger). When true, vetoes a fire if the current 5m brick is a
+	// confirmed wick touch+reject of vwap_d on the side that contradicts
+	// the trade direction (SHORT vetoed by REJECT_FROM_BELOW_*, LONG by
+	// REJECT_FROM_ABOVE_*). See Group D audit and hawks-vwap-walker.ts.
+	vwapWickRejectBlock?: boolean
+	// ── Color-streak / VB (Virada de Box) score-mode favor (Group H, 2026-06-16) ─
+	// When true, +1 contribution to `quality.score` if the fire brick is
+	// STREAK_1 (the brick that JUST flipped color — the "VB" of the
+	// methodology). Group H audit: STREAK_1 is 76.9% of all aligned fires
+	// AND the only consistently profitable bucket (n=243, net +R$1,789,
+	// avgR +0.131 vs the rest at -R$606 / n=73). Score-mode only — no
+	// block, since continuation-bucket sample sizes (n=12-25) are too
+	// small to confidently veto.
+	// See: docs/hawks-strategy/indicator-isolation/group-h-color-streak.md.
+	colorStreakFavor?: boolean
 	// ── Group C: MACD (planned) ───────────────────────────────────────────
 	macdAlignmentScore?: boolean // ±weight by sign + slope streak (legacy, see macd)
 	// ── Group D: aggression ───────────────────────────────────────────────
-	// Tri-state polarity switch. "off" = rule disabled (default, baseline
+	// Binary polarity switch. "off" = rule disabled (default, baseline
 	// behavior). "original" = aggression aligned with trade direction is
-	// FAVOR (your intuitive heuristic). "reversed" = aligned is PENALTY
-	// ("late to the move"); probe data on 20 days supports this polarity
-	// at threshold 15K with 1.67× selectivity. Recommended setting when
-	// enabling the rule is "reversed".
-	aggressionMode?: "off" | "original" | "reversed" // legacy, see aggression
+	// FAVOR. The "reversed" polarity was removed 2026-06-16 per user
+	// directive after Group F audit found the ANTI bucket is structurally
+	// empty (HTF+MACD enforces alignment). See
+	// docs/hawks-strategy/indicator-isolation/group-f-aggression.md.
+	aggressionMode?: "off" | "original" // legacy, see aggression
 	// ── Group E: volume (planned) ─────────────────────────────────────────
 	volumeScore?: boolean // +weight if brick volume > running EMA (legacy, see volume)
 	// ── Tunable parameters (defaults preserve current behavior) ───────────
@@ -294,7 +311,7 @@ interface QualityGatesConfig {
 	}
 	aggression?: {
 		// Split per spec — score and block modes are independent.
-		scoreMode?: "off" | "original" | "reversed"
+		scoreMode?: "off" | "original" // "reversed" pruned 2026-06-16; see Group F audit.
 		blockMode?: "off" | "blockOnAligned" | "blockOnAnti"
 		threshold?: number // reused; defaults to aggressionThreshold (15000)
 	}

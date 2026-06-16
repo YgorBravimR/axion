@@ -1,5 +1,8 @@
 /**
- * `vwap_rejection` playbook — "rejeição de VWAP" (v0.9 spec §4.3).
+ * `vwap_dip_recover` playbook — "rejeição de VWAP" (v0.9 spec §4.3).
+ * Was named `vwap_rejection` pre-2026-06-16; renamed for clarity since
+ * the trigger is a dip-and-recover close pattern, not a methodology
+ * touch+reject (which the `vwapWickRejectBlock` veto reads instead).
  *
  * Idea: in a BULL gate, price dipped BELOW VWAP and then closed back
  * ABOVE it — the dip failed. We enter on the close-back. Mirror for
@@ -19,7 +22,7 @@
  * LONG) or high (for SHORT) among the dip bricks. We add a brickBody
  * buffer to keep the stop outside the noise wick.
  *
- * Exit config: locked from `PLAYBOOK_EXIT_DEFAULTS.vwap_rejection` (=
+ * Exit config: locked from `PLAYBOOK_EXIT_DEFAULTS.vwap_dip_recover` (=
  *   Mode 2-ish, static3R + trail-after-3R). Spec §9.
  */
 
@@ -78,11 +81,11 @@ const evaluate = (ctx: PlaybookContext): PlaybookFire | null => {
 		const pierceExtreme = Math.min(...dipBricks.map((b) => b.low))
 		const brickBody = Math.abs(brick.close - brick.open) || brickSize
 		return {
-			id: "vwap_rejection",
+			id: "vwap_dip_recover",
 			price: brick.close,
 			stopReference: pierceExtreme - brickBody,
 			label: "vwap-rej",
-			exitConfig: PLAYBOOK_EXIT_DEFAULTS.vwap_rejection,
+			exitConfig: PLAYBOOK_EXIT_DEFAULTS.vwap_dip_recover,
 		}
 	}
 
@@ -106,15 +109,15 @@ const evaluate = (ctx: PlaybookContext): PlaybookFire | null => {
 	const pierceExtreme = Math.max(...dipBricks.map((b) => b.high))
 	const brickBody = Math.abs(brick.close - brick.open) || brickSize
 	return {
-		id: "vwap_rejection",
+		id: "vwap_dip_recover",
 		price: brick.close,
 		stopReference: pierceExtreme + brickBody,
 		label: "vwap-rej",
-		exitConfig: PLAYBOOK_EXIT_DEFAULTS.vwap_rejection,
+		exitConfig: PLAYBOOK_EXIT_DEFAULTS.vwap_dip_recover,
 	}
 }
 
 export const vwapRejectionPlaybook: Playbook = {
-	id: "vwap_rejection",
+	id: "vwap_dip_recover",
 	evaluate,
 }

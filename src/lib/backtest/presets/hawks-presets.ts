@@ -371,6 +371,8 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 			["srLevelFavor", "hawksSrFavorToggle"],
 			["keltnerOuterBlock", "hawksKeltnerBlockToggle"],
 			["keltnerInnerPenalty", "hawksKeltnerPenaltyToggle"],
+			["vwapWickRejectBlock", "hawksVwapWickRejectBlockToggle"],
+			["colorStreakFavor", "hawksColorStreakFavorToggle"],
 			["macdAlignmentScore", "hawksMacdToggle"],
 			["volumeScore", "hawksVolumeToggle"],
 			["htfMaBlock", "hawksHtfMaBlockToggle"],
@@ -402,7 +404,8 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 		},
 	})),
 
-	// Aggression polarity is a 3-way enum (not a boolean toggle).
+	// Aggression polarity is a 2-way enum (off / original). "reversed" was
+	// pruned 2026-06-16; see Group F audit for the empirical case.
 	{
 		kind: "enum",
 		path: "entry.config.qualityGates.aggressionMode",
@@ -422,15 +425,6 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 					mutateQualityGates(r, (qg) => ({
 						...qg,
 						aggressionMode: "original",
-					})),
-			},
-			{
-				value: "reversed",
-				labelKey: "hawksAggressionMode_reversed",
-				applyOption: (r) =>
-					mutateQualityGates(r, (qg) => ({
-						...qg,
-						aggressionMode: "reversed",
 					})),
 			},
 		],
@@ -619,15 +613,7 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 						aggression: { ...qg.aggression, scoreMode: "original" },
 					})),
 			},
-			{
-				value: "reversed",
-				labelKey: "hawksAggressionMode_reversed",
-				applyOption: (r) =>
-					mutateQualityGates(r, (qg) => ({
-						...qg,
-						aggression: { ...qg.aggression, scoreMode: "reversed" },
-					})),
-			},
+			// "reversed" pruned 2026-06-16; see Group F audit.
 		],
 		getCurrentValue: (r) => {
 			if (r.entry.type !== "hawks_playbook") {

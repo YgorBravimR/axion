@@ -71,6 +71,19 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Backtest / Inspector
 
+### Hawks engine — per-booster outcome audit (booster tier ordering is U-shaped)
+
+- **Priority**: P1 — directly affects the trustworthiness of every tier-based filter, optimization target, and UI label across the Hawks engine.
+- **Effort**: M (~3h — instrument BoosterChecklist into `BacktestTrade.quality` or re-compute via secondary engine pass; tabulate per-booster WR/avgR; identify mis-signed booster(s))
+- **Source**: 2026-06-16 tier sanity audit (`docs/scans/2026-06-16-tier-sanity.md`). After 15m plumbing made AAA reachable, the empirical ordering is **AAA(35% WR, +R$10/trade) > AA(29%, -R$8) > A(28%, -R$6) < B(37%, +R$18)**. B-tier outperforms AAA on every metric with the largest sample (n=91). The U-shape implies one or more boosters is firing inversely to outcomes — adding boosters makes the trade worse, not better, in the middle of the distribution.
+- **Hypothesis**: on a Renko engine firing INTO extension, "ema5m aligned" or "vwap aligned" means price has already moved past those references, which is the classic "late entry" footprint. The booster reads as a confirmation when it's actually a warning.
+- **Steps**:
+  1. Decide instrumentation path: (a) thread `BoosterChecklist` into `BacktestTrade.quality.contributions[]` (cleanest, persists for UI/storage), or (b) re-compute the checklist at each fire's brick in a secondary engine pass (cheaper, doesn't change trade shape).
+  2. For each of the 5 boosters (htf15mAligned, htfPivotAligned, macdAligned, ema5mAligned, vwapAligned) tabulate: count of trades where it fired=true, count where false, WR/avgR per cohort.
+  3. Identify mis-signed booster(s): any where `fires=true` cohort has WORSE WR/avgR than `fires=false`.
+  4. Decide: invert the polarity (rename "aligned" → "anti-aligned"), remove from the checklist, or leave wired but down-weight.
+- **Pointers**: audit script `scripts/audit-tier-sanity.ts`, booster checklist `src/lib/backtest/modules/entry/hawks-boosters.ts`, computation `src/lib/backtest/modules/entry/hawks-playbook.ts:computeBoosterChecklist`.
+
 ### Hawks engine — `keltnerOuterBlock` veto window (needs methodology spec from Ygor)
 
 - **Priority**: P2 — blocked on a methodology clarification from Ygor

@@ -481,6 +481,26 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 
 ## Backtest / Hawks methodology
 
+### Hawks booster tier ordering is U-shaped (AAA > AA, A < B) at engine v0.11 — don't trust the tier label as a quality filter
+
+- **What**: After the 5th booster (htfPivotAligned) went live 2026-06-16, the empirical per-tier outcomes are AAA: 35% WR / +R$10 per trade, AA: 29% / -R$8, A: 28% / -R$6, **B: 37% / +R$18**. B (the "lowest" tier, 0-1 boosters aligned) is the BEST bucket on every metric with the largest sample (n=91). Audit: `docs/scans/2026-06-16-tier-sanity.md`.
+- **Symptom**: Filtering or optimizing on "AAA-only" trades looks plausible but produces a curve-fit because the tier checklist isn't actually ordering trades by quality — one or more boosters is likely firing INVERSELY to outcomes (probably ema5m or vwap "aligned," which on a Renko engine firing into extension actually means "you're late").
+- **What to do**:
+  - Do **not** treat `quality.tier` as a quality filter for live results. It's a methodology-defined label; the empirical signal is U-shaped.
+  - Do **not** retune `tierThresholds` to "fix" the ordering. Fixing the wrong booster makes the U-shape worse.
+  - Until the per-booster audit lands (tracked in `docs/backlog.md`), report tier alongside actual WR/avgR — never alone.
+- **Source**: 2026-06-16 tier sanity audit after 15m candle wiring made AAA reachable for the first time.
+- **Date logged**: 2026-06-16.
+
+### `buildHtfWalker` silently no-ops the 15m pivot booster when `candles15m` isn't passed
+
+- **What**: `buildHtfWalker(candles5m, config, candles15m = [])` accepts an OPTIONAL 15m stream. When omitted, the 15m structural-pivot loop runs over zero bricks and `lastAdoptedType15m` is null in every snapshot. Downstream, the `htfPivotAligned` booster in `hawks-playbook.ts:computeBoosterChecklist` reads that field — null means the booster never fires, which silently caps the booster tier at AA (no AAA trades) without any error.
+- **Symptom**: Booster-tier breakdown shows 0 AAA trades. Easy to misread as "the strategy never qualifies for AAA," when in reality the data is just missing.
+- **What to do**: Every call site that runs `runBacktest(candles, recipe, assetConfig)` against a Hawks playbook recipe MUST pass `candles15m` as the 4th argument. Server actions: load `hawk_15m_win` via `getCandleStore().fetchRange` (see `src/app/actions/backtest.ts:fetchBacktestData` for the `includeHtf15m: true` pattern). Optimize worker: 15m flows via `StartMessage.candles15m`. Audit scripts: load both parquets (see `scripts/audit-all-vetoes-smoke.ts`).
+- **Verification**: smoke test (`scripts/audit-all-vetoes-smoke.ts`) reports the tier distribution. After wiring 15m: baseline went from `0/159/74/99` (AAA/AA/A/B) to `55/118/68/91`. If you see 0 AAA after a refactor, suspect the 15m stream got dropped.
+- **Source**: 2026-06-16 wiring of `htfPivotAligned` booster (engine v0.11). Discovered when AAA tier stayed at 0 even after the booster's logic was correctly implemented.
+- **Date logged**: 2026-06-16.
+
 ### Hawks 1R = 2 Renko boxes — don't conflate risk-units with brick-counts
 
 - **What**: In Hawks methodology, `1R` (one risk unit = the stop distance) equals **2 Renko brick bodies**, not 1. The stop fires when one Renko brick closes against entry; the price distance from entry (= entry brick close) to that level is `2·(R−1) + 1` ticks ≈ two brick bodies. The Hawks v0 engine originally set `stopReference = candle.open` (= 1 brick body), which silently halved the stop and inflated reported R-multiples 2×. Fixed 2026-05-15 to `2 * candle.open - candle.close`.
@@ -519,12 +539,33 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: `src/lib/backtest/modules/entry/hawks-playbook.ts:79-105` (veto), `src/lib/backtest/engine.ts:119-135` (walker build), `src/types/backtest.ts:240-246`, audit at `docs/hawks-strategy/indicator-isolation/group-c-keltner.md`.
 - **Date logged**: 2026-06-15.
 
+### Hawks `EntryQualityGates.srLevelBlock` / `srLevelFavor` are dead flags (walker primitive shipped, engine consumer pending)
+
+- **What**: As of 2026-06-16 a methodology-correct proximity walker exists at `src/lib/backtest/hawks-sr-walker.ts` (6 levels: 4 HTF EMAs + vwap_d + ajuste; both directions; sorted levelsAhead + favorCount). It is NOT yet wired into the playbook orchestrator. The `srLevelBlock` and `srLevelFavor` flags remain unread by any engine module — same dead-flag pattern that Keltner had pre-v0.10. The `strict` opt-in preset bundle sets these flags true but they still produce identical fires to OFF. The empirical block rate is ~30% of bricks (Group E audit, 2026-06-15) — when wiring lands this will materially change the trade stream, so an A/B audit is required before promoting.
+- **What to do**: Treat `srLevelBlock` and `srLevelFavor` as inert when reasoning about a run's fire pattern. Don't propose tuning `srBlockBufferBricks` / `srFavorRangeBricks` until the orchestrator consumer lands. The walker primitive is available for analytics, probes, and the visual isolation lab — but the playbook orchestrator and tier scoring do not consult it. The `htfMaBlock` legacy alias is also dead; mark for removal once `srLevelBlock` is fully wired with the 6-level set.
+- **Source**: walker at `src/lib/backtest/hawks-sr-walker.ts`, audit at `docs/hawks-strategy/indicator-isolation/group-e-sr-levels.md`, findings at `docs/scans/2026-06-15-group-e-sr-levels.md`, config at `src/types/backtest.ts:235-278`.
+- **Date logged**: 2026-06-16.
+
 ### Detective probe of a LABEL-ONLY axis returns "DEAD" unless the consumer mode is enabled
 
 - **What**: `scripts/sweep-detective.ts` probes axes by varying one parameter and fingerprinting the resulting trades/tiers. For `aggressionThreshold`, the consumer is `aggressionRule.evaluateScoreSignal` — which short-circuits to `"neutral"` when `aggression.scoreMode === "off"` _before_ it ever reads the threshold (see `hawks-quality-rules.ts:336-343`). The detective's default baseline uses `hawksV0`, which has `scoreMode = "off"`, so sweeping the threshold over any range produces identical fingerprints → false "DEAD" verdict. Widening the value range does **not** fix this; the rule's dead-branch is the problem, not the data distribution. Fixed 2026-06-01 by composing `withAggressionScoreMode(r, "original")` into the axis's `apply` so the rule actually consults the threshold while we measure it. The pattern generalises: any LABEL-ONLY axis whose consumer can be disabled by a sibling mode flag must enable that consumer in its probe.
 - **What to do**: When adding a new LABEL-ONLY axis to `sweep-detective.ts`, trace from the axis to its consumer and check whether a mode flag can short-circuit the read. If yes, the axis's `apply` must force that flag to an "enabled" value before setting the param being measured. Use `peek-aggression-sign.ts`-style distribution probes to pick value ranges that span the real data (min/p10/p90/max), not arbitrary round numbers — for WIN 5m the observed `aggression_balance` band is roughly `[−35K, +44K]`, so a `[2.5K, 40K]` threshold sweep covers the full effect surface.
-- **Source**: `scripts/sweep-detective.ts:364-385`; consumer at `src/lib/backtest/modules/entry/hawks-quality-rules.ts:321-344`; distribution at `scripts/peek-aggression-sign.ts`.
-- **Date logged**: 2026-06-01.
+- **Source**: `scripts/sweep-detective.ts:364-385`; consumer at `src/lib/backtest/modules/entry/hawks-quality-rules.ts:321-344` (NOTE 2026-06-16: this file was deleted between 2026-06-01 and 2026-06-16 — see the aggression gotcha below); distribution at `scripts/peek-aggression-sign.ts` (ALSO deleted).
+- **Date logged**: 2026-06-01. Annotated 2026-06-16: consumer file removed, see Group F audit.
+
+### Hawks `EntryQualityGates.aggression*` flags are dead — empirically dead, not just unwired (delete on next config refactor)
+
+- **What**: `qualityGates.aggressionMode` (legacy) and `qualityGates.aggression.{scoreMode, blockMode, threshold}` (nested) exist in `EntryQualityGates` and are surfaced via UI controls, preset bundles, leaves catalog, optimize/storage migration code. NO engine module reads any of them — the consumer (`hawks-quality-rules.ts`) was deleted at some point and replaced with nothing. The 2026-06-16 Group F audit graded all 332 baseline trades against `agr_saldo` at thresholds 5K..25K and found: (1) the `ANTI` / reversed-polarity bucket is EMPTY across all thresholds — the HTF+MACD gates already enforce aggression alignment implicitly; (2) original-polarity selectivity at T=15K is 1.133× (vs the type-comment's folklore claim of "1.67× at 15K reversed"); (3) the lift grows monotonically with T but n collapses (n=14 at T=25K is noise). The flag has no signal to capture.
+- **What to do**: Treat `aggression*` flags as inert when reading config. Don't propose tuning `aggressionThreshold`; don't propose flipping `aggressionMode` to `original` to "see what happens" — the audit already saw what happens, and the answer is "barely anything." The recommended path (option 3 from the audit) is to DELETE the config knobs entirely in a follow-up PR. Before deletion, grep `data/sweep-recipes/` for any recipe referencing these paths — those will need pruning too. The folklore comment at `src/types/backtest.ts:257-264` should be replaced with a one-line "see Group F audit" pointer.
+- **Source**: audit doc at `docs/hawks-strategy/indicator-isolation/group-f-aggression.md`, findings at `docs/scans/2026-06-16-group-f-aggression.md`, script at `scripts/indicator-isolation/group-f-aggression.ts`. The deleted consumer was `src/lib/backtest/modules/entry/hawks-quality-rules.ts`.
+- **Date logged**: 2026-06-16.
+
+### Hawks `EntryQualityGates.volume*` flags are dead — and the spec's polarity is empirically backwards (delete on next config refactor)
+
+- **What**: `qualityGates.volumeScore` (legacy) and `qualityGates.volume.{mode, emaPeriod}` (nested) exist in `EntryQualityGates`, surfaced via UI controls, preset bundles, leaves catalog, and `optimize/storage.ts`. NO engine module reads any of them — the type comment is tagged `(planned)`, the rule was scoped but never finished. The 2026-06-16 Group G audit graded all 332 baseline trades against `volume_fin` vs running EMAs of period N ∈ {50, 100, 200, 500, 1000} and found the spec's predicted polarity is REVERSED on this engine/data: ABOVE-EMA bricks have LOWER win rate AND lower PnL than BELOW-EMA bricks at every tested N. At N=500: ABOVE net −R$612, BELOW net +R$1,485 — a R$2,097 polarity reversal. Block-mode simulation (veto BELOW-EMA fires per spec) destroys R$ 875–1,485 of baseline PnL at every N.
+- **What to do**: Treat `volume*` flags as inert. Don't propose "wire volume score to confirm the methodology"; the data already says the conjecture is wrong on Renko/Hawks. The recommended path (option 3 from the audit) is to DELETE the config knobs in a follow-up PR — mechanically combine with the Group F (aggression) deletion since the file footprint is identical (`types/backtest.ts`, `hawks-quality-controls.tsx`, `hawks-leaves.ts`, `hawks-quality-presets.ts`, `optimize/storage.ts`). Replace the `(planned)` comment with a "see Group G audit" pointer.
+- **Source**: audit doc at `docs/hawks-strategy/indicator-isolation/group-g-volume.md`, findings at `docs/scans/2026-06-16-group-g-volume.md`, script at `scripts/indicator-isolation/group-g-volume.ts`.
+- **Date logged**: 2026-06-16.
 
 ---
 

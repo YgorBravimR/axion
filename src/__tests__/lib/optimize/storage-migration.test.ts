@@ -238,7 +238,7 @@ describe("migrateRun (v5 → v6)", () => {
 		expect(gatesConfig?.macdAlignmentScore).toBe(true)
 	})
 
-	it("translates aggressionMode: 'reversed' + aggressionThreshold: 20000 → aggression nested", () => {
+	it("coerces legacy aggressionMode: 'reversed' to 'off' (pruned 2026-06-16; Group F audit)", () => {
 		const v5Run = baseRun({
 			recipe: {
 				presetId: "hawks_v0" as const,
@@ -279,11 +279,11 @@ describe("migrateRun (v5 → v6)", () => {
 				? migrated.recipe.entry.config.qualityGates
 				: undefined
 		expect(gatesConfig?.aggression).toEqual({
-			scoreMode: "reversed",
+			scoreMode: "off", // coerced from legacy "reversed"
 			blockMode: "off",
 			threshold: 20000,
 		})
-		expect(gatesConfig?.aggressionMode).toBe("reversed")
+		expect(gatesConfig?.aggressionMode).toBe("off")
 	})
 
 	it("is idempotent when new fields already exist", () => {

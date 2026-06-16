@@ -52,7 +52,7 @@ describe("vwapRejectionPlaybook (LONG — BULL gate, dip-and-reject)", () => {
 		const ctx = buildCtx(brick, priors, "long")
 		const fire = vwapRejectionPlaybook.evaluate(ctx)
 		expect(fire).not.toBeNull()
-		expect(fire?.id).toBe("vwap_rejection")
+		expect(fire?.id).toBe("vwap_dip_recover")
 		expect(fire?.exitConfig.targetRule).toBe("static3R")
 		expect(fire?.exitConfig.trailAfter3R).toBe(true)
 		// Stop = min(dip low) - brickBody. dip low = 94, brickBody = 7.

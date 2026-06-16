@@ -3,7 +3,7 @@
  *
  * Per the indicator-isolation audit Group D
  * (`docs/hawks-strategy/indicator-isolation/group-d-vwap.md`), Axion's
- * `vwap_rejection` playbook uses a close-based dip-and-recover trigger that
+ * `vwap_dip_recover` playbook uses a close-based dip-and-recover trigger that
  * shares zero fires (across the full 2026-03-02..2026-06-13 catalog of 8,280
  * 5m bricks) with the methodology's wick-based touch+reject signal. They are
  * disjoint signals.

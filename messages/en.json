@@ -5124,6 +5124,7 @@
 				"groups": {
 					"sr": "S/R Levels (4 HTF MAs + VWAP + ajuste)",
 					"keltner": "Keltner Bands",
+					"vwapWick": "VWAP Wick Touch+Reject",
 					"macd": "MACD",
 					"aggression": "Aggression",
 					"volume": "Volume",
@@ -5156,6 +5157,10 @@
 				"keltnerNearBricks": {
 					"label": "Near-band distance (bricks)",
 					"hint": "Distance considered \"near\" the band."
+				},
+				"vwapWickRejectBlock": {
+					"label": "Block: VWAP wick touch+reject against direction",
+					"hint": "Refuse entry when the current 5m brick is a confirmed methodology wick touch+reject of vwap_d on the side that contradicts the trade direction. Distinct from the close-based vwap_dip_recover playbook trigger."
 				},
 				"macdAlignmentScore": {
 					"label": "Score: MACD alignment",
@@ -5382,6 +5387,8 @@
 			"hawksSrFavorToggle": "S/R favor enabled",
 			"hawksKeltnerBlockToggle": "Keltner block enabled",
 			"hawksKeltnerPenaltyToggle": "Keltner penalty enabled",
+			"hawksVwapWickRejectBlockToggle": "VWAP wick reject block enabled",
+			"hawksColorStreakFavorToggle": "Color-streak VB favor enabled",
 			"hawksMacdToggle": "MACD score enabled",
 			"hawksVolumeToggle": "Volume score enabled",
 			"hawksHtfMaBlockToggle": "HTF MA block enabled",
@@ -5628,6 +5635,8 @@
 			"hawksSrFavorRange": "S/R favor range (bricks)",
 			"hawksKeltnerBlockToggle": "Keltner outer block",
 			"hawksKeltnerPenaltyToggle": "Keltner inner penalty",
+			"hawksVwapWickRejectBlockToggle": "VWAP wick reject block",
+			"hawksColorStreakFavorToggle": "Color-streak VB favor",
 			"hawksKeltnerNear": "Keltner near distance (bricks)",
 			"hawksMacdToggle": "MACD alignment score",
 			"hawksMacdSlope": "MACD slope window",

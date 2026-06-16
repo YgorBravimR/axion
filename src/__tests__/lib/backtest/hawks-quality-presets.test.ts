@@ -48,9 +48,9 @@ describe("matchQualityPreset", () => {
 		expect(strict.keltnerOuterBlock).toBe(true)
 	})
 
-	it("'standard' carries aggression in reversed polarity", () => {
+	it("'standard' carries aggressionMode = 'off' (pruned 'reversed' 2026-06-16, Group F audit)", () => {
 		const standard = getQualityPresetBundle("standard")
-		expect(standard.aggressionMode).toBe("reversed")
+		expect(standard.aggressionMode).toBe("off")
 		expect(standard.srLevelBlock).toBe(false)
 		expect(standard.keltnerOuterBlock).toBe(false)
 	})

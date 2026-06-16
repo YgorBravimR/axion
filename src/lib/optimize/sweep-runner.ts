@@ -48,7 +48,8 @@ const runSweep = (
 	assetConfig: AssetConfig,
 	recipes: StrategyRecipe[],
 	context: SweepContext,
-	callbacks: SweepCallbacks
+	callbacks: SweepCallbacks,
+	candles15m: CandleRow[] = []
 ): SweepHandle => {
 	const worker = new Worker(new URL("./backtest-worker.ts", import.meta.url))
 	const provenance = buildSweepProvenance(
@@ -130,6 +131,7 @@ const runSweep = (
 	worker.postMessage({
 		type: "start",
 		candles,
+		candles15m,
 		assetConfig,
 		recipes,
 		walkForward: context.walkForward,

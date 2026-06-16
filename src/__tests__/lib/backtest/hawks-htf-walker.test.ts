@@ -59,6 +59,9 @@ describe("buildHtfWalker", () => {
 			gate60m: "NO_SIGNAL",
 			lastTopo15m: null,
 			lastFundo15m: null,
+			lastTopo15mAtTimestamp: null,
+			lastFundo15mAtTimestamp: null,
+			lastAdoptedType15m: null,
 		})
 	})
 
@@ -210,6 +213,9 @@ describe("lookupHtfGate", () => {
 			gate60m: "NO_SIGNAL",
 			lastTopo15m: null,
 			lastFundo15m: null,
+			lastTopo15mAtTimestamp: null,
+			lastFundo15mAtTimestamp: null,
+			lastAdoptedType15m: null,
 		})
 	})
 

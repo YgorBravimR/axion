@@ -27,6 +27,8 @@ const KELTNER_OUTER_BLOCK_PATH = "entry.config.qualityGates.keltnerOuterBlock"
 const KELTNER_INNER_PENALTY_PATH =
 	"entry.config.qualityGates.keltnerInnerPenalty"
 const KELTNER_NEAR_PATH = "entry.config.qualityGates.keltnerNearBricks"
+const VWAP_WICK_REJECT_BLOCK_PATH =
+	"entry.config.qualityGates.vwapWickRejectBlock"
 const MACD_ALIGNMENT_PATH = "entry.config.qualityGates.macdAlignmentScore"
 const MACD_SLOPE_PATH = "entry.config.qualityGates.macdSlopeWindow"
 const AGGRESSION_MODE_PATH = "entry.config.qualityGates.aggressionMode"
@@ -129,6 +131,7 @@ const HawksQualityControls = memo(
 		const isKeltnerOuterBlockSwept = useIsSwept(KELTNER_OUTER_BLOCK_PATH)
 		const isKeltnerInnerPenaltySwept = useIsSwept(KELTNER_INNER_PENALTY_PATH)
 		const isKeltnerNearSwept = useIsSwept(KELTNER_NEAR_PATH)
+		const isVwapWickRejectBlockSwept = useIsSwept(VWAP_WICK_REJECT_BLOCK_PATH)
 		const isMacdAlignmentSwept = useIsSwept(MACD_ALIGNMENT_PATH)
 		const isMacdSlopeSwept = useIsSwept(MACD_SLOPE_PATH)
 		const isAggressionModeSwept = useIsSwept(AGGRESSION_MODE_PATH)
@@ -311,6 +314,22 @@ const HawksQualityControls = memo(
 							</fieldset>
 						)}
 
+						{/* VWAP wick touch+reject veto (Group D — methodology-correct). */}
+						{!isVwapWickRejectBlockSwept && (
+							<fieldset className="space-y-s-300">
+								<legend className="text-small text-txt-100 font-medium">
+									{t("groups.vwapWick")}
+								</legend>
+								<ToggleRow
+									id="quality-vwapWickRejectBlock"
+									label={t("vwapWickRejectBlock.label")}
+									hint={t("vwapWickRejectBlock.hint")}
+									checked={view.vwapWickRejectBlock}
+									onCheckedChange={(v) => patch({ vwapWickRejectBlock: v })}
+								/>
+							</fieldset>
+						)}
+
 						{/* Group C — MACD */}
 						{!isMacdGroupAllSwept && (
 							<fieldset className="space-y-s-300">
@@ -359,14 +378,11 @@ const HawksQualityControls = memo(
 													value: "original",
 													label: t("aggressionMode.original"),
 												},
-												{
-													value: "reversed",
-													label: t("aggressionMode.reversed"),
-												},
+												// "reversed" pruned 2026-06-16; see Group F audit.
 											]}
 											onChange={(v) =>
 												patch({
-													aggressionMode: v as "off" | "original" | "reversed",
+													aggressionMode: v as "off" | "original",
 												})
 											}
 											aria-labelledby="hawks-quality-aggression-label"
