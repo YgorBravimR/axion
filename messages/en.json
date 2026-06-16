@@ -1947,6 +1947,28 @@
 			"noTagsFound": "No tags found",
 			"tagStatsRetrieved": "Tag stats retrieved successfully",
 			"tagStatsFetchFailed": "Failed to retrieve tag stats"
+		},
+		"quickAdd": {
+			"title": "Quick Add Trade",
+			"description": "Create a trade in 30 seconds with just the essentials",
+			"labels": {
+				"asset": "Asset",
+				"direction": "Direction",
+				"entryDate": "Entry Date & Time",
+				"entryPrice": "Entry Price",
+				"positionSize": "Position Size"
+			},
+			"directions": {
+				"long": "Long",
+				"short": "Short"
+			},
+			"buttons": {
+				"save": "Save trade",
+				"saveAndAdd": "Save and add another",
+				"cancel": "Cancel"
+			},
+			"tradeCreated": "Trade created successfully",
+			"createFailed": "Failed to create trade"
 		}
 	},
 	"analytics": {

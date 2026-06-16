@@ -1,0 +1,307 @@
+"use client"
+
+import { useState, useCallback } from "react"
+import { useRouter } from "next/navigation"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useTranslations } from "next-intl"
+import { Loader2 } from "lucide-react"
+import { z } from "zod"
+import { createTrade } from "@/app/actions/trades"
+import { useToast } from "@/components/ui/toast"
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog"
+import {
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select"
+
+const quickAddTradeSchema = z.object({
+	asset: z
+		.string()
+		.min(1, "validation.trade.assetRequired")
+		.max(20, "validation.trade.assetMaxLength")
+		.transform((val) => val.toUpperCase()),
+	direction: z.enum(["long", "short"]),
+	entryDate: z.string().datetime(),
+	entryPrice: z.coerce
+		.number({ message: "validation.trade.entryPriceRequired" })
+		.positive("validation.trade.entryPricePositive"),
+	positionSize: z.coerce
+		.number({ message: "validation.trade.positionSizeRequired" })
+		.positive("validation.trade.positionSizePositive"),
+})
+
+type QuickAddTradeFormInput = z.infer<typeof quickAddTradeSchema>
+
+interface QuickAddTradeModalProps {
+	isOpen: boolean
+	onClose: () => void
+	lastAsset?: string
+	lastDirection?: "long" | "short"
+}
+
+export const QuickAddTradeModal = ({
+	isOpen,
+	onClose,
+	lastAsset,
+	lastDirection,
+}: QuickAddTradeModalProps) => {
+	const router = useRouter()
+	const t = useTranslations("journal.quickAdd")
+	const { showToast } = useToast()
+	const [isSubmitting, setIsSubmitting] = useState(false)
+	const [savedCount, setSavedCount] = useState(0)
+
+	const form = useForm<QuickAddTradeFormInput>({
+		resolver: zodResolver(quickAddTradeSchema),
+		defaultValues: {
+			asset: lastAsset || "",
+			direction: lastDirection || "long",
+			entryDate: new Date().toISOString(),
+			entryPrice: undefined,
+			positionSize: undefined,
+		},
+	})
+
+	const onSubmit = useCallback(
+		async (data: QuickAddTradeFormInput, keepOpen: boolean = false) => {
+			setIsSubmitting(true)
+			try {
+				const result = await createTrade({
+					asset: data.asset,
+					direction: data.direction,
+					entryDate: new Date(data.entryDate),
+					entryPrice: data.entryPrice,
+					positionSize: data.positionSize,
+				})
+
+				if (result.status === "success") {
+					showToast("success", t("tradeCreated"))
+					setSavedCount((prev) => prev + 1)
+
+					if (keepOpen) {
+						form.reset({
+							asset: data.asset,
+							direction: data.direction,
+							entryDate: new Date().toISOString(),
+							entryPrice: undefined,
+							positionSize: undefined,
+						})
+					} else {
+						router.refresh()
+						onClose()
+					}
+				} else {
+					showToast("error", result.message || t("createFailed"))
+				}
+			} catch (error) {
+				showToast(
+					"error",
+					error instanceof Error ? error.message : t("createFailed")
+				)
+			} finally {
+				setIsSubmitting(false)
+			}
+		},
+		[form, onClose, router, showToast, t]
+	)
+
+	const handleClose = useCallback(() => {
+		if (savedCount > 0) {
+			router.refresh()
+		}
+		onClose()
+		setSavedCount(0)
+		form.reset()
+	}, [onClose, router, savedCount, form])
+
+	return (
+		<Dialog open={isOpen} onOpenChange={handleClose}>
+			<DialogContent id="quick-add-trade-modal" className="sm:max-w-md">
+				<DialogHeader>
+					<DialogTitle>{t("title")}</DialogTitle>
+					<DialogDescription>{t("description")}</DialogDescription>
+				</DialogHeader>
+
+				<Form {...form}>
+					<form onSubmit={form.handleSubmit((data) => onSubmit(data, false))}>
+						<div className="space-y-4">
+							<FormField
+								control={form.control}
+								name="asset"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel htmlFor="quick-add-asset">
+											{t("labels.asset")}
+										</FormLabel>
+										<FormControl>
+											<Input
+												id="quick-add-asset"
+												placeholder="e.g., WIN"
+												{...field}
+												disabled={isSubmitting}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="direction"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel htmlFor="quick-add-direction">
+											{t("labels.direction")}
+										</FormLabel>
+										<Select
+											onValueChange={field.onChange}
+											value={field.value}
+											disabled={isSubmitting}
+										>
+											<FormControl>
+												<SelectTrigger id="quick-add-direction">
+													<SelectValue />
+												</SelectTrigger>
+											</FormControl>
+											<SelectContent>
+												<SelectItem value="long">
+													{t("directions.long")}
+												</SelectItem>
+												<SelectItem value="short">
+													{t("directions.short")}
+												</SelectItem>
+											</SelectContent>
+										</Select>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="entryDate"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel htmlFor="quick-add-entryDate">
+											{t("labels.entryDate")}
+										</FormLabel>
+										<FormControl>
+											<Input
+												id="quick-add-entryDate"
+												type="datetime-local"
+												{...field}
+												disabled={isSubmitting}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="entryPrice"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel htmlFor="quick-add-entryPrice">
+											{t("labels.entryPrice")}
+										</FormLabel>
+										<FormControl>
+											<Input
+												id="quick-add-entryPrice"
+												type="number"
+												step="0.01"
+												placeholder="0.00"
+												{...field}
+												disabled={isSubmitting}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<FormField
+								control={form.control}
+								name="positionSize"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel htmlFor="quick-add-positionSize">
+											{t("labels.positionSize")}
+										</FormLabel>
+										<FormControl>
+											<Input
+												id="quick-add-positionSize"
+												type="number"
+												step="1"
+												placeholder="1"
+												{...field}
+												disabled={isSubmitting}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						</div>
+
+						<div className="mt-6 flex justify-end gap-3">
+							<Button
+								id="quick-add-cancel"
+								type="button"
+								variant="outline"
+								onClick={handleClose}
+								disabled={isSubmitting}
+							>
+								{t("buttons.cancel")}
+							</Button>
+							<Button
+								id="quick-add-save-and-add"
+								type="button"
+								variant="outline"
+								onClick={form.handleSubmit((data) => onSubmit(data, true))}
+								disabled={isSubmitting}
+							>
+								{isSubmitting ? (
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+								) : null}
+								{t("buttons.saveAndAdd")}
+							</Button>
+							<Button
+								id="quick-add-submit"
+								type="submit"
+								disabled={isSubmitting}
+							>
+								{isSubmitting ? (
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+								) : null}
+								{t("buttons.save")}
+							</Button>
+						</div>
+					</form>
+				</Form>
+			</DialogContent>
+		</Dialog>
+	)
+}

@@ -1270,6 +1270,8 @@ export const bulkCreateTrades = async (
 						strategyCode,
 						timeframeCode,
 						tagNames: inputTagNames,
+						profitOperationNumber: csvProfitOperationNumber,
+						profitMetadata: csvProfitMetadata,
 						...tradeInput
 					} = input
 					// Sanitize SL/TP before validation: strip values that would fail
@@ -1463,6 +1465,9 @@ export const bulkCreateTrades = async (
 						setupRank: tradeData.setupRank || null,
 						screenshotUrl: tradeData.screenshotUrl || null,
 						screenshotS3Key: tradeData.screenshotS3Key || null,
+						// Profit CSV reconciliation (Phase 2)
+						profitOperationNumber: csvProfitOperationNumber || null,
+						profitMetadata: csvProfitMetadata || null,
 					}
 
 					// Fractal plan R-snapshot (flag-guarded, silent failure)

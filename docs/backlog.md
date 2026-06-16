@@ -67,6 +67,16 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Done when**: trader's average time-to-journal-a-trading-day drops from ~15-20 min daily to ~2 min daily + ~10 min weekly review; all enriched trades carry full methodology context with no hand-typed SL/target/MFE/MAE/indicator-quality fields; `orders.csv` numbers and Axion's stored numbers match for ≥95% of trades; re-enrichment after Hawks engine improvement produces a sensible diff view without data corruption.
 - **Date filed**: 2026-06-12.
 
+### Enrichment cleanup job scheduling (wire cron route)
+
+- **Priority**: P3
+- **Effort**: XS (~15 min — create `vercel.json` with cron entry, or wire the script into a scheduled routine framework if that's later chosen)
+- **Source**: 2026-06-16 — `scripts/cleanup-abandoned-enrichments.ts` ships as a manual-run script. Spec calls for scheduled cleanup of expired `trade_enrichment_snapshots` (status='draft' that pass `expiresAt`); the script is production-ready and tested. Just needs a cron trigger.
+- **What + Why**: Draft enrichment snapshots expire after 72 hours (per Appendix D of the plan). The cleanup job flips them to `status='abandoned'` and nulls the payload. This can run daily or weekly (low overhead, one indexed query + batched UPDATE). No user-facing impact if deferred, but automating it reduces manual ops overhead.
+- **How**: Choose a backend (Vercel cron routes via `vercel.json`, or integrate into a scheduled job queue if Axion adopts one later). Create the route `/api/cron/cleanup-enrichments` that calls the script (via `pnpm tsx scripts/cleanup-abandoned-enrichments.ts`), guard with a secret header, set cron to run daily at 02:00 UTC or similar off-peak time.
+- **Alternative**: Keep the script manual-only for now and schedule it locally when needed. This is how it ships; document in a readme / sidebar note so a future agent doesn't forget it exists.
+- **Date filed**: 2026-06-16.
+
 ---
 
 ## Backtest / Inspector

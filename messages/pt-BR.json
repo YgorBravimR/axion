@@ -1947,6 +1947,28 @@
 			"noTagsFound": "Nenhuma tag encontrada",
 			"tagStatsRetrieved": "Estatísticas de tags obtidas com sucesso",
 			"tagStatsFetchFailed": "Falha ao obter estatísticas de tags"
+		},
+		"quickAdd": {
+			"title": "Adicionar Trade Rápido",
+			"description": "Crie um trade em 30 segundos apenas com o essencial",
+			"labels": {
+				"asset": "Ativo",
+				"direction": "Direção",
+				"entryDate": "Data e Hora da Entrada",
+				"entryPrice": "Preço de Entrada",
+				"positionSize": "Tamanho da Posição"
+			},
+			"directions": {
+				"long": "Compra",
+				"short": "Venda"
+			},
+			"buttons": {
+				"save": "Salvar trade",
+				"saveAndAdd": "Salvar e adicionar outro",
+				"cancel": "Cancelar"
+			},
+			"tradeCreated": "Trade criado com sucesso",
+			"createFailed": "Falha ao criar trade"
 		}
 	},
 	"analytics": {

@@ -91,6 +91,33 @@ export const setupRankEnum = pgEnum("setup_rank", ["A", "AA", "AAA"])
 // Trade Execution Rating Enum (A-F, measures execution quality)
 export const tradeRatingEnum = pgEnum("trade_rating", ["A", "B", "C", "D", "F"])
 
+// Two-phase journaling — trade enrichment status enums (see
+// docs/plans/two-phase-journaling-with-enrichment.md Appendix A).
+// `enrichment_status` is the rollup across the 4 enrichment passes
+// (ops / candle-math / indicator-readout / SL+target).
+export const enrichmentStatusEnum = pgEnum("enrichment_status", [
+	"pending",
+	"partial",
+	"enriched",
+])
+
+// Per-pass status. `skipped` = prerequisite missing, `succeeded` = reviewer
+// accepted output, `failed` = pass threw, `rejected` = reviewer rejected.
+export const enrichmentPassStatusEnum = pgEnum("enrichment_pass_status", [
+	"skipped",
+	"succeeded",
+	"failed",
+	"rejected",
+])
+
+// Snapshot status — controls draft persistence across page refreshes and
+// retention of committed audit records.
+export const snapshotStatusEnum = pgEnum("snapshot_status", [
+	"draft",
+	"committed",
+	"abandoned",
+])
+
 // Bug Report Status Enum
 export const bugReportStatusEnum = pgEnum("bug_report_status", [
 	"open",
@@ -717,6 +744,36 @@ export const trades = pgTable(
 		// Deduplication (SHA-256 hash of accountId|asset|direction|entryDate|entryPrice|exitPrice|positionSize)
 		deduplicationHash: varchar("deduplication_hash", { length: 64 }),
 
+		// Two-phase journaling — enrichment rollup state
+		// (see docs/plans/two-phase-journaling-with-enrichment.md Appendix A).
+		enrichmentStatus: enrichmentStatusEnum("enrichment_status")
+			.default("pending")
+			.notNull(),
+		enrichmentVersion: integer("enrichment_version").default(0).notNull(),
+		enrichedAt: timestamp("enriched_at", { withTimezone: true }),
+
+		// Per-pass status (NULL = pass never ran for this trade).
+		enrichmentOpsStatus: enrichmentPassStatusEnum("enrichment_ops_status"),
+		enrichmentCandleStatus: enrichmentPassStatusEnum(
+			"enrichment_candle_status"
+		),
+		enrichmentIndicatorStatus: enrichmentPassStatusEnum(
+			"enrichment_indicator_status"
+		),
+		enrichmentSlTargetStatus: enrichmentPassStatusEnum(
+			"enrichment_sl_target_status"
+		),
+
+		// Hawks indicator readout snapshot — open-shape JSON so new indicators
+		// slot in without a migration. Schema documented in the plan doc.
+		indicatorReadout: jsonb("indicator_readout"),
+
+		// Profit Pro reconciliation — operationNumber is a real column because
+		// it backs the idempotency index. Other Profit-side numbers
+		// (drawdown / ganho-max / perda-max) live inside profitMetadata.
+		profitOperationNumber: integer("profit_operation_number"),
+		profitMetadata: jsonb("profit_metadata"),
+
 		// Metadata
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.defaultNow()
@@ -754,6 +811,63 @@ export const trades = pgTable(
 		index("idx_trades_active_date")
 			.on(table.accountId, table.entryDate)
 			.where(sql`is_archived = false`),
+
+		// Enrichment dashboards filter on this rollup constantly.
+		index("trades_enrichment_status_idx").on(table.enrichmentStatus),
+		// Idempotency lookup for Profit Pro orders.csv ingestion:
+		// "have we already enriched a trade matching (account, date, operation)?"
+		index("trades_profit_operation_number_idx").on(
+			table.accountId,
+			table.entryDate,
+			table.profitOperationNumber
+		),
+	]
+)
+
+// ═══════════════════════════════════════════════════════════════════
+// Two-phase journaling — trade_enrichment_snapshots
+// ═══════════════════════════════════════════════════════════════════
+
+// One row per (trade, dry-run-version). `draft` rows survive page
+// refreshes during a review session; `committed` rows are the audit
+// record after the reviewer accepted/rejected per-field; `abandoned`
+// rows had their payload nulled by the cleanup job after expiresAt.
+// Keep forever (decision A.3) until total volume crosses 5GB.
+export const tradeEnrichmentSnapshots = pgTable(
+	"trade_enrichment_snapshots",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		tradeId: uuid("trade_id")
+			.notNull()
+			.references(() => trades.id, { onDelete: "cascade" }),
+		version: integer("version").notNull(),
+		dryRunOutput: jsonb("dry_run_output").notNull(),
+		acceptedFields: text("accepted_fields").array(),
+		rejectedFields: text("rejected_fields").array(),
+		enrichedAt: timestamp("enriched_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		enrichmentEngineVersion: varchar("enrichment_engine_version", {
+			length: 32,
+		}).notNull(),
+		candleDataLoadedAt: timestamp("candle_data_loaded_at", {
+			withTimezone: true,
+		}),
+		status: snapshotStatusEnum("status").default("draft").notNull(),
+		runId: uuid("run_id").notNull(),
+		expiresAt: timestamp("expires_at", { withTimezone: true }),
+	},
+	(table) => [
+		index("trade_enrichment_snapshots_trade_idx").on(table.tradeId),
+		index("trade_enrichment_snapshots_trade_version_idx").on(
+			table.tradeId,
+			table.version
+		),
+		index("trade_enrichment_snapshots_run_idx").on(table.runId, table.status),
+		index("trade_enrichment_snapshots_status_expiry_idx").on(
+			table.status,
+			table.expiresAt
+		),
 	]
 )
 
