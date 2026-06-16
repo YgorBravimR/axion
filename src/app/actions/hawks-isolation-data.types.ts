@@ -1,3 +1,11 @@
+import type { UserEntry } from "@/types/backtest"
+
+interface CatalogEntry extends UserEntry {
+	label?: string
+	tradeNumber?: number | string
+	closePrice?: number
+}
+
 interface CatalogMarker {
 	brickIndex: number
 	label: string
@@ -37,6 +45,7 @@ interface HawksIsolationData {
 }
 
 export type {
+	CatalogEntry,
 	CatalogMarker,
 	IsolationCandle,
 	IsolationGateSnapshot,

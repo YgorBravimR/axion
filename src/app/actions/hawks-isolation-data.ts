@@ -12,8 +12,8 @@ import { hawksV0 } from "@/lib/backtest/presets/hawks-presets"
 import { getDailyAnchors } from "@/lib/indicators/daily-anchors"
 import type { DailyAnchorPayload } from "@/lib/indicators/daily-anchors"
 import type { CandleRow } from "@/types/candle"
-import type { UserEntry } from "@/types/backtest"
 import type {
+	CatalogEntry,
 	CatalogMarker,
 	HawksIsolationData,
 	IsolationCandle,
@@ -22,12 +22,6 @@ import type {
 const ENTRIES_DIR = resolve(process.cwd(), "data/hawks/user-entries")
 const ASSET_SYMBOL = "WIN"
 const BRT_OFFSET_MS = -3 * 60 * 60 * 1000
-
-interface CatalogEntry extends UserEntry {
-	label?: string
-	tradeNumber?: number | string
-	closePrice?: number
-}
 
 const dateToBrt = (ts: Date): string =>
 	new Date(ts.getTime() + BRT_OFFSET_MS).toISOString().slice(0, 10)

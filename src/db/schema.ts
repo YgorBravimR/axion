@@ -2314,14 +2314,22 @@ export const tradeStopAuditEvents = pgTable(
 // Hawks Backtesting — Renko weekly brick sizes
 // ═══════════════════════════════════════════════════════════════════
 
-// One row per ISO week. effectiveDate = Monday of that week (ISO-safe anchor;
-// avoids the ISO week-year edge case where week 1 can start in December).
-// Upserted from the master CSV (hawk-renkos(Renkos).csv) via importHawksRenkoSizes.
+// One row per (asset, ISO week). effectiveDate = Monday of that week
+// (ISO-safe anchor; avoids the ISO week-year edge case where week 1 can
+// start in December). The asset_id column lets WIN and WDO coexist
+// cleanly — every read MUST filter on assetId (today most callers
+// hard-code WIN; the materializer + importer accept an asset arg).
+// Upserted from the master CSV (`data/hawks/renko-sizes.csv`) via
+// importHawksRenkoSizes — the CSV is WIN-only today; if/when WDO triples
+// land the importer accepts an `assetSymbol` arg.
 export const hawksRenkoSizes = pgTable(
 	"hawks_renko_sizes",
 	{
 		id: uuid("id").primaryKey().defaultRandom(),
-		effectiveDate: date("effective_date").notNull().unique(),
+		assetId: uuid("asset_id")
+			.notNull()
+			.references(() => assets.id, { onDelete: "cascade" }),
+		effectiveDate: date("effective_date").notNull(),
 		weekNumber: smallint("week_number").notNull(),
 		size5m: smallint("size_5m").notNull(),
 		size15m: smallint("size_15m").notNull(),
@@ -2330,7 +2338,12 @@ export const hawksRenkoSizes = pgTable(
 			.defaultNow()
 			.notNull(),
 	},
-	(table) => [uniqueIndex("hawks_renko_sizes_date_idx").on(table.effectiveDate)]
+	(table) => [
+		uniqueIndex("hawks_renko_sizes_asset_date_idx").on(
+			table.assetId,
+			table.effectiveDate
+		),
+	]
 )
 
 // ═══════════════════════════════════════════════════════════════════

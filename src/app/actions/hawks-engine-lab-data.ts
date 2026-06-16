@@ -1,6 +1,6 @@
 "use server"
 
-import { desc, eq, lte } from "drizzle-orm"
+import { and, desc, eq, lte } from "drizzle-orm"
 import { db } from "@/db/drizzle"
 import { assets, hawksRenkoSizes, timeframes } from "@/db/schema"
 import { requireRole } from "@/lib/auth-utils"
@@ -615,7 +615,12 @@ export const loadHawksEngineLabData = async (
 					size5m: hawksRenkoSizes.size5m,
 				})
 				.from(hawksRenkoSizes)
-				.where(lte(hawksRenkoSizes.effectiveDate, lastDayKey))
+				.where(
+					and(
+						eq(hawksRenkoSizes.assetId, assetId),
+						lte(hawksRenkoSizes.effectiveDate, lastDayKey)
+					)
+				)
 				.orderBy(desc(hawksRenkoSizes.effectiveDate))
 		: []
 	// `hawks_renko_sizes.size_5m` stores the R NUMBER `N` (e.g. R20 = 20).

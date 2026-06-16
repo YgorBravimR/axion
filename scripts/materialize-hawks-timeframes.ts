@@ -308,10 +308,11 @@ const run = async () => {
 		SELECT effective_date::text AS effective_date,
 		       size_5m, size_15m, size_60m
 		FROM hawks_renko_sizes
+		WHERE asset_id = ${assetId}
 		ORDER BY effective_date ASC
 	`) as WeekRow[]
 	if (weeks.length === 0) {
-		throw new Error("hawks_renko_sizes is empty")
+		throw new Error(`hawks_renko_sizes empty for asset ${ASSET_SYMBOL}`)
 	}
 	console.log(`Loaded ${weeks.length} weekly triple(s)`)
 

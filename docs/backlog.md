@@ -164,24 +164,6 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ---
 
-### Fractal-plan backfill tests — missing `computeROutcome` in r-snapshot mock (3 failing tests on main)
-
-- **Priority**: P2
-- **Effort**: XS (one-line mock addition; mock with the actual `computeROutcome` via `importOriginal` or restate inline)
-- **Source**: 2026-06-13 — discovered during the v0.9 walker verification run (`pnpm vitest run`). Pre-existing failure on `main`, unrelated to the Hawks/backtest domain.
-- **Symptom**: 3 tests in `src/__tests__/lib/fractal-plan/backfill-trades.test.ts` fail with `[vitest] No "computeROutcome" export is defined on the "@/lib/fractal-plan/r-snapshot" mock`. The `vi.mock("@/lib/fractal-plan/r-snapshot", ...)` block at lines 30–32 only mocks `captureROnEntry` but the source module exports both `captureROnEntry` AND `computeROutcome`. The backfill code path under test calls both, so the mock needs to provide both.
-- **Fix shape**: rewrite the mock to use `importOriginal` and keep the real `computeROutcome`:
-  ```ts
-  vi.mock("@/lib/fractal-plan/r-snapshot", async (importOriginal) => {
-  	const actual =
-  		await importOriginal<typeof import("@/lib/fractal-plan/r-snapshot")>()
-  	return { ...actual, captureROnEntry: mockCaptureROnEntry }
-  })
-  ```
-- **Note**: pre-existing on `main`; not a regression from this branch. Surfaced here only so it doesn't get lost — fix can ship in its own small PR.
-
----
-
 ### Indicator Lab: BRT offset hardcoded, ignores DST
 
 - **Priority**: P3
@@ -192,15 +174,6 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Done when**: `BRT_OFFSET_MS` is removed; `dateToBrt(ts)` returns a `YYYY-MM-DD` string via `Intl.DateTimeFormat`; Indicator Lab renders identically for every existing date in the parquet window (regression check against a sample of 2026-03/04/05/06 days).
 - **2026-06-14 review (Ygor + Claude)**: deliberately deferred — the project guideline against "error handling, fallbacks, or validation for scenarios that can't happen" applies. Brazil has no DST since 2019 with no reinstatement on the horizon, the asset definition (WIN/WDO) is BRT-only, and the code path is admin-only. Promote to P1 the day either (a) Brazil announces DST reinstatement or (b) a DST-observing asset is added to the Indicator Lab.
 - **Date filed**: 2026-06-13.
-
----
-
-### Asset-tag `hawks_renko_sizes` so WIN and WDO triples don't collide in one table
-
-- **Priority**: P3
-- **Effort**: S (migration: add `asset_id` column nullable → backfill WIN for all 124 existing rows → make NOT NULL; update unique index to `(asset_id, effective_date)`; teach `importHawksRenkoSizes` to accept an `assetSymbol` arg; update CSV format to include an `ASSET` column)
-- **Source**: 2026-06-13 — discovered while diagnosing the Group A `AXION_UNKNOWN = 19%` cascade. The renko-sizes table is schema-asset-agnostic but the source CSV (`data/hawks/renko-sizes.csv`) and the importer treat it as one global table. Ygor confirmed only WIN is exported; the table's pre-2026 weeks likely came from a planning doc that included WDO triples or theoretical sizes. Today the silent-mix is masked by the 2026-06-13 materializer fix (skip-incomplete-weeks), but if WDO ever gets exported the two assets' triples will clash on `effective_date` and the unique index will reject one.
-- **What + Why**: the schema at `src/db/schema.ts:2321` defines `hawks_renko_sizes` with `effective_date UNIQUE` and no `asset_id`. Adding `asset_id` lets WIN and WDO coexist cleanly, and adds a JOIN-on-asset filter to the materializer so it only walks WIN weeks when materializing WIN parquets. Schema migration is the bulk of the work; the materializer change is a 1-line WHERE clause; the CSV format gets a new column. Today this entry sits at P3 because the 2026-06-13 fix already de-fangs the symptom — promote to P1 the day WDO export starts.
 
 ---
 

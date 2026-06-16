@@ -1,6 +1,6 @@
 "use server"
 
-import { desc, eq, lte } from "drizzle-orm"
+import { and, desc, eq, lte } from "drizzle-orm"
 import { db } from "@/db/drizzle"
 import { assets, hawksRenkoSizes, timeframes } from "@/db/schema"
 import { requireAuth } from "@/app/actions/auth"
@@ -96,7 +96,12 @@ export const getInspectorWindow = async (
 					size60m: hawksRenkoSizes.size60m,
 				})
 				.from(hawksRenkoSizes)
-				.where(lte(hawksRenkoSizes.effectiveDate, centerDateStr))
+				.where(
+					and(
+						eq(hawksRenkoSizes.assetId, assetRow.id),
+						lte(hawksRenkoSizes.effectiveDate, centerDateStr)
+					)
+				)
 				.orderBy(desc(hawksRenkoSizes.effectiveDate))
 				.limit(1)
 		)[0]
@@ -200,7 +205,12 @@ export const getOverviewRange = async (
 					size60m: hawksRenkoSizes.size60m,
 				})
 				.from(hawksRenkoSizes)
-				.where(lte(hawksRenkoSizes.effectiveDate, params.fromDate))
+				.where(
+					and(
+						eq(hawksRenkoSizes.assetId, assetRow.id),
+						lte(hawksRenkoSizes.effectiveDate, params.fromDate)
+					)
+				)
 				.orderBy(desc(hawksRenkoSizes.effectiveDate))
 				.limit(1)
 		)[0]
