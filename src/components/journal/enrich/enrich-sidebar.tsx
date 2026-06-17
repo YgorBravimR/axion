@@ -15,7 +15,7 @@ interface DayGroup {
 	trades: Array<{
 		index: number
 		timestamp: string // HH:mm format
-		status: "draft" | "committed" | "skipped"
+		status: "draft" | "committed" | "abandoned"
 	}>
 }
 
@@ -36,11 +36,7 @@ export const EnrichSidebar = ({
 			const snapshot = snapshots[i]!
 			const entryDate = snapshot.dryRun.trade.entryDate
 			const dateStr =
-				entryDate instanceof Date
-					? entryDate.toISOString().split("T")[0]
-					: typeof entryDate === "string"
-						? entryDate.split("T")[0]
-						: ""
+				entryDate instanceof Date ? entryDate.toISOString().split("T")[0] : ""
 
 			if (!dateStr) {
 				continue

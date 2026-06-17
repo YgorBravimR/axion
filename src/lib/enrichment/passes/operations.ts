@@ -1,9 +1,14 @@
 import type { Trade } from "@/db/schema"
 import type {
 	EnrichmentDelta,
+	EnrichmentField,
 	EnrichmentPass,
 	EnrichmentContext,
 } from "@/lib/enrichment/types"
+
+const toNumberOrNull = (
+	v: string | number | null | undefined
+): number | null => (v == null ? null : Number(v))
 
 const operationsPass: EnrichmentPass = (
 	trade: Trade,
@@ -36,7 +41,7 @@ const operationsPass: EnrichmentPass = (
 		}
 	}
 
-	const fields: Record<string, unknown> = {}
+	const fields: Record<string, EnrichmentField> = {}
 
 	try {
 		const { profitOperation } = ctx
@@ -101,13 +106,13 @@ const operationsPass: EnrichmentPass = (
 		)
 		checkAndAdd(
 			"mfe",
-			profitOperation.mfe ?? null,
+			toNumberOrNull(profitOperation.mfe),
 			trade.mfe != null ? Number(trade.mfe) : null,
 			true
 		)
 		checkAndAdd(
 			"mae",
-			profitOperation.mae ?? null,
+			toNumberOrNull(profitOperation.mae),
 			trade.mae != null ? Number(trade.mae) : null,
 			true
 		)

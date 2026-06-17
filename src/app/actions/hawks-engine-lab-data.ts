@@ -803,7 +803,8 @@ export const loadHawksEngineLabData = async (
 				ctx,
 				1, // tickSize — unused by orchestrator
 				config,
-				htfSnapshot
+				htfSnapshot,
+				null
 			)
 			state = result.state
 

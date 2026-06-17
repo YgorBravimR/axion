@@ -63,6 +63,7 @@ export const EnrichResumeBanner = ({ runId }: EnrichResumeBannerProps) => {
 					<p className="text-body text-txt-100">{t("bannerText")}</p>
 					<div className="gap-s-300 flex">
 						<Button
+							id="enrich-resume-abandon"
 							variant="outline"
 							size="sm"
 							onClick={() => setShowAbandonConfirm(true)}
@@ -71,6 +72,7 @@ export const EnrichResumeBanner = ({ runId }: EnrichResumeBannerProps) => {
 							{t("abandonButton")}
 						</Button>
 						<Button
+							id="enrich-resume-continue"
 							size="sm"
 							onClick={handleResume}
 							disabled={isAbandonPending}
@@ -94,10 +96,14 @@ export const EnrichResumeBanner = ({ runId }: EnrichResumeBannerProps) => {
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
-						<AlertDialogCancel disabled={isAbandonPending}>
+						<AlertDialogCancel
+							id="enrich-resume-abandon-cancel"
+							disabled={isAbandonPending}
+						>
 							{t("abandonCancel")}
 						</AlertDialogCancel>
 						<AlertDialogAction
+							id="enrich-resume-abandon-confirm"
 							onClick={handleAbandon}
 							disabled={isAbandonPending}
 						>

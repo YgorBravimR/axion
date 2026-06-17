@@ -28,7 +28,7 @@ export const formatTimeForReview = (
  * - "draft" (•): not yet visited
  */
 export const getStatusIcon = (
-	status: "current" | "committed" | "skipped" | "draft"
+	status: "current" | "committed" | "skipped" | "abandoned" | "draft"
 ): string => {
 	switch (status) {
 		case "current":
@@ -36,6 +36,7 @@ export const getStatusIcon = (
 		case "committed":
 			return "✓"
 		case "skipped":
+		case "abandoned":
 			return "⊘"
 		case "draft":
 		default:

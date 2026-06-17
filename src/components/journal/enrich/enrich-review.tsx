@@ -62,12 +62,14 @@ export const EnrichReview = ({
 	})
 
 	const currentSnapshot = snapshots[currentIndex]
-	const currentSelection = fieldSelections.get(currentSnapshot.snapshotId) || {
-		accepted: new Set(),
-		rejected: new Set(),
-	}
-
 	const totalCount = snapshots.length
+
+	const currentSelection = currentSnapshot
+		? fieldSelections.get(currentSnapshot.snapshotId) || {
+				accepted: new Set<string>(),
+				rejected: new Set<string>(),
+			}
+		: { accepted: new Set<string>(), rejected: new Set<string>() }
 
 	// Navigation handlers
 	const handleNext = useCallback(() => {
@@ -84,6 +86,9 @@ export const EnrichReview = ({
 
 	const handleToggleField = useCallback(
 		(fieldName: string, state: "accepted" | "rejected" | "neither") => {
+			if (!currentSnapshot) {
+				return
+			}
 			const snapshotId = currentSnapshot.snapshotId
 			setFieldSelections((prev) => {
 				const selection = prev.get(snapshotId) ?? {
@@ -109,11 +114,14 @@ export const EnrichReview = ({
 				return map
 			})
 		},
-		[currentSnapshot.snapshotId]
+		[currentSnapshot]
 	)
 
 	// Save & next handler
 	const handleSave = useCallback(async () => {
+		if (!currentSnapshot) {
+			return
+		}
 		setIsCommitting(true)
 
 		try {
@@ -181,14 +189,19 @@ export const EnrichReview = ({
 
 	// Skip handler
 	const handleSkip = useCallback(async () => {
+		if (!currentSnapshot) {
+			return
+		}
+		const skipSnapshotId = currentSnapshot.snapshotId
 		setIsSkipping(true)
 
 		try {
-			// Mark locally as skipped (future enrichments will see this as draft)
+			// Mark locally as skipped — uses "abandoned" status so it counts
+			// against the reviewed total and is distinct from initial "draft".
 			setSnapshots((prev) =>
 				prev.map((s) =>
-					s.snapshotId === currentSnapshot.snapshotId
-						? { ...s, status: "draft" as const }
+					s.snapshotId === skipSnapshotId
+						? { ...s, status: "abandoned" as const }
 						: s
 				)
 			)
@@ -196,7 +209,7 @@ export const EnrichReview = ({
 			// Clear selection
 			setFieldSelections((prev) => {
 				const map = new Map(prev)
-				map.set(currentSnapshot.snapshotId, {
+				map.set(skipSnapshotId, {
 					accepted: new Set(),
 					rejected: new Set(),
 				})
@@ -235,6 +248,9 @@ export const EnrichReview = ({
 
 	// Accept all handler
 	const handleAcceptAll = useCallback(() => {
+		if (!currentSnapshot) {
+			return
+		}
 		const snapshotId = currentSnapshot.snapshotId
 		const mergedFields = Object.keys(currentSnapshot.dryRun.mergedFields)
 
@@ -250,6 +266,9 @@ export const EnrichReview = ({
 
 	// Reject all handler
 	const handleRejectAll = useCallback(() => {
+		if (!currentSnapshot) {
+			return
+		}
 		const snapshotId = currentSnapshot.snapshotId
 
 		setFieldSelections((prev) => {
@@ -286,7 +305,7 @@ export const EnrichReview = ({
 	const committedCount = snapshots.filter(
 		(s) => s.status === "committed"
 	).length
-	const skippedCount = snapshots.filter((s) => s.status === "skipped").length
+	const skippedCount = snapshots.filter((s) => s.status === "abandoned").length
 	const reviewedCount = committedCount + skippedCount
 	const isAllReviewed = reviewedCount === totalCount && totalCount > 0
 
@@ -297,6 +316,10 @@ export const EnrichReview = ({
 				stats={{ committedCount, skippedCount }}
 			/>
 		)
+	}
+
+	if (!currentSnapshot) {
+		return null
 	}
 
 	return (
@@ -360,6 +383,7 @@ export const EnrichReview = ({
 					<div className="bg-bg-200 border-bg-300 px-m-500 py-m-400 gap-s-300 flex items-center justify-between border-t">
 						<div className="flex items-center gap-2">
 							<Button
+								id="enrich-review-prev"
 								variant="outline"
 								size="sm"
 								onClick={handlePrev}
@@ -370,6 +394,7 @@ export const EnrichReview = ({
 								{t("prev")}
 							</Button>
 							<Button
+								id="enrich-review-next"
 								variant="outline"
 								size="sm"
 								onClick={handleNext}
@@ -383,6 +408,7 @@ export const EnrichReview = ({
 
 						<div className="flex items-center gap-2">
 							<Button
+								id="enrich-review-help"
 								variant="outline"
 								size="sm"
 								onClick={() => setIsHelpDialogOpen(true)}
@@ -391,6 +417,7 @@ export const EnrichReview = ({
 								?
 							</Button>
 							<Button
+								id="enrich-review-skip"
 								variant="outline"
 								size="sm"
 								onClick={handleSkip}
@@ -403,6 +430,7 @@ export const EnrichReview = ({
 								{t("skip")}
 							</Button>
 							<Button
+								id="enrich-review-save"
 								size="sm"
 								onClick={handleSave}
 								disabled={
@@ -420,6 +448,7 @@ export const EnrichReview = ({
 						</div>
 
 						<Button
+							id="enrich-review-abandon"
 							variant="destructive"
 							size="sm"
 							onClick={() => setIsAbandonDialogOpen(true)}
@@ -444,8 +473,13 @@ export const EnrichReview = ({
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<div className="flex justify-end gap-2">
-						<AlertDialogCancel>Keep reviewing</AlertDialogCancel>
-						<AlertDialogAction onClick={handleAbandon}>
+						<AlertDialogCancel id="enrich-review-abandon-cancel">
+							Keep reviewing
+						</AlertDialogCancel>
+						<AlertDialogAction
+							id="enrich-review-abandon-confirm"
+							onClick={handleAbandon}
+						>
 							Abandon
 						</AlertDialogAction>
 					</div>
@@ -454,7 +488,7 @@ export const EnrichReview = ({
 
 			{/* Help overlay */}
 			<Dialog open={isHelpDialogOpen} onOpenChange={setIsHelpDialogOpen}>
-				<DialogContent>
+				<DialogContent id="enrich-review-help-dialog">
 					<DialogHeader>
 						<DialogTitle>{t("helpTitle")}</DialogTitle>
 						<DialogClose />

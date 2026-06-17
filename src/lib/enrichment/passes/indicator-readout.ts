@@ -1,6 +1,7 @@
 import type { Trade } from "@/db/schema"
 import type {
 	EnrichmentDelta,
+	EnrichmentField,
 	EnrichmentPass,
 	EnrichmentContext,
 } from "@/lib/enrichment/types"
@@ -44,7 +45,7 @@ const indicatorReadoutPass: EnrichmentPass = (
 			}
 		}
 
-		const fields: Record<string, unknown> = {}
+		const fields: Record<string, EnrichmentField> = {}
 
 		const confidence: "high" | "medium" | "low" =
 			snapshot.favorableCount >= 4

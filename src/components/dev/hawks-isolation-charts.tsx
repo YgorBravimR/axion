@@ -1252,18 +1252,21 @@ const HawksIsolationCharts = ({
 				let emitted: TriggerOutcome | null = null
 
 				if (state.name === "cooldown") {
+					const cooldownState: Extract<State, { name: "cooldown" }> = state
 					const isFarBelow = c.high < level - effCooldownBand
 					const isFarAbove = c.low > level + effCooldownBand
 					if (
-						(state.side === "below" && isFarBelow) ||
-						(state.side === "above" && isFarAbove)
+						(cooldownState.side === "below" && isFarBelow) ||
+						(cooldownState.side === "above" && isFarAbove)
 					) {
-						state = { ...state, bricksLeft: state.bricksLeft - 1 }
-						if (state.bricksLeft <= 0) {
-							state = { name: state.side, tag: "fresh" }
+						const nextBricksLeft = cooldownState.bricksLeft - 1
+						if (nextBricksLeft <= 0) {
+							state = { name: cooldownState.side, tag: "fresh" }
+						} else {
+							state = { ...cooldownState, bricksLeft: nextBricksLeft }
 						}
 					} else {
-						state = { ...state, bricksLeft: COOLDOWN_BRICKS }
+						state = { ...cooldownState, bricksLeft: COOLDOWN_BRICKS }
 					}
 				} else if (state.name === "below" || state.name === "above") {
 					const onSide = state.name
@@ -1354,13 +1357,14 @@ const HawksIsolationCharts = ({
 						}
 					}
 				} else if (state.name === "armed_from_below") {
+					const armedFromBelowState: Extract<
+						State,
+						{ name: "armed_from_below" }
+					> = state
 					if (c.close < lo) {
-						// Pushed back below → BEARISH rejection.
-						// Reversal arm from below → trade short (price came up, got rejected).
-						// Retest arm from below → trade short (broke down, pulled up, rejected back) — continuation down.
 						emitted = {
 							kind: "rejection_short",
-							archetype: state.archetype,
+							archetype: armedFromBelowState.archetype,
 							level,
 						}
 						state = {
@@ -1370,26 +1374,28 @@ const HawksIsolationCharts = ({
 							level,
 						}
 					} else if (c.close > hi) {
-						// Closed above the band — armed from below escaped upward.
-						// Tag the new "above" side: if the prior side was "broken" the upward
-						// escape becomes a fresh side; if prior was "fresh" the break is now
-						// confirming and confirmAboveStreak handles it next iteration.
 						state = { name: "above", tag: "fresh" }
 					} else {
-						state = { ...state, countdown: state.countdown - 1 }
-						if (state.countdown <= 0) {
+						const nextCountdown = armedFromBelowState.countdown - 1
+						if (nextCountdown <= 0) {
 							state =
 								c.close >= level
 									? { name: "above", tag: "fresh" }
 									: { name: "below", tag: "fresh" }
+						} else {
+							state = { ...armedFromBelowState, countdown: nextCountdown }
 						}
 					}
 				} else {
 					// armed_from_above
+					const armedFromAboveState: Extract<
+						State,
+						{ name: "armed_from_above" }
+					> = state
 					if (c.close > hi) {
 						emitted = {
 							kind: "rejection_long",
-							archetype: state.archetype,
+							archetype: armedFromAboveState.archetype,
 							level,
 						}
 						state = {
@@ -1401,12 +1407,14 @@ const HawksIsolationCharts = ({
 					} else if (c.close < lo) {
 						state = { name: "below", tag: "fresh" }
 					} else {
-						state = { ...state, countdown: state.countdown - 1 }
-						if (state.countdown <= 0) {
+						const nextCountdown = armedFromAboveState.countdown - 1
+						if (nextCountdown <= 0) {
 							state =
 								c.close >= level
 									? { name: "above", tag: "fresh" }
 									: { name: "below", tag: "fresh" }
+						} else {
+							state = { ...armedFromAboveState, countdown: nextCountdown }
 						}
 					}
 				}
@@ -1533,7 +1541,7 @@ const HawksIsolationCharts = ({
 			const rollMean = rollCount >= MIN_ROLL_BRICKS ? rollSum / rollCount : null
 			const dayMean = dayCount >= MIN_DAY_BRICKS ? daySum / dayCount : null
 			out.push({
-				value: values[i],
+				value: values[i] ?? null,
 				rollMean,
 				dayMean,
 				dayBrickCount: dayCount,
