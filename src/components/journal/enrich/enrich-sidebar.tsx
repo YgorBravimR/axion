@@ -70,21 +70,21 @@ export const EnrichSidebar = ({
 	}, [snapshots])
 
 	return (
-		<div className="bg-background h-full w-full overflow-y-auto border-r p-4">
-			<div className="space-y-4">
+		<div className="p-m-400 h-full w-full overflow-y-auto">
+			<div className="space-y-m-400">
 				{dayGroups.map((dayGroup) => (
-					<div key={dayGroup.date} className="space-y-2">
+					<div key={dayGroup.date} className="space-y-s-200">
 						{/* Day header */}
-						<div className="text-small text-muted-foreground font-medium">
-							{new Date(dayGroup.date).toLocaleDateString("en-US", {
+						<div className="text-tiny text-txt-300 px-s-200 font-semibold tracking-wide uppercase">
+							{new Date(dayGroup.date).toLocaleDateString("pt-BR", {
 								weekday: "short",
-								month: "2-digit",
 								day: "2-digit",
+								month: "short",
 							})}
 						</div>
 
 						{/* Trade rows for this day */}
-						<div className="space-y-1">
+						<div className="space-y-s-100">
 							{dayGroup.trades.map((trade) => {
 								const isCurrent = currentIndex === trade.index
 								const icon = getStatusIcon(isCurrent ? "current" : trade.status)
@@ -93,15 +93,15 @@ export const EnrichSidebar = ({
 									<button
 										key={trade.index}
 										onClick={() => onSelect(trade.index)}
-										className={`text-small w-full rounded-sm px-3 py-2 text-left transition-colors ${
+										className={`text-small px-s-300 py-s-200 gap-s-200 flex w-full items-center rounded-md text-left transition-colors ${
 											isCurrent
-												? "bg-accent text-accent-foreground font-medium"
-												: "hover:bg-muted text-muted-foreground hover:text-foreground"
+												? "bg-acc-100/15 text-txt-100 font-medium"
+												: "text-txt-300 hover:bg-bg-300 hover:text-txt-100"
 										}`}
 										title={`Trade ${trade.index + 1}: ${trade.timestamp}`}
 									>
-										<span className="mr-2">{icon}</span>
-										<span>{trade.timestamp}</span>
+										<span className="text-tiny">{icon}</span>
+										<span className="tabular-nums">{trade.timestamp}</span>
 									</button>
 								)
 							})}

@@ -55,7 +55,7 @@ export const EnrichTradeCard = ({
 	const trade = snapshot.dryRun.trade
 	const dryRun = snapshot.dryRun
 
-	const direction = trade.direction?.toUpperCase() || "—"
+	const direction = trade.direction?.toUpperCase() ?? null
 	const entryTime = trade.entryDate
 		? formatTime(new Date(trade.entryDate))
 		: "—"
@@ -72,32 +72,46 @@ export const EnrichTradeCard = ({
 		"deterministicSlTarget",
 	] as const
 
+	const directionColor =
+		direction === "LONG"
+			? "var(--color-trade-buy)"
+			: direction === "SHORT"
+				? "var(--color-trade-sell)"
+				: null
+
 	return (
-		<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
+		<div className="space-y-m-400">
 			{/* Trade header card */}
-			<Card id="trade-header">
-				<CardHeader>
+			<Card id="trade-header" className="overflow-hidden">
+				<CardHeader className="p-m-500">
 					<div className="gap-m-400 flex items-start justify-between">
 						<div className="gap-s-200 flex flex-col">
-							<div className="gap-s-200 flex items-center">
-								<CardTitle>{trade.asset}</CardTitle>
-								<Badge
-									id={`direction-${direction}`}
-									variant={direction === "LONG" ? "default" : "secondary"}
-								>
-									{direction}
-								</Badge>
+							<div className="gap-s-300 flex flex-wrap items-center">
+								<CardTitle className="text-h3 leading-none font-bold">
+									{trade.asset}
+								</CardTitle>
+								{direction && directionColor && (
+									<Badge
+										id={`direction-${direction}`}
+										className="border-transparent text-white"
+										style={{ backgroundColor: directionColor }}
+									>
+										{direction}
+									</Badge>
+								)}
 								{qty != null && (
-									<span className="text-small text-txt-200">
-										qty {new Intl.NumberFormat("pt-BR").format(qty)}
+									<span className="text-small text-txt-300">
+										{t("journal.enrichment.review.contracts", { count: qty })}
 									</span>
 								)}
 							</div>
-							<CardDescription>
-								{entryTime} → {exitTime}
+							<CardDescription className="gap-s-300 flex flex-wrap items-center">
+								<span>
+									{entryTime} → {exitTime}
+								</span>
 								{pnlValue !== 0 && (
 									<span
-										className="ml-m-400 font-medium"
+										className="font-semibold"
 										style={{
 											color:
 												pnlValue > 0
@@ -110,7 +124,16 @@ export const EnrichTradeCard = ({
 								)}
 							</CardDescription>
 						</div>
-						<div className="gap-s-200 flex">
+						<div className="gap-s-200 flex shrink-0">
+							<Button
+								id="trade-header-reject-all"
+								variant="ghost"
+								size="sm"
+								onClick={onRejectAll}
+								className="text-txt-300"
+							>
+								{t("journal.enrichment.passActions.rejectAll")}
+							</Button>
 							<Button
 								id="trade-header-accept-all"
 								variant="outline"
@@ -118,14 +141,6 @@ export const EnrichTradeCard = ({
 								onClick={onAcceptAll}
 							>
 								{t("journal.enrichment.passActions.acceptAll")}
-							</Button>
-							<Button
-								id="trade-header-reject-all"
-								variant="outline"
-								size="sm"
-								onClick={onRejectAll}
-							>
-								{t("journal.enrichment.passActions.rejectAll")}
 							</Button>
 						</div>
 					</div>

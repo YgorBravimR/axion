@@ -2,7 +2,6 @@
 
 import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { AlertCircle } from "lucide-react"
 import type { EnrichmentDelta } from "@/lib/enrichment/types"
@@ -70,33 +69,30 @@ export const EnrichPassCard = ({
 	const passSucceededWithNoChanges =
 		delta.passStatus === "succeeded" && fieldCount === 0
 
-	const handleAcceptAll = () => {
-		for (const [fieldName, field] of Object.entries(delta.fields)) {
-			// Only auto-accept high-confidence, non-conflicting fields
-			if (field.confidence === "high" && !field.conflictsWithCurrent) {
-				onToggleField(fieldName, "accepted")
-			}
-		}
-	}
-
-	const handleRejectAll = () => {
-		for (const fieldName of Object.keys(delta.fields)) {
-			onToggleField(fieldName, "neither")
-		}
-	}
-
 	return (
 		<Card id={`pass-${passName}`}>
 			<CardHeader>
 				<div className="flex items-center justify-between">
 					<div className="gap-s-200 flex items-center">
-						<CardTitle>{passNameLabel}</CardTitle>
-						<Badge
-							id={`confidence-${passName}`}
-							variant={getConfidenceBadgeVariant(highestConfidence)}
-						>
-							{t(`journal.enrichment.confidence.${highestConfidence}`)}
-						</Badge>
+						<CardTitle className="text-body font-semibold">
+							{passNameLabel}
+						</CardTitle>
+						{fieldCount > 0 && (
+							<Badge
+								id={`confidence-${passName}`}
+								variant={getConfidenceBadgeVariant(highestConfidence)}
+							>
+								{t(`journal.enrichment.confidence.${highestConfidence}`)}
+							</Badge>
+						)}
+						{fieldCount > 0 && (
+							<span className="text-tiny text-txt-300">
+								{fieldCount}{" "}
+								{fieldCount === 1
+									? t("journal.enrichment.fieldCountOne")
+									: t("journal.enrichment.fieldCountMany")}
+							</span>
+						)}
 					</div>
 				</div>
 
@@ -137,48 +133,27 @@ export const EnrichPassCard = ({
 			</CardHeader>
 
 			{!passIsSkipped && !passIsFailed && !passSucceededWithNoChanges && (
-				<>
-					<CardContent className="space-y-s-200">
-						{Object.entries(delta.fields).map(([fieldName, field]) => {
-							const baselineValue = baseline[fieldName]
-							const fieldState = acceptedFields.has(fieldName)
-								? ("accepted" as const)
-								: rejectedFields.has(fieldName)
-									? ("rejected" as const)
-									: ("neither" as const)
+				<CardContent className="space-y-s-200">
+					{Object.entries(delta.fields).map(([fieldName, field]) => {
+						const baselineValue = baseline[fieldName]
+						const fieldState = acceptedFields.has(fieldName)
+							? ("accepted" as const)
+							: rejectedFields.has(fieldName)
+								? ("rejected" as const)
+								: ("neither" as const)
 
-							return (
-								<EnrichFieldRow
-									key={fieldName}
-									fieldName={fieldName}
-									field={field}
-									baselineValue={baselineValue}
-									state={fieldState}
-									onToggle={(newState) => onToggleField(fieldName, newState)}
-								/>
-							)
-						})}
-					</CardContent>
-
-					<div className="px-m-400 py-m-400 sm:px-m-500 sm:py-m-500 lg:px-m-600 lg:py-m-600 border-bg-300 gap-s-200 flex border-t">
-						<Button
-							id={`accept-all-${passName}`}
-							variant="outline"
-							size="sm"
-							onClick={handleAcceptAll}
-						>
-							{t("journal.enrichment.passActions.acceptAll")}
-						</Button>
-						<Button
-							id={`reject-all-${passName}`}
-							variant="outline"
-							size="sm"
-							onClick={handleRejectAll}
-						>
-							{t("journal.enrichment.passActions.rejectAll")}
-						</Button>
-					</div>
-				</>
+						return (
+							<EnrichFieldRow
+								key={fieldName}
+								fieldName={fieldName}
+								field={field}
+								baselineValue={baselineValue}
+								state={fieldState}
+								onToggle={(newState) => onToggleField(fieldName, newState)}
+							/>
+						)
+					})}
+				</CardContent>
 			)}
 		</Card>
 	)
