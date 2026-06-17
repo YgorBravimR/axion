@@ -262,12 +262,18 @@ export const EnrichReview = ({
 		})
 	}, [currentSnapshot])
 
-	// Setup keyboard shortcuts
+	// Setup keyboard shortcuts. handleSave/handleSkip are async but the hook
+	// expects sync callbacks — wrap with void so the floating-promise warning
+	// stays loud everywhere else.
 	useEnrichShortcuts({
 		onNext: handleNext,
 		onPrev: handlePrev,
-		onSave: handleSave,
-		onSkip: handleSkip,
+		onSave: () => {
+			void handleSave()
+		},
+		onSkip: () => {
+			void handleSkip()
+		},
 		onAcceptAll: handleAcceptAll,
 		onRejectAll: handleRejectAll,
 		onEdit: () => {
