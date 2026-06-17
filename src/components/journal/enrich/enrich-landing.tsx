@@ -1,9 +1,15 @@
 "use client"
 
-import { useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import {
+	useState,
+	useCallback,
+	useRef,
+	type ChangeEvent,
+	type DragEvent,
+} from "react"
+import { useRouter } from "@/i18n/routing"
 import { useTranslations } from "next-intl"
-import { Loader2 } from "lucide-react"
+import { Loader2, Upload, FileText, CheckCircle2, X } from "lucide-react"
 import { startDryRun } from "@/app/actions/enrichment"
 import { useToast } from "@/components/ui/toast"
 import { Button } from "@/components/ui/button"
@@ -11,6 +17,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { parseCsvContent } from "@/lib/csv-parser"
 import type { CsvParseResult } from "@/lib/csv-parser"
+import { cn } from "@/lib/utils"
 import { EnrichResumeBanner } from "./enrich-resume-banner"
 
 interface EnrichLandingProps {
@@ -38,23 +45,19 @@ export const EnrichLanding = ({
 	const [dateTo, setDateTo] = useState(toDateString)
 
 	// CSV upload state
+	const fileInputRef = useRef<HTMLInputElement>(null)
 	const [csvFileName, setCsvFileName] = useState<string | null>(null)
 	const [csvParseResult, setCsvParseResult] = useState<CsvParseResult | null>(
 		null
 	)
 	const [isCsvParsing, setIsCsvParsing] = useState(false)
+	const [isDragging, setIsDragging] = useState(false)
 
 	// Submit state
 	const [isPending, setIsPending] = useState(false)
 
-	// Handle CSV file selection
-	const handleCsvFileChange = useCallback(
-		async (e: React.ChangeEvent<HTMLInputElement>) => {
-			const file = e.target.files?.[0]
-			if (!file) {
-				return
-			}
-
+	const handleFileSelect = useCallback(
+		async (file: File) => {
 			if (!file.name.endsWith(".csv")) {
 				showToast("error", "Invalid file format. Please upload a .csv file.")
 				return
@@ -64,12 +67,21 @@ export const EnrichLanding = ({
 			setIsCsvParsing(true)
 
 			try {
-				const content = await new Promise<string>((resolve, reject) => {
-					const reader = new FileReader()
-					reader.onload = (e) => resolve(e.target?.result as string)
-					reader.onerror = () => reject(new Error("Failed to read file"))
-					reader.readAsText(file, "UTF-8")
-				})
+				const tryParseWithEncoding = (encoding: string) =>
+					new Promise<string>((resolve, reject) => {
+						const reader = new FileReader()
+						reader.onload = (e) => resolve(e.target?.result as string)
+						reader.onerror = () => reject(new Error("Failed to read file"))
+						reader.readAsText(file, encoding)
+					})
+
+				// Mirror the encoding-detection from csv-import.tsx: try UTF-8 first,
+				// fall back to ISO-8859-1 if the result contains U+FFFD replacement
+				// chars (the signal that the source was Latin-1).
+				let content = await tryParseWithEncoding("UTF-8")
+				if (/[�]/.test(content)) {
+					content = await tryParseWithEncoding("ISO-8859-1")
+				}
 
 				const result = parseCsvContent(content)
 				setCsvParseResult(result)
@@ -92,6 +104,46 @@ export const EnrichLanding = ({
 		},
 		[showToast, t]
 	)
+
+	const handleInputChange = useCallback(
+		(e: ChangeEvent<HTMLInputElement>) => {
+			const file = e.target.files?.[0]
+			if (file) {
+				void handleFileSelect(file)
+			}
+		},
+		[handleFileSelect]
+	)
+
+	const handleDrop = useCallback(
+		(e: DragEvent) => {
+			e.preventDefault()
+			setIsDragging(false)
+			const file = e.dataTransfer.files[0]
+			if (file) {
+				void handleFileSelect(file)
+			}
+		},
+		[handleFileSelect]
+	)
+
+	const handleDragOver = useCallback((e: DragEvent) => {
+		e.preventDefault()
+		setIsDragging(true)
+	}, [])
+
+	const handleDragLeave = useCallback((e: DragEvent) => {
+		e.preventDefault()
+		setIsDragging(false)
+	}, [])
+
+	const handleClearCsv = useCallback(() => {
+		setCsvFileName(null)
+		setCsvParseResult(null)
+		if (fileInputRef.current) {
+			fileInputRef.current.value = ""
+		}
+	}, [])
 
 	// Handle dry-run submission
 	const handleStartDryRun = useCallback(async () => {
@@ -190,45 +242,69 @@ export const EnrichLanding = ({
 					</div>
 				</div>
 
-				{/* CSV upload */}
+				{/* CSV upload — same dropzone pattern as src/components/journal/csv-import.tsx */}
 				<div>
-					<label
-						htmlFor="csv-upload"
-						className="text-small text-txt-100 font-semibold"
-					>
+					<p className="text-small text-txt-100 font-semibold">
 						{t("landing.uploadCsvLabel")}
-					</label>
+					</p>
 					<p className="mt-s-100 text-tiny text-txt-300">
 						{t("landing.uploadCsvHint")}
 					</p>
-					<div className="mt-s-300 border-bg-300 p-m-400 rounded-lg border-2 border-dashed text-center">
-						<input
-							id="csv-upload"
-							type="file"
-							accept=".csv"
-							onChange={handleCsvFileChange}
-							disabled={isCsvParsing || isPending}
-							className="hidden"
-						/>
-						<label htmlFor="csv-upload" className="block cursor-pointer">
+
+					{csvFileName && csvParseResult?.success ? (
+						<div className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 mt-s-300 flex items-center justify-between rounded-lg">
+							<div className="gap-s-300 flex items-center">
+								<CheckCircle2 className="text-acc-100 h-5 w-5" />
+								<span className="text-small text-txt-100 font-medium">
+									{csvFileName}
+								</span>
+								<span className="text-tiny text-txt-300">
+									(
+									{t("landing.uploadParsed", {
+										count: csvParseResult.trades.length,
+									})}
+									)
+								</span>
+							</div>
+							<Button
+								variant="ghost"
+								size="icon"
+								onClick={handleClearCsv}
+								disabled={isPending}
+								aria-label="Clear file"
+							>
+								<X className="h-4 w-4" />
+							</Button>
+						</div>
+					) : (
+						<label
+							htmlFor="csv-upload"
+							className={cn(
+								"p-m-600 mt-s-300 block cursor-pointer rounded-lg border-2 border-dashed text-center transition-colors",
+								isDragging
+									? "border-acc-100 bg-acc-100/10"
+									: "border-bg-300 hover:border-txt-300"
+							)}
+							onDrop={handleDrop}
+							onDragOver={handleDragOver}
+							onDragLeave={handleDragLeave}
+						>
+							<input
+								ref={fileInputRef}
+								id="csv-upload"
+								type="file"
+								accept=".csv"
+								onChange={handleInputChange}
+								disabled={isCsvParsing || isPending}
+								className="hidden"
+							/>
+
 							{isCsvParsing ? (
 								<>
-									<Loader2 className="text-acc-100 mx-auto h-8 w-8 animate-spin" />
-									<p className="mt-s-200 text-small text-txt-200">
+									<Loader2 className="text-acc-100 mx-auto h-12 w-12 animate-spin motion-reduce:animate-none" />
+									<h3 className="mt-m-400 text-body text-txt-100 font-semibold">
 										{t("landing.uploadParsing")}
-									</p>
-								</>
-							) : csvParseResult && csvParseResult.success ? (
-								<>
-									<p className="text-small text-acc-100 font-semibold">
-										✓{" "}
-										{t("landing.uploadParsed", {
-											count: csvParseResult.trades.length,
-										})}
-									</p>
-									<p className="mt-s-100 text-tiny text-txt-300">
-										{csvFileName}
-									</p>
+									</h3>
 								</>
 							) : csvFileName ? (
 								<>
@@ -244,16 +320,31 @@ export const EnrichLanding = ({
 								</>
 							) : (
 								<>
-									<p className="text-small text-txt-100 font-semibold">
-										Click to select CSV file
+									<Upload className="text-txt-300 mx-auto h-12 w-12" />
+									<h3 className="mt-m-400 text-body text-txt-100 font-semibold">
+										{t("landing.dropHere")}
+									</h3>
+									<p className="mt-s-200 text-small text-txt-300">
+										{t("landing.orClick")}
 									</p>
-									<p className="mt-s-100 text-tiny text-txt-300">
-										or drag and drop
-									</p>
+									<div className="mt-m-400 flex justify-center">
+										<Button
+											type="button"
+											variant="default"
+											onClick={(e) => {
+												e.preventDefault()
+												fileInputRef.current?.click()
+											}}
+											disabled={isCsvParsing || isPending}
+										>
+											<FileText className="mr-s-200 h-4 w-4" />
+											{t("landing.selectFile")}
+										</Button>
+									</div>
 								</>
 							)}
 						</label>
-					</div>
+					)}
 				</div>
 
 				{/* Candle status */}
@@ -261,7 +352,6 @@ export const EnrichLanding = ({
 					<label className="text-small text-txt-100 font-semibold">
 						{t("landing.candleStatusLabel")}
 					</label>
-					{/* TODO: Implement full asset/timeframe coverage check for v2 polish */}
 					<div className="mt-s-300 bg-bg-200 p-m-400 text-small text-txt-300 rounded-lg">
 						{t("landing.candleStatusPlaceholder")}
 					</div>

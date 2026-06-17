@@ -17,9 +17,32 @@ interface EnrichFieldRowProps {
 	onToggle: (_newState: "accepted" | "rejected" | "neither") => void
 }
 
-const formatValue = (value: unknown): string => {
+const formatDuration = (ms: number): string => {
+	if (!Number.isFinite(ms) || ms < 0) {
+		return "—"
+	}
+	const totalSeconds = Math.round(ms / 1000)
+	const h = Math.floor(totalSeconds / 3600)
+	const m = Math.floor((totalSeconds % 3600) / 60)
+	const s = totalSeconds % 60
+	if (h > 0) {
+		return `${h}h ${m}min`
+	}
+	if (m > 0) {
+		return `${m}min ${s}s`
+	}
+	return `${s}s`
+}
+
+const formatValue = (fieldName: string, value: unknown): string => {
 	if (value === null || value === undefined) {
 		return "—"
+	}
+
+	// holdingMs is duration in milliseconds — render as "Xmin Ys" instead of
+	// the default money-style "193.000,00" which reads as a BRL amount.
+	if (fieldName === "holdingMs" && typeof value === "number") {
+		return formatDuration(value)
 	}
 
 	if (typeof value === "number") {
@@ -99,8 +122,8 @@ export const EnrichFieldRow = ({
 	}
 
 	const fieldLabel = t(`journal.enrichment.fieldNames.${fieldName}`)
-	const currentValue = formatValue(baselineValue)
-	const proposedValue = formatValue(field.value)
+	const currentValue = formatValue(fieldName, baselineValue)
+	const proposedValue = formatValue(fieldName, field.value)
 
 	const hasConflict = field.conflictsWithCurrent && baselineValue !== null
 

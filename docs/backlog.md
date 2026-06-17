@@ -43,6 +43,24 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ## Journaling Workflow
 
+### Enrichment UI — full asset/timeframe coverage check (v2 polish)
+
+- **Priority**: P3
+- **Effort**: S
+- **Source**: 2026-06-17 enrichment session — removed inline TODO from enrich-landing component.
+- **What + Why**: Implement real coverage detection: query which assets have candle data for the selected date range across both `hawk_5m_win` and `hawk_15m_win` timeframes. Display a summary of coverage gaps so the user knows which trades may not get enriched by the indicator-readout and candle-math passes. Currently shows a placeholder.
+- **How**: In `src/components/journal/enrich/enrich-landing.tsx`, add a `useEffect` that fires when `dateFrom`/`dateTo` change, calls a new action `getEnrichmentCoverageStatus(dateFrom, dateTo)` which returns `{ asset: string; has5m: bool; has15m: bool }[]`, then renders a summary like "WIN (5m + 15m ✓), WDO (5m only), ..."
+- **Date filed**: 2026-06-17.
+
+### Backfill missing R-brick CSVs for week 25 (R41 + R81) to unblock candle/indicator enrichment
+
+- **Priority**: P2 — current 06-16 trades are stuck in `partial` enrichment with MFE/MAE blank and indicator readout missing, but the deterministic SL/TP and operations CSV passes succeeded so analytics work. Becomes P1 if pattern identification on MFE/MAE-driven cohorts is needed for the Hawks T2 review.
+- **Effort**: XS once the source files are in hand — drop `41R.csv` + `81R.csv` into `/Users/ygorbravim/Downloads/WIN/`, then `HAWKS_SOURCE_DIR=/Users/ygorbravim/Downloads/WIN pnpm tsx scripts/load-hawks-bricks-by-size.ts && pnpm tsx scripts/materialize-hawks-timeframes.ts && pnpm tsx scripts/enrich-day.ts --date 2026-06-16 --csv ~/Downloads/orders.csv`. Total runtime ~3 min.
+- **Source**: 2026-06-17 enrichment session — `hawks_renko_sizes` row for week-of-2026-06-15 has `(size_5m, size_15m, size_60m) = (22, 41, 81)`. Folder `/Users/ygorbravim/Downloads/WIN/` contains `22R.csv` ✓ but jumps `40R.csv → 43R.csv` (missing R41) and `73R.csv → 84R.csv` (missing R81). Materializer skips week 25 because the rule is all-or-nothing per week (see `docs/gotchas.md` entry "Hawks materializer skips a whole week when ANY of `(5m, 15m, 60m)` R-source CSVs is missing").
+- **What + Why**: The 105-of-125-weeks "incomplete" rate reported by the materializer means most of the historical journal is non-enriched on the candle/indicator axes. R41 + R81 unblock week 25 immediately; the wider 105-week gap is a separate audit of which historic weeks need brick CSVs vs. which ones the user has source for. Defer the broader audit until R41/R81 ship.
+- **How**: Re-export R41 and R81 brick CSVs from whichever ProfitChart export pipeline produced the rest of `/Users/ygorbravim/Downloads/WIN/`. File size should be ~3-4 MB each based on the size pattern (R40 = 3.7 MB, R43 = 3.2 MB; R73 = 1.1 MB, R84 = 893 KB). After dropping the files in place, run the 3-command sequence above. Then re-open the journal and confirm trades `b6557ce2`, `b64581f4`, `b83414b3` move from `partial` to `enriched` and the indicator-readout band populates.
+- **Date filed**: 2026-06-17.
+
 ### Enrichment cleanup job scheduling (wire cron route)
 
 - **Priority**: P3

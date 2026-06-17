@@ -515,7 +515,18 @@ const parseProfitChartContent = (
 	const columnMap: Array<{ index: number; field: ProfitChartField }> = []
 	const unmappedHeaders: string[] = []
 
+	// Pull the raw header line so we can spot "(%)" suffix columns that the
+	// normalizer collapses to the same key as their absolute-value sibling
+	// (e.g. "Res. Operação" and "Res. Operação (%)" both become "res_operacao").
+	const rawHeaderLine = lines[headerRowIndex] ?? ""
+	const rawHeaders = parseCSVLine(rawHeaderLine, delimiter)
 	for (const [index, header] of headers.entries()) {
+		const rawHeader = rawHeaders[index] ?? ""
+		if (/\(%\)/.test(rawHeader)) {
+			// Skip percent-formatted duplicates so they don't overwrite the
+			// absolute-value column that normalizes to the same key.
+			continue
+		}
 		const field = PROFITCHART_COLUMN_MAPPINGS[header]
 		if (field) {
 			columnMap.push({ index, field })

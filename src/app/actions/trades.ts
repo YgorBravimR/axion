@@ -207,10 +207,14 @@ export const createTrade = async (
 			realizedR = calculateRMultiple(pnl, plannedRiskAmount)
 		}
 
-		// Hawks Mode: validate sidecar payload, look up bias, compute ordinal
+		// Hawks Mode: validate sidecar payload, look up bias, compute ordinal.
+		// Quick-add and CSV-import flows are exempt — hawks state-machine fields
+		// (scenario, screens) are enrichment-time fields per the two-phase journaling spec.
 		const accountMode = await getActiveAccountModeForUser()
+		const isThinEntry =
+			tradeData.source === "quick-add" || tradeData.source === "csv-import"
 		let hawksSidecar: typeof tradeHawksMetadata.$inferInsert | null = null
-		if (accountMode === "hawks") {
+		if (accountMode === "hawks" && !isThinEntry) {
 			if (!tradeData.hawks) {
 				return {
 					status: "error",

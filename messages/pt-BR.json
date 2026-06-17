@@ -1955,7 +1955,9 @@
 				"asset": "Ativo",
 				"direction": "Direção",
 				"entryDate": "Data e Hora da Entrada",
+				"exitDate": "Data e Hora da Saída",
 				"entryPrice": "Preço de Entrada",
+				"exitPrice": "Preço de Saída",
 				"positionSize": "Tamanho da Posição"
 			},
 			"directions": {
@@ -1980,6 +1982,9 @@
 				"dateTo": "Até",
 				"uploadCsvLabel": "CSV de Operações Profit Pro (opcional)",
 				"uploadCsvHint": "Carregue sua exportação de operações Profit para ativar a reconciliação com CSV.",
+				"dropHere": "Solte seu arquivo CSV aqui",
+				"orClick": "ou clique para selecionar",
+				"selectFile": "Selecionar arquivo",
 				"uploadParsing": "Analisando...",
 				"uploadParsed": "{count} operações analisadas",
 				"uploadError": "Erro na análise: {message}",
@@ -2046,7 +2051,8 @@
 			"passStatus": {
 				"succeeded": "Sucesso",
 				"skipped": "Pulada: {reason}",
-				"failed": "Falha: {error}"
+				"failed": "Falha: {error}",
+				"noChanges": "✓ Sem alterações — seus dados já estão alinhados"
 			},
 			"confidence": {
 				"high": "Alta",

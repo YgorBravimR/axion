@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/i18n/routing"
 import { useTranslations } from "next-intl"
 import { abandonDryRun } from "@/app/actions/enrichment"
 import { useToast } from "@/components/ui/toast"

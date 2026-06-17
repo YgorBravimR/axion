@@ -62,6 +62,13 @@ export const EnrichPassCard = ({
 
 	const passIsSkipped = delta.passStatus === "skipped"
 	const passIsFailed = delta.passStatus === "failed"
+	const fieldCount = Object.keys(delta.fields).length
+	// A pass can succeed with zero fields when every enrichment field already
+	// matches the current trade (e.g. CSV pass finds no diffs because the user
+	// entered the canonical numbers manually). Render a clear "no changes"
+	// state instead of an empty card with accept/reject buttons.
+	const passSucceededWithNoChanges =
+		delta.passStatus === "succeeded" && fieldCount === 0
 
 	const handleAcceptAll = () => {
 		for (const [fieldName, field] of Object.entries(delta.fields)) {
@@ -121,9 +128,15 @@ export const EnrichPassCard = ({
 						</span>
 					</div>
 				)}
+
+				{passSucceededWithNoChanges && (
+					<div className="mt-s-200 px-s-300 py-s-200 bg-acc-100/10 text-acc-100 text-small rounded-sm">
+						{t("journal.enrichment.passStatus.noChanges")}
+					</div>
+				)}
 			</CardHeader>
 
-			{!passIsSkipped && !passIsFailed && (
+			{!passIsSkipped && !passIsFailed && !passSucceededWithNoChanges && (
 				<>
 					<CardContent className="space-y-s-200">
 						{Object.entries(delta.fields).map(([fieldName, field]) => {

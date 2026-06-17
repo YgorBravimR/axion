@@ -35,21 +35,62 @@ import {
 } from "@/components/ui/select"
 import type { Asset } from "@/db/schema"
 
-const quickAddTradeSchema = z.object({
-	asset: z
+// B3 futures session is BRT — datetime-local inputs are interpreted as BRT (UTC-3)
+const BRT_OFFSET = "-03:00"
+
+const toDatetimeLocalString = (date: Date): string => {
+	const pad = (n: number) => String(n).padStart(2, "0")
+	// Render `date` in BRT so the datetime-local input shows São Paulo time
+	const brt = new Date(date.getTime() - 3 * 60 * 60 * 1000)
+	return `${brt.getUTCFullYear()}-${pad(brt.getUTCMonth() + 1)}-${pad(
+		brt.getUTCDate()
+	)}T${pad(brt.getUTCHours())}:${pad(brt.getUTCMinutes())}`
+}
+
+const fromDatetimeLocalString = (value: string): Date => {
+	// Treat the bare "YYYY-MM-DDTHH:mm" string as BRT, not browser local time
+	return new Date(`${value}${BRT_OFFSET}`)
+}
+
+const datetimeField = (key: "entryDate" | "exitDate") =>
+	z
 		.string()
-		.min(1, "validation.trade.assetRequired")
-		.max(20, "validation.trade.assetMaxLength")
-		.transform((val) => val.toUpperCase()),
-	direction: z.enum(["long", "short"]),
-	entryDate: z.string().datetime(),
-	entryPrice: z.coerce
-		.number({ message: "validation.trade.entryPriceRequired" })
-		.positive("validation.trade.entryPricePositive"),
-	positionSize: z.coerce
-		.number({ message: "validation.trade.positionSizeRequired" })
-		.positive("validation.trade.positionSizePositive"),
-})
+		.min(1, `validation.trade.${key}Required`)
+		.refine((val) => !Number.isNaN(new Date(val).getTime()), {
+			message: `validation.trade.${key}Invalid`,
+		})
+
+const quickAddTradeSchema = z
+	.object({
+		asset: z
+			.string()
+			.min(1, "validation.trade.assetRequired")
+			.max(20, "validation.trade.assetMaxLength")
+			.transform((val) => val.toUpperCase()),
+		direction: z.enum(["long", "short"]),
+		entryDate: datetimeField("entryDate"),
+		exitDate: datetimeField("exitDate"),
+		entryPrice: z.coerce
+			.number({ message: "validation.trade.entryPriceRequired" })
+			.positive("validation.trade.entryPricePositive"),
+		exitPrice: z.coerce
+			.number({ message: "validation.trade.exitPriceRequired" })
+			.positive("validation.trade.exitPricePositive"),
+		positionSize: z.coerce
+			.number({ message: "validation.trade.positionSizeRequired" })
+			.positive("validation.trade.positionSizePositive"),
+	})
+	.superRefine((data, ctx) => {
+		const entry = fromDatetimeLocalString(data.entryDate).getTime()
+		const exit = fromDatetimeLocalString(data.exitDate).getTime()
+		if (exit < entry) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				path: ["exitDate"],
+				message: "validation.trade.exitDateAfterEntry",
+			})
+		}
+	})
 
 type QuickAddTradeFormInput = z.infer<typeof quickAddTradeSchema>
 
@@ -79,8 +120,10 @@ export const QuickAddTradeModal = ({
 		defaultValues: {
 			asset: lastAsset || "",
 			direction: lastDirection || "long",
-			entryDate: new Date().toISOString(),
+			entryDate: toDatetimeLocalString(new Date()),
+			exitDate: toDatetimeLocalString(new Date()),
 			entryPrice: undefined,
+			exitPrice: undefined,
 			positionSize: undefined,
 		},
 	})
@@ -92,9 +135,12 @@ export const QuickAddTradeModal = ({
 				const result = await createTrade({
 					asset: data.asset,
 					direction: data.direction,
-					entryDate: new Date(data.entryDate),
+					entryDate: fromDatetimeLocalString(data.entryDate),
+					exitDate: fromDatetimeLocalString(data.exitDate),
 					entryPrice: data.entryPrice,
+					exitPrice: data.exitPrice,
 					positionSize: data.positionSize,
+					source: "quick-add",
 				})
 
 				if (result.status === "success") {
@@ -105,8 +151,10 @@ export const QuickAddTradeModal = ({
 						form.reset({
 							asset: data.asset,
 							direction: data.direction,
-							entryDate: new Date().toISOString(),
+							entryDate: toDatetimeLocalString(new Date()),
+							exitDate: toDatetimeLocalString(new Date()),
 							entryPrice: undefined,
+							exitPrice: undefined,
 							positionSize: undefined,
 						})
 					} else {
@@ -220,49 +268,99 @@ export const QuickAddTradeModal = ({
 								)}
 							/>
 
-							<FormField
-								control={form.control}
-								name="entryDate"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel htmlFor="quick-add-entryDate">
-											{t("labels.entryDate")}
-										</FormLabel>
-										<FormControl>
-											<Input
-												id="quick-add-entryDate"
-												type="datetime-local"
-												{...field}
-												disabled={isSubmitting}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
+							<div className="grid grid-cols-2 gap-3">
+								<FormField
+									control={form.control}
+									name="entryDate"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel htmlFor="quick-add-entryDate">
+												{t("labels.entryDate")}
+											</FormLabel>
+											<FormControl>
+												<Input
+													id="quick-add-entryDate"
+													type="datetime-local"
+													step="1"
+													{...field}
+													disabled={isSubmitting}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
 
-							<FormField
-								control={form.control}
-								name="entryPrice"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel htmlFor="quick-add-entryPrice">
-											{t("labels.entryPrice")}
-										</FormLabel>
-										<FormControl>
-											<Input
-												id="quick-add-entryPrice"
-												type="number"
-												step="0.01"
-												placeholder="0.00"
-												{...field}
-												disabled={isSubmitting}
-											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
+								<FormField
+									control={form.control}
+									name="exitDate"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel htmlFor="quick-add-exitDate">
+												{t("labels.exitDate")}
+											</FormLabel>
+											<FormControl>
+												<Input
+													id="quick-add-exitDate"
+													type="datetime-local"
+													step="1"
+													{...field}
+													disabled={isSubmitting}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
+
+							<div className="grid grid-cols-2 gap-3">
+								<FormField
+									control={form.control}
+									name="entryPrice"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel htmlFor="quick-add-entryPrice">
+												{t("labels.entryPrice")}
+											</FormLabel>
+											<FormControl>
+												<Input
+													id="quick-add-entryPrice"
+													type="number"
+													step="0.01"
+													placeholder="0.00"
+													{...field}
+													disabled={isSubmitting}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+
+								<FormField
+									control={form.control}
+									name="exitPrice"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel htmlFor="quick-add-exitPrice">
+												{t("labels.exitPrice")}
+											</FormLabel>
+											<FormControl>
+												<Input
+													id="quick-add-exitPrice"
+													type="number"
+													step="0.01"
+													placeholder="0.00"
+													{...field}
+													disabled={isSubmitting}
+												/>
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
 
 							<FormField
 								control={form.control}

@@ -20,8 +20,11 @@ const operationsPass: EnrichmentPass = (
 		}
 	}
 
-	// Skip if the operation number doesn't match the trade's recorded operation number
+	// Skip if the operation number doesn't match the trade's recorded operation number.
+	// Thin-form trades have trade.profitOperationNumber === null and are matched by
+	// time-window in the dry-run dispatcher, so allow null on the trade side.
 	if (
+		trade.profitOperationNumber != null &&
 		ctx.profitOperation.profitOperationNumber !== trade.profitOperationNumber
 	) {
 		return {
@@ -85,21 +88,24 @@ const operationsPass: EnrichmentPass = (
 			Number(profitOperation.positionSize),
 			trade.positionSize != null ? Number(trade.positionSize) : null
 		)
+		// Money fields on trade are stored as integer cents; CSV values are BRL.
+		const toCents = (val: number | null | undefined) =>
+			val == null ? null : Math.round(Number(val) * 100)
 		checkAndAdd(
 			"pnl",
-			Number(profitOperation.pnl),
+			toCents(profitOperation.pnl),
 			trade.pnl != null ? Number(trade.pnl) : null,
 			true
 		)
 		checkAndAdd(
 			"mfe",
-			profitOperation.profitMetadata?.profitMep,
+			toCents(profitOperation.profitMetadata?.profitMep),
 			trade.mfe != null ? Number(trade.mfe) : null,
 			true
 		)
 		checkAndAdd(
 			"mae",
-			profitOperation.profitMetadata?.profitMen,
+			toCents(profitOperation.profitMetadata?.profitMen),
 			trade.mae != null ? Number(trade.mae) : null,
 			true
 		)

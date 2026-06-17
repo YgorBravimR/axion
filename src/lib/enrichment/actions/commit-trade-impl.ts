@@ -1,10 +1,11 @@
 "use server"
 
 import { db } from "@/db/drizzle"
-import { trades, tradeEnrichmentSnapshots } from "@/db/schema"
+import { trades, assets, tradeEnrichmentSnapshots } from "@/db/schema"
 import { eq, and } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { isFrameworkSignal } from "@/lib/error-utils"
+import { deriveTradeFieldsFromEnrichment } from "@/lib/enrichment/derive-trade-fields"
 
 import type { ActionResponse } from "@/types"
 import type {
@@ -109,11 +110,28 @@ export const commitTradeImpl = async (
 			}
 		}
 
+		// Recompute derived R-math from the accepted fields ∪ current trade.
+		// Same logic the createTrade action runs for new trades — so the journal
+		// shows realizedRMultiple / plannedRMultiple / plannedRiskAmount / outcome
+		// after enrichment, not just the raw pnl/SL/TP.
+		const tradeAsset = await db.query.assets.findFirst({
+			where: eq(assets.symbol, trade.asset),
+		})
+		const { patch: derivedPatch } = deriveTradeFieldsFromEnrichment({
+			current: trade,
+			accepted: updatePayload,
+			asset: tradeAsset ?? null,
+		})
+		Object.assign(updatePayload, derivedPatch)
+
 		// Add metadata fields
 		updatePayload.enrichmentVersion = snapshot.version
 		updatePayload.enrichedAt = new Date()
 
-		// Determine enrichmentStatus based on result passes
+		// Determine enrichmentStatus based on result passes. "skipped" means
+		// the pass had no input to work with (no CSV op, no candles), which
+		// is not a failure — it's just a no-op. Only treat "failed" as
+		// blocking. Anything else counts as enriched.
 		const passStatuses = [
 			result.passes.operations.passStatus,
 			result.passes.candleMath.passStatus,
@@ -121,7 +139,7 @@ export const commitTradeImpl = async (
 			result.passes.deterministicSlTarget.passStatus,
 		]
 
-		const allPassed = passStatuses.every((s) => s === "succeeded")
+		const allPassed = passStatuses.every((s) => s !== "failed")
 		updatePayload.enrichmentStatus = allPassed ? "enriched" : "partial"
 
 		// Persist per-pass statuses

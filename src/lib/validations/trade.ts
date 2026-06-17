@@ -140,6 +140,11 @@ const tradeBaseFields = {
 			})
 		)
 		.optional(),
+
+	// Origin of this trade — quick-add and csv-import bypass the Hawks scenario
+	// gate because hawks state-machine fields are enrichment-time per the
+	// two-phase journaling spec.
+	source: z.enum(["trade-form", "quick-add", "csv-import"]).optional(),
 }
 
 // Base object schema (no refinements) — used for .partial() and server actions
@@ -227,6 +232,7 @@ export interface CreateTradeInput {
 		ajusteRespected: boolean
 	}
 	conditionsMet?: { conditionId: string; met: boolean }[]
+	source?: "trade-form" | "quick-add" | "csv-import"
 }
 
 // Form input type alias

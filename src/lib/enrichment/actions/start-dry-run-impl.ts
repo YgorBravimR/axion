@@ -35,6 +35,7 @@ const startDryRunImpl = async (
 
 		// Parse operations JSON if provided
 		const opsMap = new Map<number, ProfitChartOperation>()
+		const opsList: ProfitChartOperation[] = []
 		if (input.parsedOperationsJson) {
 			try {
 				const ops = JSON.parse(
@@ -42,6 +43,7 @@ const startDryRunImpl = async (
 				) as ProfitChartOperation[]
 				for (const op of ops) {
 					opsMap.set(op.profitOperationNumber, op)
+					opsList.push(op)
 				}
 			} catch (parseErr) {
 				if (!isFrameworkSignal(parseErr)) {
@@ -49,6 +51,39 @@ const startDryRunImpl = async (
 				}
 				// Continue with empty map if parse fails
 			}
+		}
+
+		const ENTRY_MATCH_TOLERANCE_MS = 60_000
+		const matchOperationByWindow = (
+			trade: typeof trades.$inferSelect
+		): ProfitChartOperation | null => {
+			if (!trade.entryDate) {
+				return null
+			}
+			const tradeEntryMs = new Date(trade.entryDate).getTime()
+			const tradeDirection = trade.direction
+			const tradeAsset = trade.asset
+			let best: { op: ProfitChartOperation; delta: number } | null = null
+			for (const op of opsList) {
+				if (op.normalizedAsset !== tradeAsset) {
+					continue
+				}
+				if (op.direction !== tradeDirection) {
+					continue
+				}
+				if (!op.entryDate) {
+					continue
+				}
+				const opEntryMs = new Date(op.entryDate).getTime()
+				const delta = Math.abs(opEntryMs - tradeEntryMs)
+				if (delta > ENTRY_MATCH_TOLERANCE_MS) {
+					continue
+				}
+				if (!best || delta < best.delta) {
+					best = { op, delta }
+				}
+			}
+			return best?.op ?? null
 		}
 
 		// Query trades for this account in the date range with pending/partial status
@@ -92,14 +127,21 @@ const startDryRunImpl = async (
 					)
 				}
 
-				// Load candles if both dates present and timeframe exists
+				// Load candles if both dates present and timeframe exists. The
+				// indicator readout pass needs a floor candle (≤ entry), so we
+				// extend the fetch window backward by INDICATOR_LOOKBACK_MS to
+				// guarantee at least one 5m brick before entry is in the slice.
 				let candles = null
 				if (trade.entryDate && trade.exitDate && timeframe && asset) {
+					const indicatorLookbackMs = 60 * 60 * 1000
+					const fetchFrom = new Date(
+						trade.entryDate.getTime() - indicatorLookbackMs
+					)
 					try {
 						candles = await getCandleStore().fetchRange({
 							assetId: asset.id,
 							timeframeId: timeframe.id,
-							from: trade.entryDate,
+							from: fetchFrom,
 							to: trade.exitDate,
 							indicatorKeys: [],
 						})
@@ -112,7 +154,9 @@ const startDryRunImpl = async (
 				}
 
 				// Build enrichment context
-				const profitOp = opsMap.get(trade.profitOperationNumber ?? -1) ?? null
+				const profitOp =
+					opsMap.get(trade.profitOperationNumber ?? -1) ??
+					matchOperationByWindow(trade)
 				const ctx: EnrichmentContext = {
 					candles,
 					profitOperation: profitOp,
