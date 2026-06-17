@@ -7,7 +7,78 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Check, X } from "lucide-react"
+import { Check, X, Minus } from "lucide-react"
+
+type IndicatorKey =
+	| "gate15m"
+	| "gate60m"
+	| "macd"
+	| "vwapD"
+	| "vwapM"
+	| "vwapW"
+	| "ajuste"
+
+const INDICATOR_KEYS: IndicatorKey[] = [
+	"gate15m",
+	"gate60m",
+	"macd",
+	"vwapD",
+	"vwapM",
+	"vwapW",
+	"ajuste",
+]
+
+interface IndicatorSnapshotLike {
+	direction?: "long" | "short"
+	favorableCount?: number
+	gate15m?: { favorable?: boolean; state?: string }
+	gate60m?: { favorable?: boolean; state?: string }
+	macd?: { favorable?: boolean; sign?: string; value?: number }
+	vwapD?: { favorable?: boolean; side?: string; distance?: number }
+	vwapM?: { favorable?: boolean; side?: string; distance?: number }
+	vwapW?: { favorable?: boolean; side?: string; distance?: number }
+	ajuste?: { favorable?: boolean; position?: string; distance?: number }
+}
+
+const isIndicatorSnapshot = (v: unknown): v is IndicatorSnapshotLike => {
+	if (typeof v !== "object" || v === null) {
+		return false
+	}
+	const obj = v as Record<string, unknown>
+	return (
+		typeof obj.favorableCount === "number" &&
+		typeof obj.direction === "string" &&
+		typeof obj.gate15m === "object"
+	)
+}
+
+const formatIndicatorDetail = (
+	key: IndicatorKey,
+	snap: IndicatorSnapshotLike
+): string | null => {
+	const readout = snap[key]
+	if (!readout || typeof readout !== "object") {
+		return null
+	}
+	const r = readout as Record<string, unknown>
+	if (key === "macd") {
+		const sign = typeof r.sign === "string" ? r.sign : null
+		const value = typeof r.value === "number" ? r.value.toFixed(2) : null
+		return value ? `${sign ?? "?"} (${value})` : (sign ?? null)
+	}
+	if (key === "ajuste") {
+		const pos = typeof r.position === "string" ? r.position : null
+		const dist = typeof r.distance === "number" ? r.distance.toFixed(0) : null
+		return dist ? `${pos ?? "?"} ${dist}pts` : (pos ?? null)
+	}
+	if (key === "gate15m" || key === "gate60m") {
+		return typeof r.state === "string" ? r.state : null
+	}
+	// vwapD/M/W
+	const side = typeof r.side === "string" ? r.side : null
+	const dist = typeof r.distance === "number" ? r.distance.toFixed(0) : null
+	return dist ? `${side ?? "?"} ${dist}pts` : (side ?? null)
+}
 
 interface EnrichFieldRowProps {
 	fieldName: string
@@ -169,6 +240,11 @@ export const EnrichFieldRow = ({
 
 	const hasConflict = field.conflictsWithCurrent && baselineValue !== null
 
+	const indicatorSnapshot =
+		fieldName === "indicatorReadout" && isIndicatorSnapshot(field.value)
+			? field.value
+			: null
+
 	const borderColor =
 		state === "accepted"
 			? "var(--color-trade-buy)"
@@ -208,10 +284,69 @@ export const EnrichFieldRow = ({
 									{t(`journal.enrichment.confidence.${field.confidence}`)}
 								</span>
 							</div>
-							<div className="text-small text-txt-200">
-								{currentValue} →{" "}
-								<span className="font-medium">{proposedValue}</span>
-							</div>
+							{indicatorSnapshot ? (
+								<div className="mt-s-200 gap-s-100 flex flex-col">
+									<div className="text-tiny text-txt-300">
+										{t("journal.enrichment.indicatorSummary", {
+											count: indicatorSnapshot.favorableCount ?? 0,
+										})}{" "}
+										· {indicatorSnapshot.direction?.toUpperCase()}
+									</div>
+									<div className="gap-s-100 mt-s-100 flex flex-col">
+										{INDICATOR_KEYS.map((key) => {
+											const readout = indicatorSnapshot[key]
+											const favorable =
+												typeof readout === "object" &&
+												readout !== null &&
+												(readout as { favorable?: boolean }).favorable === true
+											const detail = formatIndicatorDetail(
+												key,
+												indicatorSnapshot
+											)
+											return (
+												<div
+													key={key}
+													className="gap-s-300 text-tiny flex items-center"
+												>
+													{favorable ? (
+														<Check
+															className="size-3 shrink-0"
+															style={{ color: "var(--color-trade-buy)" }}
+															aria-label={t(
+																"journal.enrichment.indicatorFavorable"
+															)}
+														/>
+													) : (
+														<Minus
+															className="text-txt-300 size-3 shrink-0"
+															aria-label={t(
+																"journal.enrichment.indicatorUnfavorable"
+															)}
+														/>
+													)}
+													<span
+														className={
+															favorable ? "text-txt-100" : "text-txt-300"
+														}
+													>
+														{t(`journal.enrichment.indicatorLabels.${key}`)}
+													</span>
+													{detail && (
+														<span className="text-txt-300 tabular-nums">
+															{detail}
+														</span>
+													)}
+												</div>
+											)
+										})}
+									</div>
+								</div>
+							) : (
+								<div className="text-small text-txt-200">
+									{currentValue} →{" "}
+									<span className="font-medium">{proposedValue}</span>
+								</div>
+							)}
 							{hasConflict && (
 								<div
 									className="mt-s-100 px-s-200 text-tiny gap-s-100 flex items-center rounded-sm py-[2px]"
