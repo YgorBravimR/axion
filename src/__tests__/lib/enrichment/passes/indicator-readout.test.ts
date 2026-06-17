@@ -11,34 +11,68 @@ import * as hawksIndicatorsModule from "@/lib/backtest/hawks-indicators"
 vi.mock("@/lib/backtest/hawks-indicators")
 
 // Minimal Trade fixture
-const createTrade = (overrides?: Partial<Trade>): Trade => ({
-	id: "trade-123",
-	userId: "user-1",
-	accountId: "account-1",
-	entryDate: new Date("2026-06-15T09:35:00Z"),
-	entryTime: "09:35:00",
-	exitDate: new Date("2026-06-15T10:15:00Z"),
-	exitTime: "10:15:00",
-	asset: "WIN",
-	direction: "long",
-	entryPrice: 75500,
-	exitPrice: 75600,
-	positionSize: 10,
-	pnl: 1000,
-	mfe: null,
-	mae: null,
-	profitOperationNumber: null,
-	profitMetadata: null,
-	strategyId: null,
-	strategyCode: null,
-	timeframeCode: null,
-	tags: [],
-	notes: null,
-	indicatorReadout: null,
-	createdAt: new Date(),
-	updatedAt: new Date(),
-	...overrides,
-})
+const createTrade = (overrides?: Partial<Trade>): Trade =>
+	({
+		// Note: Cast as Trade due to module/type resolution complexity in test environment
+		id: "trade-123",
+		accountId: null,
+		entryDate: new Date("2026-06-15T09:35:00Z"),
+		exitDate: new Date("2026-06-15T10:15:00Z"),
+		asset: "WIN",
+		direction: "long" as const,
+		timeframeId: null,
+		entryPrice: "75500",
+		exitPrice: "75600",
+		positionSize: "10",
+		stopLoss: null,
+		takeProfit: null,
+		plannedRiskAmount: null,
+		plannedRMultiple: null,
+		pnl: "1000",
+		pnlPercent: null,
+		pointsPnl: null,
+		realizedRMultiple: null,
+		oneRSnapshotCents: null,
+		rOutcome: null,
+		outcome: null,
+		mfe: null,
+		mae: null,
+		mfeR: null,
+		maeR: null,
+		commission: null,
+		fees: null,
+		contractsExecuted: null,
+		preTradeThoughts: null,
+		postTradeReflection: null,
+		lessonLearned: null,
+		strategyId: null,
+		strategyVersionId: null,
+		setupRank: null,
+		screenshotUrl: null,
+		screenshotS3Key: null,
+		followedPlan: null,
+		disciplineNotes: null,
+		rating: null,
+		executionMode: "simple" as const,
+		totalEntryQuantity: null,
+		totalExitQuantity: null,
+		avgEntryPrice: null,
+		avgExitPrice: null,
+		remainingQuantity: null,
+		deduplicationHash: null,
+		enrichmentStatus: "pending" as const,
+		enrichmentVersion: 0,
+		enrichedAt: null,
+		enrichmentOpsStatus: null,
+		enrichmentCandleStatus: null,
+		enrichmentIndicatorStatus: null,
+		enrichmentSlTargetStatus: null,
+		source: null,
+		indicatorReadout: null,
+		createdAt: new Date("2026-06-15T09:35:00Z"),
+		updatedAt: new Date(),
+		...overrides,
+	}) as Trade
 
 // Minimal HawksTripleScreenConfig fixture
 const createHawksConfig = (
@@ -347,7 +381,7 @@ describe("indicatorReadoutPass", () => {
 		)
 
 		const trade = createTrade({
-			indicatorReadout: snapshot as Record<string, unknown>,
+			indicatorReadout: snapshot as unknown as Record<string, unknown>,
 		})
 		const ctx: EnrichmentContext = {
 			candles: [],
@@ -371,7 +405,7 @@ describe("indicatorReadoutPass", () => {
 		)
 
 		const trade = createTrade({
-			indicatorReadout: differentSnapshot as Record<string, unknown>,
+			indicatorReadout: differentSnapshot as unknown as Record<string, unknown>,
 		})
 		const ctx: EnrichmentContext = {
 			candles: [],
@@ -432,7 +466,7 @@ describe("indicatorReadoutPass", () => {
 			vi.mocked(hawksIndicatorsModule.getHawksIndicatorsAt)
 		).toHaveBeenCalled()
 		const callArgs = vi.mocked(hawksIndicatorsModule.getHawksIndicatorsAt).mock
-			.calls[0]
+			.calls[0]!
 		expect(callArgs[1]).toBe("2026-06-15T09:35:00.000Z")
 	})
 })

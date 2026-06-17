@@ -57,12 +57,18 @@ function createTrade(overrides?: Partial<Trade>): Trade {
 		avgExitPrice: null,
 		remainingQuantity: null,
 		deduplicationHash: null,
-		enrichmentStatus: "draft" as const,
-		candleDataStatus: null,
+		enrichmentStatus: "pending" as const,
+		enrichmentVersion: 0,
+		enrichedAt: null,
+		enrichmentOpsStatus: null,
+		enrichmentCandleStatus: null,
+		enrichmentIndicatorStatus: null,
+		enrichmentSlTargetStatus: null,
+		source: null,
 		createdAt: new Date(),
 		updatedAt: new Date(),
 		...overrides,
-	}
+	} as Trade
 }
 
 // Helper to create a CandleRow fixture
@@ -291,7 +297,7 @@ describe("candleMathPass", () => {
 			entryPrice: "100.00",
 			entryDate,
 			exitDate,
-			mfe: 2.5, // Different from computed 5
+			mfe: "2.5", // Different from computed 5
 		})
 
 		const candles: CandleRow[] = [
@@ -349,10 +355,10 @@ describe("candleMathPass", () => {
 		const entryDate = new Date("2026-06-16T10:00:00Z")
 		const exitDate = new Date("2026-06-16T11:00:00Z")
 
-		// Use string timestamps (as they come from DB)
+		// Use Date objects for timestamps
 		const trade = createTrade({
-			entryDate: entryDate.toISOString(),
-			exitDate: exitDate.toISOString(),
+			entryDate: entryDate,
+			exitDate: exitDate,
 		})
 
 		const candles: CandleRow[] = [

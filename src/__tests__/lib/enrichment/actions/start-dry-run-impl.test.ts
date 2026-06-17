@@ -255,7 +255,7 @@ describe("startDryRunImpl", () => {
 
 		// Verify the query was called with the correct where clause
 		expect(mockFindMany).toHaveBeenCalled()
-		const callArgs = mockFindMany.mock.calls[0]
+		const callArgs = mockFindMany.mock.calls[0]!
 		expect(callArgs[0].where).toBeDefined()
 	})
 
@@ -299,7 +299,7 @@ describe("startDryRunImpl", () => {
 		})
 
 		expect(mockValues).toHaveBeenCalled()
-		const snapshotValues = mockValues.mock.calls[0][0]
+		const snapshotValues = mockValues.mock.calls[0]![0]
 		expect(snapshotValues.enrichmentEngineVersion).toBe("enrich-v1")
 		expect(snapshotValues.status).toBe("draft")
 		expect(snapshotValues.expiresAt).toBeDefined()

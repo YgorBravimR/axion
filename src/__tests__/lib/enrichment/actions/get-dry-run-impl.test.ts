@@ -120,12 +120,19 @@ describe("getDryRunImpl", () => {
 		const result = await getDryRunImpl("run-uuid")
 
 		expect(result.status).toBe("success")
-		expect(result.data?.snapshots).toHaveLength(2)
-		expect(result.data?.snapshots[0].snapshotId).toBe("snap-1")
-		expect(result.data?.snapshots[0].tradeId).toBe("trade-1")
-		expect(result.data?.snapshots[0].version).toBe(1)
-		expect(result.data?.snapshots[0].status).toBe("draft")
-		expect(result.data?.snapshots[0].baseline.stopLoss).toBe("74500")
+		const snapshots = result.data?.snapshots as unknown as [
+			Record<string, unknown>,
+			Record<string, unknown>,
+		] &
+			Array<Record<string, unknown>>
+		expect(snapshots).toHaveLength(2)
+		expect(snapshots[0].snapshotId).toBe("snap-1")
+		expect(snapshots[0].tradeId).toBe("trade-1")
+		expect(snapshots[0].version).toBe(1)
+		expect(snapshots[0].status).toBe("draft")
+		expect((snapshots[0].baseline as Record<string, unknown>).stopLoss).toBe(
+			"74500"
+		)
 	})
 
 	it("filters out snapshots for foreign accounts via SQL where clause", async () => {
@@ -149,8 +156,13 @@ describe("getDryRunImpl", () => {
 		const result = await getDryRunImpl("run-uuid")
 
 		expect(result.status).toBe("success")
-		expect(result.data?.snapshots).toHaveLength(1)
-		expect(result.data?.snapshots[0].tradeId).toBe("trade-1")
+		const snapshots = result.data?.snapshots as unknown as [
+			Record<string, unknown>,
+			Record<string, unknown>,
+		] &
+			Array<Record<string, unknown>>
+		expect(snapshots).toHaveLength(1)
+		expect(snapshots[0].tradeId).toBe("trade-1")
 	})
 
 	it("respects showAllAccounts flag for multi-account access", async () => {
@@ -225,9 +237,14 @@ describe("getDryRunImpl", () => {
 		const result = await getDryRunImpl("run-uuid")
 
 		expect(result.status).toBe("success")
-		expect(result.data?.snapshots).toHaveLength(1)
-		expect(result.data?.snapshots[0].dryRun).toEqual({})
-		expect(result.data?.snapshots[0].baseline).toEqual({})
+		const snapshots = result.data?.snapshots as unknown as [
+			Record<string, unknown>,
+			Record<string, unknown>,
+		] &
+			Array<Record<string, unknown>>
+		expect(snapshots).toHaveLength(1)
+		expect(snapshots[0].dryRun).toEqual({})
+		expect(snapshots[0].baseline).toEqual({})
 	})
 
 	it("returns correct runId in response", async () => {
