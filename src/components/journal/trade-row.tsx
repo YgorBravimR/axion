@@ -60,6 +60,7 @@ export const TradeRow = memo(
 
 		const handleDeleteClick = useCallback(
 			(e: MouseEvent<HTMLButtonElement>) => {
+				e.preventDefault()
 				e.stopPropagation()
 				onDeleteRequest(trade.id)
 			},
@@ -68,6 +69,7 @@ export const TradeRow = memo(
 
 		const handleConfirmClick = useCallback(
 			(e: MouseEvent<HTMLButtonElement>) => {
+				e.preventDefault()
 				e.stopPropagation()
 				onDeleteConfirm(trade.id)
 			},
@@ -76,6 +78,7 @@ export const TradeRow = memo(
 
 		const handleCancelClick = useCallback(
 			(e: MouseEvent<HTMLButtonElement>) => {
+				e.preventDefault()
 				e.stopPropagation()
 				onDeleteCancel()
 			},
