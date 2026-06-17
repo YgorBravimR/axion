@@ -17,8 +17,12 @@ interface PayoffMatrixTabProps {
 	currentOneRCents: number
 }
 
-const WIN_RATES = [0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7] as const
-const R_MULTIPLES = [1.0, 1.5, 2.0, 2.5, 3.0] as const
+const WIN_RATES = [
+	0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7,
+] as const
+const R_MULTIPLES = [
+	1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0,
+] as const
 
 const expectedRPerTrade = (winRate: number, rMultiple: number): number =>
 	winRate * rMultiple - (1 - winRate)

@@ -7,6 +7,7 @@ import { db } from "@/db/drizzle"
 import { yearlyPlans } from "@/db/schema"
 import { requireAuth, getCurrentAccount } from "@/app/actions/auth"
 import { autoSeedYearlyTree } from "@/lib/fractal-plan/auto-seed"
+import { backfillTradesForAccount } from "@/lib/fractal-plan/backfill-trades"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import type { ActionResponse } from "@/types"
 import type { CreateYearlyPlanResult } from "./yearly.types"
@@ -76,6 +77,18 @@ export const createYearlyPlanV2 = async (
 			annualGoalCents: parsed.annualGoalCents,
 			now: new Date(),
 		})
+
+		// Heal trades created before this plan existed: their oneRSnapshotCents +
+		// rOutcome are null because captureROnEntry had no plan to resolve at the
+		// time. Now that the plan exists, retroactively snapshot them.
+		try {
+			await backfillTradesForAccount({ accountId })
+		} catch (backfillErr) {
+			console.error(
+				"[fractal-plan] backfillTradesForAccount after plan create failed:",
+				backfillErr
+			)
+		}
 
 		return {
 			status: "success",
