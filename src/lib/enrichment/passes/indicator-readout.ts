@@ -67,23 +67,25 @@ const indicatorReadoutPass: EnrichmentPass = (
 			derivation: `Hawks indicator snapshot at 5m brick ${snapshot.candleTimestamp}`,
 		}
 
-		const setupRank: "AAA" | "AA" | "A" | "B" | "C" =
+		// setupRank: DB enum only supports A/AA/AAA; <4 favorable → NULL (full data in JSON).
+		// Enum extension to B/C tracked in backlog.
+		const setupRank: "AAA" | "AA" | "A" | null =
 			snapshot.favorableCount >= 6
 				? "AAA"
 				: snapshot.favorableCount === 5
 					? "AA"
 					: snapshot.favorableCount === 4
 						? "A"
-						: snapshot.favorableCount >= 2
-							? "B"
-							: "C"
+						: null
 
-		fields.setupRank = {
-			value: setupRank,
-			source: "indicator-readout" as const,
-			confidence,
-			conflictsWithCurrent: false,
-			derivation: `Derived from favorableCount=${snapshot.favorableCount}/7`,
+		if (setupRank !== null) {
+			fields.setupRank = {
+				value: setupRank,
+				source: "indicator-readout" as const,
+				confidence,
+				conflictsWithCurrent: false,
+				derivation: `favorableCount=${snapshot.favorableCount}/7`,
+			}
 		}
 
 		return {

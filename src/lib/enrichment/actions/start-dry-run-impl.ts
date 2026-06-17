@@ -127,10 +127,7 @@ const startDryRunImpl = async (
 					)
 				}
 
-				// Load candles if both dates present and timeframe exists. The
-				// indicator readout pass needs a floor candle (≤ entry), so we
-				// extend the fetch window backward by INDICATOR_LOOKBACK_MS to
-				// guarantee at least one 5m brick before entry is in the slice.
+				// Load candles with 1-hour backward buffer for indicator-readout floor candle.
 				let candles = null
 				if (trade.entryDate && trade.exitDate && timeframe && asset) {
 					const indicatorLookbackMs = 60 * 60 * 1000
@@ -143,7 +140,7 @@ const startDryRunImpl = async (
 							timeframeId: timeframe.id,
 							from: fetchFrom,
 							to: trade.exitDate,
-							indicatorKeys: [],
+							indicatorKeys: "*",
 						})
 					} catch (candleErr) {
 						if (!isFrameworkSignal(candleErr)) {
@@ -162,21 +159,31 @@ const startDryRunImpl = async (
 					profitOperation: profitOp,
 					hawksConfig: DEFAULT_HAWKS_CONFIG,
 					brickSize5mPoints,
-					pointValue: 1, // Default point value; asset-specific values would come from asset lookup
+					pointValue: 1,
 				}
 
 				// Run dry run
 				const dryRunResult = runDryRun(trade, ctx)
 
-				// Capture baseline: current values of fields that will be enriched
-				const baseline = {
-					stopLoss: trade.stopLoss,
-					takeProfit: trade.takeProfit,
-					entry: trade.entryPrice,
-					exit: trade.exitPrice,
-					pnl: trade.pnl,
-					outcome: trade.outcome,
-					realizedRMultiple: trade.realizedRMultiple,
+				// Flat baseline: trade column values. Pass cards and staleness check
+				// read fields by key name (baseline['pnl'], etc.). Keys must match
+				// what each pass writes to delta.fields.
+				const num = (v: string | null) => (v == null ? null : Number(v))
+				const baseline: Record<string, unknown> = {
+					entryPrice: num(trade.entryPrice),
+					exitPrice: num(trade.exitPrice),
+					positionSize: num(trade.positionSize),
+					pnl: num(trade.pnl),
+					mfe: num(trade.mfe),
+					mae: num(trade.mae),
+					holdingMs:
+						trade.entryDate && trade.exitDate
+							? trade.exitDate.getTime() - trade.entryDate.getTime()
+							: null,
+					indicatorReadout: trade.indicatorReadout,
+					setupRank: trade.setupRank,
+					stopLoss: num(trade.stopLoss),
+					takeProfit: num(trade.takeProfit),
 				}
 
 				// Insert snapshot

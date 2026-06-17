@@ -34,33 +34,75 @@ const formatDuration = (ms: number): string => {
 	return `${s}s`
 }
 
+// pnl + plannedRiskAmount are stored as integer CENTS — divide before format.
+const CENTS_BRL_FIELDS = new Set(["pnl", "plannedRiskAmount"])
+// mfe + mae are stored as BRL gross excursion (matches what csv-trade-card
+// renders via formatCurrency). Render as currency without the /100 step.
+const BRL_FIELDS = new Set(["mfe", "mae"])
+// Raw asset prices — pt-BR thousand separator, no currency.
+const PRICE_FIELDS = new Set([
+	"entryPrice",
+	"exitPrice",
+	"stopLoss",
+	"takeProfit",
+])
+
+const formatBRL = (brl: number): string =>
+	new Intl.NumberFormat("pt-BR", {
+		style: "currency",
+		currency: "BRL",
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
+	}).format(brl)
+
+const formatPrice = (n: number): string =>
+	new Intl.NumberFormat("pt-BR", {
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
+	}).format(n)
+
 const formatValue = (fieldName: string, value: unknown): string => {
-	if (value === null || value === undefined) {
+	if (value === null || value === undefined || value === "") {
 		return "—"
 	}
 
-	// holdingMs is duration in milliseconds — render as "Xmin Ys" instead of
-	// the default money-style "193.000,00" which reads as a BRL amount.
-	if (fieldName === "holdingMs" && typeof value === "number") {
-		return formatDuration(value)
+	const numeric =
+		typeof value === "number"
+			? value
+			: typeof value === "string" &&
+				  value.trim() !== "" &&
+				  !isNaN(Number(value))
+				? Number(value)
+				: null
+
+	if (numeric !== null) {
+		if (fieldName === "holdingMs") {
+			return formatDuration(numeric)
+		}
+		if (CENTS_BRL_FIELDS.has(fieldName)) {
+			return formatBRL(numeric / 100)
+		}
+		if (BRL_FIELDS.has(fieldName)) {
+			return formatBRL(numeric)
+		}
+		if (PRICE_FIELDS.has(fieldName)) {
+			return formatPrice(numeric)
+		}
+		return formatPrice(numeric)
 	}
 
-	if (typeof value === "number") {
-		return new Intl.NumberFormat("pt-BR", {
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2,
-		}).format(value)
-	}
-
-	if (typeof value === "object") {
-		// For HawksIndicatorSnapshot, render favorableCount/7
+	if (typeof value === "object" && value !== null) {
 		const obj = value as Record<string, unknown>
-		if ("favorableCount" in obj && "direction" in obj) {
+		if (
+			typeof obj.favorableCount === "number" &&
+			typeof obj.direction === "string"
+		) {
 			return `${obj.favorableCount}/7 ${obj.direction}`
 		}
+		return JSON.stringify(value)
 	}
 
-	return String(value)
+	return typeof value === "string" ? value : JSON.stringify(value)
 }
 
 const getStateIcon = (state: "accepted" | "rejected" | "neither") => {

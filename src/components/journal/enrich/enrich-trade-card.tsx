@@ -24,15 +24,15 @@ interface EnrichTradeCardProps {
 	onRejectAll: () => void
 }
 
-const formatPnL = (value: number): string => {
-	const formatted = new Intl.NumberFormat("pt-BR", {
-		minimumFractionDigits: 0,
-		maximumFractionDigits: 0,
+// trade.pnl is stored as integer CENTS — divide before formatting as currency.
+const formatPnL = (cents: number): string =>
+	new Intl.NumberFormat("pt-BR", {
+		style: "currency",
+		currency: "BRL",
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
 		signDisplay: "always",
-	}).format(value)
-
-	return formatted
-}
+	}).format(cents / 100)
 
 const formatTime = (date: Date): string => {
 	return date.toLocaleTimeString("pt-BR", {
@@ -60,7 +60,7 @@ export const EnrichTradeCard = ({
 		? formatTime(new Date(trade.entryDate))
 		: "—"
 	const exitTime = trade.exitDate ? formatTime(new Date(trade.exitDate)) : "—"
-	const pnlValue = trade.pnl != null ? Number(trade.pnl) : 0
+	const pnlValue = Number(trade.pnl ?? 0)
 	const pnlFormatted = formatPnL(pnlValue)
 	const qty = trade.positionSize != null ? Number(trade.positionSize) : null
 
@@ -105,7 +105,7 @@ export const EnrichTradeCard = ({
 													: "var(--color-fb-error)",
 										}}
 									>
-										{pnlFormatted} BRL
+										{pnlFormatted}
 									</span>
 								)}
 							</CardDescription>
@@ -132,17 +132,14 @@ export const EnrichTradeCard = ({
 				</CardHeader>
 			</Card>
 
-			{/* Pass cards */}
 			{passNames.map((passName) => {
 				const delta = dryRun.passes[passName]
-				const baselineData = snapshot.baseline[passName] || {}
-
 				return (
 					<EnrichPassCard
 						key={passName}
 						passName={passName}
 						delta={delta}
-						baseline={baselineData}
+						baseline={snapshot.baseline ?? {}}
 						acceptedFields={acceptedFields}
 						rejectedFields={rejectedFields}
 						onToggleField={onToggleField}

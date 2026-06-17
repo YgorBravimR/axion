@@ -61,6 +61,14 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **How**: Re-export R41 and R81 brick CSVs from whichever ProfitChart export pipeline produced the rest of `/Users/ygorbravim/Downloads/WIN/`. File size should be ~3-4 MB each based on the size pattern (R40 = 3.7 MB, R43 = 3.2 MB; R73 = 1.1 MB, R84 = 893 KB). After dropping the files in place, run the 3-command sequence above. Then re-open the journal and confirm trades `b6557ce2`, `b64581f4`, `b83414b3` move from `partial` to `enriched` and the indicator-readout band populates.
 - **Date filed**: 2026-06-17.
 
+### Extend `setup_rank` enum to include weak setups (B, C)
+
+- **Priority**: P2 — current behavior writes NULL setupRank for any setup with <4 favorable indicators. The engine's indicator-readout pass DOES classify those into "B" (2-3 favorable) and "C" (0-1 favorable), but the DB enum only accepts "A"/"AA"/"AAA" so the write is silently dropped. Analytics can recover via `indicatorReadout.favorableCount` but the `setupRank` column under-reports weak-setup trades as "rank unknown".
+- **Effort**: S — Drizzle migration adds `'B'` and `'C'` to the `setup_rank` enum (Postgres `ALTER TYPE setup_rank ADD VALUE 'B'` / `'C'`). Update the TS-side `setupRankEnum` in `src/db/schema.ts` accordingly. Re-extend `indicator-readout.ts` to write all 5 ranks. Backfill: optional one-shot script that re-derives setupRank from `indicatorReadout.favorableCount` on every trade with `indicatorReadout != null AND setup_rank IS NULL`.
+- **Source**: 2026-06-17 — `scripts/enrich-day.ts` bulk run hit `NeonDbError: invalid input value for enum setup_rank: "B"` on a 2-favorable setup. Temporarily collapsed B/C → NULL in indicator-readout pass (which loses signal in the column but keeps the JSON readout intact).
+- **How**: Generate a Drizzle migration with `pnpm db:generate` after updating `setupRankEnum` in schema. Note: the enum is `pgEnum("setup_rank", [...])` at line 89 of `src/db/schema.ts`. The migration is append-only on enum values; safe.
+- **Date filed**: 2026-06-17.
+
 ### Enrichment cleanup job scheduling (wire cron route)
 
 - **Priority**: P3

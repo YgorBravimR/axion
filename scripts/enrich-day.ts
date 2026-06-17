@@ -219,6 +219,7 @@ type Args = {
 	from: Date
 	to: Date
 	csvPath: string | null
+	accountName: string | null
 }
 
 const parseArgs = (): Args => {
@@ -232,10 +233,17 @@ const parseArgs = (): Args => {
 	const toStr = get("--to") ?? date
 	if (!fromStr || !toStr) {
 		console.error(
-			"Usage: pnpm tsx scripts/enrich-day.ts --date YYYY-MM-DD [--csv path]"
+			"Usage: pnpm tsx scripts/enrich-day.ts --date YYYY-MM-DD [--csv path] [--account name]"
 		)
 		console.error(
-			"   or: pnpm tsx scripts/enrich-day.ts --from YYYY-MM-DD --to YYYY-MM-DD [--csv path]"
+			"   or: pnpm tsx scripts/enrich-day.ts --from YYYY-MM-DD --to YYYY-MM-DD [--csv path] [--account name]"
+		)
+		console.error("")
+		console.error(
+			"   --account scopes enrichment to trades on a single trading account (matched by name, case-insensitive)."
+		)
+		console.error(
+			"   Without --account the script enriches EVERY account's trades in the date window."
 		)
 		process.exit(1)
 	}
@@ -243,6 +251,7 @@ const parseArgs = (): Args => {
 		from: new Date(`${fromStr}T00:00:00Z`),
 		to: new Date(`${toStr}T23:59:59.999Z`),
 		csvPath: get("--csv") ?? null,
+		accountName: get("--account") ?? null,
 	}
 }
 
@@ -318,12 +327,31 @@ const main = async () => {
 		opsMap.set(op.profitOperationNumber, op)
 	}
 
+	// Resolve account filter — case-insensitive match against tradingAccounts.name.
+	let accountFilterId: string | null = null
+	if (args.accountName) {
+		const accts = await db.query.tradingAccounts.findMany()
+		const wanted = args.accountName.toLowerCase()
+		const match = accts.find((a) => a.name.toLowerCase() === wanted)
+		if (!match) {
+			console.error(
+				`[enrich-day] no account named "${args.accountName}". Known: ${accts.map((a) => a.name).join(", ")}`
+			)
+			process.exit(1)
+		}
+		accountFilterId = match.id
+		console.log(
+			`[enrich-day] scoped to account "${match.name}" (${match.id.slice(0, 8)})`
+		)
+	}
+
 	// Pull every closed trade in the window that hasn't been fully enriched yet.
 	const candidates = await db.query.trades.findMany({
 		where: and(
 			between(trades.entryDate, args.from, args.to),
 			inArray(trades.enrichmentStatus, ["pending", "partial", "enriched"]),
-			eq(trades.isArchived, false)
+			eq(trades.isArchived, false),
+			accountFilterId ? eq(trades.accountId, accountFilterId) : undefined
 		),
 	})
 	console.log(
@@ -360,14 +388,8 @@ const main = async () => {
 			)
 		}
 
-		// Candle store can't be imported here because it transitively pulls
-		// @/db/drizzle (top-level await — breaks tsx CJS loader). Instead we
-		// read the same Parquet files directly via the inline DuckDB reader.
-		//
-		// Extend the fetch window backward by INDICATOR_LOOKBACK_MS so the
-		// indicator-readout pass can find a floor candle (≤ entry). Without
-		// this buffer, low-activity entries (no 5m brick at the exact entry
-		// timestamp) report "no-candle-at-entry" and the indicator pass skips.
+		// Read Parquet directly (can't import candle-store: top-level await breaks CJS).
+		// Extend fetch window backward 1h for indicator-readout floor candle.
 		let candles = null
 		if (timeframe && asset) {
 			const indicatorLookbackMs = 60 * 60 * 1000
@@ -405,8 +427,7 @@ const main = async () => {
 
 		const dry = runDryRun(trade, ctx)
 
-		// Auto-accept every merged field. Behaviour mirrors the UI's
-		// "Accept all" on every band.
+		// Auto-accept every field (mirrors UI "Accept all").
 		const updatePayload: Record<string, unknown> = {}
 		const accepted: string[] = []
 		for (const [field, raw] of Object.entries(dry.mergedFields)) {
@@ -426,10 +447,7 @@ const main = async () => {
 		})
 		Object.assign(updatePayload, derivedPatch)
 
-		// Per-pass status columns so the UI badge tells the truth. A pass that
-		// returned "skipped" because its prerequisites weren't met (no CSV op,
-		// no candles, etc.) is not a failure — it's just a no-op. Only treat
-		// "failed" as blocking. Anything else counts as enriched.
+		// Pass status: "failed" blocks; "skipped" is a no-op.
 		const passStatuses = [
 			dry.passes.operations.passStatus,
 			dry.passes.candleMath.passStatus,

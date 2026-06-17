@@ -88,24 +88,26 @@ const operationsPass: EnrichmentPass = (
 			Number(profitOperation.positionSize),
 			trade.positionSize != null ? Number(trade.positionSize) : null
 		)
-		// Money fields on trade are stored as integer cents; CSV values are BRL.
-		const toCents = (val: number | null | undefined) =>
-			val == null ? null : Math.round(Number(val) * 100)
+		// Mirror bulkCreateTrades: pnl = cents (BRL × 100); mfe/mae = BRL gross.
+		const pnlCents =
+			profitOperation.pnl == null
+				? null
+				: Math.round(Number(profitOperation.pnl) * 100)
 		checkAndAdd(
 			"pnl",
-			toCents(profitOperation.pnl),
+			pnlCents,
 			trade.pnl != null ? Number(trade.pnl) : null,
 			true
 		)
 		checkAndAdd(
 			"mfe",
-			toCents(profitOperation.profitMetadata?.profitMep),
+			profitOperation.mfe ?? null,
 			trade.mfe != null ? Number(trade.mfe) : null,
 			true
 		)
 		checkAndAdd(
 			"mae",
-			toCents(profitOperation.profitMetadata?.profitMen),
+			profitOperation.mae ?? null,
 			trade.mae != null ? Number(trade.mae) : null,
 			true
 		)

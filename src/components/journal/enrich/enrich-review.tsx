@@ -33,11 +33,6 @@ interface EnrichReviewProps {
 	initialSnapshots: DryRunSnapshotHydrated[]
 }
 
-/**
- * Main review screen for enriched trades.
- * Displays a sidebar with trade list and main area with enrichment details.
- * Supports keyboard shortcuts for navigation and actions.
- */
 export const EnrichReview = ({
 	runId,
 	initialSnapshots,
@@ -278,7 +273,7 @@ export const EnrichReview = ({
 		onAcceptAll: handleAcceptAll,
 		onRejectAll: handleRejectAll,
 		onEdit: () => {
-			/* TODO: open edit mode (5.D) */
+			// TODO: open edit mode
 		},
 		onHelp: () => setIsHelpDialogOpen(true),
 		enabled: !isCommitting && !isSkipping,
@@ -372,7 +367,11 @@ export const EnrichReview = ({
 							<Button
 								size="sm"
 								onClick={handleSave}
-								disabled={isCommitting || isSkipping}
+								disabled={
+									isCommitting ||
+									isSkipping ||
+									currentSnapshot.status === "committed"
+								}
 								title="enter"
 							>
 								{isCommitting && (
