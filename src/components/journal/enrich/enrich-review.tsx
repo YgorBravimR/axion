@@ -26,6 +26,7 @@ import {
 import type { DryRunSnapshotHydrated } from "@/app/actions/enrichment.types"
 import { useEnrichShortcuts } from "@/hooks/use-enrich-shortcuts"
 import { EnrichSidebar } from "./enrich-sidebar"
+import { EnrichSuccessScreen } from "./enrich-success-screen"
 import { EnrichTradeCard } from "./enrich-trade-card"
 
 interface EnrichReviewProps {
@@ -160,14 +161,10 @@ export const EnrichReview = ({
 
 			showToast("success", t("commitSuccess"))
 
-			// Advance to next trade
+			// Advance to next trade. If this was the last, stay put — the
+			// "all reviewed" derived state will swap the screen to the success view.
 			if (currentIndex < snapshots.length - 1) {
 				setCurrentIndex(currentIndex + 1)
-			} else {
-				// All trades committed — show success screen
-				// TODO: render EnrichSuccessScreen (from sibling 5.D)
-				showToast("success", "All trades reviewed!")
-				router.push("/journal/enrich")
 			}
 		} finally {
 			setIsCommitting(false)
@@ -180,7 +177,6 @@ export const EnrichReview = ({
 		snapshots.length,
 		t,
 		showToast,
-		router,
 	])
 
 	// Skip handler
@@ -243,11 +239,12 @@ export const EnrichReview = ({
 		const mergedFields = Object.keys(currentSnapshot.dryRun.mergedFields)
 
 		setFieldSelections((prev) => {
-			const newSelection = {
+			const next = new Map(prev)
+			next.set(snapshotId, {
 				accepted: new Set(mergedFields),
 				rejected: new Set(),
-			}
-			return prev.set(snapshotId, newSelection)
+			})
+			return next
 		})
 	}, [currentSnapshot])
 
@@ -256,11 +253,12 @@ export const EnrichReview = ({
 		const snapshotId = currentSnapshot.snapshotId
 
 		setFieldSelections((prev) => {
-			const newSelection = {
+			const next = new Map(prev)
+			next.set(snapshotId, {
 				accepted: new Set(),
 				rejected: new Set(),
-			}
-			return prev.set(snapshotId, newSelection)
+			})
+			return next
 		})
 	}, [currentSnapshot])
 
@@ -279,23 +277,57 @@ export const EnrichReview = ({
 		enabled: !isCommitting && !isSkipping,
 	})
 
+	const committedCount = snapshots.filter(
+		(s) => s.status === "committed"
+	).length
+	const skippedCount = snapshots.filter((s) => s.status === "skipped").length
+	const reviewedCount = committedCount + skippedCount
+	const isAllReviewed = reviewedCount === totalCount && totalCount > 0
+
+	if (isAllReviewed) {
+		return (
+			<EnrichSuccessScreen
+				_runId={runId}
+				stats={{ committedCount, skippedCount }}
+			/>
+		)
+	}
+
 	return (
-		<div className="flex h-screen flex-col overflow-hidden">
+		<div className="bg-bg-100 flex h-screen flex-col overflow-hidden">
 			{/* Header */}
-			<div className="bg-background border-b px-6 py-4">
-				<h1 className="text-lg font-semibold">
-					{t("header")} ·{" "}
-					{t("tradeOf", {
-						current: currentIndex + 1,
-						total: totalCount,
-					})}
-				</h1>
+			<div className="bg-bg-200 border-bg-300 px-m-500 py-m-400 gap-s-300 flex items-center justify-between border-b">
+				<div className="gap-s-100 flex flex-col">
+					<h1 className="text-h3 leading-none font-bold">{t("header")}</h1>
+					<p className="text-small text-txt-300">
+						{t("tradeOf", {
+							current: currentIndex + 1,
+							total: totalCount,
+						})}
+					</p>
+				</div>
+				<div className="text-tiny text-txt-300 gap-s-300 flex items-center">
+					<span>
+						{reviewedCount}/{totalCount}
+					</span>
+					<div
+						className="bg-bg-300 h-1 w-32 overflow-hidden rounded-full"
+						aria-hidden="true"
+					>
+						<div
+							className="bg-acc-100 h-full transition-[width]"
+							style={{
+								width: `${(reviewedCount / Math.max(totalCount, 1)) * 100}%`,
+							}}
+						/>
+					</div>
+				</div>
 			</div>
 
 			{/* Main layout: sidebar + content */}
 			<div className="flex flex-1 overflow-hidden">
 				{/* Sidebar */}
-				<div className="bg-muted w-64">
+				<div className="bg-bg-200 border-bg-300 w-64 border-r">
 					<EnrichSidebar
 						snapshots={snapshots}
 						currentIndex={currentIndex}
@@ -319,7 +351,7 @@ export const EnrichReview = ({
 					</div>
 
 					{/* Action bar */}
-					<div className="bg-background flex items-center justify-between gap-3 border-t px-6 py-4">
+					<div className="bg-bg-200 border-bg-300 px-m-500 py-m-400 gap-s-300 flex items-center justify-between border-t">
 						<div className="flex items-center gap-2">
 							<Button
 								variant="outline"
@@ -338,7 +370,7 @@ export const EnrichReview = ({
 								disabled={currentIndex === snapshots.length - 1}
 								title="j / ↓"
 							>
-								Next
+								{t("next")}
 								<ChevronRight className="ml-1 h-4 w-4" />
 							</Button>
 						</div>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/i18n/routing"
 import {
 	Card,
 	CardContent,
@@ -25,7 +25,7 @@ export const EnrichSuccessScreen = ({
 	const router = useRouter()
 
 	const handleViewDashboard = () => {
-		router.push("/dashboard")
+		router.push("/")
 	}
 
 	const handleBackToJournal = () => {
