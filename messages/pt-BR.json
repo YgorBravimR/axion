@@ -138,6 +138,9 @@
 		"dashboard": "Painel",
 		"commandCenter": "Central de Comando",
 		"journal": "Diário",
+		"journalGroup": "Diário",
+		"journalOverview": "Operações",
+		"enrichJournal": "Enriquecer",
 		"analytics": "Análises",
 		"monteCarlo": "Monte Carlo",
 		"playbook": "Playbook",
@@ -1975,25 +1978,27 @@
 		"enrichment": {
 			"landing": {
 				"title": "Enriquecer Diário",
-				"description": "Revise e enriqueça operações pendentes do seu diário.",
-				"pendingLabel": "Operações pendentes de enriquecimento",
+				"description": "Pegue suas operações cruas e some o que você não digitou na mão: P&L, MFE/MAE, leitura de indicadores e stop/alvo.",
+				"pendingLabel": "Operações aguardando enriquecimento",
+				"pendingHint": "Operações ainda não revisadas dentro do período selecionado.",
+				"emptyAllDoneTitle": "Tudo enriquecido",
+				"emptyAllDoneBody": "Nenhuma operação pendente nesse período. Mude as datas para revisitar uma semana anterior, ou volte ao diário.",
+				"backToJournal": "Voltar ao diário",
 				"dateRangeLabel": "Período",
 				"dateFrom": "De",
 				"dateTo": "Até",
 				"uploadCsvLabel": "CSV de Operações Profit Pro (opcional)",
-				"uploadCsvHint": "Carregue sua exportação de operações Profit para ativar a reconciliação com CSV.",
+				"uploadCsvHint": "Carregue sua exportação para reconciliar P&L, MFE e MAE diretamente do Profit.",
 				"dropHere": "Solte seu arquivo CSV aqui",
 				"orClick": "ou clique para selecionar",
 				"selectFile": "Selecionar arquivo",
 				"uploadParsing": "Analisando...",
 				"uploadParsed": "{count} operações analisadas",
 				"uploadError": "Erro na análise: {message}",
-				"candleStatusLabel": "Status de dados de candles",
-				"candleStatusPlaceholder": "Verificação de cobertura de candles em breve",
-				"runDryRun": "Executar pré-execução de enriquecimento",
+				"runDryRun": "Iniciar revisão",
 				"cancel": "Cancelar",
-				"startError": "Falha ao iniciar pré-execução",
-				"startedToast": "Pré-execução iniciada ({count} operações)"
+				"startError": "Falha ao iniciar a revisão",
+				"startedToast": "Revisão iniciada ({count} operações)"
 			},
 			"resume": {
 				"bannerText": "Você tem operações de rascunho pendentes de revisão de uma sessão anterior.",
@@ -2012,6 +2017,8 @@
 				"saveAndNext": "Salvar e próximo",
 				"skip": "Pular",
 				"prev": "Anterior",
+				"next": "Próximo",
+				"contracts": "{count, plural, =1 {1 contrato} other {# contratos}}",
 				"abandonRun": "Abandonar execução",
 				"commitError": "Falha ao confirmar operação",
 				"commitSuccess": "Operação enriquecida",
@@ -2031,7 +2038,7 @@
 					"saveLabel": "Salvar e avançar",
 					"skipLabel": "Pular operação atual",
 					"acceptAllLabel": "Aceitar todos os campos de alta confiança",
-					"rejectAllLabel": "Rejeitar todas as mudanças",
+					"rejectAllLabel": "Limpar todas as seleções",
 					"editLabel": "Editar campo inline",
 					"helpLabel": "Mostrar este overlay"
 				},
@@ -2077,10 +2084,24 @@
 				"indicatorReadout": "Leitura de indicadores",
 				"setupRank": "Ranking de setup"
 			},
+			"indicatorLabels": {
+				"gate15m": "Gate 15m (EMAs + candle prévio)",
+				"gate60m": "Gate 60m (EMAs + candle prévio)",
+				"macd": "MACD histograma",
+				"vwapD": "VWAP diária",
+				"vwapM": "VWAP mensal",
+				"vwapW": "VWAP semanal",
+				"ajuste": "Preço de ajuste"
+			},
+			"indicatorFavorable": "favorável",
+			"indicatorUnfavorable": "contra",
+			"indicatorSummary": "{count}/7 indicadores a favor",
 			"passActions": {
 				"acceptAll": "Aceitar todos",
-				"rejectAll": "Rejeitar todos"
+				"rejectAll": "Limpar seleção"
 			},
+			"fieldCountOne": "campo",
+			"fieldCountMany": "campos",
 			"success": {
 				"enriched": "{count, plural, =0 {Nenhuma operação enriquecida} =1 {Enriquecida 1 operação} other {Enriquecidas # operações}}",
 				"skipped": "{count, plural, =0 {} =1 {Pulada 1 operação} other {Puladas # operações}}",
@@ -4329,7 +4350,9 @@
 		"editTrade": "Editar Trade",
 		"editPlaybook": "Editar Playbook",
 		"playbookDetails": "Detalhes do Playbook",
-		"newPlaybook": "Novo Playbook"
+		"newPlaybook": "Novo Playbook",
+		"enrichJournal": "Enriquecer",
+		"enrichReview": "Revisar"
 	},
 	"forgotPassword": {
 		"title": "Redefinir Senha",

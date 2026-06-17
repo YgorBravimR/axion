@@ -17,12 +17,16 @@ import {
 	CalendarClock,
 	Sparkles,
 	Activity,
+	Sparkle,
+	NotebookPen,
 	type LucideIcon,
 } from "lucide-react"
 
 type NavLabelKey =
 	| "dashboard"
 	| "journal"
+	| "journalOverview"
+	| "enrichJournal"
 	| "analytics"
 	| "playbook"
 	| "reports"
@@ -38,7 +42,7 @@ type NavLabelKey =
 	| "indicatorLab"
 	| "settings"
 
-type NavGroupKey = "plans" | "simulation" | "reportsGroup"
+type NavGroupKey = "plans" | "simulation" | "reportsGroup" | "journalGroup"
 
 interface NavItem {
 	kind?: "item"
@@ -73,7 +77,23 @@ const buildNavStructure = (now: Date): NavEntry[] => {
 	return [
 		{ labelKey: "dashboard", href: "/", icon: LayoutDashboard },
 		{ labelKey: "commandCenter", href: "/command-center", icon: Target },
-		{ labelKey: "journal", href: "/journal", icon: BookOpen },
+		{
+			kind: "group",
+			groupKey: "journalGroup",
+			icon: BookOpen,
+			items: [
+				{
+					labelKey: "journalOverview",
+					href: "/journal",
+					icon: NotebookPen,
+				},
+				{
+					labelKey: "enrichJournal",
+					href: "/journal/enrich",
+					icon: Sparkle,
+				},
+			],
+		},
 		{ labelKey: "analytics", href: "/analytics", icon: BarChart3 },
 		{
 			kind: "group",

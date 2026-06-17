@@ -138,6 +138,9 @@
 		"dashboard": "Dashboard",
 		"commandCenter": "Command Center",
 		"journal": "Journal",
+		"journalGroup": "Journal",
+		"journalOverview": "Trades",
+		"enrichJournal": "Enrich",
 		"analytics": "Analytics",
 		"monteCarlo": "Monte Carlo",
 		"playbook": "Playbook",
@@ -1975,25 +1978,27 @@
 		"enrichment": {
 			"landing": {
 				"title": "Enrich Journal",
-				"description": "Review and enrich pending trades from your journal.",
-				"pendingLabel": "Pending trades to enrich",
+				"description": "Take your raw trades and add what you didn't type by hand: P&L, MFE/MAE, indicator readout, stop and target.",
+				"pendingLabel": "Trades awaiting enrichment",
+				"pendingHint": "Trades not yet reviewed inside the selected window.",
+				"emptyAllDoneTitle": "All caught up",
+				"emptyAllDoneBody": "No pending trades in this window. Change the dates to revisit an earlier week, or head back to the journal.",
+				"backToJournal": "Back to journal",
 				"dateRangeLabel": "Date range",
 				"dateFrom": "From",
 				"dateTo": "To",
 				"uploadCsvLabel": "Profit Pro Operações CSV (optional)",
-				"uploadCsvHint": "Upload your Profit operations export to enable Operations CSV reconciliation.",
+				"uploadCsvHint": "Upload your Profit operations export to reconcile P&L, MFE and MAE straight from Profit.",
 				"dropHere": "Drop your CSV file here",
 				"orClick": "or click to browse",
 				"selectFile": "Select file",
 				"uploadParsing": "Parsing...",
 				"uploadParsed": "{count} operations parsed",
 				"uploadError": "Parse error: {message}",
-				"candleStatusLabel": "Candle data status",
-				"candleStatusPlaceholder": "Candle coverage check coming soon",
-				"runDryRun": "Run dry-run enrichment",
+				"runDryRun": "Start review",
 				"cancel": "Cancel",
-				"startError": "Failed to start dry-run",
-				"startedToast": "Dry-run started ({count} trades)"
+				"startError": "Failed to start review",
+				"startedToast": "Review started ({count} trades)"
 			},
 			"resume": {
 				"bannerText": "You have draft trades pending review from a previous session.",
@@ -2012,6 +2017,8 @@
 				"saveAndNext": "Save & next",
 				"skip": "Skip",
 				"prev": "Previous",
+				"next": "Next",
+				"contracts": "{count, plural, =1 {1 contract} other {# contracts}}",
 				"abandonRun": "Abandon run",
 				"commitError": "Failed to commit trade",
 				"commitSuccess": "Trade enriched",
@@ -2031,7 +2038,7 @@
 					"saveLabel": "Save & advance",
 					"skipLabel": "Skip current trade",
 					"acceptAllLabel": "Accept all high-confidence fields",
-					"rejectAllLabel": "Reject all changes",
+					"rejectAllLabel": "Clear all selections",
 					"editLabel": "Edit field inline",
 					"helpLabel": "Show this overlay"
 				},
@@ -2077,10 +2084,24 @@
 				"indicatorReadout": "Indicator readout",
 				"setupRank": "Setup rank"
 			},
+			"indicatorLabels": {
+				"gate15m": "Gate 15m (EMAs + prior candle)",
+				"gate60m": "Gate 60m (EMAs + prior candle)",
+				"macd": "MACD histogram",
+				"vwapD": "Daily VWAP",
+				"vwapM": "Monthly VWAP",
+				"vwapW": "Weekly VWAP",
+				"ajuste": "Settlement price"
+			},
+			"indicatorFavorable": "favorable",
+			"indicatorUnfavorable": "against",
+			"indicatorSummary": "{count}/7 indicators in favor",
 			"passActions": {
 				"acceptAll": "Accept all",
-				"rejectAll": "Reject all"
+				"rejectAll": "Clear selection"
 			},
+			"fieldCountOne": "field",
+			"fieldCountMany": "fields",
 			"success": {
 				"enriched": "{count, plural, =0 {No trades enriched} =1 {Enriched 1 trade} other {Enriched # trades}}",
 				"skipped": "{count, plural, =0 {} =1 {Skipped 1 trade} other {Skipped # trades}}",
@@ -4329,7 +4350,9 @@
 		"editTrade": "Edit Trade",
 		"editPlaybook": "Edit Playbook",
 		"playbookDetails": "Playbook Details",
-		"newPlaybook": "New Playbook"
+		"newPlaybook": "New Playbook",
+		"enrichJournal": "Enrich",
+		"enrichReview": "Review"
 	},
 	"forgotPassword": {
 		"title": "Reset Password",
