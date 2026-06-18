@@ -1,7 +1,6 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { useRouter } from "next/navigation"
 import { Link } from "@/i18n/routing"
 import { BarChart2 } from "lucide-react"
 import { WeeklyReportCard } from "./weekly-report-card"
@@ -74,7 +73,6 @@ export const ReportsContent = ({
 	comparisonData,
 }: ReportsContentProps) => {
 	const t = useTranslations("reports")
-	const router = useRouter()
 	useRegisterPageGuide(reportsGuide)
 
 	const allNull =
@@ -183,16 +181,10 @@ export const ReportsContent = ({
 								withdrawalTargetPercent={
 									annualRollupData.withdrawalTargetPercent
 								}
-								onLogged={() => router.refresh()}
 							/>
 						)}
 
-					<CapitalEventLog
-						events={capitalEvents}
-						year={currentYear}
-						onEventDeleted={() => router.refresh()}
-						onEventAdded={() => router.refresh()}
-					/>
+					<CapitalEventLog events={capitalEvents} year={currentYear} />
 				</section>
 			)}
 
