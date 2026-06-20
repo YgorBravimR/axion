@@ -268,8 +268,12 @@ export const EnrichReview = ({
 	useEnrichShortcuts({
 		onNext: handleNext,
 		onPrev: handlePrev,
-		onSave: handleSave,
-		onSkip: handleSkip,
+		onSave: () => {
+			void handleSave()
+		},
+		onSkip: () => {
+			void handleSkip()
+		},
 		onAcceptAll: handleAcceptAll,
 		onRejectAll: handleRejectAll,
 		onEdit: () => {
