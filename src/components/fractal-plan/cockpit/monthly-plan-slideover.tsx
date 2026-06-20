@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import {
 	Sheet,
 	SheetContent,
@@ -32,6 +33,7 @@ const MonthlyPlanSlideover = ({
 	riskProfiles,
 	existing,
 }: MonthlyPlanSlideoverProps) => {
+	const t = useTranslations("plan.slideovers")
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
 			<SheetContent
@@ -40,11 +42,8 @@ const MonthlyPlanSlideover = ({
 				className="flex w-full flex-col overflow-hidden border-l px-0 pt-0 pb-0 sm:max-w-xl"
 			>
 				<SheetHeader className="border-bg-300 px-m-400 py-s-300 border-b">
-					<SheetTitle>Editar plano · {monthLabel}</SheetTitle>
-					<SheetDescription>
-						Meta, intenção, pós-mortem e override de perfil de risco para este
-						mês.
-					</SheetDescription>
+					<SheetTitle>{t("monthlyTitle", { monthLabel })}</SheetTitle>
+					<SheetDescription>{t("monthlyDescription")}</SheetDescription>
 				</SheetHeader>
 				<div className="px-m-400 py-m-400 flex-1 overflow-y-auto">
 					<MonthlyPlanEditor

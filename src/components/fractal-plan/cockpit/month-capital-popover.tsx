@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Pencil, RefreshCcw, Save } from "lucide-react"
 import {
 	Popover,
@@ -32,6 +33,7 @@ const MonthCapitalPopover = ({
 	const router = useRouter()
 	const { showToast } = useToast()
 	const { formatCurrency } = useFormatting()
+	const t = useTranslations("plan.capital")
 	const formatBRL = (cents: number): string => formatCurrency(cents / 100)
 	const [open, setOpen] = useState(false)
 	const [isPending, startTransition] = useTransition()
@@ -50,7 +52,7 @@ const MonthCapitalPopover = ({
 	const handleSubmit = () => {
 		const cents = valueCents !== null ? Math.round(valueCents) : 0
 		if (!Number.isFinite(cents) || cents <= 0) {
-			showToast("error", "Capital deve ser número positivo.")
+			showToast("error", t("mustBePositive"))
 			return
 		}
 		startTransition(async () => {
@@ -63,13 +65,13 @@ const MonthCapitalPopover = ({
 				showToast(
 					"success",
 					propagate && res.data?.forwardUpdated
-						? `Capital atualizado · ${res.data.forwardUpdated} meses adiante recalibrados`
-						: "Capital atualizado"
+						? t("updatedWithForward", { count: res.data.forwardUpdated })
+						: t("updated")
 				)
 				setOpen(false)
 				router.refresh()
 			} else {
-				showToast("error", res.message || "Falha ao atualizar capital")
+				showToast("error", res.message || t("updateFailed"))
 			}
 		})
 	}
@@ -79,7 +81,7 @@ const MonthCapitalPopover = ({
 			<PopoverTrigger asChild>
 				<button
 					type="button"
-					aria-label={`Editar capital de ${monthLabel}`}
+					aria-label={t("editAriaLabel", { monthLabel })}
 					className="right-s-200 top-s-200 text-txt-300 hover:bg-bg-300 hover:text-acc-100 focus-visible:ring-acc-100 absolute z-10 inline-flex size-7 items-center justify-center rounded-sm p-1 opacity-40 transition-opacity group-hover:opacity-100 hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:outline-none"
 					onClick={(e) => {
 						e.preventDefault()
@@ -96,10 +98,10 @@ const MonthCapitalPopover = ({
 			>
 				<div>
 					<h4 className="text-small text-txt-100 font-medium">
-						Capital · {monthLabel}
+						{t("heading", { monthLabel })}
 					</h4>
 					<p className="text-tiny text-txt-300">
-						Atual:{" "}
+						{t("currentLabel")}{" "}
 						<span className="font-mono">{formatBRL(currentCapitalCents)}</span>
 					</p>
 				</div>
@@ -108,7 +110,7 @@ const MonthCapitalPopover = ({
 						id={`capital-input-${monthlyPlanId}-lbl`}
 						htmlFor={`capital-input-${monthlyPlanId}`}
 					>
-						Novo capital (R$)
+						{t("newCapitalLabel")}
 					</Label>
 					<CurrencyInput
 						id={`capital-input-${monthlyPlanId}`}
@@ -129,7 +131,7 @@ const MonthCapitalPopover = ({
 					disabled={prevMonthEndCents === null}
 				>
 					<RefreshCcw className="mr-s-200 size-3.5" />
-					Usar saldo final do mês anterior
+					{t("usePrevMonth")}
 					{prevMonthEndCents !== null && (
 						<span className="text-tiny text-txt-300 ml-auto font-mono">
 							{formatBRL(prevMonthEndCents)}
@@ -145,7 +147,7 @@ const MonthCapitalPopover = ({
 						checked={propagate}
 						onCheckedChange={(v) => setPropagate(v === true)}
 					/>
-					<span>Aplicar a meses seguintes (sem override manual)</span>
+					<span>{t("applyForward")}</span>
 				</label>
 				<div className="gap-s-200 pt-s-200 flex justify-end">
 					<Button
@@ -155,7 +157,7 @@ const MonthCapitalPopover = ({
 						size="sm"
 						onClick={() => setOpen(false)}
 					>
-						Cancelar
+						{t("cancel")}
 					</Button>
 					<Button
 						id={`capital-save-${monthlyPlanId}`}
@@ -165,7 +167,7 @@ const MonthCapitalPopover = ({
 						disabled={isPending}
 					>
 						<Save className="mr-s-200 size-3.5" />
-						Salvar
+						{t("save")}
 					</Button>
 				</div>
 			</PopoverContent>

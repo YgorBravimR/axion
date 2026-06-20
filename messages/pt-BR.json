@@ -2088,7 +2088,8 @@
 				"viewDashboard": "Ver dashboard",
 				"backToJournal": "Voltar para diário"
 			}
-		}
+		},
+		"quickAddTradeAriaLabel": "Adicionar trade rápido"
 	},
 	"analytics": {
 		"title": "Análises",
@@ -6527,6 +6528,46 @@
 					}
 				}
 			}
+		},
+		"slideovers": {
+			"monthlyTitle": "Editar plano · {monthLabel}",
+			"monthlyDescription": "Meta, intenção, pós-mortem e override de perfil de risco para este mês.",
+			"quarterlyTitle": "Editar trimestre · {quarterLabel}",
+			"quarterlyDescription": "Meta, reflexão e pós-mortem do trimestre. As metas mensais ficam no card do mês.",
+			"yearlyEditTitle": "Editar plano {year}",
+			"yearlyCreateTitle": "Criar plano {year}",
+			"yearlyDescription": "Capital inicial, ladder de tiers, caps R e perfil de risco padrão."
+		},
+		"annualGrid": {
+			"ariaLabel": "Grade anual de planos para {year}"
+		},
+		"capital": {
+			"editAriaLabel": "Editar capital de {monthLabel}",
+			"heading": "Capital · {monthLabel}",
+			"currentLabel": "Atual:",
+			"newCapitalLabel": "Novo capital (R$)",
+			"usePrevMonth": "Usar saldo final do mês anterior",
+			"applyForward": "Aplicar a meses seguintes (sem override manual)",
+			"cancel": "Cancelar",
+			"save": "Salvar",
+			"mustBePositive": "Capital deve ser número positivo.",
+			"updatedWithForward": "Capital atualizado · {count} meses adiante recalibrados",
+			"updated": "Capital atualizado",
+			"updateFailed": "Falha ao atualizar capital"
+		},
+		"rCapOverride": {
+			"mustBePositive": "{fieldLabel} deve ser um número positivo.",
+			"setSuccess": "Override definido em {level}: {value}R",
+			"saveFailed": "Falha ao salvar",
+			"cleared": "Override removido — herda do nível superior",
+			"resetFailed": "Falha ao resetar",
+			"editAriaLabel": "Editar override de {fieldLabel}",
+			"heading": "Override {fieldLabel} em {level}",
+			"currentFrom": "Atual: {value} de",
+			"newValueLabel": "Novo valor em R",
+			"placeholder": "ex.: 2,50",
+			"reset": "Resetar",
+			"save": "Salvar"
 		}
 	},
 	"hawks": {

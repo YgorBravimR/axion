@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslations } from "next-intl"
 import {
 	Sheet,
 	SheetContent,
@@ -44,6 +45,7 @@ const YearlyPlanSlideover = ({
 	existing,
 	defaultInitialCapitalCents,
 }: YearlyPlanSlideoverProps) => {
+	const t = useTranslations("plan.slideovers")
 	const { isActive: guideActive } = usePageGuide()
 	const handleOpenChange = (next: boolean): void => {
 		if (guideActive && !next) {
@@ -75,11 +77,11 @@ const YearlyPlanSlideover = ({
 			>
 				<SheetHeader className="border-bg-300 px-m-400 py-s-300 border-b">
 					<SheetTitle>
-						{existing ? `Editar plano ${year}` : `Criar plano ${year}`}
+						{existing
+							? t("yearlyEditTitle", { year })
+							: t("yearlyCreateTitle", { year })}
 					</SheetTitle>
-					<SheetDescription>
-						Capital inicial, ladder de tiers, caps R e perfil de risco padrão.
-					</SheetDescription>
+					<SheetDescription>{t("yearlyDescription")}</SheetDescription>
 				</SheetHeader>
 				<div className="px-m-400 py-m-400 flex-1 overflow-y-auto">
 					<YearlyPlanEditor

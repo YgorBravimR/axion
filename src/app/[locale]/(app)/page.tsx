@@ -1,4 +1,4 @@
-import { setRequestLocale } from "next-intl/server"
+import { getTranslations, setRequestLocale } from "next-intl/server"
 import { DashboardContent } from "@/components/dashboard"
 import { getDashboardBatch } from "@/app/actions/analytics"
 import { getServerEffectiveNow } from "@/lib/effective-date"
@@ -12,6 +12,7 @@ const DashboardPage = async ({ params }: DashboardPageProps) => {
 	const { locale } = await params
 	setRequestLocale(locale)
 
+	const t = await getTranslations("dashboard")
 	const now = await getServerEffectiveNow()
 
 	const initialYear = now.getFullYear()
@@ -34,7 +35,7 @@ const DashboardPage = async ({ params }: DashboardPageProps) => {
 		hawksCoachingResult.status === "success" ? hawksCoachingResult.data : null
 
 	return (
-		<section className="flex h-full flex-col" aria-label="Dashboard">
+		<section className="flex h-full flex-col" aria-label={t("title")}>
 			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1">
 				<DashboardContent
 					initialStats={stats}

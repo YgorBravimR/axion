@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { Loader2, RotateCcw, Save, Settings2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -124,6 +125,7 @@ const RCapOverridePopover = ({
 }: RCapOverridePopoverProps) => {
 	const router = useRouter()
 	const { showToast } = useToast()
+	const t = useTranslations("plan.rCapOverride")
 	const [open, setOpen] = useState(false)
 	const [draft, setDraft] = useState("")
 	const [isPending, startTransition] = useTransition()
@@ -133,18 +135,18 @@ const RCapOverridePopover = ({
 	const handleSave = () => {
 		const num = parseFloat(draft.replace(",", "."))
 		if (!Number.isFinite(num) || num <= 0) {
-			showToast("error", `${fieldLabel} must be positive number.`)
+			showToast("error", t("mustBePositive", { fieldLabel }))
 			return
 		}
 		startTransition(async () => {
 			const result = await callUpsert(level, planRowId, fieldKey, num)
 			if (result.status === "success") {
-				showToast("success", `Override set at ${level}: ${num.toFixed(2)}R`)
+				showToast("success", t("setSuccess", { level, value: num.toFixed(2) }))
 				setOpen(false)
 				setDraft("")
 				router.refresh()
 			} else {
-				showToast("error", result.message || "Save failed")
+				showToast("error", result.message || t("saveFailed"))
 			}
 		})
 	}
@@ -153,11 +155,11 @@ const RCapOverridePopover = ({
 		startTransition(async () => {
 			const result = await callReset(level, planRowId, fieldKey)
 			if (result.status === "success") {
-				showToast("success", "Override cleared — falls back to parent")
+				showToast("success", t("cleared"))
 				setOpen(false)
 				router.refresh()
 			} else {
-				showToast("error", result.message || "Reset failed")
+				showToast("error", result.message || t("resetFailed"))
 			}
 		})
 	}
@@ -175,7 +177,7 @@ const RCapOverridePopover = ({
 						variant="ghost"
 						size="sm"
 						className="text-tiny text-txt-300 hover:text-txt-100 h-7 px-2"
-						aria-label={`Edit ${fieldLabel} override`}
+						aria-label={t("editAriaLabel", { fieldLabel })}
 					>
 						<Settings2 className="h-3.5 w-3.5" />
 					</Button>
@@ -184,10 +186,10 @@ const RCapOverridePopover = ({
 					<div className="space-y-s-300">
 						<div>
 							<p className="text-tiny text-txt-300 font-medium tracking-wider uppercase">
-								Override {fieldLabel} at {level}
+								{t("heading", { fieldLabel, level })}
 							</p>
 							<p className="text-tiny text-txt-300 mt-1">
-								Current: {formatR(currentValue)} from{" "}
+								{t("currentFrom", { value: formatR(currentValue) })}{" "}
 								<strong className="text-txt-200">{currentSource}</strong>
 							</p>
 						</div>
@@ -196,7 +198,7 @@ const RCapOverridePopover = ({
 								id={`${idPrefix}-input-label`}
 								htmlFor={`${idPrefix}-input`}
 							>
-								New R value
+								{t("newValueLabel")}
 							</Label>
 							<Input
 								id={`${idPrefix}-input`}
@@ -205,7 +207,7 @@ const RCapOverridePopover = ({
 								min="0.01"
 								value={draft}
 								onChange={(e) => setDraft(e.target.value)}
-								placeholder="e.g., 2.50"
+								placeholder={t("placeholder")}
 								autoFocus
 							/>
 						</div>
@@ -219,7 +221,7 @@ const RCapOverridePopover = ({
 								className="text-tiny"
 							>
 								<RotateCcw className="mr-1 h-3 w-3" />
-								Reset
+								{t("reset")}
 							</Button>
 							<Button
 								id={`${idPrefix}-save`}
@@ -232,7 +234,7 @@ const RCapOverridePopover = ({
 								) : (
 									<Save className="mr-1 h-3 w-3" />
 								)}
-								Save
+								{t("save")}
 							</Button>
 						</div>
 					</div>

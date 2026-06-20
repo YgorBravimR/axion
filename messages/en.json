@@ -2088,7 +2088,8 @@
 				"viewDashboard": "View dashboard",
 				"backToJournal": "Back to journal"
 			}
-		}
+		},
+		"quickAddTradeAriaLabel": "Quick add trade"
 	},
 	"analytics": {
 		"title": "Analytics",
@@ -6527,6 +6528,46 @@
 					}
 				}
 			}
+		},
+		"slideovers": {
+			"monthlyTitle": "Edit plan · {monthLabel}",
+			"monthlyDescription": "Goal, intent, post-mortem and risk-profile override for this month.",
+			"quarterlyTitle": "Edit quarter · {quarterLabel}",
+			"quarterlyDescription": "Quarter goal, reflection and post-mortem. Monthly goals live in the month card.",
+			"yearlyEditTitle": "Edit plan {year}",
+			"yearlyCreateTitle": "Create plan {year}",
+			"yearlyDescription": "Initial capital, tier ladder, R caps and default risk profile."
+		},
+		"annualGrid": {
+			"ariaLabel": "Annual plan grid for {year}"
+		},
+		"capital": {
+			"editAriaLabel": "Edit capital for {monthLabel}",
+			"heading": "Capital · {monthLabel}",
+			"currentLabel": "Current:",
+			"newCapitalLabel": "New capital (R$)",
+			"usePrevMonth": "Use end-of-month balance from prior month",
+			"applyForward": "Apply to following months (without manual override)",
+			"cancel": "Cancel",
+			"save": "Save",
+			"mustBePositive": "Capital must be a positive number.",
+			"updatedWithForward": "Capital updated · {count} forward months recalibrated",
+			"updated": "Capital updated",
+			"updateFailed": "Failed to update capital"
+		},
+		"rCapOverride": {
+			"mustBePositive": "{fieldLabel} must be a positive number.",
+			"setSuccess": "Override set at {level}: {value}R",
+			"saveFailed": "Save failed",
+			"cleared": "Override cleared — falls back to parent",
+			"resetFailed": "Reset failed",
+			"editAriaLabel": "Edit {fieldLabel} override",
+			"heading": "Override {fieldLabel} at {level}",
+			"currentFrom": "Current: {value} from",
+			"newValueLabel": "New R value",
+			"placeholder": "e.g., 2.50",
+			"reset": "Reset",
+			"save": "Save"
 		}
 	},
 	"hawks": {

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react"
 import { connection } from "next/server"
+import { getTranslations } from "next-intl/server"
 import { getCopyrightYear } from "@/lib/copyright-year"
 
 interface AuthLayoutProps {
@@ -8,6 +9,7 @@ interface AuthLayoutProps {
 
 const AuthLayout = async ({ children }: AuthLayoutProps) => {
 	await connection()
+	const t = await getTranslations("common")
 
 	return (
 		<div className="p-m-400 pb-m-400 md:pb-l-900 flex min-h-dvh flex-col items-center justify-center">
@@ -16,7 +18,7 @@ const AuthLayout = async ({ children }: AuthLayoutProps) => {
 				href="#main"
 				className="focus:top-s-300 focus:left-s-300 focus:bg-acc-100 focus:px-m-400 focus:py-s-200 focus:text-small focus:text-bg-100 sr-only focus:not-sr-only focus:fixed focus:z-50 focus:rounded-sm focus:font-medium"
 			>
-				Skip to content
+				{t("skipToContent")}
 			</a>
 
 			<main id="main" className="w-full max-w-sm md:max-w-md lg:max-w-lg">

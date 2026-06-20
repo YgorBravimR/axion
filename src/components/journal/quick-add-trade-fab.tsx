@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { QuickAddTradeModal } from "./quick-add-trade-modal"
@@ -18,6 +19,7 @@ export const QuickAddTradeFab = ({
 	lastDirection,
 }: QuickAddTradeFabProps) => {
 	const [isOpen, setIsOpen] = useState(false)
+	const t = useTranslations("journal")
 
 	return (
 		<>
@@ -25,7 +27,7 @@ export const QuickAddTradeFab = ({
 				id="quick-add-fab"
 				onClick={() => setIsOpen(true)}
 				className="fixed right-8 bottom-8 h-14 w-14 rounded-full shadow-lg hover:shadow-xl"
-				aria-label="Quick add trade"
+				aria-label={t("quickAddTradeAriaLabel")}
 			>
 				<Plus className="h-6 w-6" />
 			</Button>

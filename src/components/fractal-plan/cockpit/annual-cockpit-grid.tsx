@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server"
 import { MonthCard, type WeekData } from "./month-card"
 import { projectMonth } from "@/lib/fractal-plan/projection"
 import {
@@ -76,7 +77,7 @@ const MONTH_LABELS_PT = [
 	"dez",
 ]
 
-const AnnualCockpitGrid = ({
+const AnnualCockpitGrid = async ({
 	year,
 	locale,
 	currentMonthIndex,
@@ -95,6 +96,7 @@ const AnnualCockpitGrid = ({
 	defaultDailyWinR,
 	assertivityPct = 50,
 }: AnnualCockpitGridProps) => {
+	const t = await getTranslations("plan.annualGrid")
 	const assertivity = Math.min(100, Math.max(1, assertivityPct)) / 100
 	const defaultFallbackTotalR =
 		defaultDailyWinR && defaultDailyWinR > 0
@@ -217,7 +219,7 @@ const AnnualCockpitGrid = ({
 	const seenAnchorStates = new Set<string>()
 	return (
 		<section
-			aria-label={`Grade anual de planos para ${year}`}
+			aria-label={t("ariaLabel", { year })}
 			className="gap-s-300 sm:gap-s-300 lg:gap-m-400 grid auto-rows-fr grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
 		>
 			{cards.map((c) => {
