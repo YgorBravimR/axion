@@ -32,14 +32,17 @@ import { getQualityPresetBundle } from "@/lib/backtest/presets/hawks-quality-pre
  *     AND MME55 (for SHORT). No 1-box-buffer applied. Decision Step 6.
  *
  * QUALITY (present but do NOT gate entry — reserved for AAA/AA/A tier tagging):
- *   macd       — 5m MACD histogram (5m CSV col 17).
- *   vwap_d_5m  — VWAP daily    (5m CSV col 9).
- *   vwap_m_5m  — VWAP monthly  (5m CSV col 10).
- *   vwap_s_5m  — VWAP weekly   (5m CSV col 11).
- *   ajuste_d1  — Prior day settlement price (5m CSV col 13, sparse).
+ *   macd1_histo — 5m MACD histogram (per methodology, MACD config #1 = 5m).
+ *   vwap_d      — VWAP daily.
+ *   vwap_m      — VWAP monthly.
+ *   vwap_w      — VWAP weekly (Portuguese "semanal" — historic key was vwap_s).
+ *   ajuste      — Prior day settlement (injected via asset_session_anchors, not parquet).
  *
- * NOT YET LOADED (in CSV but unmapped — future quality multipliers):
- *   mme17_5m (col 14), mme74_5m (col 15) — native 5m EMAs periods 17/74.
+ * NAMING NOTE: parquet column names are vendor-native (ProfitChart CSV headers).
+ * Engine reads keys verbatim from `candle.indicators`. There is NO alias layer —
+ * mismatches between engine-expected keys and parquet column names produce silent
+ * NULL reads ("rule emits neutral on every brick"). Always reconcile against
+ * `data/parquet/candles/hawk_5m_win/WIN.parquet` schema when adding a rule.
  * ─────────────────────────────────────────────────────────────────────────────
  *
  * Stop: 1 brick against entry (Hawks 1R = 2 Renko bricks via signal.stopReference = 2·open − close).
@@ -50,17 +53,36 @@ const hawksV0: StrategyRecipe = {
 	presetId: "hawks_v0",
 	displayName: "Hawks v0 — Triple Screen",
 	entry: {
-		type: "hawks_triple_screen",
+		type: "hawks_playbook",
 		config: {
+			// HTF gate keys.
 			ema27_60m_key: "mme27_60m",
 			ema55_60m_key: "mme55_60m",
 			ema27_15m_key: "mme27_15m",
 			ema55_15m_key: "mme55_15m",
-			macd_key: "macd",
 			prev_15m_open_key: "prev_15m_open",
 			prev_15m_close_key: "prev_15m_close",
 			prev_60m_open_key: "prev_60m_open",
 			prev_60m_close_key: "prev_60m_close",
+			// 5m EMA — anchor for the mean_reversion playbook (engine v0.10).
+			ema_fast_5m_key: "ema9",
+			// Quality-indicator keys — every literal goes through config so
+			// vendor column renames are a one-line preset change, not a
+			// rule-code change. See `docs/gotchas.md` → "Hawks: candle-store
+			// has NO indicator-key alias layer".
+			// MACD: 5m uses config #1 (`macd1_histo`); macd2_* reserved for
+			// future higher-TF MACD use (per methodology: macd1=5m, macd2=HTF).
+			macd_key: "macd1_histo",
+			vwap_d_key: "vwap_d",
+			vwap_m_key: "vwap_m",
+			vwap_w_key: "vwap_w",
+			ajuste_key: "ajuste",
+			keltner_inner_inf_key: "kc1_inf",
+			keltner_inner_sup_key: "kc1_sup",
+			keltner_outer_inf_key: "kc2_inf",
+			keltner_outer_sup_key: "kc2_sup",
+			aggression_key: "agr_saldo",
+			volume_key: "volume_fin",
 			// WIN micro-mini Bovespa: 1 tick = 5 points, brick = 20 ticks = 100 points
 			brickSize5mPoints: 100,
 			// Process from market open so the morning's first pivots are detected
@@ -87,8 +109,12 @@ const hawksV0: StrategyRecipe = {
 	stop: {
 		// points=0 activates signal.stopReference escape hatch — stop = 2·open − close = 2 bricks back
 		initial: { type: "fixed_points", points: 0 },
-		// Pedro's rule: when price moves 1R in favor (100% of risk distance), shift stop to BE
+		// Spec §2 (exit-management-spec.md): BE fires when NET favorable price
+		// distance reaches 1R (= 2 brick bodies) AND the current brick closes
+		// favorable. triggerMode: "brick_close" enforces the second condition —
+		// intra-brick wicks do NOT count, only confirmed closes.
 		breakeven: { type: "on_pct_risk", triggerPct: 100 },
+		triggerMode: "brick_close",
 	},
 	target: {
 		type: "fixed_levels",
@@ -99,6 +125,7 @@ const hawksV0: StrategyRecipe = {
 	reversal: { type: "none" },
 	slippageTicks: 0,
 	requiredIndicators: [
+		// Group A — HTF gate (4 EMAs + 4 prev OHLC).
 		"mme27_60m",
 		"mme55_60m",
 		"mme27_15m",
@@ -107,10 +134,22 @@ const hawksV0: StrategyRecipe = {
 		"prev_15m_close",
 		"prev_60m_open",
 		"prev_60m_close",
-		// SR-level keys used by hawks-quality-rules. `ajuste` is sourced from
-		// asset_session_anchors at fetch time; `vwap_d` from per-brick JSONB.
+		// Group C — S/R levels. `ajuste` is sourced from asset_session_anchors
+		// at fetch time; `vwap_d`/`vwap_m`/`vwap_w` from per-brick parquet.
 		"vwap_d",
+		"vwap_m",
+		"vwap_w",
 		"ajuste",
+		// Group B — MACD config #1 (5m methodology).
+		"macd1_histo",
+		// Group E — Keltner bands. Inner (kc1) = 1.25× ATR; outer (kc2) = 1.65×.
+		"kc1_inf",
+		"kc1_sup",
+		"kc2_inf",
+		"kc2_sup",
+		// Group F — order flow + volume.
+		"agr_saldo",
+		"volume_fin",
 	],
 }
 
@@ -164,19 +203,19 @@ const hawksPresets: readonly [StrategyRecipe, ...StrategyRecipe[]] = [
 // Tier 3C (deferred): per-day regime, Fib bands, stayArmed flag.
 
 const isHawksTriple = (r: StrategyRecipe): boolean =>
-	r.entry.type === "hawks_triple_screen"
+	r.entry.type === "hawks_playbook"
 
 const mutateHawksConfig = (
 	recipe: StrategyRecipe,
 	mutator: (_cfg: HawksTripleScreenConfig) => HawksTripleScreenConfig
 ): StrategyRecipe => {
-	if (recipe.entry.type !== "hawks_triple_screen") {
+	if (recipe.entry.type !== "hawks_playbook") {
 		return recipe
 	}
 	return {
 		...recipe,
 		entry: {
-			type: "hawks_triple_screen",
+			type: "hawks_playbook",
 			config: mutator(recipe.entry.config),
 		},
 	}
@@ -332,6 +371,8 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 			["srLevelFavor", "hawksSrFavorToggle"],
 			["keltnerOuterBlock", "hawksKeltnerBlockToggle"],
 			["keltnerInnerPenalty", "hawksKeltnerPenaltyToggle"],
+			["vwapWickRejectBlock", "hawksVwapWickRejectBlockToggle"],
+			["colorStreakFavor", "hawksColorStreakFavorToggle"],
 			["macdAlignmentScore", "hawksMacdToggle"],
 			["volumeScore", "hawksVolumeToggle"],
 			["htfMaBlock", "hawksHtfMaBlockToggle"],
@@ -356,14 +397,15 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 			},
 		],
 		getCurrentValue: (r) => {
-			if (r.entry.type !== "hawks_triple_screen") {
+			if (r.entry.type !== "hawks_playbook") {
 				return "off"
 			}
 			return r.entry.config.qualityGates?.[gateKey] ? "on" : "off"
 		},
 	})),
 
-	// Aggression polarity is a 3-way enum (not a boolean toggle).
+	// Aggression polarity is a 2-way enum (off / original). "reversed" was
+	// pruned 2026-06-16; see Group F audit for the empirical case.
 	{
 		kind: "enum",
 		path: "entry.config.qualityGates.aggressionMode",
@@ -385,18 +427,9 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 						aggressionMode: "original",
 					})),
 			},
-			{
-				value: "reversed",
-				labelKey: "hawksAggressionMode_reversed",
-				applyOption: (r) =>
-					mutateQualityGates(r, (qg) => ({
-						...qg,
-						aggressionMode: "reversed",
-					})),
-			},
 		],
 		getCurrentValue: (r) => {
-			if (r.entry.type !== "hawks_triple_screen") {
+			if (r.entry.type !== "hawks_playbook") {
 				return "off"
 			}
 			return r.entry.config.qualityGates?.aggressionMode ?? "off"
@@ -450,7 +483,7 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 			},
 		],
 		getCurrentValue: (r) => {
-			if (r.entry.type !== "hawks_triple_screen") {
+			if (r.entry.type !== "hawks_playbook") {
 				return "off"
 			}
 			return r.entry.config.qualityGates?.keltnerInner?.mode ?? "off"
@@ -500,7 +533,7 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 			},
 		],
 		getCurrentValue: (r) => {
-			if (r.entry.type !== "hawks_triple_screen") {
+			if (r.entry.type !== "hawks_playbook") {
 				return "off"
 			}
 			return r.entry.config.qualityGates?.macd?.mode ?? "off"
@@ -550,7 +583,7 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 			},
 		],
 		getCurrentValue: (r) => {
-			if (r.entry.type !== "hawks_triple_screen") {
+			if (r.entry.type !== "hawks_playbook") {
 				return "off"
 			}
 			return r.entry.config.qualityGates?.volume?.mode ?? "off"
@@ -580,18 +613,10 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 						aggression: { ...qg.aggression, scoreMode: "original" },
 					})),
 			},
-			{
-				value: "reversed",
-				labelKey: "hawksAggressionMode_reversed",
-				applyOption: (r) =>
-					mutateQualityGates(r, (qg) => ({
-						...qg,
-						aggression: { ...qg.aggression, scoreMode: "reversed" },
-					})),
-			},
+			// "reversed" pruned 2026-06-16; see Group F audit.
 		],
 		getCurrentValue: (r) => {
-			if (r.entry.type !== "hawks_triple_screen") {
+			if (r.entry.type !== "hawks_playbook") {
 				return "off"
 			}
 			return r.entry.config.qualityGates?.aggression?.scoreMode ?? "off"
@@ -632,7 +657,7 @@ const HAWKS_SWEEPABLE_PARAMS: SweepableParam[] = [
 			},
 		],
 		getCurrentValue: (r) => {
-			if (r.entry.type !== "hawks_triple_screen") {
+			if (r.entry.type !== "hawks_playbook") {
 				return "off"
 			}
 			return r.entry.config.qualityGates?.aggression?.blockMode ?? "off"

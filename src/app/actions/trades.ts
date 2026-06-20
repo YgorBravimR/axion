@@ -207,10 +207,14 @@ export const createTrade = async (
 			realizedR = calculateRMultiple(pnl, plannedRiskAmount)
 		}
 
-		// Hawks Mode: validate sidecar payload, look up bias, compute ordinal
+		// Hawks Mode: validate sidecar payload, look up bias, compute ordinal.
+		// Quick-add and CSV-import flows are exempt — hawks state-machine fields
+		// (scenario, screens) are enrichment-time fields per the two-phase journaling spec.
 		const accountMode = await getActiveAccountModeForUser()
+		const isThinEntry =
+			tradeData.source === "quick-add" || tradeData.source === "csv-import"
 		let hawksSidecar: typeof tradeHawksMetadata.$inferInsert | null = null
-		if (accountMode === "hawks") {
+		if (accountMode === "hawks" && !isThinEntry) {
 			if (!tradeData.hawks) {
 				return {
 					status: "error",
@@ -1270,6 +1274,8 @@ export const bulkCreateTrades = async (
 						strategyCode,
 						timeframeCode,
 						tagNames: inputTagNames,
+						profitOperationNumber: csvProfitOperationNumber,
+						profitMetadata: csvProfitMetadata,
 						...tradeInput
 					} = input
 					// Sanitize SL/TP before validation: strip values that would fail
@@ -1463,6 +1469,9 @@ export const bulkCreateTrades = async (
 						setupRank: tradeData.setupRank || null,
 						screenshotUrl: tradeData.screenshotUrl || null,
 						screenshotS3Key: tradeData.screenshotS3Key || null,
+						// Profit CSV reconciliation (Phase 2)
+						profitOperationNumber: csvProfitOperationNumber || null,
+						profitMetadata: csvProfitMetadata || null,
 					}
 
 					// Fractal plan R-snapshot (flag-guarded, silent failure)

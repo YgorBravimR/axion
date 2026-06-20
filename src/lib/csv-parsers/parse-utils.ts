@@ -12,18 +12,15 @@ const pad2 = (n: number): string => String(n).padStart(2, "0")
  * @returns Normalized lowercase snake_case header
  */
 const normalizeHeader = (header: string): string => {
-	return (
-		header
-			.toLowerCase()
-			.trim()
-			.replace(/[\s-]/g, "_")
-			// Handle common encoding issues with Portuguese characters
-			.replace(/[çã]/g, (char) => (char === "ç" ? "c" : "a"))
-			// Remove special characters that might appear due to encoding
-			.replace(/[^\w_]/g, "_")
-			.replace(/_+/g, "_")
-			.replace(/^_|_$/g, "")
-	)
+	return header
+		.normalize("NFD")
+		.replace(/[̀-ͯ]/g, "") // strip combining diacritics
+		.toLowerCase()
+		.trim()
+		.replace(/[\s-]/g, "_")
+		.replace(/[^\w_]/g, "_")
+		.replace(/_+/g, "_")
+		.replace(/^_|_$/g, "")
 }
 
 /**

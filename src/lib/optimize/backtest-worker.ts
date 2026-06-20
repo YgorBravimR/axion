@@ -16,6 +16,7 @@ import type {
 interface StartMessage {
 	type: "start"
 	candles: CandleRow[]
+	candles15m?: CandleRow[]
 	assetConfig: AssetConfig
 	recipes: StrategyRecipe[]
 	walkForward?: { inSamplePct: number }
@@ -112,8 +113,15 @@ declare const self: DedicatedWorkerGlobalScope
 
 self.onmessage = (event: MessageEvent<StartMessage>) => {
 	try {
-		const { candles, assetConfig, recipes, walkForward, referenceCatalog } =
-			event.data
+		const {
+			candles,
+			candles15m,
+			assetConfig,
+			recipes,
+			walkForward,
+			referenceCatalog,
+		} = event.data
+		const c15 = candles15m ?? []
 		const startTime = performance.now()
 
 		for (let i = 0; i < recipes.length; i++) {
@@ -124,8 +132,18 @@ self.onmessage = (event: MessageEvent<StartMessage>) => {
 				const { isCandles, oosCandles, isDateRange, oosDateRange } =
 					splitCandles(candles, walkForward.inSamplePct)
 
-				const isResult = runBacktest(isCandles, recipe, assetConfig)
-				const oosResult = runBacktest(oosCandles, recipe, assetConfig)
+				const isCutoff = oosCandles[0]?.timestamp
+				const is15m =
+					isCutoff !== undefined
+						? c15.filter((c) => c.timestamp < isCutoff)
+						: c15
+				const oos15m =
+					isCutoff !== undefined
+						? c15.filter((c) => c.timestamp >= isCutoff)
+						: []
+
+				const isResult = runBacktest(isCandles, recipe, assetConfig, is15m)
+				const oosResult = runBacktest(oosCandles, recipe, assetConfig, oos15m)
 
 				const msg: ProgressMessage = {
 					type: "progress",
@@ -146,7 +164,7 @@ self.onmessage = (event: MessageEvent<StartMessage>) => {
 					oosRobust: isOosRobust(isResult.summary, oosResult.summary),
 					// Phase 3B match rate (if catalog provided and Hawks strategy)
 					...(referenceCatalog &&
-						recipe.entry.type === "hawks_triple_screen" && {
+						recipe.entry.type === "hawks_playbook" && {
 							matchRateIS: computeMatchRate(
 								isResult.trades,
 								referenceCatalog,
@@ -162,7 +180,7 @@ self.onmessage = (event: MessageEvent<StartMessage>) => {
 				self.postMessage(msg)
 			} else {
 				// Standard mode: single-pass backtest (current behavior)
-				const result = runBacktest(candles, recipe, assetConfig)
+				const result = runBacktest(candles, recipe, assetConfig, c15)
 
 				const msg: ProgressMessage = {
 					type: "progress",
@@ -174,7 +192,7 @@ self.onmessage = (event: MessageEvent<StartMessage>) => {
 					trades: result.trades,
 					// Phase 3B match rate (if catalog provided and Hawks strategy)
 					...(referenceCatalog &&
-						recipe.entry.type === "hawks_triple_screen" && {
+						recipe.entry.type === "hawks_playbook" && {
 							matchRate: computeMatchRate(result.trades, referenceCatalog),
 						}),
 				}

@@ -210,22 +210,31 @@ const buildOcoRowsForWeek = (week: RenkoWeek): OcoRow[] => [
 
 const seedRenkoSizes = async (sql: SeedSql): Promise<void> => {
 	console.log("\n📦 Seeding Hawks Renko weekly sizes (22 weeks of 2026)...")
+	const winRows = (await sql`
+		SELECT id FROM assets WHERE symbol = 'WIN' LIMIT 1
+	`) as Array<{ id: string }>
+	const winAssetId = winRows[0]?.id
+	if (!winAssetId) {
+		throw new Error(
+			"Cannot seed hawks_renko_sizes: WIN asset missing — seed assets first"
+		)
+	}
 	for (const week of RENKO_2026) {
 		await sql`
 			INSERT INTO hawks_renko_sizes (
-				id, effective_date, week_number, size_5m, size_15m, size_60m
+				id, asset_id, effective_date, week_number, size_5m, size_15m, size_60m
 			) VALUES (
-				gen_random_uuid(), ${week.effectiveDate}, ${week.week},
+				gen_random_uuid(), ${winAssetId}, ${week.effectiveDate}, ${week.week},
 				${week.size5m}, ${week.size15m}, ${week.size60m}
 			)
-			ON CONFLICT (effective_date) DO UPDATE SET
+			ON CONFLICT (asset_id, effective_date) DO UPDATE SET
 				week_number = EXCLUDED.week_number,
 				size_5m = EXCLUDED.size_5m,
 				size_15m = EXCLUDED.size_15m,
 				size_60m = EXCLUDED.size_60m
 		`
 	}
-	console.log(`✅ ${RENKO_2026.length} Renko weeks seeded (W01–W22 2026)`)
+	console.log(`✅ ${RENKO_2026.length} Renko weeks seeded (W01–W22 2026) — WIN`)
 }
 
 const seedWeeklyOco = async (

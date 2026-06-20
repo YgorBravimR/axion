@@ -142,7 +142,59 @@ export const validateCsvTrades = async (
 			}
 		}
 
-		// Batch query existing hashes
+		// Pre-compute Profit operation number lookups (Phase 2 idempotency upgrade)
+		const profitOpNumberToIndex = new Map<number, number[]>()
+		const entryDateByIndex = new Map<number, Date>()
+		for (let i = 0; i < csvTrades.length; i++) {
+			const trade = csvTrades[i]!
+			if (trade.profitOperationNumber && trade.entryDate) {
+				const existing =
+					profitOpNumberToIndex.get(trade.profitOperationNumber) || []
+				existing.push(i)
+				profitOpNumberToIndex.set(trade.profitOperationNumber, existing)
+				entryDateByIndex.set(i, new Date(trade.entryDate))
+			}
+		}
+
+		// Batch lookup existing Profit operation numbers (exact match on accountId + dateOnly + operationNumber)
+		const existingProfitOpNumbers = new Set<number>()
+		if (profitOpNumberToIndex.size > 0) {
+			const allOpNumbers = [...profitOpNumberToIndex.keys()]
+			const PROFIT_OP_BATCH = 100
+			for (let i = 0; i < allOpNumbers.length; i += PROFIT_OP_BATCH) {
+				const batch = allOpNumbers.slice(i, i + PROFIT_OP_BATCH)
+				// eslint-disable-next-line no-await-in-loop -- SQL parameter limit requires batching; batches are independent but must accumulate results sequentially
+				const found = await db
+					.select({
+						profitOperationNumber: tradesTable.profitOperationNumber,
+						entryDate: tradesTable.entryDate,
+					})
+					.from(tradesTable)
+					.where(
+						and(
+							eq(tradesTable.accountId, accountId),
+							inArray(tradesTable.profitOperationNumber, batch),
+							eq(tradesTable.isArchived, false)
+						)
+					)
+				for (const row of found) {
+					if (row.profitOperationNumber && row.entryDate) {
+						// Only mark as duplicate if both profitOperationNumber AND entryDate (dateOnly) match
+						const rowDateOnly = new Date(row.entryDate).toDateString()
+						for (const idx of profitOpNumberToIndex.get(
+							row.profitOperationNumber
+						) || []) {
+							const csvDateOnly = entryDateByIndex.get(idx)?.toDateString()
+							if (csvDateOnly === rowDateOnly) {
+								existingProfitOpNumbers.add(row.profitOperationNumber)
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Batch query existing hashes (fallback for non-Profit imports)
 		const allHashes = [...hashToIndex.keys()]
 		const existingHashes = new Set<string>()
 		if (allHashes.length > 0) {
@@ -203,7 +255,21 @@ export const validateCsvTrades = async (
 				continue
 			}
 
-			// Check for duplicates via dedup hash
+			// Check for duplicates via Profit operation number first (Phase 2 idempotency upgrade)
+			if (
+				trade.profitOperationNumber &&
+				existingProfitOpNumbers.has(trade.profitOperationNumber)
+			) {
+				processed.status = "skipped"
+				processed.skipReason =
+					"Duplicate: this trade (Profit operation number) has already been imported"
+				skippedCount++
+				duplicateCount++
+				processedTrades.push(processed)
+				continue
+			}
+
+			// Check for duplicates via dedup hash (fallback for non-Profit imports)
 			if (trade.entryPrice && trade.entryDate && trade.positionSize) {
 				const hash = computeTradeHash({
 					accountId,

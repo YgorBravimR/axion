@@ -106,7 +106,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 	// (displayedSummary, the catalog effects) depend on them — moving them
 	// below would put their references inside the temporal dead zone.
 	const isHawksFamily =
-		recipe.entry.type === "hawks_triple_screen" ||
+		recipe.entry.type === "hawks_playbook" ||
 		recipe.entry.type === "user_catalog"
 	const isUserCatalog = recipe.entry.type === "user_catalog"
 
@@ -271,7 +271,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 	const handleStrategyChange = useCallback((type: string) => {
 		if (type === "orb_breakout") {
 			setRecipe(orbPresets[0])
-		} else if (type === "hawks_triple_screen") {
+		} else if (type === "hawks_playbook") {
 			// `macd_wma_alignment` (DEZK) archived 2026-05-29 — not selectable.
 			setRecipe(hawksPresets[0])
 		} else if (type === "user_catalog") {
@@ -462,7 +462,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 							<SelectContent>
 								<SelectItem value="orb_breakout">{t("orb.name")}</SelectItem>
 								{/* DEZK (macd_wma_alignment) archived 2026-05-29 — hidden from UI. */}
-								<SelectItem value="hawks_triple_screen">
+								<SelectItem value="hawks_playbook">
 									{t("hawks.name")}
 								</SelectItem>
 								<SelectItem value="user_catalog">
@@ -554,7 +554,7 @@ const BacktestContent = ({ dataSources }: BacktestContentProps) => {
 						<OrbEntrySection recipe={recipe} onRecipeChange={setRecipe} />
 					)}
 					{/* DEZK entry section removed 2026-05-29 — strategy archived. */}
-					{recipe.entry.type === "hawks_triple_screen" && (
+					{recipe.entry.type === "hawks_playbook" && (
 						<HawksEntrySection recipe={recipe} onRecipeChange={setRecipe} />
 					)}
 					{recipe.entry.type === "user_catalog" && (

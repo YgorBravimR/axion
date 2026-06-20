@@ -125,15 +125,26 @@ const migrateRun = (run: OptimizationRun): OptimizationRun => {
 						emaPeriod: gatesRecord.volumeEmaPeriod,
 					}
 				}
-				// aggressionMode: "original" | "reversed" → aggression shape
+				// aggressionMode: "original" → aggression shape. Legacy "reversed"
+				// values from pre-2026-06-16 saved runs are coerced to "off"
+				// (the type literal was pruned; see Group F audit).
 				if (
 					gatesRecord.aggressionMode &&
 					gatesRecord.aggressionMode !== "off"
 				) {
+					const coercedMode =
+						gatesRecord.aggressionMode === "original"
+							? ("original" as const)
+							: ("off" as const)
 					migrated.aggression = {
-						scoreMode: gatesRecord.aggressionMode,
+						scoreMode: coercedMode,
 						blockMode: "off" as const,
 						threshold: gatesRecord.aggressionThreshold,
+					}
+					// Also coerce the legacy flat field so callers that read either
+					// shape see consistent values.
+					if (gatesRecord.aggressionMode === "reversed") {
+						migrated.aggressionMode = "off"
 					}
 				}
 				entryConfig.qualityGates = migrated

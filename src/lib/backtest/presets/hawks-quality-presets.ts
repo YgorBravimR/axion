@@ -29,6 +29,8 @@ const DEFAULT_QUALITY: FilledQualityGates = {
 	srLevelFavor: false,
 	keltnerOuterBlock: false,
 	keltnerInnerPenalty: false,
+	vwapWickRejectBlock: false,
+	colorStreakFavor: false,
 	macdAlignmentScore: false,
 	aggressionMode: "off",
 	volumeScore: false,
@@ -45,8 +47,9 @@ const DEFAULT_QUALITY: FilledQualityGates = {
 // Named bundles. Choices are deliberate, not exhaustive:
 //   off      — engine baseline; quality scoring still runs but no rule modifies it.
 //   lite     — one favor signal (sr-level cushion). No blocks. Safest test.
-//   standard — all favor/penalty/score signals on, aggression reversed (the
-//              polarity supported by the 20-day probe). No blocks.
+//   standard — all favor/penalty/score signals on. Aggression OFF
+//              (pruned the legacy "reversed" polarity 2026-06-16; Group F
+//              audit found no signal at engine v0.10). No blocks.
 //   strict   — standard + the two block rules (sr-level ahead, keltner outer).
 //              Reduces fire rate; raises catalog-share-of-fires.
 const QUALITY_BUNDLES: Record<
@@ -62,9 +65,11 @@ const QUALITY_BUNDLES: Record<
 		...DEFAULT_QUALITY,
 		srLevelFavor: true,
 		keltnerInnerPenalty: true,
+		vwapWickRejectBlock: false,
+		colorStreakFavor: true,
 		macdAlignmentScore: true,
 		volumeScore: true,
-		aggressionMode: "reversed",
+		aggressionMode: "off", // pruned "reversed" 2026-06-16; see Group F audit
 	},
 	strict: {
 		...DEFAULT_QUALITY,
@@ -72,9 +77,11 @@ const QUALITY_BUNDLES: Record<
 		srLevelFavor: true,
 		keltnerOuterBlock: true,
 		keltnerInnerPenalty: true,
+		vwapWickRejectBlock: true,
+		colorStreakFavor: true,
 		macdAlignmentScore: true,
 		volumeScore: true,
-		aggressionMode: "reversed",
+		aggressionMode: "off", // pruned "reversed" 2026-06-16; see Group F audit
 	},
 }
 
@@ -90,6 +97,9 @@ const normalizeQualityGates = (
 		gates?.keltnerOuterBlock ?? DEFAULT_QUALITY.keltnerOuterBlock,
 	keltnerInnerPenalty:
 		gates?.keltnerInnerPenalty ?? DEFAULT_QUALITY.keltnerInnerPenalty,
+	vwapWickRejectBlock:
+		gates?.vwapWickRejectBlock ?? DEFAULT_QUALITY.vwapWickRejectBlock,
+	colorStreakFavor: gates?.colorStreakFavor ?? DEFAULT_QUALITY.colorStreakFavor,
 	macdAlignmentScore:
 		gates?.macdAlignmentScore ?? DEFAULT_QUALITY.macdAlignmentScore,
 	aggressionMode: gates?.aggressionMode ?? DEFAULT_QUALITY.aggressionMode,
@@ -120,6 +130,8 @@ const filledQualityGatesEqual = (
 	a.srLevelFavor === b.srLevelFavor &&
 	a.keltnerOuterBlock === b.keltnerOuterBlock &&
 	a.keltnerInnerPenalty === b.keltnerInnerPenalty &&
+	a.vwapWickRejectBlock === b.vwapWickRejectBlock &&
+	a.colorStreakFavor === b.colorStreakFavor &&
 	a.macdAlignmentScore === b.macdAlignmentScore &&
 	a.aggressionMode === b.aggressionMode &&
 	a.volumeScore === b.volumeScore &&

@@ -39,6 +39,7 @@ import { useAccountMode } from "@/components/providers/account-mode-provider"
 import type { CircuitBreakerStatus } from "@/lib/validations/command-center"
 import type { LiveTradingStatusResult } from "@/types/live-trading-status"
 import { useCallback, useState, useTransition } from "react"
+import { QuickAddTradeFab } from "@/components/journal/quick-add-trade-fab"
 
 interface CommandCenterContentProps {
 	initialCompletions: ChecklistWithCompletion[]
@@ -285,6 +286,9 @@ const CommandCenterContent = ({
 					onSuccess={handleChecklistManagerSuccess}
 				/>
 			)}
+
+			{/* Quick Add Trade FAB — visible only on today's view */}
+			{isToday && <QuickAddTradeFab availableAssets={availableAssets} />}
 		</div>
 	)
 }

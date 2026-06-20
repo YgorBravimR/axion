@@ -138,6 +138,9 @@
 		"dashboard": "Painel",
 		"commandCenter": "Central de Comando",
 		"journal": "Diário",
+		"journalGroup": "Diário",
+		"journalOverview": "Operações",
+		"enrichJournal": "Enriquecer",
 		"analytics": "Análises",
 		"monteCarlo": "Monte Carlo",
 		"playbook": "Playbook",
@@ -151,6 +154,7 @@
 		"backtest": "Backtest",
 		"equityShield": "Equity Shield",
 		"backtestOptimize": "Otimizar",
+		"indicatorLab": "Laboratório de Indicadores",
 		"newTrade": "Novo Trade",
 		"plans": "Planos",
 		"simulation": "Simulação"
@@ -1946,6 +1950,165 @@
 			"noTagsFound": "Nenhuma tag encontrada",
 			"tagStatsRetrieved": "Estatísticas de tags obtidas com sucesso",
 			"tagStatsFetchFailed": "Falha ao obter estatísticas de tags"
+		},
+		"quickAdd": {
+			"title": "Adicionar Trade Rápido",
+			"description": "Crie um trade em 30 segundos apenas com o essencial",
+			"labels": {
+				"asset": "Ativo",
+				"direction": "Direção",
+				"entryDate": "Data e Hora da Entrada",
+				"exitDate": "Data e Hora da Saída",
+				"entryPrice": "Preço de Entrada",
+				"exitPrice": "Preço de Saída",
+				"positionSize": "Tamanho da Posição"
+			},
+			"directions": {
+				"long": "Compra",
+				"short": "Venda"
+			},
+			"buttons": {
+				"save": "Salvar trade",
+				"saveAndAdd": "Salvar e adicionar outro",
+				"cancel": "Cancelar"
+			},
+			"tradeCreated": "Trade criado com sucesso",
+			"createFailed": "Falha ao criar trade"
+		},
+		"enrichment": {
+			"landing": {
+				"title": "Enriquecer Diário",
+				"description": "Pegue suas operações cruas e some o que você não digitou na mão: P&L, MFE/MAE, leitura de indicadores e stop/alvo.",
+				"pendingLabel": "Operações aguardando enriquecimento",
+				"pendingHint": "Operações ainda não revisadas dentro do período selecionado.",
+				"emptyAllDoneTitle": "Tudo enriquecido",
+				"emptyAllDoneBody": "Nenhuma operação pendente nesse período. Mude as datas para revisitar uma semana anterior, ou volte ao diário.",
+				"backToJournal": "Voltar ao diário",
+				"dateRangeLabel": "Período",
+				"dateFrom": "De",
+				"dateTo": "Até",
+				"uploadCsvLabel": "CSV de Operações Profit Pro (opcional)",
+				"uploadCsvHint": "Carregue sua exportação para reconciliar P&L, MFE e MAE diretamente do Profit.",
+				"dropHere": "Solte seu arquivo CSV aqui",
+				"orClick": "ou clique para selecionar",
+				"selectFile": "Selecionar arquivo",
+				"uploadParsing": "Analisando...",
+				"uploadParsed": "{count} operações analisadas",
+				"uploadError": "Erro na análise: {message}",
+				"runDryRun": "Iniciar revisão",
+				"cancel": "Cancelar",
+				"startError": "Falha ao iniciar a revisão",
+				"startedToast": "Revisão iniciada ({count} operações)"
+			},
+			"resume": {
+				"bannerText": "Você tem operações de rascunho pendentes de revisão de uma sessão anterior.",
+				"resumeButton": "Continuar",
+				"abandonButton": "Abandonar",
+				"abandonConfirmTitle": "Abandonar pré-execução?",
+				"abandonConfirmBody": "Todos os enriquecimentos de rascunho nesta execução serão descartados. Isto não pode ser desfeito.",
+				"abandonConfirm": "Abandonar",
+				"abandonCancel": "Continuar revisando",
+				"abandonedToast": "Pré-execução abandonada",
+				"abandonError": "Falha ao abandonar pré-execução"
+			},
+			"review": {
+				"header": "Revisar enriquecimento",
+				"tradeOf": "Operação {current} de {total}",
+				"saveAndNext": "Salvar e próximo",
+				"skip": "Pular",
+				"prev": "Anterior",
+				"next": "Próximo",
+				"contracts": "{count, plural, =1 {1 contrato} other {# contratos}}",
+				"abandonRun": "Abandonar execução",
+				"commitError": "Falha ao confirmar operação",
+				"commitSuccess": "Operação enriquecida",
+				"stalenessTitle": "Alguns campos foram alterados",
+				"stalenessBody": "{count} campos mudaram desde que a pré-execução iniciou. Decida campo por campo antes de salvar.",
+				"stalenessField": "{field}: era {baseline}, agora {current}",
+				"acceptAnyway": "Salvar restantes (pular alterados)",
+				"helpTitle": "Atalhos do teclado",
+				"helpClose": "Fechar",
+				"abandonConfirm": "Abandonar",
+				"abandonCancel": "Continuar revisão",
+				"abandonedToast": "Dry-run abandonado",
+				"abandonError": "Falha ao abandonar dry-run",
+				"shortcuts": {
+					"nextLabel": "Próxima operação",
+					"prevLabel": "Operação anterior",
+					"saveLabel": "Salvar e avançar",
+					"skipLabel": "Pular operação atual",
+					"acceptAllLabel": "Aceitar todos os campos de alta confiança",
+					"rejectAllLabel": "Limpar todas as seleções",
+					"editLabel": "Editar campo inline",
+					"helpLabel": "Mostrar este overlay"
+				},
+				"sidebar": {
+					"statusCurrent": "Atual",
+					"statusCommitted": "Confirmada",
+					"statusSkipped": "Pulada",
+					"statusPending": "Ainda não revisada"
+				}
+			},
+			"passNames": {
+				"operations": "CSV de Operações",
+				"candleMath": "Cálculo de candles",
+				"indicatorReadout": "Leitura de indicadores",
+				"deterministicSlTarget": "SL/alvo determinístico"
+			},
+			"passStatus": {
+				"succeeded": "Sucesso",
+				"skipped": "Pulada: {reason}",
+				"failed": "Falha: {error}",
+				"noChanges": "✓ Sem alterações — seus dados já estão alinhados"
+			},
+			"confidence": {
+				"high": "Alta",
+				"medium": "Média",
+				"low": "Baixa"
+			},
+			"fieldStates": {
+				"accepted": "Aceita",
+				"rejected": "Rejeitada",
+				"conflict": "Conflita com atual"
+			},
+			"fieldNames": {
+				"entryPrice": "Preço de entrada",
+				"exitPrice": "Preço de saída",
+				"positionSize": "Tamanho da posição",
+				"pnl": "P&L",
+				"mfe": "MFE",
+				"mae": "MAE",
+				"holdingMs": "Tempo de holding",
+				"stopLoss": "Stop loss",
+				"takeProfit": "Alvo",
+				"indicatorReadout": "Leitura de indicadores",
+				"setupRank": "Ranking de setup"
+			},
+			"indicatorLabels": {
+				"gate15m": "Gate 15m (EMAs + candle prévio)",
+				"gate60m": "Gate 60m (EMAs + candle prévio)",
+				"macd": "MACD histograma",
+				"vwapD": "VWAP diária",
+				"vwapM": "VWAP mensal",
+				"vwapW": "VWAP semanal",
+				"ajuste": "Preço de ajuste"
+			},
+			"indicatorFavorable": "favorável",
+			"indicatorUnfavorable": "contra",
+			"indicatorSummary": "{count}/7 indicadores a favor",
+			"passActions": {
+				"acceptAll": "Aceitar todos",
+				"rejectAll": "Limpar seleção"
+			},
+			"fieldCountOne": "campo",
+			"fieldCountMany": "campos",
+			"success": {
+				"enriched": "{count, plural, =0 {Nenhuma operação enriquecida} =1 {Enriquecida 1 operação} other {Enriquecidas # operações}}",
+				"skipped": "{count, plural, =0 {} =1 {Pulada 1 operação} other {Puladas # operações}}",
+				"snapshotSaved": "Snapshot salvo.",
+				"viewDashboard": "Ver dashboard",
+				"backToJournal": "Voltar para diário"
+			}
 		}
 	},
 	"analytics": {
@@ -4187,7 +4350,9 @@
 		"editTrade": "Editar Trade",
 		"editPlaybook": "Editar Playbook",
 		"playbookDetails": "Detalhes do Playbook",
-		"newPlaybook": "Novo Playbook"
+		"newPlaybook": "Novo Playbook",
+		"enrichJournal": "Enriquecer",
+		"enrichReview": "Revisar"
 	},
 	"forgotPassword": {
 		"title": "Redefinir Senha",
@@ -5123,6 +5288,7 @@
 				"groups": {
 					"sr": "Níveis S/R (4 MMEs HTF + VWAP + ajuste)",
 					"keltner": "Bandas Keltner",
+					"vwapWick": "VWAP — Pavio Toca+Rejeita",
 					"macd": "MACD",
 					"aggression": "Agressão",
 					"volume": "Volume",
@@ -5155,6 +5321,10 @@
 				"keltnerNearBricks": {
 					"label": "Distância \"perto\" da banda (bricks)",
 					"hint": "Distância considerada \"perto\" da banda."
+				},
+				"vwapWickRejectBlock": {
+					"label": "Bloqueio: pavio do VWAP toca+rejeita contra a direção",
+					"hint": "Recusa a entrada quando o brick atual de 5m é um toque-e-rejeição metodologicamente correto do vwap_d no lado oposto à direção do trade. Distinto do gatilho de fechamento do playbook vwap_dip_recover."
 				},
 				"macdAlignmentScore": {
 					"label": "Score: alinhamento do MACD",
@@ -5381,6 +5551,8 @@
 			"hawksSrFavorToggle": "Favorecimento S/R ativo",
 			"hawksKeltnerBlockToggle": "Bloqueio Keltner ativo",
 			"hawksKeltnerPenaltyToggle": "Penalidade Keltner ativa",
+			"hawksVwapWickRejectBlockToggle": "Bloqueio VWAP pavio rejeita ativo",
+			"hawksColorStreakFavorToggle": "Favor VB (cor) ativo",
 			"hawksMacdToggle": "Pontuação MACD ativa",
 			"hawksVolumeToggle": "Pontuação de volume ativa",
 			"hawksHtfMaBlockToggle": "Bloqueio MA HTF ativo",
@@ -5627,6 +5799,8 @@
 			"hawksSrFavorRange": "Faixa do favorecimento S/R (tijolos)",
 			"hawksKeltnerBlockToggle": "Bloqueio Keltner externo",
 			"hawksKeltnerPenaltyToggle": "Penalidade Keltner interno",
+			"hawksVwapWickRejectBlockToggle": "Bloqueio VWAP pavio rejeita",
+			"hawksColorStreakFavorToggle": "Favor VB (cor do tijolo)",
 			"hawksKeltnerNear": "Distância Keltner (tijolos)",
 			"hawksMacdToggle": "Score de alinhamento MACD",
 			"hawksMacdSlope": "Janela de inclinação MACD",

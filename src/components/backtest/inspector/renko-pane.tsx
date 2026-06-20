@@ -30,6 +30,10 @@ interface IndicatorOverlay {
 	readonly label: string
 	readonly color: string
 	readonly data: ReadonlyArray<{ time: UTCTimestamp; value: number }>
+	// When "points", the overlay renders as isolated dots — no connecting
+	// line between sparse data points (useful for pivot markers, event
+	// glyphs). Default = "line".
+	readonly style?: "line" | "points"
 }
 
 interface TradeOverlay {
@@ -45,9 +49,19 @@ interface TradeOverlay {
 // second pane below the price pane sharing the time axis. Each data point can
 // carry its own color via `HistogramData.color` — caller decides what positive
 // vs. negative means (we don't impose semantics here).
+//
+// `lines` lets the caller paint line overlays ON the histogram pane (e.g.
+// rolling-mean / day-mean threshold for an aggression/volume evaluator).
+interface HistogramLineOverlay {
+	readonly key: string
+	readonly label: string
+	readonly color: string
+	readonly data: ReadonlyArray<{ time: UTCTimestamp; value: number }>
+}
 interface HistogramOverlay {
 	readonly label: string
 	readonly data: ReadonlyArray<HistogramData<UTCTimestamp>>
+	readonly lines?: ReadonlyArray<HistogramLineOverlay>
 }
 
 // "trade" (default): entry marker uses tradeBuy/tradeSell palette colored by
@@ -68,6 +82,12 @@ interface RenkoPaneProps {
 	readonly series: BrickChartSeries
 	readonly indicators?: ReadonlyArray<IndicatorOverlay>
 	readonly trade?: TradeOverlay | null
+	// Freeform marker array layered on top of the `trade` overlay's
+	// markers. Useful for engines that emit many fires across a window
+	// (engine lab) where the single-trade overlay model doesn't fit.
+	// Each marker uses the lightweight-charts `SeriesMarker` shape
+	// directly — caller controls position / shape / color / text.
+	readonly extraMarkers?: ReadonlyArray<SeriesMarker<UTCTimestamp>>
 	readonly histogram?: HistogramOverlay | null
 	readonly markerColorMode?: MarkerColorMode
 	readonly drawings?: ProjectedDrawings | null
@@ -75,6 +95,12 @@ interface RenkoPaneProps {
 	readonly externalCrosshair?: number | null
 	readonly onCrosshairMove?: (_brickIdx: number | null) => void
 	readonly emitsCrosshair?: boolean
+	// When set, the chart's visible logical range is constrained to
+	// [focusBrickIdx - focusBrickRadius, focusBrickIdx + focusBrickRadius]
+	// instead of fitting the entire series. Used by the engine lab to
+	// zoom around the currently-selected trade across a long timeline.
+	readonly focusBrickIdx?: number | null
+	readonly focusBrickRadius?: number
 	readonly className?: string
 }
 
@@ -84,6 +110,7 @@ const RenkoPane = ({
 	series,
 	indicators,
 	trade,
+	extraMarkers,
 	histogram,
 	markerColorMode = "trade",
 	drawings,
@@ -91,6 +118,8 @@ const RenkoPane = ({
 	externalCrosshair,
 	onCrosshairMove,
 	emitsCrosshair = false,
+	focusBrickIdx = null,
+	focusBrickRadius = 30,
 	className,
 }: RenkoPaneProps) => {
 	const containerRef = useRef<HTMLDivElement>(null)
@@ -101,6 +130,9 @@ const RenkoPane = ({
 	const entryLineRef = useRef<ISeriesApi<"Line"> | null>(null)
 	const exitLineRef = useRef<ISeriesApi<"Line"> | null>(null)
 	const histogramSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null)
+	const histogramLineSeriesRef = useRef<Map<string, ISeriesApi<"Line">>>(
+		new Map()
+	)
 	const hlineRefs = useRef<Map<string, IPriceLine>>(new Map())
 	const trendlineRefs = useRef<Map<string, ISeriesApi<"Line">>>(new Map())
 	const seriesTimesRef = useRef<ReadonlyArray<number>>([])
@@ -137,6 +169,25 @@ const RenkoPane = ({
 				visible: true,
 				timeVisible: false,
 				secondsVisible: false,
+				// Renko bricks use brick-INDEX as the time axis (0, 1, 2, …) —
+				// not a real timestamp. Default lightweight-charts formatting
+				// reads "0" as Unix epoch and prints "01 Jan '70". Translate
+				// the index back to the real brick close timestamp via
+				// `seriesTimesRef` and format as BRT YYYY-MM-DD HH:MM.
+				tickMarkFormatter: (time: unknown) => {
+					const idx = typeof time === "number" ? time : Number(time)
+					const epochMs = seriesTimesRef.current[idx]
+					if (typeof epochMs !== "number" || Number.isNaN(epochMs)) {
+						return ""
+					}
+					// BRT = UTC - 3h. Shift then format.
+					const d = new Date(epochMs - 3 * 60 * 60 * 1000)
+					const mm = String(d.getUTCMonth() + 1).padStart(2, "0")
+					const dd = String(d.getUTCDate()).padStart(2, "0")
+					const hh = String(d.getUTCHours()).padStart(2, "0")
+					const mi = String(d.getUTCMinutes()).padStart(2, "0")
+					return `${mm}-${dd} ${hh}:${mi}`
+				},
 			},
 			crosshair: { mode: CrosshairMode.Normal },
 		})
@@ -171,9 +222,27 @@ const RenkoPane = ({
 			return
 		}
 		candleSeries.setData(series.data)
-		chart.timeScale().fitContent()
+		if (focusBrickIdx === null) {
+			chart.timeScale().fitContent()
+		}
 		seriesTimesRef.current = series.times
-	}, [series])
+	}, [series, focusBrickIdx])
+
+	// Focus window — re-applies when the selected anchor changes,
+	// independently of the series data lifecycle.
+	useEffect(() => {
+		const chart = chartRef.current
+		if (!chart || focusBrickIdx === null) {
+			return
+		}
+		const last = series.data.length - 1
+		if (last < 0) {
+			return
+		}
+		const from = Math.max(0, focusBrickIdx - focusBrickRadius)
+		const to = Math.min(last, focusBrickIdx + focusBrickRadius)
+		chart.timeScale().setVisibleLogicalRange({ from, to })
+	}, [focusBrickIdx, focusBrickRadius, series])
 
 	// Indicator overlays — recreate on change
 	useEffect(() => {
@@ -196,11 +265,15 @@ const RenkoPane = ({
 		for (const ind of indicators ?? []) {
 			let s = existing.get(ind.key)
 			if (!s) {
+				const isPoints = ind.style === "points"
 				s = chart.addSeries(LineSeries, {
 					color: ind.color,
 					lineWidth: 1,
 					priceLineVisible: false,
 					lastValueVisible: false,
+					lineVisible: !isPoints,
+					pointMarkersVisible: isPoints,
+					pointMarkersRadius: isPoints ? 4 : undefined,
 				})
 				existing.set(ind.key, s)
 			}
@@ -231,7 +304,26 @@ const RenkoPane = ({
 			markersPluginRef.current.setMarkers([])
 		}
 
-		if (!trade || !theme) {
+		// Caller may pass `extraMarkers` without a `trade` — still render them.
+		const hasExtra = (extraMarkers?.length ?? 0) > 0
+		if ((!trade && !hasExtra) || !theme) {
+			return
+		}
+
+		// Ensure plugin is mounted before either path uses it.
+		const candleSeriesForMarkers = candleSeriesRef.current
+		if (!markersPluginRef.current && candleSeriesForMarkers) {
+			markersPluginRef.current = createSeriesMarkers(
+				candleSeriesForMarkers
+			) as ISeriesMarkersPluginApi<UTCTimestamp>
+		}
+
+		// `trade`-less path: render extraMarkers and bail.
+		if (!trade) {
+			const eMarkers = [...(extraMarkers ?? [])].sort(
+				(m1, m2) => (m1.time as number) - (m2.time as number)
+			)
+			markersPluginRef.current?.setMarkers(eMarkers)
 			return
 		}
 
@@ -337,9 +429,10 @@ const RenkoPane = ({
 				text: `exit ${formatNumber(trade.exitPrice)}`,
 			},
 		]
-		markers.sort((m1, m2) => (m1.time as number) - (m2.time as number))
-		markersPluginRef.current.setMarkers(markers)
-	}, [trade, theme, markerColorMode, series, formatNumber])
+		const merged = [...markers, ...(extraMarkers ?? [])]
+		merged.sort((m1, m2) => (m1.time as number) - (m2.time as number))
+		markersPluginRef.current?.setMarkers(merged)
+	}, [trade, extraMarkers, theme, markerColorMode, series, formatNumber])
 
 	// Optional histogram sub-pane (e.g., MACD). Mounted at paneIndex 1 so it
 	// shares the time axis with the price pane above. Per-point `color` on each
@@ -349,6 +442,16 @@ const RenkoPane = ({
 		if (!chart) {
 			return
 		}
+		// Tear down line overlays first so subsequent histogram removal doesn't
+		// orphan them on a stale pane.
+		for (const [, line] of histogramLineSeriesRef.current) {
+			try {
+				chart.removeSeries(line)
+			} catch {
+				// already removed
+			}
+		}
+		histogramLineSeriesRef.current.clear()
 		if (histogramSeriesRef.current) {
 			try {
 				chart.removeSeries(histogramSeriesRef.current)
@@ -371,6 +474,23 @@ const RenkoPane = ({
 		)
 		hist.setData([...histogram.data])
 		histogramSeriesRef.current = hist
+		// Line overlays on the histogram pane (paneIndex 1).
+		for (const ln of histogram.lines ?? []) {
+			const series = chart.addSeries(
+				LineSeries,
+				{
+					color: ln.color,
+					lineWidth: 1,
+					priceLineVisible: false,
+					lastValueVisible: false,
+					crosshairMarkerVisible: false,
+					title: ln.label,
+				},
+				1
+			)
+			series.setData([...ln.data])
+			histogramLineSeriesRef.current.set(ln.key, series)
+		}
 		// Price pane: ~4/5 of the vertical space; MACD pane: ~1/5.
 		const panes = chart.panes()
 		if (panes.length >= 2 && panes[0] && panes[1]) {

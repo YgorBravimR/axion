@@ -10,10 +10,10 @@ export {
 	type DezkState,
 } from "./macd-wma-alignment"
 export {
-	processHawksCandle,
-	createInitialHawksState,
-	type HawksState,
-} from "./hawks-triple-screen"
+	processHawksPlaybookCandle,
+	createInitialHawksPlaybookState,
+	type HawksPlaybookState,
+} from "./hawks-playbook"
 export {
 	processUserCatalogCandle,
 	createInitialUserCatalogState,

@@ -24,9 +24,9 @@ import {
 	createInitialDezkState,
 	resetDezkForNewDay,
 	type DezkState,
-	processHawksCandle,
-	createInitialHawksState,
-	type HawksState,
+	processHawksPlaybookCandle,
+	createInitialHawksPlaybookState,
+	type HawksPlaybookState,
 	processUserCatalogCandle,
 	createInitialUserCatalogState,
 	type UserCatalogState,
@@ -36,6 +36,24 @@ import { createTargetModule } from "./modules/target"
 import { createSizingModule } from "./modules/sizing"
 import { createReversalModule } from "./modules/reversal"
 import { computeMetrics, buildEquityCurve } from "./metrics"
+import {
+	buildHtfWalker,
+	lookupHtfGate,
+	type HtfWalkerSnapshot,
+} from "./hawks-htf-walker"
+import {
+	buildKeltnerWalker,
+	type KeltnerWalkerSnapshot,
+} from "./hawks-keltner-walker"
+import { buildSrWalker, type SrWalkerSnapshot } from "./hawks-sr-walker"
+import {
+	buildVwapTouchRejectWalker,
+	type VwapTouchRejectSnapshot,
+} from "./hawks-vwap-walker"
+import {
+	buildVolumeEmaWalker,
+	type VolumeEmaSnapshot,
+} from "./hawks-volume-walker"
 
 /**
  * Compute the 1-indexed brick index (candle_index) where the entry occurred.
@@ -70,7 +88,8 @@ const getEntryBrickIndex = (
 const runBacktest = (
 	candles: CandleRow[],
 	recipe: StrategyRecipe,
-	assetConfig: AssetConfig
+	assetConfig: AssetConfig,
+	candles15m: CandleRow[] = []
 ): BacktestResult => {
 	const days = groupCandlesByDay(candles)
 	const sortedDayKeys = [...days.keys()].sort()
@@ -101,20 +120,80 @@ const runBacktest = (
 	// days. The user's "TOPO ANTERIOR" for the morning's first setup is
 	// yesterday's last indicator-marked TOPO, so the engine must not reset
 	// on day boundary.
-	let persistentHawksState: HawksState | null =
-		recipe.entry.type === "hawks_triple_screen"
-			? createInitialHawksState()
+	let persistentHawksPlaybookState: HawksPlaybookState | null =
+		recipe.entry.type === "hawks_playbook"
+			? createInitialHawksPlaybookState()
+			: null
+
+	// v0.9 HTF-gate stateful walker: precompute the per-timestamp BULL/BEAR
+	// snapshot for 15m and 60m once at engine init. O(N) walk; O(1) lookup
+	// per brick. Always built for `hawks_playbook` — the playbook engine has
+	// no stateless gate fallback; 60m is the one and only directional filter
+	// (spec §1) and the walker is the only source of that signal.
+	const htfWalker: Map<string, HtfWalkerSnapshot> | null =
+		recipe.entry.type === "hawks_playbook"
+			? buildHtfWalker(candles, recipe.entry.config, candles15m)
+			: null
+
+	// v0.10 Keltner walker — only built when the `keltnerOuterBlock` quality
+	// gate is enabled (default off). Skipping the build keeps optimize sweeps
+	// that don't touch KC cheap. Per Group C indicator-isolation audit, the
+	// walker is the first methodology-correct KC consumer in the engine.
+	const keltnerWalker: Map<string, KeltnerWalkerSnapshot> | null =
+		recipe.entry.type === "hawks_playbook" &&
+		recipe.entry.config.qualityGates?.keltnerOuterBlock === true
+			? buildKeltnerWalker(candles, recipe.entry.config)
+			: null
+
+	// v0.11 S/R proximity walker — only built when `srLevelBlock` or
+	// `srLevelFavor` is enabled. Group E audit found ~30% catalog-wide block
+	// rate; the orchestrator consumes the snapshot via the composable
+	// veto evaluator in `hawks-playbook.ts`.
+	const srWalker: Map<string, SrWalkerSnapshot> | null =
+		recipe.entry.type === "hawks_playbook" &&
+		(recipe.entry.config.qualityGates?.srLevelBlock === true ||
+			recipe.entry.config.qualityGates?.srLevelFavor === true)
+			? buildSrWalker(candles, recipe.entry.config)
+			: null
+
+	// v0.11 VWAP wick touch+reject walker — only built when
+	// `vwapWickRejectBlock` is enabled. Methodology-correct VWAP rejection
+	// reader per Group D audit (distinct from the close-based
+	// `vwap_dip_recover` playbook trigger).
+	const vwapWalker: Map<string, VwapTouchRejectSnapshot> | null =
+		recipe.entry.type === "hawks_playbook" &&
+		recipe.entry.config.qualityGates?.vwapWickRejectBlock === true
+			? buildVwapTouchRejectWalker(candles, recipe.entry.config)
+			: null
+
+	// v0.11 Volume EMA walker — built whenever `volume.mode` is non-"off".
+	// "score" / "both" populate `quality.contributions[].volume`; "block" /
+	// "both" feed the veto evaluator. Implements the per-spec polarity
+	// (below-EMA = block); see Group G audit for the empirical caveat.
+	const volumeMode =
+		recipe.entry.type === "hawks_playbook"
+			? recipe.entry.config.qualityGates?.volume?.mode
+			: undefined
+	const volumeWalker: Map<string, VolumeEmaSnapshot> | null =
+		recipe.entry.type === "hawks_playbook" &&
+		volumeMode !== undefined &&
+		volumeMode !== "off"
+			? buildVolumeEmaWalker(candles, recipe.entry.config)
 			: null
 
 	for (const dayKey of sortedDayKeys) {
 		const dayCandlesArr = days.get(dayKey)!
 		let position: Position | null = null
 		let reversalState = reversalModule.init()
-		let entryState: OrbState | DezkState | HawksState | UserCatalogState =
+		let entryState:
+			| OrbState
+			| DezkState
+			| HawksPlaybookState
+			| UserCatalogState =
 			recipe.entry.type === "orb_breakout"
 				? createInitialOrbState()
-				: recipe.entry.type === "hawks_triple_screen"
-					? persistentHawksState!
+				: recipe.entry.type === "hawks_playbook"
+					? persistentHawksPlaybookState!
 					: recipe.entry.type === "user_catalog"
 						? createInitialUserCatalogState()
 						: resetDezkForNewDay(persistentEntryState!)
@@ -299,13 +378,23 @@ const runBacktest = (
 				)
 				entryState = result.state
 				entrySignal = result.signal
-			} else if (recipe.entry.type === "hawks_triple_screen") {
-				const result = processHawksCandle(
+			} else if (recipe.entry.type === "hawks_playbook") {
+				const htfSnapshot = lookupHtfGate(htfWalker, candle)
+				const keltnerSnapshot = keltnerWalker?.get(candle.timestamp) ?? null
+				const srSnapshot = srWalker?.get(candle.timestamp) ?? null
+				const vwapSnapshot = vwapWalker?.get(candle.timestamp) ?? null
+				const volumeSnapshot = volumeWalker?.get(candle.timestamp) ?? null
+				const result = processHawksPlaybookCandle(
 					candle,
-					entryState as HawksState,
+					entryState as HawksPlaybookState,
 					ctx,
 					assetConfig.tickSize,
-					recipe.entry.config
+					recipe.entry.config,
+					htfSnapshot,
+					keltnerSnapshot,
+					srSnapshot,
+					vwapSnapshot,
+					volumeSnapshot
 				)
 				entryState = result.state
 				entrySignal = result.signal
@@ -366,8 +455,8 @@ const runBacktest = (
 		}
 		// Carry structural state across days for Hawks — yesterday's last
 		// TOPO/FUNDO anchors today's first setup ("TOPO ANTERIOR").
-		if (recipe.entry.type === "hawks_triple_screen") {
-			persistentHawksState = entryState as HawksState
+		if (recipe.entry.type === "hawks_playbook") {
+			persistentHawksPlaybookState = entryState as HawksPlaybookState
 		}
 
 		trades.push(...dayTrades)
@@ -392,8 +481,13 @@ const runBacktest = (
 const getEngineVersionForRecipe = (
 	recipe: StrategyRecipe
 ): string | undefined => {
-	if (recipe.entry.type === "hawks_triple_screen") {
-		return "hawks-v0.7"
+	if (recipe.entry.type === "hawks_playbook") {
+		// v0.9 = v0.8 + opt-in stateful HTF walker (`useStatefulHtfGate: true`).
+		// When the flag is off, behavior is byte-identical to v0.8 — but stamp
+		// every run as v0.9 anyway so we can see in production telemetry which
+		// runs came after the walker module was deployed (even when the flag
+		// is off the walker code path is in the binary).
+		return "hawks-v0.9"
 	}
 	if (recipe.entry.type === "user_catalog") {
 		return "user-catalog-v1"

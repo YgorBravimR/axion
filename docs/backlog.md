@@ -41,49 +41,172 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ---
 
+## Journaling Workflow
+
+### Enrichment UI — full asset/timeframe coverage check (v2 polish)
+
+- **Priority**: P3
+- **Effort**: S
+- **Source**: 2026-06-17 enrichment session — removed inline TODO from enrich-landing component.
+- **What + Why**: Implement real coverage detection: query which assets have candle data for the selected date range across both `hawk_5m_win` and `hawk_15m_win` timeframes. Display a summary of coverage gaps so the user knows which trades may not get enriched by the indicator-readout and candle-math passes. Currently shows a placeholder.
+- **How**: In `src/components/journal/enrich/enrich-landing.tsx`, add a `useEffect` that fires when `dateFrom`/`dateTo` change, calls a new action `getEnrichmentCoverageStatus(dateFrom, dateTo)` which returns `{ asset: string; has5m: bool; has15m: bool }[]`, then renders a summary like "WIN (5m + 15m ✓), WDO (5m only), ..."
+- **Date filed**: 2026-06-17.
+
+### Backfill missing R-brick CSVs for week 25 (R41 + R81) to unblock candle/indicator enrichment
+
+- **Priority**: P2 — current 06-16 trades are stuck in `partial` enrichment with MFE/MAE blank and indicator readout missing, but the deterministic SL/TP and operations CSV passes succeeded so analytics work. Becomes P1 if pattern identification on MFE/MAE-driven cohorts is needed for the Hawks T2 review.
+- **Effort**: XS once the source files are in hand — drop `41R.csv` + `81R.csv` into `/Users/ygorbravim/Downloads/WIN/`, then `HAWKS_SOURCE_DIR=/Users/ygorbravim/Downloads/WIN pnpm tsx scripts/load-hawks-bricks-by-size.ts && pnpm tsx scripts/materialize-hawks-timeframes.ts && pnpm tsx scripts/enrich-day.ts --date 2026-06-16 --csv ~/Downloads/orders.csv`. Total runtime ~3 min.
+- **Source**: 2026-06-17 enrichment session — `hawks_renko_sizes` row for week-of-2026-06-15 has `(size_5m, size_15m, size_60m) = (22, 41, 81)`. Folder `/Users/ygorbravim/Downloads/WIN/` contains `22R.csv` ✓ but jumps `40R.csv → 43R.csv` (missing R41) and `73R.csv → 84R.csv` (missing R81). Materializer skips week 25 because the rule is all-or-nothing per week (see `docs/gotchas.md` entry "Hawks materializer skips a whole week when ANY of `(5m, 15m, 60m)` R-source CSVs is missing").
+- **What + Why**: The 105-of-125-weeks "incomplete" rate reported by the materializer means most of the historical journal is non-enriched on the candle/indicator axes. R41 + R81 unblock week 25 immediately; the wider 105-week gap is a separate audit of which historic weeks need brick CSVs vs. which ones the user has source for. Defer the broader audit until R41/R81 ship.
+- **How**: Re-export R41 and R81 brick CSVs from whichever ProfitChart export pipeline produced the rest of `/Users/ygorbravim/Downloads/WIN/`. File size should be ~3-4 MB each based on the size pattern (R40 = 3.7 MB, R43 = 3.2 MB; R73 = 1.1 MB, R84 = 893 KB). After dropping the files in place, run the 3-command sequence above. Then re-open the journal and confirm trades `b6557ce2`, `b64581f4`, `b83414b3` move from `partial` to `enriched` and the indicator-readout band populates.
+- **Date filed**: 2026-06-17.
+
+### Extend `setup_rank` enum to include weak setups (B, C)
+
+- **Priority**: P2 — current behavior writes NULL setupRank for any setup with <4 favorable indicators. The engine's indicator-readout pass DOES classify those into "B" (2-3 favorable) and "C" (0-1 favorable), but the DB enum only accepts "A"/"AA"/"AAA" so the write is silently dropped. Analytics can recover via `indicatorReadout.favorableCount` but the `setupRank` column under-reports weak-setup trades as "rank unknown".
+- **Effort**: S — Drizzle migration adds `'B'` and `'C'` to the `setup_rank` enum (Postgres `ALTER TYPE setup_rank ADD VALUE 'B'` / `'C'`). Update the TS-side `setupRankEnum` in `src/db/schema.ts` accordingly. Re-extend `indicator-readout.ts` to write all 5 ranks. Backfill: optional one-shot script that re-derives setupRank from `indicatorReadout.favorableCount` on every trade with `indicatorReadout != null AND setup_rank IS NULL`.
+- **Source**: 2026-06-17 — `scripts/enrich-day.ts` bulk run hit `NeonDbError: invalid input value for enum setup_rank: "B"` on a 2-favorable setup. Temporarily collapsed B/C → NULL in indicator-readout pass (which loses signal in the column but keeps the JSON readout intact).
+- **How**: Generate a Drizzle migration with `pnpm db:generate` after updating `setupRankEnum` in schema. Note: the enum is `pgEnum("setup_rank", [...])` at line 89 of `src/db/schema.ts`. The migration is append-only on enum values; safe.
+- **Date filed**: 2026-06-17.
+
+### Enrichment cleanup job scheduling (wire cron route)
+
+- **Priority**: P3
+- **Effort**: XS (~15 min — create `vercel.json` with cron entry, or wire the script into a scheduled routine framework if that's later chosen)
+- **Source**: 2026-06-16 — `scripts/cleanup-abandoned-enrichments.ts` ships as a manual-run script. Spec calls for scheduled cleanup of expired `trade_enrichment_snapshots` (status='draft' that pass `expiresAt`); the script is production-ready and tested. Just needs a cron trigger.
+- **What + Why**: Draft enrichment snapshots expire after 72 hours (per Appendix D of the plan). The cleanup job flips them to `status='abandoned'` and nulls the payload. This can run daily or weekly (low overhead, one indexed query + batched UPDATE). No user-facing impact if deferred, but automating it reduces manual ops overhead.
+- **How**: Choose a backend (Vercel cron routes via `vercel.json`, or integrate into a scheduled job queue if Axion adopts one later). Create the route `/api/cron/cleanup-enrichments` that calls the script (via `pnpm tsx scripts/cleanup-abandoned-enrichments.ts`), guard with a secret header, set cron to run daily at 02:00 UTC or similar off-peak time.
+- **Alternative**: Keep the script manual-only for now and schedule it locally when needed. This is how it ships; document in a readme / sidebar note so a future agent doesn't forget it exists.
+- **Date filed**: 2026-06-16.
+
+---
+
 ## Backtest / Inspector
 
-### Precomputed structural pivots — `asset_pivots` table (N=1..6, all timeframes, Renko first)
+### Hawks engine — per-booster outcome audit (booster tier ordering is U-shaped)
+
+- **Priority**: P1 — directly affects the trustworthiness of every tier-based filter, optimization target, and UI label across the Hawks engine.
+- **Effort**: M (~3h — instrument BoosterChecklist into `BacktestTrade.quality` or re-compute via secondary engine pass; tabulate per-booster WR/avgR; identify mis-signed booster(s))
+- **Source**: 2026-06-16 tier sanity audit (`docs/scans/2026-06-16-tier-sanity.md`). After 15m plumbing made AAA reachable, the empirical ordering is **AAA(35% WR, +R$10/trade) > AA(29%, -R$8) > A(28%, -R$6) < B(37%, +R$18)**. B-tier outperforms AAA on every metric with the largest sample (n=91). The U-shape implies one or more boosters is firing inversely to outcomes — adding boosters makes the trade worse, not better, in the middle of the distribution.
+- **Hypothesis**: on a Renko engine firing INTO extension, "ema5m aligned" or "vwap aligned" means price has already moved past those references, which is the classic "late entry" footprint. The booster reads as a confirmation when it's actually a warning.
+- **Steps**:
+  1. Decide instrumentation path: (a) thread `BoosterChecklist` into `BacktestTrade.quality.contributions[]` (cleanest, persists for UI/storage), or (b) re-compute the checklist at each fire's brick in a secondary engine pass (cheaper, doesn't change trade shape).
+  2. For each of the 5 boosters (htf15mAligned, htfPivotAligned, macdAligned, ema5mAligned, vwapAligned) tabulate: count of trades where it fired=true, count where false, WR/avgR per cohort.
+  3. Identify mis-signed booster(s): any where `fires=true` cohort has WORSE WR/avgR than `fires=false`.
+  4. Decide: invert the polarity (rename "aligned" → "anti-aligned"), remove from the checklist, or leave wired but down-weight.
+- **Pointers**: audit script `scripts/audit-tier-sanity.ts`, booster checklist `src/lib/backtest/modules/entry/hawks-boosters.ts`, computation `src/lib/backtest/modules/entry/hawks-playbook.ts:computeBoosterChecklist`.
+
+### Hawks engine — `keltnerOuterBlock` veto window (needs methodology spec from Ygor)
+
+- **Priority**: P2 — blocked on a methodology clarification from Ygor
+- **Effort**: S once the spec answer is in (~30 min — change the lookback constant, update tests, ship)
+- **Source**: 2026-06-15 A/B audit (`docs/scans/2026-06-15-keltner-outer-block-ab.md`) found N=1 produces 0 vetoes. Window-sweep audit (`docs/scans/2026-06-15-keltner-window-sweep.md`) tested N=1..20 and found vetoes start firing at N=4, accumulate to 5 vetoes / R$ +346 by N=20. **Every vetoed trade across all window sizes is a stop-out or BE — zero winners removed.**
+- **The result is tantalising but statistically insignificant**: only 5 trades caught across 8,280 bricks, cluster into 2 trading days. 100%-precision shape is what you'd expect if the methodology is real, but n=5 won't pass any honest stats bar.
+- **Blocking question for Ygor**: Does the methodology's "outer-band exhaustion" signal imply a 1-brick veto (same brick only) or a wider "no entries for ~5-10 bricks after the exhaustion" zone? The book/Pedro's teaching is the source of truth — if the book says wider, ship wider even at low sample. If the book says same-brick only, remove the wiring (the audit shows the narrow interpretation is dead in practice).
+- **Open questions** beyond the window-size answer:
+  1. Should the veto also block on plain `TOUCH_KC2_*` (no confirmed reject)? Currently only confirmed rejects veto.
+  2. If we ship the wider-window variant, is `keltnerNearBricks` (already in config, default 2) the natural place to store the lookback, or do we add `keltnerOuterBlockLookback`?
+  3. Once spec is resolved and code lands, do we need a forward-test or more historical data before promoting the flag default-on?
+- **Pointers**: `src/lib/backtest/modules/entry/hawks-playbook.ts:79-105` (`isKeltnerOuterVeto` — extend to take a brick history slice for the wider-window variant), `scripts/audit-keltner-outer-block-ab.ts` (the 1-brick A/B harness), `scripts/audit-keltner-outer-block-window-sweep.ts` (the lookback sweep).
+
+### Hawks engine — fibo retracement anchor logic (deferred)
+
+- **Priority**: P2
+- **Effort**: M (1-2 days — needs another day-scrubbing pass with Ygor to pin down what "the right impulse" actually is across enough days to formalize the rule)
+- **Source**: 2026-06-15 engine v0.10 fibo-lab session. We iterated through several `findDominantImpulse` heuristics — global deepest-low, most-recent local pivot pair with post-reversal confirmation, etc. — and ended at "most recent local FUNDO with `LOCAL_WINDOW=2` neighbors + impulse-start TOPO with `≥ minSwing` post-drop + retracement-peak strictly AFTER impulse-end + `≥ 2 × renkoSize` minimum retracement". The geometry is now usually right, but it's still wrong often enough on real days that we don't trust the T1/T2/T3 measured-move projections for production yet. The lab page (`/dev/fibo-lab`) renders all 10 days continuously with a global trade picker so the work is resumable.
+- **What + Why**: the fibo measured-move target (Mode 3a/3b exit modes per spec §5) needs reliable `impulseStart → impulseEnd → retracementPeak` anchors at fire-time. Open questions:
+  1. Should the impulse leg always be picked on **15m bricks**, or on a higher TF (60m) when the 60m leg is visible? Today's code uses 15m only.
+  2. Is "most recent local pivot pair" the right semantic, or should we use the engine's **confirmed structural pivots** (the period-2 detector in `hawks-structural-pivots.ts`) and just pick the latest topo→fundo pair?
+  3. The `requirePostReversal` toggle is currently asymmetric (impulse-end skips it, impulse-start requires it). On the rightmost edge of the data this is necessary, but it produces some odd anchors mid-day. May want a unified rule.
+  4. The "last high fallback" (when no rally has formed yet) currently uses the brick AT/AFTER the fundo. When the fire IS the fundo brick the setup is rejected entirely — but should it use the fire brick's high instead?
+- **Build sequence**:
+  1. Use `/dev/fibo-lab` to scrub another 10 days, marking each trade's anchors as "correct" or "wrong" (and labeling WHY they're wrong — wrong leg, wrong peak, etc.).
+  2. From the catalog, choose between (a) keep the current geometric local-pivot finder with tweaked thresholds, or (b) switch to the structural-pivot detector's output and forward-fill the latest topo→fundo pair.
+  3. Promote the chosen logic from the lab action (`src/app/actions/hawks-engine-lab-data.ts:findDominantImpulse`) into the engine proper (`src/lib/backtest/hawks-htf-walker.ts` or a new module) so Mode 3a/3b lifecycle can consume it.
+  4. Wire production fibo target into `simulateLifecycle` (currently the lifecycle simulator accepts a `targetPrice` parameter but no caller supplies a fibo-derived value yet).
+- **What's already shipped on this work**:
+  - `/dev/fibo-lab` page with global trade picker, focus-zoom around the selected trade, side-by-side 5m + 15m charts, crosshair sync, gate-trace diagnostic, demo-fire suppression when `findDominantImpulse` returns null. Keep this wired — it's the day-scrubbing tool.
+  - Wick-based structural pivot direction classifier (engine-wide, see [`docs/gotchas.md`](gotchas.md) "Hawks structural pivots: direction is WICK-BASED").
+  - R<N> brick-size convention codified ([`CLAUDE.md`](../CLAUDE.md) rule #0) — anchors and targets correctly convert `(size_5m − 1) × 5` to points.
+  - Lab gates for the fibo-lab loosened from production thresholds: 5m/15m structure guards disabled, `legShapeOk` kept at production `≥4/≥2`. Production engine path retains all gates.
+- **Done when**: real `mean_reversion` / `retracement` / `vwap_rejection` fires get reliable fibo target prices; Mode 3a/3b exit modes consume them in `simulateLifecycle`; the lab page shows the SAME anchors the engine uses (no lab-only finder); Ygor signs off after a fresh 10-day scrub.
+- **Date filed**: 2026-06-15.
+
+---
+
+### Hawks engine — noise / chop discriminator per playbook (refine phase)
+
+- **Priority**: P2
+- **Effort**: M (1-2 days — exploratory: discriminator badge in lab, day-scrubbing pass with Ygor to mark "noise vs trade" bricks, then formalize the winning rule)
+- **Source**: 2026-06-14 — engine lab review (Image #12). Demo path fires SHORT B twice inside a clearly choppy box; both fires pass every coded rule (60m gate, leg-shape ≥4/≥2, VB, 5m HH/LL running-extreme) but Ygor would not take either trade. Engine isn't wrong against stated rules — humans see "chop" as a Gestalt the rules don't yet encode.
+- **What + Why**: build a noise/chop classifier the engine can read at fire-decision time. Three candidate rules — none obviously right, all need scrubbing against catalogued days:
+  1. **Brick-ATR ratio**: average brick range / net price displacement over last N bricks. High ratio = chop.
+  2. **Color-flip count**: number of color flips in last N bricks. ≥X flips in last 10 = chop.
+  3. **Range-bound test**: rolling high − rolling low over last 20 bricks ≤ K renko-sizes = chop.
+- **Build sequence**:
+  1. Add a "noise score" badge row to the engine lab (`/dev/hawks-engine-lab`) — three cursor-reactive badges for the three candidates above.
+  2. Day-scrub a catalog (~10 days) with Ygor marking each fire as "noise" or "OK".
+  3. Pick the rule (or combination) that minimises false-positive noise fires without killing real-signal fires.
+  4. Promote the chosen discriminator into each playbook's `evaluate()` (per the v0.9 spec, the noise rule lives INSIDE the playbook, not in the orchestrator). Each playbook gets its own threshold — `mean_reversion` may TREAT chop as signal (fires at the edges), `retracement` rejects chop entirely, `vwap_rejection` is orthogonal.
+- **Locked design call (2026-06-14, Ygor)**: only canonical universal rule is 60m gate direction. All other rules live inside individual playbooks — discriminator IS a per-playbook concern.
+- **Done when**: each playbook's `evaluate()` rejects fires that score "chop" by the chosen rule; Image #12-class fires no longer appear in the engine lab; a follow-up Ygor-led scrub of 10 days confirms no real-signal trades are killed.
+- **Date filed**: 2026-06-14.
+
+---
+
+### Hawks engine — per-playbook engine variant (today's orchestrator is shared)
+
+- **Priority**: P2
+- **Effort**: L (2-3 days — refactor orchestrator into composable per-playbook engines + per-playbook config blocks; migrate the lab UI to a playbook-switcher view; preserve current Hawks orchestrator as the "all playbooks" mode)
+- **Source**: 2026-06-14 — engine v0.9 review with Ygor. Today's `hawks-playbook` orchestrator (`src/lib/backtest/modules/entry/hawks-playbook.ts`) is a single state machine that dispatches to all 3 playbooks per brick. Ygor's manual-optimization workflow needs each playbook to be runnable in isolation (its own backtest, its own quality metrics, its own optimization knobs) without the others firing or contaminating the result.
+- **What + Why**: today `processHawksPlaybookCandle` evaluates ALL playbooks per brick and picks the highest-priority hit. For per-playbook optimization Ygor needs:
+  - **Per-playbook backtest preset** (`hawksV0_mean_reversion`, `hawksV0_retracement`, `hawksV0_vwap_rejection`) so each can be benchmarked alone.
+  - **Per-playbook entry-module config block** so quality thresholds, leg sizes, etc. can be tuned without affecting siblings.
+  - **Per-playbook engine state slot** — the shared orchestrator's `lastFireBrickIndex` cooldown is a single counter; running a single playbook should not be cooldown-coupled to fires from the others.
+  - **Lab UI playbook switcher** — `/dev/hawks-engine-lab` should toggle between "all playbooks" view (today's behavior) and a "just this playbook" view.
+- **Locked design call (2026-06-14, Ygor)**: 60m gate stays the universal rule across all variants. Each per-playbook engine still consumes the same `HtfWalker` snapshot.
+- **Build sequence**:
+  1. Extract each playbook's logic into its own `processSinglePlaybookCandle` entry function so it can run without the orchestrator.
+  2. Add `EntryModuleConfig` variants `hawks_mean_reversion`, `hawks_retracement`, `hawks_vwap_rejection`.
+  3. Add three presets to `hawks-presets.ts`.
+  4. Engine-lab page picks one preset; the page-level config becomes a dropdown.
+  5. The current `hawks_playbook` ("all playbooks" mode) stays as-is for the integrated view.
+- **Done when**: each playbook can be backtested alone with its own preset; `/dev/hawks-engine-lab` has a playbook switcher; per-playbook fire metrics are reportable in isolation; the "all playbooks" view still works as today.
+- **Date filed**: 2026-06-14.
+
+---
+
+### Indicator Lab: BRT offset hardcoded, ignores DST
+
+- **Priority**: P3
+- **Effort**: XS
+- **Source**: 2026-06-13 — flagged during the `/finish-it` Codex pass on the Indicator Lab promotion (commit `9b404dd2`). `src/app/actions/hawks-isolation-data.ts` declares `BRT_OFFSET_MS = -3 * 60 * 60 * 1000` and uses it in `dateToBrt(ts)` to slice candles into BRT trading days.
+- **What + Why**: Brazil dropped permanent DST in 2019, so for every date in the current parquet window the offset is correct and this is **purely a future-proofing concern**. But the constant is wrong-by-construction: if DST is ever reinstated (proposals surface every few years) or the asset definition shifts to a market that observes DST, every BRT-day boundary in the Indicator Lab will skew by one hour for half the year — Indicator Lab's catalog cross-references, day-so-far averages (rolling 200 / day-so-far), and 60m HTF gate slicing all silently drift. The bug is in the tool itself (admin-only `/indicator-lab` route), so blast radius is low, which is why it's P3 rather than P1.
+- **Fix shape**: replace the hardcoded ms-offset with `Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(ts)` to derive the BRT calendar date, then group candles by that string. Drops the constant entirely and is DST-correct for any future zone change.
+- **Done when**: `BRT_OFFSET_MS` is removed; `dateToBrt(ts)` returns a `YYYY-MM-DD` string via `Intl.DateTimeFormat`; Indicator Lab renders identically for every existing date in the parquet window (regression check against a sample of 2026-03/04/05/06 days).
+- **2026-06-14 review (Ygor + Claude)**: deliberately deferred — the project guideline against "error handling, fallbacks, or validation for scenarios that can't happen" applies. Brazil has no DST since 2019 with no reinstatement on the horizon, the asset definition (WIN/WDO) is BRT-only, and the code path is admin-only. Promote to P1 the day either (a) Brazil announces DST reinstatement or (b) a DST-observing asset is added to the Indicator Lab.
+- **Date filed**: 2026-06-13.
+
+---
+
+### Precomputed structural pivots — engine swap + display wiring (Phase 2/3 of `asset_pivots`)
 
 - **Priority**: P1
-- **Effort**: L
-- **Source**: 2026-06-08 — session continuing the /backtest vs /optimize parity fix (commit `1022fdc4`). Ygor surfaced that the engine reproduces topos/fundos at runtime via the v0.7 structural state machine (`src/lib/backtest/modules/entry/hawks-triple-screen.ts:223–260`), but every other surface that needs pivots — chart overlays, Fibonacci retracement/expansion levels, alternate-N strategy variants — would either re-derive them or fail to find them. Persisting the swing sequence per (asset, timeframe, confirmation_n) unlocks Fib features and gives every analytics surface a single canonical answer.
-- **What + Why**: Build a persisted swing-sequence table indexed by `(asset_id, timeframe_id, confirmation_n, brick_index)` and populate it via a one-time backfill + per-ingest write. Both the engine (entry filters, stop logic, Fib-confluent gates) and the chart (overlay levels, Fib boxes) read from the same source. The master goal stated by Ygor is **data fidelity**: every consumer sees the same pivot, no drift across recompute boundaries, no silent regressions when detection logic evolves.
-- **Schema shape** (single source of truth, normalized):
-  ```sql
-  create type pivot_type_enum as enum ('topo', 'fundo');
-  create table asset_pivots (
-    asset_id          text     not null references assets(id),
-    timeframe_id      text     not null references timeframes(id),
-    confirmation_n    smallint not null check (confirmation_n between 1 and 6),
-    brick_index       integer  not null,           -- 0-based row in price_candles for (asset, tf)
-    pivot_type        pivot_type_enum not null,
-    pivot_price       numeric(20, 8)  not null,    -- candle.high (topo) or candle.low (fundo)
-    pivot_timestamp   timestamptz     not null,
-    algorithm_version text     not null,           -- bump when detection logic changes (e.g. "pivots-v1")
-    computed_at       timestamptz not null default now(),
-    primary key (asset_id, timeframe_id, confirmation_n, brick_index)
-  );
-  create index idx_asset_pivots_seq
-    on asset_pivots (asset_id, timeframe_id, confirmation_n, brick_index);
-  ```
-  Read-time Fib pair-up uses a `LAG()` window — no `prior_brick_idx` denorm field, intentionally, to keep each row independently correct.
-- **Detection algorithm** (Renko v1; time-based deferred): generalize the v0.7 state machine to parameter N. Track `direction`, `runExtreme`, `runExtremeBrickIdx`, `oppositeStreak`. On direction flip, after `oppositeStreak >= N` and a prior run-extreme exists, that extreme becomes a pivot at confirmation_n=N. Compute N=1..6 in parallel during a single brick scan (O(candles × 6) with a ~10-op inner loop). Single source of truth in `src/lib/pivots/detect-renko.ts` consumed by both backfill and per-ingest writer.
-- **Fidelity invariants (testable)**:
-  1. **Subset rule** — `pivots(N=k+1) ⊆ pivots(N=k)` is a math fact (more confirmation can only drop pivots, never add). Assert as a hard test after backfill on every (asset, tf).
-  2. **Price-match rule** — every row's `pivot_price` must equal `candles[brick_index].high` (topo) or `.low` (fundo). Run as an assert during backfill; throws on mismatch.
-  3. **Algorithm-version stamp** — every row carries the version that produced it. Lets queries say "give me only pivots from v1+" and lets re-detection target only stale rows.
-  4. **Freshness** — when `price_candles` for a (asset, tf) is reloaded, any pivot rows with `computed_at < candles_loaded_at` must be invalidated and recomputed. Either cascade-delete or compare timestamps at read time.
-- **Engine wiring**: extend `fetchCandles` (`src/app/actions/backtest.ts:44`) to JOIN `asset_pivots` for the recipe's requested N and attach as `candle.pivots[N] = { type, price } | undefined`. Mirrors the existing anchor-merge pattern at lines 70–96. Hawks engine swaps its runtime detection for `candle.pivots[recipe.entry.config.pivotConfirmationN ?? 2]`. **Hard regression bar:** after the swap, /backtest and /optimize must still report 325 trades on the Hawks v0 baseline (the number locked in by commit `1022fdc4`).
-- **Display wiring**: `/api/pivots?asset=…&tf=…&n=2&from=…&to=…` returns the pivot stream; chart overlay component draws topo/fundo markers + on-demand Fib retracement / extension between any user-selected pair (math in `src/lib/fibonacci/levels.ts` — derive levels on read, do not persist).
-- **Phased rollout**:
-  1. Schema + detection lib + unit tests against v0.7 fixtures (must reproduce existing N=2 pivots exactly). **Touches `src/db/schema.ts` — protected path, requires explicit user go-ahead.**
-  2. Backfill script `scripts/backfill-pivots.ts` — Renko sources only in v1, idempotent via `ON CONFLICT DO NOTHING`. Runs the subset + price-match invariants as hard asserts at the end.
-  3. Engine swap (Hawks reads `candle.pivots[N]`), re-run the parity test, confirm 325/325.
-  4. Display API + Fib utils + chart overlay component.
-  5. Time-based candle detection — separate algorithm, same table, deferred until 1–4 land.
-- **Done when**: All six N values populated for every Renko (asset, timeframe) pair currently in `price_candles`; Hawks v0 still reports 325 trades on both /backtest and /optimize; subset and price-match invariants pass on the full table; one chart in the app displays an N=2 pivot overlay; Fib retracement/extension levels render between any two user-selected pivots.
-- **Date filed**: 2026-06-08.
+- **Effort**: M (engine swap = S, display + Fib UI = M)
+- **Source**: 2026-06-16 — Phase 1 (schema + detection lib + tests + backfill) landed this session. `asset_pivots` table exists, populated for all 3 Hawks Renko TFs (5m: N=2 → 2672 pivots / 15m: 3479 / 60m: 3663 — full counts N=1..6 in backfill output). Detector at `src/lib/pivots/detect-renko.ts`, `ALGORITHM_VERSION="pivots-v1"`. Backfill at `scripts/backfill-pivots.ts` (idempotent, asserts price-match + count-monotonicity).
+- **What + Why**: The persisted table is now the canonical source for any pivot consumer beyond the legacy v0.7 engine path. Two pieces remain before this work fully retires:
+  1. **Engine swap (Phase 2)** — Hawks engine currently re-derives pivots at runtime via `src/lib/backtest/hawks-structural-pivots.ts`. Wire `fetchCandles` (`src/app/actions/backtest.ts`) to JOIN `asset_pivots` for the recipe's requested N and attach as `candle.pivots[N] = { type, price } | undefined`, mirroring the daily-anchors merge pattern. Hawks engine then reads `candle.pivots[recipe.entry.config.pivotConfirmationN ?? 2]`. **Hard regression bar**: trade counts must match the locked baseline from commit `1022fdc4` (325 on the original window; or the post-15m-wiring 332 baseline on the current 20-day window — measure and lock before swapping).
+  2. **Display + Fib wiring (Phase 3)** — `/api/pivots?asset=…&tf=…&n=2&from=…&to=…` returns the pivot stream; chart overlay component renders topo/fundo markers; on-demand Fib retracement / extension box between any user-selected pair (math in `src/lib/fibonacci/levels.ts` — derive on read, do not persist).
+- **Phase 4 deferred — time-based candle detection**: separate algorithm, same table; deferred until Phase 2 + 3 land and the persisted table proves itself on Renko in production.
+- **CLEAN-SWING semantic note (CRITICAL for engine swap)**: the new detector emits ONE TOPO per actual peak (single canonical answer for Fib / chart). The legacy `walkStructuralPivots` in `src/lib/backtest/hawks-structural-pivots.ts` emits an EVENT stream (multiple pivots per swing, every directional brick after a flip emits something) — the engine consumes the legacy stream because it conditions on the event sequence for cooldown / re-arm timing. Phase 2 must either (a) verify trade-count parity empirically BEFORE fully cutting over (likely fails), or (b) introduce a thin adapter that fans the clean-swing stream back into legacy events at engine-read time, OR (c) keep the legacy detector as the engine's pivot source and use `asset_pivots` only for UI/Fib/cross-tool surfaces. Path (c) is the safest and probably what we want — the persisted table is for fidelity across consumers, not necessarily a replacement for the engine's internal event stream. **Pick this empirically during Phase 2, do NOT commit to a path in advance.**
+- **What's already shipped** (Phase 1, 2026-06-16):
+  - Detector library `src/lib/pivots/detect-renko.ts` — N=1..6 in a single sweep via `detectRenkoPivotsAllN`, wick-based direction with ambiguity-guard for outside bricks (see `docs/gotchas.md` 2026-06-16 "Hawks pivots: ambiguous-wick").
+  - Schema + migration `src/db/migrations/0021_messy_namor.sql` — `asset_pivots` table (PK `(asset_id, timeframe_id, confirmation_n, brick_index)`), enum `pivot_type`, check constraint `1 ≤ N ≤ 6`.
+  - Tests `src/__tests__/lib/pivots/detect-renko.test.ts` — 27 passing: clean-swing fixture × N=1..6 + price-match + count-monotonicity + bounds + edge cases on 6 random seeds.
+  - Backfill script `scripts/backfill-pivots.ts` — usage: `pnpm tsx scripts/backfill-pivots.ts [tf_code] [asset_symbol]`. Idempotent via `ON CONFLICT DO NOTHING`. Asserts price-match + count-monotonicity at end. Reports DB count summary by N.
+  - Gotchas logged: clean-swing subset invariant doesn't hold (only count-monotonicity does); ambiguous-wick bricks need body tiebreaker (`docs/gotchas.md` 2026-06-16).
+- **Done when** (Phase 2 + 3): Hawks v0 baseline trade count reproduces 1:1 on /backtest and /optimize after the engine swap (or path (c) above is chosen and documented); one chart in the app displays an N=2 pivot overlay; Fib retracement/extension levels render between any two user-selected pivots.
+- **Date filed**: 2026-06-08. Phase 1 shipped 2026-06-16.
 
 ### Hawks catalog import: replace formulaic exit math with brick-walk simulation
 
@@ -140,18 +263,25 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 - **Done when**: Two consecutive sweep runs against the same range/asset/indicators show the second one starting backtest execution within 50 ms of clicking Run.
 - **Date filed**: 2026-05-29.
 
-### Hawks autonomous engine: reproduction 51% → improve via quality gates
+### Hawks autonomous engine: indicator-isolation validation (replaces "reproduction 51% → 75%")
 
-- **Priority**: P1
+- **Priority**: P1 (paused — see below)
 - **Effort**: L (multi-session)
-- **Source**: 2026-05-28 — Step 8 parallel-audit harness (`scripts/audit-parallel.ts`) and state-machine tracer (`scripts/trace-hawks.ts`) landed in commit `6390656e`. Subsequent session pushed engine to v0.6 (stay-armed + slide-down FUNDO/TOPO + 5-brick cooldown). Audit moved 47.6% → 51.4% with extras 38 → 57.
-- **What + Why**: State-machine tuning has hit diminishing returns. Empirical cooldown sweep (3/5/7 bricks) and stay-armed-vs-anchored variants explored; best matches-to-extras ratio is the anchored + cd=5 configuration currently shipped. Remaining ~50% miss rate likely requires structural changes outside the wave detector:
-  1. **Quality multipliers → hard gates.** MACD histogram, VWAP, AJUSTE are computed and logged but never gate fire. Catalog T2/T3/T4 misses likely correlate with one of these being off.
-  2. **15m/60m gate transition windows.** `gateS` / `gateL` flip binary on EMA crossovers. Trades catalogged in transition zones (e.g., 2026-03-19 16:00 area, 2026-03-25 11:00 area) miss because the gate isn't on at the catalog brick.
-  3. **Per-day volatility calibration.** Tight days (NR4/NR7) may need a different retracement threshold than expansion days.
-  4. **Synthetic test fixtures need rebuild.** `src/__tests__/lib/backtest/hawks-engine.test.ts` has 3 `describe.skip` tests (re-arm pair + LONG smoke) that were written against pre-stay-armed semantics. Rebuild with brick close + cooldown awareness.
-  5. **Fibonacci-based retracement & extension layer.** Current wave detector uses a single `retracementMin` brick threshold for wave-2. Try replacing the binary threshold with a Fibonacci band: accept wave-2 entries whose retracement falls within `[0.382, 0.618]` of wave-1's range, and tag projected targets at `1.272 / 1.618 / 2.618` extensions. Hypothesis: per-day volatility calibration (#3 above) may collapse into "the right Fib ratio for this day's brick size" rather than a per-day-tuned constant. Plumb the Fib levels through the engine + the inspector overlay so audit traces can show where the catalog entry lands on the Fib grid.
-- **Done when**: Reproduction rate >75% with extras <60 across the 20-day catalog. Skipped test fixtures rebuilt. Fib-band experiment has been tried and either kept (with measured lift) or recorded as ruled-out with the audit numbers.
+- **Source**: 2026-06-12 — full archive of the reproduction-vs-catalog tuning pass at [`docs/postMorten/2026-06-12-hawks-engine-v0.8-archive.md`](postMorten/2026-06-12-hawks-engine-v0.8-archive.md). Final state: v0.8 engine reaches **55.9% reproduction / 169 extras** on the 20-day catalog. Five hypotheses tested with audit numbers; only one kept (brick-high retracement anchor — Hypothesis A). Bar of 75% / <60 NOT met.
+- **Pause trigger**: Ygor's strategic observation that the paper-traded user catalog itself may contain input errors (mis-clicked timestamps, wrong direction tags, late clicks), making "reproduction-vs-catalog" a noisy validation target. Five hours of hypothesis testing optimized engine co-occurrence with a target we never audited for correctness.
+- **What + Why** (new direction): Replace reproduction-vs-catalog with **indicator-isolation validation**. For each Hawks indicator independently:
+  1. **Define how to track it.** State explicitly whether it's a level (S/R), trend, momentum reading, etc. Should price be below for SHORT / above for LONG? Should the absolute value be increasing? Pre-register the predictive hypothesis before measurement (no cherry-pick).
+  2. **Script test.** For each indicator state, measure forward outcome distribution on raw 5m candles (next-N-brick MFE/MAE/return). Compare conditional vs baseline distributions. Report effect size + sample size + comparison-to-null.
+  3. **Visual smoke test.** Plot the indicator on chart; Ygor + Arch scroll through and confirm the script's measurement matches what the eye sees.
+     Indicators to validate, in order: 15m gate, 60m gate, MACD 5m, VWAP D, VWAP M, VWAP S, AJUSTE. Only after all 7 pass solo do we compose them in the engine.
+- **Pre-work check before resuming**: Ygor will recheck a sample of paper-traded catalog entries against the live chart to estimate the catalog's error rate. If the catalog is verifiably clean we may reconsider reproduction-vs-catalog as a co-validation regime; otherwise it stays archived.
+- **What's already shipped and kept** (orthogonal to validation regime, see archive doc for full list):
+  1. `getHawksIndicatorsAt` + `getHawksIndicatorsAtCandle` at `src/lib/backtest/hawks-indicators.ts` — pure functions returning `HawksIndicatorSnapshot` (15m/60m/MACD/VWAP D-M-S/AJUSTE tagged favorable per direction). 8 passing tests. Unblocks the two-phase journaling enrichment plan above.
+  2. `EntrySignal.indicatorSnapshot` attached at fire time so audit harness can grade fires by indicator alignment.
+  3. v0.8 brick-high retracement anchor in `hawks-triple-screen.ts` (only hypothesis with measurable lift, +21pp from intermediate baseline).
+  4. Audit harness rebuilt for post-Phase-5 data layer (direct DuckDB+Parquet read, no `price_candles` table dependency).
+  5. Diagnostic probes: `scripts/diagnose-misses.ts`, `scripts/probe-fib-retrace.ts`.
+- **Done when** (new bar): Each of the 7 Hawks indicators has a recorded solo-validation result (kept / rejected / inconclusive with sample size); the engine retains only kept indicators as hard gates; final engine reproduction rate is reported as a _consequence_ of indicator quality, not as the optimization target.
 
 ### Hawks engine: 10-day verification and multi-trade open questions
 

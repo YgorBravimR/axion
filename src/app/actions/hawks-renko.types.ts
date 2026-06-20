@@ -15,6 +15,12 @@ interface RenkoSizeRow {
 	size5m: number
 	size15m: number
 	size60m: number
+	/**
+	 * Per-row asset symbol from the optional `ASSET` column in the CSV.
+	 * `null` falls back to the `assetSymbol` arg passed to
+	 * `importHawksRenkoSizes` (which defaults to "WIN").
+	 */
+	assetSymbol?: string | null
 }
 
 export type { RenkoSizeRow }

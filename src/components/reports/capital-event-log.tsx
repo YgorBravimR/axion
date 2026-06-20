@@ -3,6 +3,7 @@
 
 import { useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
+import { useRouter } from "next/navigation"
 import { useFormatting } from "@/hooks/use-formatting"
 import type { CapitalEvent } from "@/types/integration"
 import { Input } from "@/components/ui/input"
@@ -14,16 +15,10 @@ import {
 interface CapitalEventLogProps {
 	events: CapitalEvent[]
 	year: number
-	onEventDeleted: () => void
-	onEventAdded: () => void
 }
 
-const CapitalEventLog = ({
-	events,
-	year,
-	onEventDeleted,
-	onEventAdded,
-}: CapitalEventLogProps) => {
+const CapitalEventLog = ({ events, year }: CapitalEventLogProps) => {
+	const router = useRouter()
 	const t = useTranslations("reports.capitalEventLog")
 	const [isPending, startTransition] = useTransition()
 	const [formType, setFormType] = useState<"deposit" | "withdrawal">("deposit")
@@ -38,7 +33,7 @@ const CapitalEventLog = ({
 		startTransition(async () => {
 			const result = await deleteCapitalEvent(id)
 			if (result.status === "success") {
-				onEventDeleted()
+				router.refresh()
 			}
 		})
 	}
@@ -62,7 +57,7 @@ const CapitalEventLog = ({
 			if (result.status === "success") {
 				setFormAmount("")
 				setFormNotes("")
-				onEventAdded()
+				router.refresh()
 			} else {
 				setFormError(result.message ?? t("failedToRecord"))
 			}

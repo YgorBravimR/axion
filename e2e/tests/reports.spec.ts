@@ -643,4 +643,29 @@ test.describe("Reports", () => {
 			await expect(card).toBeVisible()
 		})
 	})
+
+	// Regression for Sentry PROFIT-JOURNAL-F. async-sections.tsx (a server
+	// component) used to pass inline arrow function props (onLogged /
+	// onEventAdded / onEventDeleted) to WithdrawalCalculator and
+	// CapitalEventLog, both client components. Next.js cannot serialize
+	// functions across the RSC boundary, so the page crashed with
+	// "Event handlers cannot be passed to Client Component props".
+	test.describe("RSC boundary regression (PROFIT-JOURNAL-F)", () => {
+		test("reports page renders without an RSC serialization crash", async ({
+			page,
+		}) => {
+			const errors: string[] = []
+			page.on("pageerror", (err) => {
+				errors.push(err.message)
+			})
+			await page.goto(ROUTES.reports)
+			await page.waitForLoadState("load")
+			await page.waitForTimeout(1500)
+
+			const offending = errors.filter((m) =>
+				/Event handlers cannot be passed to Client Component props/i.test(m)
+			)
+			expect(offending).toEqual([])
+		})
+	})
 })

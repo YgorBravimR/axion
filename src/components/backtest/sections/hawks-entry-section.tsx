@@ -26,7 +26,7 @@ const HawksEntrySection = memo(
 		// on entry.type already, but Rules of Hooks requires a stable hook
 		// call order regardless of an early return.
 		const config: HawksTripleScreenConfig | null =
-			recipe.entry.type === "hawks_triple_screen"
+			recipe.entry.type === "hawks_playbook"
 				? (recipe.entry.config as HawksTripleScreenConfig)
 				: null
 
@@ -50,21 +50,21 @@ const HawksEntrySection = memo(
 			]
 			onRecipeChange({
 				...recipe,
-				entry: { type: "hawks_triple_screen", config: newConfig },
+				entry: { type: "hawks_playbook", config: newConfig },
 				requiredIndicators,
 			})
 		}
 
 		const handleQualityChange = useCallback(
 			(nextGates: QualityGatesConfig) => {
-				if (recipe.entry.type !== "hawks_triple_screen") {
+				if (recipe.entry.type !== "hawks_playbook") {
 					return
 				}
 				const currentConfig = recipe.entry.config as HawksTripleScreenConfig
 				onRecipeChange({
 					...recipe,
 					entry: {
-						type: "hawks_triple_screen",
+						type: "hawks_playbook",
 						config: { ...currentConfig, qualityGates: nextGates },
 					},
 				})

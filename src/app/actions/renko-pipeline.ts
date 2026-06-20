@@ -148,7 +148,10 @@ export const regenerateRenkoBricks = async (
 		}
 
 		const renkoSize = await dbWs.query.hawksRenkoSizes.findFirst({
-			where: eq(hawksRenkoSizes.effectiveDate, weekStartIso),
+			where: and(
+				eq(hawksRenkoSizes.assetId, assetId),
+				eq(hawksRenkoSizes.effectiveDate, weekStartIso)
+			),
 		})
 		if (!renkoSize) {
 			return {

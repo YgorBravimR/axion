@@ -170,6 +170,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 	// ── Data state (fetched once, reused for all runs) ────────────
 	const candlesRef = useRef<CandleRow[]>([])
+	const candles15mRef = useRef<CandleRow[]>([])
 	const assetConfigRef = useRef<AssetConfig | null>(null)
 	const catalogRef = useRef<UserEntry[] | undefined>(undefined)
 	const [candleCount, setCandleCount] = useState(0)
@@ -216,7 +217,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		validators: LeafGroupValidator[]
 		strategyKey: "hawks" | "orb"
 	} | null>(() => {
-		if (recipe.entry.type === "hawks_triple_screen") {
+		if (recipe.entry.type === "hawks_playbook") {
 			return {
 				leaves: HAWKS_LEAVES,
 				validators: HAWKS_VALIDATORS,
@@ -473,7 +474,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		let nextRecipe: StrategyRecipe | null = null
 		if (type === "orb_breakout") {
 			nextRecipe = orbPresets[0]
-		} else if (type === "hawks_triple_screen") {
+		} else if (type === "hawks_playbook") {
 			nextRecipe = hawksV0
 		} else if (type === "user_catalog") {
 			nextRecipe = hawksUserCatalog
@@ -490,7 +491,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		// same asset so the wizard produces real trades instead of zero-trade
 		// runs. Skip when no compatible source exists for the asset.
 		const needsHawksSource =
-			type === "hawks_triple_screen" || type === "user_catalog"
+			type === "hawks_playbook" || type === "user_catalog"
 		const current = dataSources[selectedSourceIndex]
 		let nextIndex = selectedSourceIndex
 		if (needsHawksSource && current?.timeframeCode !== "hawk_5m_win") {
@@ -523,6 +524,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		if (nextIndex !== selectedSourceIndex) {
 			setSelectedSourceIndex(nextIndex)
 			candlesRef.current = []
+			candles15mRef.current = []
 			assetConfigRef.current = null
 			setCandleCount(0)
 		}
@@ -536,6 +538,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		const index = parseInt(value, 10)
 		setSelectedSourceIndex(index)
 		candlesRef.current = []
+		candles15mRef.current = []
 		assetConfigRef.current = null
 		setCandleCount(0)
 		const source = dataSources[index]
@@ -581,6 +584,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 		setDateRange({ from, to: now })
 		candlesRef.current = []
+		candles15mRef.current = []
 		assetConfigRef.current = null
 		setCandleCount(0)
 	}
@@ -589,6 +593,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		setDateRange(range)
 		setQuickRangeKey("custom")
 		candlesRef.current = []
+		candles15mRef.current = []
 		assetConfigRef.current = null
 		setCandleCount(0)
 	}
@@ -607,6 +612,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 			timeframeId: selectedSource.timeframeId,
 			dateRange: { from: dateFrom, to: dateTo },
 			requiredIndicators: recipe.requiredIndicators,
+			includeHtf15m: recipe.entry.type === "hawks_playbook",
 		})
 
 		hideLoading()
@@ -614,6 +620,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 
 		if (response.success && response.data) {
 			candlesRef.current = response.data.candles
+			candles15mRef.current = response.data.candles15m ?? []
 			assetConfigRef.current = response.data.assetConfig
 			setCandleCount(response.data.candles.length)
 			showToast(
@@ -662,7 +669,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 		}
 
 		// Load catalog for Hawks strategy
-		if (recipe.entry.type === "hawks_triple_screen" && !catalogRef.current) {
+		if (recipe.entry.type === "hawks_playbook" && !catalogRef.current) {
 			const bundles = await listBundledCatalogs()
 			const allBundle = bundles.find((b) => b.key === "all")
 			if (allBundle) {
@@ -721,7 +728,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					? { inSamplePct: walkForwardConfig.inSamplePct / 100 }
 					: undefined,
 				referenceCatalog:
-					recipe.entry.type === "hawks_triple_screen"
+					recipe.entry.type === "hawks_playbook"
 						? catalogRef.current
 						: undefined,
 				// Always stamp a stage — `undefined` would render as "ad-hoc"
@@ -769,7 +776,8 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 					sweepHandleRef.current = null
 					showToast("error", t("sweepError", { message }))
 				},
-			}
+			},
+			candles15mRef.current
 		)
 
 		sweepHandleRef.current = handle
@@ -988,7 +996,8 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 				const result = runBacktest(
 					candlesRef.current,
 					run.recipe,
-					assetConfigRef.current!
+					assetConfigRef.current!,
+					candles15mRef.current
 				)
 				return {
 					...run,
@@ -1139,7 +1148,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 											{tBacktest("orb.name")}
 										</SelectItem>
 										{/* DEZK (macd_wma_alignment) archived 2026-05-29 — hidden from UI. */}
-										<SelectItem value="hawks_triple_screen">
+										<SelectItem value="hawks_playbook">
 											{tBacktest("hawks.name")}
 										</SelectItem>
 										<SelectItem value="user_catalog">
@@ -1360,7 +1369,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 													/>
 												)}
 												{/* DEZK archived: macd_wma_alignment branch removed (strategy hidden from UI) */}
-												{recipe.entry.type === "hawks_triple_screen" && (
+												{recipe.entry.type === "hawks_playbook" && (
 													<HawksEntrySection
 														recipe={recipe}
 														onRecipeChange={setRecipe}
@@ -1833,7 +1842,7 @@ const OptimizeContent = ({ dataSources }: OptimizeContentProps) => {
 				run={runs.find((r) => r.id === freezeRunId) ?? null}
 				sourcePresetId={
 					(runs.find((r) => r.id === freezeRunId)?.recipe.entry.type ===
-					"hawks_triple_screen"
+					"hawks_playbook"
 						? "hawks_v0"
 						: runs.find((r) => r.id === freezeRunId)?.recipe.entry.type ===
 							  "orb_breakout"

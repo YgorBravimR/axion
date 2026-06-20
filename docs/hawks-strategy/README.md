@@ -7,11 +7,13 @@ the user's explanation and the reference image
 
 ## Other docs in this folder
 
-- [`engine-and-quality.md`](./engine-and-quality.md) — autonomous entry engine state machine + quality registry
+- [`engine-v0.9-playbook-spec.md`](./engine-v0.9-playbook-spec.md) — **current** engine spec (playbook architecture, 60m-only gate, 3 initial playbooks)
+- [`engine-and-quality.md`](./engine-and-quality.md) — v0.6 engine (legacy, superseded by v0.9 spec above)
 - [`indicator-inventory.md`](./indicator-inventory.md) — `price_candles.indicators` JSONB keys, what each means
 - [`improvement-plan.md`](./improvement-plan.md) — 8-step roadmap to engine v1
 - [`zero-to-hero-seed.md`](./zero-to-hero-seed.md) — manual seed (tags/conditions/playbooks) for a Hawks user
 - [`chart-palette.md`](./chart-palette.md) — chart colour decisions for Renko panes
+- [`indicator-isolation/`](./indicator-isolation/) — per-group probe write-ups (Groups A, B, …)
 
 ---
 

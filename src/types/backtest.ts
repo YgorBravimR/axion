@@ -58,6 +58,11 @@ interface EntrySignal {
 	// Optional quality score attached at fire time. The engine threads this
 	// through unchanged into the trade row; pure metadata, no behavior.
 	quality?: TradeQuality
+	// Optional point-in-time Hawks indicator readout at fire time. Produced
+	// by `src/lib/backtest/hawks-indicators.ts:getHawksIndicatorsAt`. Pure
+	// metadata; shared between the autonomous engine (replay) and the two-
+	// phase journaling enrichment pass (manual entries get the same readout).
+	indicatorSnapshot?: HawksIndicatorSnapshot
 }
 
 // Quality tiering — signed-score model.
@@ -82,6 +87,55 @@ interface TradeQuality {
 	tier: QualityTier
 	score: number
 	contributions: IndicatorContribution[]
+}
+
+// ─── Hawks indicator snapshot — pure readout shape ───────────────────────
+// Produced by `src/lib/backtest/hawks-indicators.ts:getHawksIndicatorsAt`.
+// Used by the engine to capture indicator state at fire time and by the
+// two-phase journaling enrichment to derive the same readout for a manually-
+// entered trade. No structural state (TOPO/FUNDO/phase) is included —
+// strictly indicator values + direction-aware `favorable` flags.
+
+interface HawksHtfGateReadout {
+	state: "above_both" | "below_both" | "mixed" | "unknown"
+	favorable: boolean
+	prevOpen?: number
+	prevClose?: number
+	ema27?: number
+	ema55?: number
+}
+
+interface HawksMacdReadout {
+	sign: "positive" | "negative" | "zero" | "unknown"
+	favorable: boolean
+	value?: number
+}
+
+interface HawksVwapReadout {
+	side: "above" | "below" | "at" | "unknown"
+	favorable: boolean
+	value?: number
+	distance?: number // candle.close - vwap (positive = above)
+}
+
+interface HawksAjusteReadout {
+	position: "above" | "below" | "at" | "unknown"
+	favorable: boolean
+	value?: number
+	distance?: number // candle.close - ajuste (positive = above)
+}
+
+interface HawksIndicatorSnapshot {
+	candleTimestamp: string
+	direction: "short" | "long"
+	gate15m: HawksHtfGateReadout
+	gate60m: HawksHtfGateReadout
+	macd: HawksMacdReadout
+	vwapD: HawksVwapReadout
+	vwapM: HawksVwapReadout
+	vwapW: HawksVwapReadout
+	ajuste: HawksAjusteReadout
+	favorableCount: number // 0..7 — how many of the 7 indicators favor the trade direction
 }
 
 interface EntryState {
@@ -114,11 +168,11 @@ interface MACDWMAConfig {
 // Stop = 2 bricks back (Hawks 1R = 2 Renko boxes), via signal.stopReference = 2·open − close.
 // Indicator keys must match candle-header-mappings.ts and the candle JSONB.
 interface HawksTripleScreenConfig {
+	// ── Higher-TF EMA stack (engine HARD GATE) ───────────────────────────
 	ema27_60m_key: string // default: "mme27_60m"
 	ema55_60m_key: string // default: "mme55_60m"
 	ema27_15m_key: string // default: "mme27_15m"
 	ema55_15m_key: string // default: "mme55_15m"
-	macd_key: string // default: "macd"
 	// Previous-closed-candle OHLC projected from 15m / 60m at ingest time.
 	// Used by the higher-TF gate: the brick BEFORE the current one must have
 	// opened AND closed below both EMAs (for SHORT) / above both (for LONG).
@@ -126,6 +180,27 @@ interface HawksTripleScreenConfig {
 	prev_15m_close_key: string // default: "prev_15m_close"
 	prev_60m_open_key: string // default: "prev_60m_open"
 	prev_60m_close_key: string // default: "prev_60m_close"
+	// 5m EMA — the "mean" for the `mean_reversion` playbook (engine v0.10
+	// Phase G). Optional: when undefined, mean_reversion does not fire.
+	// Default preset value: "ema9".
+	ema_fast_5m_key?: string
+	// ── Quality indicators (read by hawks-quality-rules + hawks-indicators) ─
+	// Every per-brick indicator key is plumbed through config — no hardcoded
+	// literals in rule code. Adding a new column means: (a) add key here,
+	// (b) set default in the preset, (c) consume via config in the rule.
+	macd_key: string // 5m MACD histogram. Default: "macd1_histo" (MACD config #1).
+	vwap_d_key: string // VWAP daily.   Default: "vwap_d"
+	vwap_m_key: string // VWAP monthly. Default: "vwap_m"
+	vwap_w_key: string // VWAP weekly ("semanal").       Default: "vwap_w"
+	ajuste_key: string // D-1 settlement (anchor table). Default: "ajuste"
+	// Keltner channel bands. Inner = 1.25× ATR (kc1); outer = 1.65× (kc2).
+	keltner_inner_inf_key: string // default: "kc1_inf"
+	keltner_inner_sup_key: string // default: "kc1_sup"
+	keltner_outer_inf_key: string // default: "kc2_inf"
+	keltner_outer_sup_key: string // default: "kc2_sup"
+	// Order-flow indicators.
+	aggression_key: string // net buy-aggression. Default: "agr_saldo"
+	volume_key: string // brick volume (financial). Default: "volume_fin"
 	// Renko box size in points for the 5m chart. Used as the unit for the
 	// "wave-1 ≥ 4 boxes" and "retracement ≥ 2 boxes" structural checks.
 	// Currently a constant per recipe; future revision can swap to a
@@ -138,6 +213,14 @@ interface HawksTripleScreenConfig {
 	fireCooldownBricks?: number // default 5 (post-fire 5m brick cooldown)
 	wave1MinBricks?: number // default 4 (wave-1 minimum bricks)
 	retracementMinBricks?: number // default 2 (wave-2 retracement minimum bricks)
+	// v0.9 HTF-gate stateful walker (per Group A indicator-isolation audit).
+	// Default `false` keeps the v0.8 stateless gate. When `true`, engine init
+	// precomputes a per-timestamp BULL/BEAR/NO_SIGNAL snapshot for the 15m and
+	// 60m timeframes via a sticky walker that flips only when ALL 4 EMA
+	// inequalities reverse. Replaces the stateless "all-4-must-align-on-this-
+	// brick" gate; preserves the both-timeframes-must-agree semantics.
+	// Methodology source: `docs/hawks-strategy/indicator-isolation/group-a-htf-gate.md`.
+	useStatefulHtfGate?: boolean // default false
 	// Optional user-toggleable quality gates. Each flag is independent and
 	// additive: when true, the engine refuses an otherwise-valid fire if the
 	// gate's condition holds. Default off ⇒ baseline engine behavior preserved.
@@ -154,19 +237,48 @@ interface QualityGatesConfig {
 	srLevelBlock?: boolean
 	// SCORE +weight per S/R level BEHIND trade within srFavorRangeBricks.
 	srLevelFavor?: boolean
-	// ── Group B: Keltner (planned, not yet wired) ─────────────────────────
-	keltnerOuterBlock?: boolean // hard reject when 165 band acts as floor/ceiling
+	// ── Group B: Keltner ───────────────────────────────────────────────────
+	// `keltnerOuterBlock` is WIRED as of engine v0.10 (Group C audit): when
+	// true, the playbook orchestrator vetoes a fire if the current 5m brick is
+	// a confirmed outer-band touch+reject against the trade direction (SHORT
+	// vetoed by REJECT_KC2_INF_*, LONG by REJECT_KC2_SUP_*). The remaining
+	// keltner* fields below are still UI-only pending similar audits.
+	//
+	// HOLD: the gate is intentionally NOT promoted to default-on. The 2026-06-15
+	// A/B + window-sweep audits showed the narrow (1-brick) interpretation fires
+	// 0 times across 8,280 catalog bricks, and the wider (~5-10 brick) variant
+	// catches only 5 trades clustering into 2 days — statistically insignificant.
+	// Decision is blocked on a methodology spec answer (see backlog "keltnerOuterBlock
+	// veto window"). Do NOT change defaults without that answer.
+	keltnerOuterBlock?: boolean
 	keltnerInnerPenalty?: boolean // -weight when price past 125 band on trade side (legacy, see keltnerInner)
+	// ── VWAP wick touch+reject (methodology-correct, separate from the
+	// `vwap_dip_recover` playbook which is a close-based dip-and-recover
+	// trigger). When true, vetoes a fire if the current 5m brick is a
+	// confirmed wick touch+reject of vwap_d on the side that contradicts
+	// the trade direction (SHORT vetoed by REJECT_FROM_BELOW_*, LONG by
+	// REJECT_FROM_ABOVE_*). See Group D audit and hawks-vwap-walker.ts.
+	vwapWickRejectBlock?: boolean
+	// ── Color-streak / VB (Virada de Box) score-mode favor (Group H, 2026-06-16) ─
+	// When true, +1 contribution to `quality.score` if the fire brick is
+	// STREAK_1 (the brick that JUST flipped color — the "VB" of the
+	// methodology). Group H audit: STREAK_1 is 76.9% of all aligned fires
+	// AND the only consistently profitable bucket (n=243, net +R$1,789,
+	// avgR +0.131 vs the rest at -R$606 / n=73). Score-mode only — no
+	// block, since continuation-bucket sample sizes (n=12-25) are too
+	// small to confidently veto.
+	// See: docs/hawks-strategy/indicator-isolation/group-h-color-streak.md.
+	colorStreakFavor?: boolean
 	// ── Group C: MACD (planned) ───────────────────────────────────────────
 	macdAlignmentScore?: boolean // ±weight by sign + slope streak (legacy, see macd)
 	// ── Group D: aggression ───────────────────────────────────────────────
-	// Tri-state polarity switch. "off" = rule disabled (default, baseline
+	// Binary polarity switch. "off" = rule disabled (default, baseline
 	// behavior). "original" = aggression aligned with trade direction is
-	// FAVOR (your intuitive heuristic). "reversed" = aligned is PENALTY
-	// ("late to the move"); probe data on 20 days supports this polarity
-	// at threshold 15K with 1.67× selectivity. Recommended setting when
-	// enabling the rule is "reversed".
-	aggressionMode?: "off" | "original" | "reversed" // legacy, see aggression
+	// FAVOR. The "reversed" polarity was removed 2026-06-16 per user
+	// directive after Group F audit found the ANTI bucket is structurally
+	// empty (HTF+MACD enforces alignment). See
+	// docs/hawks-strategy/indicator-isolation/group-f-aggression.md.
+	aggressionMode?: "off" | "original" // legacy, see aggression
 	// ── Group E: volume (planned) ─────────────────────────────────────────
 	volumeScore?: boolean // +weight if brick volume > running EMA (legacy, see volume)
 	// ── Tunable parameters (defaults preserve current behavior) ───────────
@@ -199,7 +311,7 @@ interface QualityGatesConfig {
 	}
 	aggression?: {
 		// Split per spec — score and block modes are independent.
-		scoreMode?: "off" | "original" | "reversed"
+		scoreMode?: "off" | "original" // "reversed" pruned 2026-06-16; see Group F audit.
 		blockMode?: "off" | "blockOnAligned" | "blockOnAnti"
 		threshold?: number // reused; defaults to aggressionThreshold (15000)
 	}
@@ -238,7 +350,7 @@ interface UserCatalogConfig {
 type EntryModuleConfig =
 	| { type: "orb_breakout"; config: OrbEntryConfig }
 	| { type: "macd_wma_alignment"; config: MACDWMAConfig }
-	| { type: "hawks_triple_screen"; config: HawksTripleScreenConfig }
+	| { type: "hawks_playbook"; config: HawksTripleScreenConfig }
 	| { type: "user_catalog"; config: UserCatalogConfig }
 
 interface EntryModule {
@@ -784,4 +896,10 @@ export type {
 	OptimizationRunProvenance,
 	FunnelStage,
 	HeroWinPreset,
+	// Hawks indicator snapshot (read-only readout for engine + enrichment)
+	HawksHtfGateReadout,
+	HawksMacdReadout,
+	HawksVwapReadout,
+	HawksAjusteReadout,
+	HawksIndicatorSnapshot,
 }

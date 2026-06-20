@@ -138,6 +138,9 @@
 		"dashboard": "Dashboard",
 		"commandCenter": "Command Center",
 		"journal": "Journal",
+		"journalGroup": "Journal",
+		"journalOverview": "Trades",
+		"enrichJournal": "Enrich",
 		"analytics": "Analytics",
 		"monteCarlo": "Monte Carlo",
 		"playbook": "Playbook",
@@ -151,6 +154,7 @@
 		"backtest": "Backtest",
 		"equityShield": "Equity Shield",
 		"backtestOptimize": "Optimize",
+		"indicatorLab": "Indicator Lab",
 		"newTrade": "New Trade",
 		"plans": "Plans",
 		"simulation": "Simulation"
@@ -1946,6 +1950,165 @@
 			"noTagsFound": "No tags found",
 			"tagStatsRetrieved": "Tag stats retrieved successfully",
 			"tagStatsFetchFailed": "Failed to retrieve tag stats"
+		},
+		"quickAdd": {
+			"title": "Quick Add Trade",
+			"description": "Create a trade in 30 seconds with just the essentials",
+			"labels": {
+				"asset": "Asset",
+				"direction": "Direction",
+				"entryDate": "Entry Date & Time",
+				"exitDate": "Exit Date & Time",
+				"entryPrice": "Entry Price",
+				"exitPrice": "Exit Price",
+				"positionSize": "Position Size"
+			},
+			"directions": {
+				"long": "Long",
+				"short": "Short"
+			},
+			"buttons": {
+				"save": "Save trade",
+				"saveAndAdd": "Save and add another",
+				"cancel": "Cancel"
+			},
+			"tradeCreated": "Trade created successfully",
+			"createFailed": "Failed to create trade"
+		},
+		"enrichment": {
+			"landing": {
+				"title": "Enrich Journal",
+				"description": "Take your raw trades and add what you didn't type by hand: P&L, MFE/MAE, indicator readout, stop and target.",
+				"pendingLabel": "Trades awaiting enrichment",
+				"pendingHint": "Trades not yet reviewed inside the selected window.",
+				"emptyAllDoneTitle": "All caught up",
+				"emptyAllDoneBody": "No pending trades in this window. Change the dates to revisit an earlier week, or head back to the journal.",
+				"backToJournal": "Back to journal",
+				"dateRangeLabel": "Date range",
+				"dateFrom": "From",
+				"dateTo": "To",
+				"uploadCsvLabel": "Profit Pro Operações CSV (optional)",
+				"uploadCsvHint": "Upload your Profit operations export to reconcile P&L, MFE and MAE straight from Profit.",
+				"dropHere": "Drop your CSV file here",
+				"orClick": "or click to browse",
+				"selectFile": "Select file",
+				"uploadParsing": "Parsing...",
+				"uploadParsed": "{count} operations parsed",
+				"uploadError": "Parse error: {message}",
+				"runDryRun": "Start review",
+				"cancel": "Cancel",
+				"startError": "Failed to start review",
+				"startedToast": "Review started ({count} trades)"
+			},
+			"resume": {
+				"bannerText": "You have draft trades pending review from a previous session.",
+				"resumeButton": "Resume",
+				"abandonButton": "Abandon",
+				"abandonConfirmTitle": "Abandon dry-run?",
+				"abandonConfirmBody": "All draft enrichments in this run will be discarded. This cannot be undone.",
+				"abandonConfirm": "Abandon",
+				"abandonCancel": "Keep reviewing",
+				"abandonedToast": "Dry-run abandoned",
+				"abandonError": "Failed to abandon dry-run"
+			},
+			"review": {
+				"header": "Review enrichment",
+				"tradeOf": "Trade {current} of {total}",
+				"saveAndNext": "Save & next",
+				"skip": "Skip",
+				"prev": "Previous",
+				"next": "Next",
+				"contracts": "{count, plural, =1 {1 contract} other {# contracts}}",
+				"abandonRun": "Abandon run",
+				"commitError": "Failed to commit trade",
+				"commitSuccess": "Trade enriched",
+				"stalenessTitle": "Some fields have changed",
+				"stalenessBody": "{count} fields drifted since dry-run started. Decide per-field before saving.",
+				"stalenessField": "{field}: was {baseline}, now {current}",
+				"acceptAnyway": "Save remaining (skip drifted)",
+				"helpTitle": "Keyboard shortcuts",
+				"helpClose": "Close",
+				"abandonConfirm": "Abandon",
+				"abandonCancel": "Keep reviewing",
+				"abandonedToast": "Dry-run abandoned",
+				"abandonError": "Failed to abandon dry-run",
+				"shortcuts": {
+					"nextLabel": "Next trade",
+					"prevLabel": "Previous trade",
+					"saveLabel": "Save & advance",
+					"skipLabel": "Skip current trade",
+					"acceptAllLabel": "Accept all high-confidence fields",
+					"rejectAllLabel": "Clear all selections",
+					"editLabel": "Edit field inline",
+					"helpLabel": "Show this overlay"
+				},
+				"sidebar": {
+					"statusCurrent": "Current",
+					"statusCommitted": "Committed",
+					"statusSkipped": "Skipped",
+					"statusPending": "Not yet reviewed"
+				}
+			},
+			"passNames": {
+				"operations": "Operations CSV",
+				"candleMath": "Candle math",
+				"indicatorReadout": "Indicator readout",
+				"deterministicSlTarget": "Deterministic SL/target"
+			},
+			"passStatus": {
+				"succeeded": "Succeeded",
+				"skipped": "Skipped: {reason}",
+				"failed": "Failed: {error}",
+				"noChanges": "✓ No changes — your data already matches"
+			},
+			"confidence": {
+				"high": "High",
+				"medium": "Medium",
+				"low": "Low"
+			},
+			"fieldStates": {
+				"accepted": "Accepted",
+				"rejected": "Rejected",
+				"conflict": "Conflicts with current"
+			},
+			"fieldNames": {
+				"entryPrice": "Entry price",
+				"exitPrice": "Exit price",
+				"positionSize": "Position size",
+				"pnl": "P&L",
+				"mfe": "MFE",
+				"mae": "MAE",
+				"holdingMs": "Holding time",
+				"stopLoss": "Stop loss",
+				"takeProfit": "Take profit",
+				"indicatorReadout": "Indicator readout",
+				"setupRank": "Setup rank"
+			},
+			"indicatorLabels": {
+				"gate15m": "Gate 15m (EMAs + prior candle)",
+				"gate60m": "Gate 60m (EMAs + prior candle)",
+				"macd": "MACD histogram",
+				"vwapD": "Daily VWAP",
+				"vwapM": "Monthly VWAP",
+				"vwapW": "Weekly VWAP",
+				"ajuste": "Settlement price"
+			},
+			"indicatorFavorable": "favorable",
+			"indicatorUnfavorable": "against",
+			"indicatorSummary": "{count}/7 indicators in favor",
+			"passActions": {
+				"acceptAll": "Accept all",
+				"rejectAll": "Clear selection"
+			},
+			"fieldCountOne": "field",
+			"fieldCountMany": "fields",
+			"success": {
+				"enriched": "{count, plural, =0 {No trades enriched} =1 {Enriched 1 trade} other {Enriched # trades}}",
+				"skipped": "{count, plural, =0 {} =1 {Skipped 1 trade} other {Skipped # trades}}",
+				"snapshotSaved": "Snapshot saved.",
+				"viewDashboard": "View dashboard",
+				"backToJournal": "Back to journal"
+			}
 		}
 	},
 	"analytics": {
@@ -4187,7 +4350,9 @@
 		"editTrade": "Edit Trade",
 		"editPlaybook": "Edit Playbook",
 		"playbookDetails": "Playbook Details",
-		"newPlaybook": "New Playbook"
+		"newPlaybook": "New Playbook",
+		"enrichJournal": "Enrich",
+		"enrichReview": "Review"
 	},
 	"forgotPassword": {
 		"title": "Reset Password",
@@ -5123,6 +5288,7 @@
 				"groups": {
 					"sr": "S/R Levels (4 HTF MAs + VWAP + ajuste)",
 					"keltner": "Keltner Bands",
+					"vwapWick": "VWAP Wick Touch+Reject",
 					"macd": "MACD",
 					"aggression": "Aggression",
 					"volume": "Volume",
@@ -5155,6 +5321,10 @@
 				"keltnerNearBricks": {
 					"label": "Near-band distance (bricks)",
 					"hint": "Distance considered \"near\" the band."
+				},
+				"vwapWickRejectBlock": {
+					"label": "Block: VWAP wick touch+reject against direction",
+					"hint": "Refuse entry when the current 5m brick is a confirmed methodology wick touch+reject of vwap_d on the side that contradicts the trade direction. Distinct from the close-based vwap_dip_recover playbook trigger."
 				},
 				"macdAlignmentScore": {
 					"label": "Score: MACD alignment",
@@ -5381,6 +5551,8 @@
 			"hawksSrFavorToggle": "S/R favor enabled",
 			"hawksKeltnerBlockToggle": "Keltner block enabled",
 			"hawksKeltnerPenaltyToggle": "Keltner penalty enabled",
+			"hawksVwapWickRejectBlockToggle": "VWAP wick reject block enabled",
+			"hawksColorStreakFavorToggle": "Color-streak VB favor enabled",
 			"hawksMacdToggle": "MACD score enabled",
 			"hawksVolumeToggle": "Volume score enabled",
 			"hawksHtfMaBlockToggle": "HTF MA block enabled",
@@ -5627,6 +5799,8 @@
 			"hawksSrFavorRange": "S/R favor range (bricks)",
 			"hawksKeltnerBlockToggle": "Keltner outer block",
 			"hawksKeltnerPenaltyToggle": "Keltner inner penalty",
+			"hawksVwapWickRejectBlockToggle": "VWAP wick reject block",
+			"hawksColorStreakFavorToggle": "Color-streak VB favor",
 			"hawksKeltnerNear": "Keltner near distance (bricks)",
 			"hawksMacdToggle": "MACD alignment score",
 			"hawksMacdSlope": "MACD slope window",

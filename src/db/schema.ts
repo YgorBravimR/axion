@@ -91,6 +91,33 @@ export const setupRankEnum = pgEnum("setup_rank", ["A", "AA", "AAA"])
 // Trade Execution Rating Enum (A-F, measures execution quality)
 export const tradeRatingEnum = pgEnum("trade_rating", ["A", "B", "C", "D", "F"])
 
+// Two-phase journaling — trade enrichment status enums (see
+// docs/plans/two-phase-journaling-with-enrichment.md Appendix A).
+// `enrichment_status` is the rollup across the 4 enrichment passes
+// (ops / candle-math / indicator-readout / SL+target).
+export const enrichmentStatusEnum = pgEnum("enrichment_status", [
+	"pending",
+	"partial",
+	"enriched",
+])
+
+// Per-pass status. `skipped` = prerequisite missing, `succeeded` = reviewer
+// accepted output, `failed` = pass threw, `rejected` = reviewer rejected.
+export const enrichmentPassStatusEnum = pgEnum("enrichment_pass_status", [
+	"skipped",
+	"succeeded",
+	"failed",
+	"rejected",
+])
+
+// Snapshot status — controls draft persistence across page refreshes and
+// retention of committed audit records.
+export const snapshotStatusEnum = pgEnum("snapshot_status", [
+	"draft",
+	"committed",
+	"abandoned",
+])
+
 // Bug Report Status Enum
 export const bugReportStatusEnum = pgEnum("bug_report_status", [
 	"open",
@@ -717,6 +744,36 @@ export const trades = pgTable(
 		// Deduplication (SHA-256 hash of accountId|asset|direction|entryDate|entryPrice|exitPrice|positionSize)
 		deduplicationHash: varchar("deduplication_hash", { length: 64 }),
 
+		// Two-phase journaling — enrichment rollup state
+		// (see docs/plans/two-phase-journaling-with-enrichment.md Appendix A).
+		enrichmentStatus: enrichmentStatusEnum("enrichment_status")
+			.default("pending")
+			.notNull(),
+		enrichmentVersion: integer("enrichment_version").default(0).notNull(),
+		enrichedAt: timestamp("enriched_at", { withTimezone: true }),
+
+		// Per-pass status (NULL = pass never ran for this trade).
+		enrichmentOpsStatus: enrichmentPassStatusEnum("enrichment_ops_status"),
+		enrichmentCandleStatus: enrichmentPassStatusEnum(
+			"enrichment_candle_status"
+		),
+		enrichmentIndicatorStatus: enrichmentPassStatusEnum(
+			"enrichment_indicator_status"
+		),
+		enrichmentSlTargetStatus: enrichmentPassStatusEnum(
+			"enrichment_sl_target_status"
+		),
+
+		// Hawks indicator readout snapshot — open-shape JSON so new indicators
+		// slot in without a migration. Schema documented in the plan doc.
+		indicatorReadout: jsonb("indicator_readout"),
+
+		// Profit Pro reconciliation — operationNumber is a real column because
+		// it backs the idempotency index. Other Profit-side numbers
+		// (drawdown / ganho-max / perda-max) live inside profitMetadata.
+		profitOperationNumber: integer("profit_operation_number"),
+		profitMetadata: jsonb("profit_metadata"),
+
 		// Metadata
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.defaultNow()
@@ -754,6 +811,63 @@ export const trades = pgTable(
 		index("idx_trades_active_date")
 			.on(table.accountId, table.entryDate)
 			.where(sql`is_archived = false`),
+
+		// Enrichment dashboards filter on this rollup constantly.
+		index("trades_enrichment_status_idx").on(table.enrichmentStatus),
+		// Idempotency lookup for Profit Pro orders.csv ingestion:
+		// "have we already enriched a trade matching (account, date, operation)?"
+		index("trades_profit_operation_number_idx").on(
+			table.accountId,
+			table.entryDate,
+			table.profitOperationNumber
+		),
+	]
+)
+
+// ═══════════════════════════════════════════════════════════════════
+// Two-phase journaling — trade_enrichment_snapshots
+// ═══════════════════════════════════════════════════════════════════
+
+// One row per (trade, dry-run-version). `draft` rows survive page
+// refreshes during a review session; `committed` rows are the audit
+// record after the reviewer accepted/rejected per-field; `abandoned`
+// rows had their payload nulled by the cleanup job after expiresAt.
+// Keep forever (decision A.3) until total volume crosses 5GB.
+export const tradeEnrichmentSnapshots = pgTable(
+	"trade_enrichment_snapshots",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		tradeId: uuid("trade_id")
+			.notNull()
+			.references(() => trades.id, { onDelete: "cascade" }),
+		version: integer("version").notNull(),
+		dryRunOutput: jsonb("dry_run_output").notNull(),
+		acceptedFields: text("accepted_fields").array(),
+		rejectedFields: text("rejected_fields").array(),
+		enrichedAt: timestamp("enriched_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		enrichmentEngineVersion: varchar("enrichment_engine_version", {
+			length: 32,
+		}).notNull(),
+		candleDataLoadedAt: timestamp("candle_data_loaded_at", {
+			withTimezone: true,
+		}),
+		status: snapshotStatusEnum("status").default("draft").notNull(),
+		runId: uuid("run_id").notNull(),
+		expiresAt: timestamp("expires_at", { withTimezone: true }),
+	},
+	(table) => [
+		index("trade_enrichment_snapshots_trade_idx").on(table.tradeId),
+		index("trade_enrichment_snapshots_trade_version_idx").on(
+			table.tradeId,
+			table.version
+		),
+		index("trade_enrichment_snapshots_run_idx").on(table.runId, table.status),
+		index("trade_enrichment_snapshots_status_expiry_idx").on(
+			table.status,
+			table.expiresAt
+		),
 	]
 )
 
@@ -2314,14 +2428,22 @@ export const tradeStopAuditEvents = pgTable(
 // Hawks Backtesting — Renko weekly brick sizes
 // ═══════════════════════════════════════════════════════════════════
 
-// One row per ISO week. effectiveDate = Monday of that week (ISO-safe anchor;
-// avoids the ISO week-year edge case where week 1 can start in December).
-// Upserted from the master CSV (hawk-renkos(Renkos).csv) via importHawksRenkoSizes.
+// One row per (asset, ISO week). effectiveDate = Monday of that week
+// (ISO-safe anchor; avoids the ISO week-year edge case where week 1 can
+// start in December). The asset_id column lets WIN and WDO coexist
+// cleanly — every read MUST filter on assetId (today most callers
+// hard-code WIN; the materializer + importer accept an asset arg).
+// Upserted from the master CSV (`data/hawks/renko-sizes.csv`) via
+// importHawksRenkoSizes — the CSV is WIN-only today; if/when WDO triples
+// land the importer accepts an `assetSymbol` arg.
 export const hawksRenkoSizes = pgTable(
 	"hawks_renko_sizes",
 	{
 		id: uuid("id").primaryKey().defaultRandom(),
-		effectiveDate: date("effective_date").notNull().unique(),
+		assetId: uuid("asset_id")
+			.notNull()
+			.references(() => assets.id, { onDelete: "cascade" }),
+		effectiveDate: date("effective_date").notNull(),
 		weekNumber: smallint("week_number").notNull(),
 		size5m: smallint("size_5m").notNull(),
 		size15m: smallint("size_15m").notNull(),
@@ -2330,7 +2452,12 @@ export const hawksRenkoSizes = pgTable(
 			.defaultNow()
 			.notNull(),
 	},
-	(table) => [uniqueIndex("hawks_renko_sizes_date_idx").on(table.effectiveDate)]
+	(table) => [
+		uniqueIndex("hawks_renko_sizes_asset_date_idx").on(
+			table.assetId,
+			table.effectiveDate
+		),
+	]
 )
 
 // ═══════════════════════════════════════════════════════════════════
@@ -2369,6 +2496,68 @@ export const assetSessionAnchors = pgTable(
 			table.date
 		),
 		index("asset_session_anchors_date_idx").on(table.date),
+	]
+)
+
+// ═══════════════════════════════════════════════════════════════════
+// Asset Pivots — precomputed structural pivots per (asset, timeframe, N)
+// ═══════════════════════════════════════════════════════════════════
+//
+// Persisted swing-sequence for every Renko candle source. Indexed by
+// (asset_id, timeframe_id, confirmation_n, brick_index). Both the engine
+// (entry filters, Fib gates) and the chart (overlays, Fib boxes) read
+// from this table — single canonical answer per (asset, tf, N).
+//
+// Detection lives in `src/lib/pivots/detect-renko.ts` (single source of
+// truth, "pivots-v1"). Backfill via `scripts/backfill-pivots.ts`;
+// per-ingest writer triggers after `price_candles` reload.
+//
+// Pivot price always equals `candles[brick_index].high` (TOPO) or `.low`
+// (FUNDO) — asserted at write time. Subset invariant doesn't hold (see
+// detect-renko header); count-monotonicity does:
+// `|pivots(N=k+1)| ≤ |pivots(N=k)|`.
+export const pivotTypeEnum = pgEnum("pivot_type", ["topo", "fundo"])
+
+export const assetPivots = pgTable(
+	"asset_pivots",
+	{
+		assetId: uuid("asset_id")
+			.notNull()
+			.references(() => assets.id, { onDelete: "cascade" }),
+		timeframeId: uuid("timeframe_id")
+			.notNull()
+			.references(() => timeframes.id, { onDelete: "cascade" }),
+		confirmationN: smallint("confirmation_n").notNull(),
+		brickIndex: integer("brick_index").notNull(),
+		pivotType: pivotTypeEnum("pivot_type").notNull(),
+		pivotPrice: numeric("pivot_price", { precision: 20, scale: 8 }).notNull(),
+		pivotTimestamp: timestamp("pivot_timestamp", {
+			withTimezone: true,
+		}).notNull(),
+		algorithmVersion: varchar("algorithm_version", { length: 32 }).notNull(),
+		computedAt: timestamp("computed_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		primaryKey({
+			columns: [
+				table.assetId,
+				table.timeframeId,
+				table.confirmationN,
+				table.brickIndex,
+			],
+		}),
+		check(
+			"asset_pivots_confirmation_n_range",
+			sql`${table.confirmationN} between 1 and 6`
+		),
+		index("asset_pivots_seq_idx").on(
+			table.assetId,
+			table.timeframeId,
+			table.confirmationN,
+			table.brickIndex
+		),
 	]
 )
 

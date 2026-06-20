@@ -23,9 +23,10 @@
  *   pnpm tsx scripts/audit-parallel.ts 2026-03-02 2026-05-13 --window 3
  */
 import "dotenv/config"
-import { readFileSync, readdirSync } from "node:fs"
+import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { neon } from "@neondatabase/serverless"
+import { DuckDBInstance } from "@duckdb/node-api"
 import { isNeonUrl } from "@/db/url"
 import postgres from "postgres"
 import { runBacktest } from "@/lib/backtest/engine"
@@ -33,10 +34,61 @@ import { hawksV0 } from "@/lib/backtest/presets/hawks-presets"
 import type { CandleRow } from "@/types/candle"
 import type { UserEntry, BacktestTrade } from "@/types/backtest"
 
+// BRT is UTC-3 fixed (Brazil dropped DST in 2019). Inlined here to avoid
+// pulling in @/lib/indicators/daily-anchors, which imports the drizzle
+// client and that has a top-level await tsx can't transform in cjs.
+const BRT_OFFSET_MS = -3 * 60 * 60 * 1000
+const candleTimestampToBrtDate = (ts: Date): string =>
+	new Date(ts.getTime() + BRT_OFFSET_MS).toISOString().slice(0, 10)
+
 const ENTRIES_DIR = resolve(process.cwd(), "data/hawks/user-entries")
-const ASSET_SYMBOL = "WIN"
+// Phase-5 cutover: candle data lives in R2/local Parquet via DuckDB.
+// Audit reads the parquet directly to bypass the drizzle top-level-await
+// that breaks tsx's cjs transform when importing the candle-store factory.
+const PARQUET_PATH = resolve(
+	process.cwd(),
+	"data/parquet/candles/hawk_5m_win/WIN.parquet"
+)
+const WIN_ASSET_ID = "2d922fa1-365a-4f17-990f-27e5aa96b659"
 const ASSET_CONFIG = { tickSize: 5, tickValueCents: 100 }
 const DEFAULT_WINDOW = 2
+
+const toNumber = (v: unknown): number => {
+	if (typeof v === "number") {
+		return v
+	}
+	if (typeof v === "bigint") {
+		return Number(v)
+	}
+	if (v !== null && typeof v === "object" && "value" in v && "scale" in v) {
+		const { value, scale } = v as { value: number | bigint; scale: number }
+		return Number(value) / Math.pow(10, scale)
+	}
+	if (v === null || v === undefined) {
+		return NaN
+	}
+	return Number(v)
+}
+
+const toIsoString = (v: unknown): string => {
+	if (v instanceof Date) {
+		return v.toISOString()
+	}
+	if (typeof v === "string") {
+		return new Date(v).toISOString()
+	}
+	if (typeof v === "number") {
+		return new Date(v).toISOString()
+	}
+	if (typeof v === "bigint") {
+		return new Date(Number(v) / 1000).toISOString()
+	}
+	if (v !== null && typeof v === "object" && "micros" in v) {
+		const micros = (v as { micros: number | bigint }).micros
+		return new Date(Number(micros) / 1000).toISOString()
+	}
+	throw new Error(`audit: unparseable timestamp ${String(v)}`)
+}
 
 interface CatalogEntry extends UserEntry {
 	expectedResult?: string | null
@@ -61,41 +113,99 @@ const loadCatalog = (days: string[]): CatalogEntry[] => {
 	return all
 }
 
+const fetchAnchors = async (
+	sql: ReturnType<typeof neon> | ReturnType<typeof postgres>,
+	fromDate: string,
+	toDate: string
+): Promise<Map<string, Record<string, number>>> => {
+	const rows = (await sql`
+		SELECT date::text AS date, payload
+		FROM asset_session_anchors
+		WHERE asset_id = ${WIN_ASSET_ID}
+		  AND date BETWEEN ${fromDate} AND ${toDate}
+	`) as { date: string; payload: Record<string, unknown> | null }[]
+	const out = new Map<string, Record<string, number>>()
+	for (const r of rows) {
+		if (!r.payload || typeof r.payload !== "object") {
+			continue
+		}
+		const numeric: Record<string, number> = {}
+		for (const [key, value] of Object.entries(r.payload)) {
+			if (typeof value === "number") {
+				numeric[key] = value
+			}
+		}
+		out.set(r.date, numeric)
+	}
+	return out
+}
+
 const fetchCandles = async (
 	sql: ReturnType<typeof neon> | ReturnType<typeof postgres>,
 	fromDate: string,
 	toDate: string
 ): Promise<CandleRow[]> => {
+	if (!existsSync(PARQUET_PATH)) {
+		throw new Error(
+			`audit: Parquet not found at ${PARQUET_PATH} — run pnpm tsx scripts/export-candles-to-parquet.ts WIN hawk_5m_win`
+		)
+	}
 	const fromUtc = new Date(`${fromDate}T03:00:00.000Z`)
 	const toUtc = new Date(`${toDate}T03:00:00.000Z`)
-	const rows = (await sql`
-		SELECT pc.timestamp, pc.open, pc.high, pc.low, pc.close,
-		       pc.candle_index, pc.indicators
-		FROM price_candles pc
-		JOIN timeframes t ON t.id = pc.timeframe_id
-		JOIN assets a ON a.id = pc.asset_id
-		WHERE a.symbol = ${ASSET_SYMBOL} AND t.code = '5m'
-		  AND pc.timestamp >= ${fromUtc.toISOString()}
-		  AND pc.timestamp <  ${toUtc.toISOString()}
-		ORDER BY pc.timestamp, pc.candle_index NULLS LAST
-	`) as {
-		timestamp: string
-		open: number
-		high: number
-		low: number
-		close: number
-		candle_index: number | null
-		indicators: Record<string, unknown>
-	}[]
-	return rows.map((r) => ({
-		timestamp: r.timestamp,
-		open: Number(r.open),
-		high: Number(r.high),
-		low: Number(r.low),
-		close: Number(r.close),
-		candleIndex: r.candle_index ?? 0,
-		indicators: r.indicators as Record<string, number>,
-	}))
+	const instance = await DuckDBInstance.create(":memory:")
+	const connection = await instance.connect()
+	const reader = await connection.runAndReadAll(
+		`SELECT * FROM read_parquet('${PARQUET_PATH.replace(/'/g, "''")}')
+		 WHERE timestamp >= TIMESTAMP '${fromUtc.toISOString()}'
+		   AND timestamp <= TIMESTAMP '${toUtc.toISOString()}'
+		 ORDER BY timestamp ASC`
+	)
+	const rows = reader.getRowObjects()
+	const BASE_COL_SET = new Set([
+		"timestamp",
+		"open",
+		"high",
+		"low",
+		"close",
+		"candle_index",
+	])
+	const anchorsByDate = await fetchAnchors(sql, fromDate, toDate)
+	return rows.map((row) => {
+		const indicators: Record<string, number> = {}
+		for (const [key, v] of Object.entries(row)) {
+			if (BASE_COL_SET.has(key)) {
+				continue
+			}
+			if (v !== null && v !== undefined) {
+				const n = toNumber(v)
+				if (!Number.isNaN(n)) {
+					indicators[key] = n
+				}
+			}
+		}
+		const ts = toIsoString(row.timestamp)
+		const dateKey = candleTimestampToBrtDate(new Date(ts))
+		const anchorPayload = anchorsByDate.get(dateKey)
+		if (anchorPayload) {
+			for (const [key, value] of Object.entries(anchorPayload)) {
+				if (indicators[key] === undefined) {
+					indicators[key] = value
+				}
+			}
+		}
+		return {
+			timestamp: ts,
+			open: toNumber(row.open),
+			high: toNumber(row.high),
+			low: toNumber(row.low),
+			close: toNumber(row.close),
+			candleIndex:
+				row.candle_index === null || row.candle_index === undefined
+					? null
+					: toNumber(row.candle_index),
+			indicators,
+		}
+	})
 }
 
 const brtDate = (iso: string): string => {
@@ -106,7 +216,25 @@ const brtDate = (iso: string): string => {
 
 const run = async () => {
 	const argv = process.argv.slice(2)
-	const args = argv.filter((a) => !a.startsWith("--"))
+	// Flags that take a value (--flag value); strip both tokens from positionals.
+	const FLAGS_WITH_VALUE = new Set([
+		"--window",
+		"--dump",
+		"--cooldown",
+		"--wave1",
+		"--retrace",
+	])
+	const args: string[] = []
+	for (let i = 0; i < argv.length; i++) {
+		const a = argv[i]!
+		if (a.startsWith("--")) {
+			if (FLAGS_WITH_VALUE.has(a)) {
+				i++ // skip the value
+			}
+			continue
+		}
+		args.push(a)
+	}
 	const windowArgIdx = argv.findIndex((a) => a === "--window")
 	const matchWindow =
 		windowArgIdx >= 0 && argv[windowArgIdx + 1]
@@ -120,20 +248,18 @@ const run = async () => {
 	}
 	const sql = isNeonUrl(url) ? neon(url) : postgres(url)
 
+	const allDays = readdirSync(ENTRIES_DIR)
+		.filter((f) => f.endsWith(".json"))
+		.map((f) => f.replace(".json", ""))
+		.sort()
+
 	let days: string[]
 	if (args.length === 1) {
 		days = [args[0]!]
 	} else if (args.length === 2) {
-		const allFiles = readdirSync(ENTRIES_DIR)
-			.filter((f) => f.endsWith(".json"))
-			.map((f) => f.replace(".json", ""))
-			.sort()
-		days = allFiles.filter((d) => d >= args[0]! && d <= args[1]!)
+		days = allDays.filter((d) => d >= args[0]! && d <= args[1]!)
 	} else {
-		days = readdirSync(ENTRIES_DIR)
-			.filter((f) => f.endsWith(".json"))
-			.map((f) => f.replace(".json", ""))
-			.sort()
+		days = allDays
 	}
 
 	const catalog = loadCatalog(days)
@@ -181,18 +307,51 @@ const run = async () => {
 		...(aggMode !== "off" ? { aggressionMode: aggMode } : {}),
 	}
 	const anyFlag = Object.values(flags).some((v) => v && v !== "off")
-	const recipe = anyFlag
-		? ({
-				...hawksV0,
-				entry: {
-					...hawksV0.entry,
-					config: {
-						...(hawksV0.entry as { config: Record<string, unknown> }).config,
-						qualityGates: flags,
+
+	// Engine-knob overrides — let the audit sweep state-machine params without
+	// editing the preset. Read each as an optional int from the corresponding
+	// --flag value; undefined → use the preset default.
+	const intArg = (name: string): number | undefined => {
+		const i = argv.findIndex((a) => a === name)
+		if (i < 0 || !argv[i + 1]) {
+			return undefined
+		}
+		const n = parseInt(argv[i + 1]!, 10)
+		return Number.isFinite(n) ? n : undefined
+	}
+	const cooldownOverride = intArg("--cooldown")
+	const wave1Override = intArg("--wave1")
+	const retraceOverride = intArg("--retrace")
+	const knobOverrides: Record<string, number | boolean> = {}
+	if (cooldownOverride !== undefined) {
+		knobOverrides.fireCooldownBricks = cooldownOverride
+	}
+	if (wave1Override !== undefined) {
+		knobOverrides.wave1MinBricks = wave1Override
+	}
+	if (retraceOverride !== undefined) {
+		knobOverrides.retracementMinBricks = retraceOverride
+	}
+	const statefulHtf = process.argv.includes("--stateful-htf")
+	if (statefulHtf) {
+		knobOverrides.useStatefulHtfGate = true
+	}
+	const anyKnob = Object.keys(knobOverrides).length > 0
+
+	const recipe =
+		anyFlag || anyKnob
+			? ({
+					...hawksV0,
+					entry: {
+						...hawksV0.entry,
+						config: {
+							...(hawksV0.entry as { config: Record<string, unknown> }).config,
+							...knobOverrides,
+							...(anyFlag ? { qualityGates: flags } : {}),
+						},
 					},
-				},
-			} as typeof hawksV0)
-		: hawksV0
+				} as typeof hawksV0)
+			: hawksV0
 	if (anyFlag) {
 		console.log(
 			`[audit] gates ENABLED: ${Object.entries(flags)
@@ -200,6 +359,9 @@ const run = async () => {
 				.map(([k]) => k)
 				.join(", ")}`
 		)
+	}
+	if (anyKnob) {
+		console.log(`[audit] knob overrides: ${JSON.stringify(knobOverrides)}`)
 	}
 	const result = runBacktest(candles, recipe, ASSET_CONFIG)
 
@@ -387,6 +549,53 @@ const run = async () => {
 					`${trade.exitReason}`
 			)
 		}
+	}
+
+	// Optional dump for downstream analysis: --dump <path> writes JSON with
+	// the full trade list, claimed status, and per-catalog-entry match label.
+	const dumpIdx = argv.findIndex((a) => a === "--dump")
+	if (dumpIdx >= 0 && argv[dumpIdx + 1]) {
+		const dumpPath = argv[dumpIdx + 1]!
+		const matched: Array<{
+			day: string
+			trade: DecoratedTrade
+			matchLabel: string
+		}> = []
+		const matchedById = new Map<number, DecoratedTrade>()
+		for (const t of tradesByDay.values()) {
+			for (const tr of t) {
+				if (claimed.has(tr.id)) {
+					matchedById.set(tr.id, tr)
+				}
+			}
+		}
+		const out = {
+			matchWindow,
+			summary: { exact, near, dirmiss, miss, extras: extras.length },
+			matched: [...matchedById.values()].map((t) => ({
+				day: brtDate(t.entryTime),
+				direction: t.direction,
+				entryBrickIndex: t.entryBrickIndex,
+				entryPrice: t.entryPrice,
+				exitPrice: t.exitPrice,
+				exitReason: t.exitReason,
+				quality: t.quality,
+				rMultiple: t.rMultiple,
+			})),
+			extras: extras.map(({ day, trade }) => ({
+				day,
+				direction: trade.direction,
+				entryBrickIndex: trade.entryBrickIndex,
+				entryPrice: trade.entryPrice,
+				exitPrice: trade.exitPrice,
+				exitReason: trade.exitReason,
+				quality: trade.quality,
+				rMultiple: trade.rMultiple,
+			})),
+		}
+		writeFileSync(dumpPath, JSON.stringify(out, null, 2))
+		console.log(`Dumped to ${dumpPath}`)
+		void matched
 	}
 }
 

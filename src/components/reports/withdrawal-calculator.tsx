@@ -2,20 +2,20 @@
 
 import { useState, useTransition } from "react"
 import { useTranslations } from "next-intl"
+import { useRouter } from "next/navigation"
 import { useFormatting } from "@/hooks/use-formatting"
 import { recordCapitalEvent } from "@/app/actions/annual-reports"
 
 interface WithdrawalCalculatorProps {
 	currentMonthNetPnl: number // in cents
 	withdrawalTargetPercent: number // e.g. 30 for 30%
-	onLogged: () => void
 }
 
 const WithdrawalCalculator = ({
 	currentMonthNetPnl,
 	withdrawalTargetPercent,
-	onLogged,
 }: WithdrawalCalculatorProps) => {
+	const router = useRouter()
 	const t = useTranslations("reports")
 	const { formatCurrency } = useFormatting()
 	const suggestedCents = Math.round(
@@ -50,7 +50,7 @@ const WithdrawalCalculator = ({
 			})
 			if (result.status === "success") {
 				setSuccess(true)
-				onLogged()
+				router.refresh()
 			} else {
 				setError(result.message ?? t("withdrawalFailedToLog"))
 			}

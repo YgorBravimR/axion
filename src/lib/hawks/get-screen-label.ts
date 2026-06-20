@@ -4,12 +4,10 @@ interface ScreenLabel {
 	hint: string
 }
 
-type Bias = "long" | "short" | "neutral"
-
 const getScreenLabel = (
 	key: ScreenLabel["key"],
-	bias: Bias,
-	t: (key: string) => string
+	bias: "long" | "short" | "neutral",
+	t: (_key: string) => string
 ): ScreenLabel => {
 	const baseKey = {
 		renko60: "screenRenko60",
@@ -36,4 +34,4 @@ const getScreenLabel = (
 	}
 }
 
-export { getScreenLabel, type ScreenLabel, type Bias }
+export { getScreenLabel, type ScreenLabel }

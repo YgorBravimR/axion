@@ -88,6 +88,8 @@ const BUNDLE_OWNED_PATHS = [
 	`${QUALITY_GATES_PREFIX}keltnerOuterBlock`,
 	`${QUALITY_GATES_PREFIX}keltnerInnerPenalty`,
 	`${QUALITY_GATES_PREFIX}keltnerNearBricks`,
+	`${QUALITY_GATES_PREFIX}vwapWickRejectBlock`,
+	`${QUALITY_GATES_PREFIX}colorStreakFavor`,
 	`${QUALITY_GATES_PREFIX}macdAlignmentScore`,
 	`${QUALITY_GATES_PREFIX}macdSlopeWindow`,
 	`${QUALITY_GATES_PREFIX}aggressionMode`,
@@ -217,6 +219,18 @@ const HAWKS_LEAVES: SweepableLeaf[] = [
 	},
 	{
 		kind: "bool",
+		path: `${QUALITY_GATES_PREFIX}vwapWickRejectBlock`,
+		labelKey: "hawksVwapWickRejectBlockToggle",
+		managedBy: BUNDLE_PATH,
+	},
+	{
+		kind: "bool",
+		path: `${QUALITY_GATES_PREFIX}colorStreakFavor`,
+		labelKey: "hawksColorStreakFavorToggle",
+		managedBy: BUNDLE_PATH,
+	},
+	{
+		kind: "bool",
 		path: `${QUALITY_GATES_PREFIX}macdAlignmentScore`,
 		labelKey: "hawksMacdToggle",
 		managedBy: BUNDLE_PATH,
@@ -237,7 +251,7 @@ const HAWKS_LEAVES: SweepableLeaf[] = [
 		options: [
 			{ value: "off", labelKey: "hawksAggressionMode_off" },
 			{ value: "original", labelKey: "hawksAggressionMode_original" },
-			{ value: "reversed", labelKey: "hawksAggressionMode_reversed" },
+			// "reversed" pruned 2026-06-16; see Group F audit.
 		],
 		managedBy: BUNDLE_PATH,
 	},
@@ -327,7 +341,7 @@ const HAWKS_LEAVES: SweepableLeaf[] = [
 		options: [
 			{ value: "off", labelKey: "hawksAggressionMode_off" },
 			{ value: "original", labelKey: "hawksAggressionMode_original" },
-			{ value: "reversed", labelKey: "hawksAggressionMode_reversed" },
+			// "reversed" pruned 2026-06-16; see Group F audit.
 		],
 		managedBy: BUNDLE_PATH,
 	},

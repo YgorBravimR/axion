@@ -283,12 +283,13 @@ const PlanYearPage = async ({ params }: PageProps) => {
 		.select({
 			entryDate: trades.entryDate,
 			rOutcome: trades.rOutcome,
-			oneRSnapshotCents: trades.oneRSnapshotCents,
+			pnl: trades.pnl,
 		})
 		.from(trades)
 		.where(
 			and(
 				eq(trades.accountId, accountId),
+				eq(trades.isArchived, false),
 				gte(trades.entryDate, yearStart),
 				lt(trades.entryDate, yearEnd)
 			)
@@ -320,18 +321,29 @@ const PlanYearPage = async ({ params }: PageProps) => {
 		return Math.ceil(((t.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
 	}
 
+	const grossPnlByMonth = Array.from({ length: 12 }, () => 0)
 	for (const t of yearTrades) {
 		const r = t.rOutcome !== null ? Number(t.rOutcome) : 0
-		const oneR = t.oneRSnapshotCents ?? 0
+		const pnlCents = t.pnl !== null ? Number(t.pnl) : 0
 		const m = t.entryDate.getUTCMonth()
 		const dayKey = t.entryDate.toISOString().slice(0, 10)
 		dayKeySetByMonth[m]!.add(dayKey)
 		realByMonth[m]!.tradesCount += 1
-		realByMonth[m]!.realPnlCents += Math.round(r * oneR)
+		grossPnlByMonth[m]! += pnlCents
 		realByMonth[m]!.realRSum += r
 		const iso = isoWeekOf(t.entryDate)
 		const map = weekIsoBucketsByMonth[m]!
 		map.set(iso, (map.get(iso) ?? 0) + r)
+	}
+	for (let i = 0; i < 12; i++) {
+		const gross = grossPnlByMonth[i]!
+		const tax = gross > 0 ? Math.round(gross * irTaxRate) : 0
+		const netAfterTax = gross - tax
+		const wd =
+			netAfterTax > 0 && withdrawalPct > 0
+				? Math.round(netAfterTax * withdrawalPct)
+				: 0
+		realByMonth[i]!.realPnlCents = netAfterTax - wd
 	}
 	for (let i = 0; i < 12; i++) {
 		realByMonth[i]!.tradingDaysWithTrades = dayKeySetByMonth[i]!.size
@@ -439,14 +451,15 @@ const PlanYearPage = async ({ params }: PageProps) => {
 		}
 	>()
 	if (eoy) {
-		eoy.months.map((m, k) => {
+		for (let k = 0; k < eoy.months.length; k++) {
+			const m = eoy.months[k]!
 			paceByMonthIdx.set(lastActualMonthIdx + 1 + k, {
 				endBalanceCents: m.endBalanceCents,
 				oneRCents: m.oneRCents,
 				netLiquidCents: m.netLiquidCents,
 				grossPnlCents: m.grossPnlCents,
 			})
-		})
+		}
 	}
 
 	const currentTierResolution =

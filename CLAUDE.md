@@ -6,6 +6,10 @@ This file is a **router**. Read it fully every session. Only mandatory rules and
 
 ## Mandatory rules (non-negotiable)
 
+0. **Hawks Renko — `R<N>` size convention.** An `R<N>` brick = `(N − 1)` ticks; 1 WIN tick = 5 points. So `R<N>` in **points = `(N − 1) × 5`**. The `hawks_renko_sizes.size_5m` / `size_15m` / `size_60m` columns store the **R number `N`**, NOT the tick count. Examples: R20 → 19 ticks → **95 pts**; R21 → 20 → 100 pts; R24 → 23 → 115 pts; R34 → 33 → 165 pts. Every R-math computation (1R stop = `2 × renkoSize`, BE threshold, 3R target, trail-after-3R, fibo measured-moves) MUST convert via `(size_5m − 1) × 5` before use. Misreading this column as ticks-or-points has bitten the engine repeatedly.
+
+0a. **Hawks structural pivots — WICK-BASED direction.** The TOPO/FUNDO detector classifies brick direction by **wick extremes** relative to the prior brick, NOT by `close > open`: bullish = `high > priorHigh`, bearish = `low < priorLow`, otherwise neutral. Pivot prices are stored at `brick.high` (TOPO) and `brick.low` (FUNDO). Single source: `src/lib/backtest/hawks-structural-pivots.ts`. The visible chart swing sits at the wick — the engine must see the same swing the user reads. Don't revert to close/open classification.
+
 1. **No feature duplication.** Before creating a new feature, search for existing equivalents. If something related exists, surface it explicitly and propose merge or override — never silently re-build. All new feature work comes only after a review of what's already shipped.
 
 2. **Discovery logging.** When you discover a non-obvious gotcha mid-task (API quirk, framework version trap, repo-specific convention, recurring footgun, "we tried X and it bit us"), **append it to [`docs/gotchas.md`](docs/gotchas.md) before closing the session.** Format and conventions are in that file's header. Do **not** scatter the discovery as inline `// HACK` / `// WARNING` comments — they rot. Surface the logged entry in your end-of-session summary so the user sees it.
@@ -74,6 +78,15 @@ This file is a **router**. Read it fully every session. Only mandatory rules and
     - If your scope genuinely requires a clean slate, **say so in your report and refuse to start** — let the orchestrator decide whether to commit, stash, or proceed despite the dirty tree.
 
     The orchestrator is responsible for committing/branching between waves of parallel subagents. Subagents only do file edits inside their scope.
+
+12. **Always simplify before commit — no exceptions.** Every commit (manual, `/finish-it`, `/ship`, ad-hoc, or subagent-driven) MUST run a simplifier pass over the uncommitted diff BEFORE staging. The pass is behavior-preserving cleanup of the whole diff: drop redundant code, dead branches, defensive checks for impossible conditions, comments that restate the code, debug logging, half-finished abstractions, premature generality. Does NOT refactor unrelated code, change public APIs, or optimize for performance.
+
+    **How to run it**:
+    - **Inside `/finish-it`**: Phase 1 already does this — never skip it. `without review` only skips Phase 2 external reviews; Phases 1 (simplify) and 3 (commit) stay mandatory.
+    - **Outside `/finish-it`** (direct commit, ad-hoc commits mid-feature): before invoking `git-commit-helper`, run the pass yourself. Diff < ~50 lines → review inline in the orchestrator. Diff ≥ 50 lines → delegate to a `general-purpose` subagent with the `/finish-it` Phase 1 prompt. State in your reply that you ran the pass and what it changed (or "no changes" if clean).
+    - `/simplify` on a single file is a targeted refactor — it does NOT replace the whole-diff pre-commit pass.
+
+    **Why**: agent diffs accumulate cruft (over-explaining comments, defensive nulls, restated types, leftover probes). The pass catches it before it lands. `main` auto-deploys, so cruft in `main` is cruft in prod. Added 2026-06-16 after `/finish-it without external reviews` was misread as "skip Phase 1 too".
 
 ---
 

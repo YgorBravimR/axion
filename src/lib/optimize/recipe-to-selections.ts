@@ -55,7 +55,7 @@ const readSynthesizedValue = (
 		// `matchQualityPreset` returns "custom" when nothing matches — which is
 		// exactly the right enum value for the bundle leaf.
 		const gates =
-			recipe.entry.type === "hawks_triple_screen"
+			recipe.entry.type === "hawks_playbook"
 				? recipe.entry.config.qualityGates
 				: undefined
 		return matchQualityPreset(gates)

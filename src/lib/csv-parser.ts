@@ -21,11 +21,30 @@ export interface CsvTradeInput extends CreateTradeInput {
 	isFutures: boolean
 	// Replay mode flag (ProfitChart exports prefix assets with [R] in replay mode)
 	isReplayTrade: boolean
+	// Profit metadata fields (optional, populated when parsing ProfitChart CSV)
+	profitOperationNumber?: number
+	profitMetadata?: ProfitChartMetadata
+}
+
+export interface ProfitChartMetadata {
+	marketPriceAtClose: number | null
+	wasAveraged: boolean
+	profitDrawdown: number | null
+	profitGanhoMax: number | null
+	profitPerdaMax: number | null
+	profitMep: number | null
+	profitMen: number | null
+}
+
+export type ProfitChartOperation = CsvTradeInput & {
+	profitOperationNumber: number
+	profitMetadata: ProfitChartMetadata
 }
 
 export interface CsvParseResult {
 	success: boolean
 	trades: CsvTradeInput[]
+	profitOperations?: ProfitChartOperation[]
 	errors: Array<{
 		row: number
 		field: string
@@ -57,6 +76,14 @@ type ProfitChartField =
 	| "pc_pnl"
 	| "pc_mfe"
 	| "pc_mae"
+	| "pc_operationNumber"
+	| "pc_drawdown"
+	| "pc_ganhoMax"
+	| "pc_perdaMax"
+	| "pc_mep"
+	| "pc_men"
+	| "pc_marketPriceAtClose"
+	| "pc_wasAveraged"
 
 const PROFITCHART_COLUMN_MAPPINGS: Record<string, ProfitChartField> = {
 	// Asset
@@ -89,13 +116,28 @@ const PROFITCHART_COLUMN_MAPPINGS: Record<string, ProfitChartField> = {
 	resoperacao: "pc_pnl",
 	res_opera_o: "pc_pnl", // Encoding issue: ç stripped
 	res_operaao: "pc_pnl", // Another encoding variant
-	// MFE/MAE
+	// MFE/MAE (also collected as profitGanhoMax/profitPerdaMax for metadata)
 	ganho_max: "pc_mfe",
 	ganhomax: "pc_mfe",
 	ganho_max_: "pc_mfe",
 	perda_max: "pc_mae",
 	perdamax: "pc_mae",
 	perda_max_: "pc_mae",
+	// Profit metadata columns (new in Phase 2)
+	numero_operacao: "pc_operationNumber",
+	numerooperacao: "pc_operationNumber",
+	n_operacao: "pc_operationNumber",
+	noperacao: "pc_operationNumber",
+	drawdown: "pc_drawdown",
+	mep: "pc_mep",
+	men: "pc_men",
+	preco_de_mercado: "pc_marketPriceAtClose",
+	precoardmercado: "pc_marketPriceAtClose",
+	preo_de_mercado: "pc_marketPriceAtClose",
+	preoardmercado: "pc_marketPriceAtClose",
+	pre_o_de_mercado: "pc_marketPriceAtClose",
+	medio: "pc_wasAveraged",
+	medio_sim_nao: "pc_wasAveraged",
 }
 
 // Headers that indicate ProfitChart format
@@ -473,7 +515,18 @@ const parseProfitChartContent = (
 	const columnMap: Array<{ index: number; field: ProfitChartField }> = []
 	const unmappedHeaders: string[] = []
 
+	// Pull the raw header line so we can spot "(%)" suffix columns that the
+	// normalizer collapses to the same key as their absolute-value sibling
+	// (e.g. "Res. Operação" and "Res. Operação (%)" both become "res_operacao").
+	const rawHeaderLine = lines[headerRowIndex] ?? ""
+	const rawHeaders = parseCSVLine(rawHeaderLine, delimiter)
 	for (const [index, header] of headers.entries()) {
+		const rawHeader = rawHeaders[index] ?? ""
+		if (/\(%\)/.test(rawHeader)) {
+			// Skip percent-formatted duplicates so they don't overwrite the
+			// absolute-value column that normalizes to the same key.
+			continue
+		}
 		const field = PROFITCHART_COLUMN_MAPPINGS[header]
 		if (field) {
 			columnMap.push({ index, field })
@@ -503,6 +556,14 @@ const parseProfitChartContent = (
 				pc_pnl: "Res. Operação",
 				pc_mfe: "Ganho Max.",
 				pc_mae: "Perda Max.",
+				pc_operationNumber: "Número Operação",
+				pc_drawdown: "Drawdown",
+				pc_ganhoMax: "Ganho Max.",
+				pc_perdaMax: "Perda Max.",
+				pc_mep: "MEP",
+				pc_men: "MEN",
+				pc_marketPriceAtClose: "Preço de Mercado",
+				pc_wasAveraged: "Médio",
 			}
 			return readableNames[f] || f
 		})
@@ -521,6 +582,9 @@ const parseProfitChartContent = (
 			message: `imports.warnings.ignoredColumns|${unmappedHeaders.slice(0, 5).join(", ")}${unmappedHeaders.length > 5 ? `|${unmappedHeaders.length - 5}` : ""}`,
 		})
 	}
+
+	// Initialize profitOperations array
+	const profitOperations: ProfitChartOperation[] = []
 
 	// Parse data rows (starting after header row)
 	for (let i = headerRowIndex + 1; i < lines.length; i++) {
@@ -541,6 +605,16 @@ const parseProfitChartContent = (
 
 		// Skip rows without essential data
 		if (!rawData.pc_asset || !rawData.pc_side) {
+			continue
+		}
+
+		// Check for blank fechamento (closeDateTime) - per B.10, reject with MALFORMED_ROW warning
+		if (!rawData.pc_closeDateTime || rawData.pc_closeDateTime.trim() === "") {
+			result.warnings.push({
+				row: rowNumber,
+				message:
+					"imports.warnings.malformedRow|Fechamento blank (position still open)",
+			})
 			continue
 		}
 
@@ -649,11 +723,57 @@ const parseProfitChartContent = (
 			trade.mae = Math.abs(mae)
 		} // MAE should be positive in our system
 
+		// Parse Profit metadata columns (Phase 2 extension)
+		const operationNumberStr = rawData.pc_operationNumber || ""
+		const operationNumber = operationNumberStr
+			? parseInt(operationNumberStr, 10)
+			: 0
+
+		const drawdown = parseBrazilianNumber(rawData.pc_drawdown || "")
+		const ganhoMax = parseBrazilianNumber(rawData.pc_ganhoMax || "")
+		const perdaMax = parseBrazilianNumber(rawData.pc_perdaMax || "")
+		const mep = parseBrazilianNumber(rawData.pc_mep || "")
+		const men = parseBrazilianNumber(rawData.pc_men || "")
+		const marketPriceAtClose = parseBrazilianNumber(
+			rawData.pc_marketPriceAtClose || ""
+		)
+		const wasAveragedStr = rawData.pc_wasAveraged || ""
+		const wasAveraged = wasAveragedStr.toLowerCase() === "sim"
+
+		// Add Profit metadata to the trade
+		if (operationNumber > 0) {
+			trade.profitOperationNumber = operationNumber
+		}
+		trade.profitMetadata = {
+			marketPriceAtClose,
+			wasAveraged,
+			profitDrawdown: drawdown,
+			profitGanhoMax: ganhoMax,
+			profitPerdaMax: perdaMax,
+			profitMep: mep,
+			profitMen: men,
+		}
+
 		result.trades.push(trade)
+
+		// Also track in profitOperations for easier access by consumers
+		if (operationNumber > 0) {
+			const profitOperation: ProfitChartOperation = {
+				...trade,
+				profitOperationNumber: operationNumber,
+				profitMetadata: trade.profitMetadata,
+			}
+			profitOperations.push(profitOperation)
+		}
 	}
 
 	if (result.errors.length > 0 && result.trades.length === 0) {
 		result.success = false
+	}
+
+	// Add profitOperations to result if we have any
+	if (profitOperations.length > 0) {
+		result.profitOperations = profitOperations
 	}
 
 	return result

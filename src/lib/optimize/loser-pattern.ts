@@ -19,7 +19,7 @@
  *
  * Driver ranking is by `|delta|` across leaf values, then by leaf overall
  * strength (max |delta| per leaf). The list returned is per-leaf-value so the
- * UI can surface specific recommendations ("aggressionMode=reversed is in
+ * UI can surface specific recommendations ("aggressionMode=original is in
  * 67% of winners vs 12% of losers — fix this in refine").
  */
 import type { OptimizationRun, StrategyRecipe } from "@/types/backtest"

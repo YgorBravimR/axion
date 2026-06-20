@@ -45,8 +45,10 @@ const qualityGatesConfigSchema = z.object({
 	srLevelFavor: z.boolean().optional(),
 	keltnerOuterBlock: z.boolean().optional(),
 	keltnerInnerPenalty: z.boolean().optional(),
+	vwapWickRejectBlock: z.boolean().optional(),
+	colorStreakFavor: z.boolean().optional(),
 	macdAlignmentScore: z.boolean().optional(),
-	aggressionMode: z.enum(["off", "original", "reversed"]).optional(),
+	aggressionMode: z.enum(["off", "original"]).optional(),
 	volumeScore: z.boolean().optional(),
 	srBlockBufferBricks: z.number().int().min(0).max(50).optional(),
 	srFavorRangeBricks: z.number().int().min(0).max(50).optional(),
@@ -218,7 +220,7 @@ const strategyRecipeSchema = z.object({
 			config: macdWmaConfigSchema,
 		}),
 		z.object({
-			type: z.literal("hawks_triple_screen"),
+			type: z.literal("hawks_playbook"),
 			config: hawksTripleScreenConfigSchema,
 		}),
 		z.object({

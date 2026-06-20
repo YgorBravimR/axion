@@ -10,7 +10,7 @@ import { backtestInputSchema } from "@/lib/validations/backtest"
 import { runBacktest } from "@/lib/backtest/engine"
 import { getAssetsWithPriceData } from "@/app/actions/candle-query"
 import { db } from "@/db/drizzle"
-import { assets } from "@/db/schema"
+import { assets, timeframes } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { BRT_OFFSET } from "@/lib/dates"
 import {
@@ -39,6 +39,40 @@ const fetchAssetConfig = async (
 		tickValueCents: asset.tickValue,
 		currency: asset.currency,
 	}
+}
+
+const fetchCandles15m = async (
+	assetId: string,
+	dateRange: { from: string; to: string }
+): Promise<CandleRow[]> => {
+	const tfRow = (
+		await db
+			.select({ id: timeframes.id })
+			.from(timeframes)
+			.where(eq(timeframes.code, "hawk_15m_win"))
+			.limit(1)
+	)[0]
+	if (!tfRow) {
+		return []
+	}
+	const from = new Date(`${dateRange.from}T09:00:00${BRT_OFFSET}`)
+	const to = new Date(`${dateRange.to}T18:00:00${BRT_OFFSET}`)
+	const rows = await getCandleStore().fetchRange({
+		assetId,
+		timeframeId: tfRow.id,
+		from,
+		to,
+		indicatorKeys: "*",
+	})
+	return rows.map((r) => ({
+		timestamp: r.timestamp,
+		open: r.open,
+		high: r.high,
+		low: r.low,
+		close: r.close,
+		candleIndex: r.candleIndex ?? 0,
+		indicators: r.indicators,
+	}))
 }
 
 const fetchCandles = async (
@@ -154,7 +188,21 @@ export const runBacktestAction = async (
 			return { success: false, error: candleResult.error }
 		}
 
-		const result = runBacktest(candleResult.candles, recipe, assetConfig)
+		// Hawks playbook needs the 15m candle stream to power the
+		// `htfPivotAligned` booster (engine.ts → buildHtfWalker). Without it
+		// the AAA tier is unreachable. Fetch 15m candles alongside the
+		// primary stream when the recipe is hawks_playbook.
+		const candles15m =
+			recipe.entry.type === "hawks_playbook"
+				? await fetchCandles15m(assetId, dateRange)
+				: []
+
+		const result = runBacktest(
+			candleResult.candles,
+			recipe as Parameters<typeof runBacktest>[1],
+			assetConfig,
+			candles15m
+		)
 
 		return { success: true, data: result }
 	} catch (error) {
@@ -195,9 +243,14 @@ export const fetchBacktestData = async (params: {
 	timeframeId: string
 	dateRange: { from: string; to: string }
 	requiredIndicators: string[]
+	includeHtf15m?: boolean
 }): Promise<{
 	success: boolean
-	data?: { candles: CandleRow[]; assetConfig: AssetConfig }
+	data?: {
+		candles: CandleRow[]
+		candles15m?: CandleRow[]
+		assetConfig: AssetConfig
+	}
 	error?: string
 }> => {
 	const t = await getTranslations("backtest")
@@ -212,9 +265,13 @@ export const fetchBacktestData = async (params: {
 			return { success: false, error: candleResult.error }
 		}
 
+		const candles15m = params.includeHtf15m
+			? await fetchCandles15m(params.assetId, params.dateRange)
+			: undefined
+
 		return {
 			success: true,
-			data: { candles: candleResult.candles, assetConfig },
+			data: { candles: candleResult.candles, candles15m, assetConfig },
 		}
 	} catch (error) {
 		return {
