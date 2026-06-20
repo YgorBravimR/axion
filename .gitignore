@@ -75,3 +75,6 @@ data/parquet/
 tmp/
 results-snapshot.md
 *.png
+
+# Local DB snapshots used as enrichment-rollback recovery points (not committed)
+docs/journal-snapshots/

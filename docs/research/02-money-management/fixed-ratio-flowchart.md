@@ -8,15 +8,17 @@
 
 ## 1. Strategy Overview & Philosophy
 
-**Fixed Ratio** position sizing was developed by **Ralph Vince**, author of *The Mathematics of Money Management* and *Portfolio Management Formulas*. While Van Tharp's Fixed Fractional risks a fixed % of balance, Vince's approach scales position size based on **accumulated profit** using a "delta" parameter.
+**Fixed Ratio** position sizing was developed by **Ralph Vince**, author of _The Mathematics of Money Management_ and _Portfolio Management Formulas_. While Van Tharp's Fixed Fractional risks a fixed % of balance, Vince's approach scales position size based on **accumulated profit** using a "delta" parameter.
 
 **Core principle:** You earn the right to increase position size. Each additional contract (or size unit) requires earning a fixed delta of profit. This creates a natural acceleration curve — slow at the start, faster as profits accumulate — without the wild swings of percent-of-balance sizing.
 
 **Key difference from Fixed Fractional:**
+
 - Fixed Fractional: risk = % of current balance (immediate adjustment)
 - Fixed Ratio: contracts = f(total profit / delta) — stepped increases based on cumulative profit
 
 **When to use this strategy:**
+
 - You trade instruments where "number of contracts" is the primary size lever
 - You want position size to grow with proven profitability
 - You prefer a more gradual scaling approach than percent-of-balance
@@ -29,11 +31,11 @@
 ### Risk Limits (R-Multiple Mode)
 
 | Scope     | R-Multiples | Absolute (R$) |
-|-----------|------------|---------------|
-| Per Trade | 1R         | R$500         |
-| Daily     | 3R         | R$1,500       |
-| Weekly    | 6R         | R$3,000       |
-| Monthly   | 12R        | R$6,000       |
+| --------- | ----------- | ------------- |
+| Per Trade | 1R          | R$500         |
+| Daily     | 3R          | R$1,500       |
+| Weekly    | 6R          | R$3,000       |
+| Monthly   | 12R         | R$6,000       |
 
 > **R-multiple limits** mean limits scale with your base risk. If base risk changes to R$600, daily limit becomes 3 × R$600 = R$1,800.
 
@@ -57,10 +59,10 @@ Example progression:
 
 ### Consecutive Loss Rules
 
-| Consecutive Red Days | Action       |
-|---------------------|--------------|
-| 2 days              | Reduce risk by 33% |
-| 4 days              | Reduce risk by 75% |
+| Consecutive Red Days | Action             |
+| -------------------- | ------------------ |
+| 2 days               | Reduce risk by 33% |
+| 4 days               | Reduce risk by 75% |
 
 > **No drawdown tiers** — this template relies on R-multiple limits and consecutive loss rules instead.
 
@@ -135,6 +137,7 @@ flowchart LR
 ```
 
 **Rules:**
+
 - **2 recovery trades** with declining risk: 75% → 50% of base
 - `stopAfterSequence: false` — a **win at any point exits recovery** and resumes normal trading
 - `executeAllRegardless: false` — you don't have to take all 3 if you win
@@ -197,16 +200,16 @@ flowchart TD
 
 ### All Paths — Complete Table
 
-| #  | Path       | Accumulated | Risk (30%) | **Day Result**  | Probability | Category          |
-|----|------------|------------|-----------|----------------|-------------|-------------------|
-| 1  | L-G        | —          | —         | **+R$62.50**   | 25.00%      | Recovery win      |
-| 2  | L-L-G      | —          | —         | **-R$500**     | 12.50%      | Late recovery     |
-| 3  | L-L-L      | —          | —         | **-R$1,125**   | 12.50%      | Max loss (2.25R)  |
-| 4  | G-L        | R$750      | R$225     | **+R$525**     | 25.00%      | Keep 70%          |
-| 5  | G-G-L      | R$1,087.50 | R$326.25  | **+R$761.25**  | 12.50%      | Keep 70%          |
-| 6  | G-G-G-L    | R$1,576.88 | R$473.06  | **+R$1,103.81**| 6.25%       | Keep 70%          |
-| 7  | G-G-G-G-L  | R$2,286.47 | R$685.94  | **+R$1,600.53**| 3.125%      | Keep 70%          |
-| 8  | G-G-G-G-G+ | R$3,315.38+| —         | **continues**  | 3.125%      | Geometric growth  |
+| #   | Path       | Accumulated | Risk (30%) | **Day Result**  | Probability | Category         |
+| --- | ---------- | ----------- | ---------- | --------------- | ----------- | ---------------- |
+| 1   | L-G        | —           | —          | **+R$62.50**    | 25.00%      | Recovery win     |
+| 2   | L-L-G      | —           | —          | **-R$500**      | 12.50%      | Late recovery    |
+| 3   | L-L-L      | —           | —          | **-R$1,125**    | 12.50%      | Max loss (2.25R) |
+| 4   | G-L        | R$750       | R$225      | **+R$525**      | 25.00%      | Keep 70%         |
+| 5   | G-G-L      | R$1,087.50  | R$326.25   | **+R$761.25**   | 12.50%      | Keep 70%         |
+| 6   | G-G-G-L    | R$1,576.88  | R$473.06   | **+R$1,103.81** | 6.25%       | Keep 70%         |
+| 7   | G-G-G-G-L  | R$2,286.47  | R$685.94   | **+R$1,600.53** | 3.125%      | Keep 70%         |
+| 8   | G-G-G-G-G+ | R$3,315.38+ | —          | **continues**   | 3.125%      | Geometric growth |
 
 > **8 visible paths.** The loss side has 3 leaves (same 3-leaf structure as before). The gain side uses 30% of accumulated — the most aggressive reinvestment rate of all templates. This creates 1.45× geometric growth per win, but also means larger absolute losses when the compounding streak breaks.
 
@@ -246,12 +249,12 @@ After T1 WIN, each subsequent trade risks **30% of accumulated gains**. On a los
 **Compounding Walkthrough at R:R 1:1.5:**
 
 | Step   | Accumulated | Risk (30% of acc) | If WIN (+risk×1.5) | New Accumulated | If LOSS (keep 70%) |
-|--------|------------|-------------------|-------------------|----------------|-------------------|
-| T1 WIN | R$750      | —                 | —                 | R$750          | —                 |
-| T2     | R$750      | R$225             | +R$337.50         | R$1,087.50     | **+R$525**        |
-| T3     | R$1,087.50 | R$326.25          | +R$489.38         | R$1,576.88     | **+R$761.25**     |
-| T4     | R$1,576.88 | R$473.06          | +R$709.59         | R$2,286.47     | **+R$1,103.81**   |
-| T5     | R$2,286.47 | R$685.94          | +R$1,028.91       | R$3,315.38     | **+R$1,600.53**   |
+| ------ | ----------- | ----------------- | ------------------ | --------------- | ------------------ |
+| T1 WIN | R$750       | —                 | —                  | R$750           | —                  |
+| T2     | R$750       | R$225             | +R$337.50          | R$1,087.50      | **+R$525**         |
+| T3     | R$1,087.50  | R$326.25          | +R$489.38          | R$1,576.88      | **+R$761.25**      |
+| T4     | R$1,576.88  | R$473.06          | +R$709.59          | R$2,286.47      | **+R$1,103.81**    |
+| T5     | R$2,286.47  | R$685.94          | +R$1,028.91        | R$3,315.38      | **+R$1,600.53**    |
 
 **E[Gain Mode] = +R$477.27 / 0.50 = +R$954.55** (conditional on T1=GAIN)
 
@@ -279,12 +282,12 @@ flowchart LR
 
 **Scaling table:**
 
-| Accumulated Profit | Contracts | Risk per Trade |
-|-------------------|-----------|---------------|
-| R$0 – R$4,999     | 1         | R$500         |
-| R$5,000 – R$9,999 | 2         | R$1,000       |
-| R$10,000 – R$14,999| 3        | R$1,500       |
-| R$15,000+         | 4         | R$2,000       |
+| Accumulated Profit  | Contracts | Risk per Trade |
+| ------------------- | --------- | -------------- |
+| R$0 – R$4,999       | 1         | R$500          |
+| R$5,000 – R$9,999   | 2         | R$1,000        |
+| R$10,000 – R$14,999 | 3         | R$1,500        |
+| R$15,000+           | 4         | R$2,000        |
 
 **Key insight:** Unlike percent-of-balance (which adjusts daily), Fixed Ratio creates **discrete steps**. You stay at 1 contract until you've earned the delta, then jump to 2. This prevents overtrading during small fluctuations.
 
@@ -307,10 +310,10 @@ Limits scale proportionally with your position size — you're always capped at 
 
 ### Aggressive Consecutive Loss Rules
 
-| Consecutive Red Days | Action           | Effect on R$500 Risk |
-|---------------------|------------------|---------------------|
-| 2 days              | Reduce risk 33%  | R$500 → R$335       |
-| 4 days              | Reduce risk 75%  | R$500 → R$125       |
+| Consecutive Red Days | Action          | Effect on R$500 Risk |
+| -------------------- | --------------- | -------------------- |
+| 2 days               | Reduce risk 33% | R$500 → R$335        |
+| 4 days               | Reduce risk 75% | R$500 → R$125        |
 
 These are the **most aggressive consecutive loss rules** of all templates. After just 2 bad days, risk drops by a third. After 4, you're essentially in survival mode at R$125/trade.
 
@@ -324,29 +327,29 @@ These are the **most aggressive consecutive loss rules** of all templates. After
 
 #### Loss Recovery Paths (3-leaf tree)
 
-| Path  | T1      | T2         | T3       | **Result**     | Prob   |
-|-------|---------|------------|----------|---------------|--------|
-| L-G   | -R$500  | +R$750     | —        | **+R$250**    | 55.0%  |
-| L-L-G | -R$500  | -R$375     | +R$500   | **-R$375**    | 24.75% |
-| L-L-L | -R$500  | -R$375     | -R$250   | **-R$1,125**  | 20.25% |
+| Path  | T1     | T2     | T3     | **Result**   | Prob   |
+| ----- | ------ | ------ | ------ | ------------ | ------ |
+| L-G   | -R$500 | +R$750 | —      | **+R$250**   | 55.0%  |
+| L-L-G | -R$500 | -R$375 | +R$500 | **-R$375**   | 24.75% |
+| L-L-L | -R$500 | -R$375 | -R$250 | **-R$1,125** | 20.25% |
 
 **E[Loss Mode] = 0.55(250) + 0.2475(-375) + 0.2025(-1125) = +R$137.50 - R$92.81 - R$227.81 = -R$183.12**
 
 #### Gain Mode Paths (30% reinvest, compounding)
 
-| Step | Last Gain | Risk (30%) | If WIN (+risk×2) | Accumulated | If LOSS (keep 70%) |
-|------|----------|-----------|-----------------|------------|-------------------|
-| T1 WIN | —     | —         | +R$1,000        | R$1,000    | —                 |
-| T2   | R$1,000  | R$300     | +R$600          | R$1,600    | **+R$700**        |
-| T3   | R$600    | R$180     | +R$360          | R$1,960    | **+R$1,120**      |
-| T4   | R$360    | R$108     | +R$216          | R$2,176    | **+R$1,604**      |
+| Step   | Last Gain | Risk (30%) | If WIN (+risk×2) | Accumulated | If LOSS (keep 70%) |
+| ------ | --------- | ---------- | ---------------- | ----------- | ------------------ |
+| T1 WIN | —         | —          | +R$1,000         | R$1,000     | —                  |
+| T2     | R$1,000   | R$300      | +R$600           | R$1,600     | **+R$700**         |
+| T3     | R$600     | R$180      | +R$360           | R$1,960     | **+R$1,120**       |
+| T4     | R$360     | R$108      | +R$216           | R$2,176     | **+R$1,604**       |
 
-| Path       | Result             | Probability |
-|------------|-------------------|-------------|
-| 1W, 1L     | **+R$700**        | 45.00%      |
-| 2W, 1L     | **+R$1,120**      | 24.75%      |
-| 3W, 1L     | **+R$1,604**      | 13.61%      |
-| 4W+        | **+R$1,960+**     | 16.64%      |
+| Path   | Result        | Probability |
+| ------ | ------------- | ----------- |
+| 1W, 1L | **+R$700**    | 45.00%      |
+| 2W, 1L | **+R$1,120**  | 24.75%      |
+| 3W, 1L | **+R$1,604**  | 13.61%      |
+| 4W+    | **+R$1,960+** | 16.64%      |
 
 **E[Gain Mode] = 0.45(700) + 0.2475(1120) + 0.1361(1604) + 0.1664(2076) = +R$1,155.82**
 
@@ -365,22 +368,22 @@ Monthly (22 days): +R$12,173
 
 #### Loss Recovery Paths
 
-| Path  | T1      | T2         | T3       | **Result**     | Prob   |
-|-------|---------|------------|----------|---------------|--------|
-| L-G   | -R$500  | +R$562.50  | —        | **+R$62.50**  | 45.0%  |
-| L-L-G | -R$500  | -R$375     | +R$375   | **-R$500**    | 30.25% |
-| L-L-L | -R$500  | -R$375     | -R$250   | **-R$1,125**  | 24.75% |
+| Path  | T1     | T2        | T3     | **Result**   | Prob   |
+| ----- | ------ | --------- | ------ | ------------ | ------ |
+| L-G   | -R$500 | +R$562.50 | —      | **+R$62.50** | 45.0%  |
+| L-L-G | -R$500 | -R$375    | +R$375 | **-R$500**   | 30.25% |
+| L-L-L | -R$500 | -R$375    | -R$250 | **-R$1,125** | 24.75% |
 
 **E[Loss Mode] = 0.45(62.50) + 0.3025(-500) + 0.2475(-1125) = 28.13 - 151.25 - 278.44 = -R$401.56**
 
 #### Gain Mode Paths (30% reinvest)
 
-| Path       | Result             | Probability |
-|------------|-------------------|-------------|
-| 1W, 1L     | **+R$525**        | 55.00%      |
-| 2W, 1L     | **+R$761.25**     | 24.75%      |
-| 3W, 1L     | **+R$1,103.81**   | 11.14%      |
-| 4W+        | **+R$1,239+**     | 9.11%       |
+| Path   | Result          | Probability |
+| ------ | --------------- | ----------- |
+| 1W, 1L | **+R$525**      | 55.00%      |
+| 2W, 1L | **+R$761.25**   | 24.75%      |
+| 3W, 1L | **+R$1,103.81** | 11.14%      |
+| 4W+    | **+R$1,239+**   | 9.11%       |
 
 **E[Gain Mode] = 0.55(525) + 0.2475(761.25) + 0.1114(1103.81) + 0.0911(1239.38) = +R$723.72**
 
@@ -401,21 +404,21 @@ Monthly (22 days): +R$2,306
 
 #### Loss Recovery Paths
 
-| Path  | T1      | T2         | T3       | **Result**     | Prob   |
-|-------|---------|------------|----------|---------------|--------|
-| L-G   | -R$500  | +R$375     | —        | **-R$125**    | 35.0%  |
-| L-L-G | -R$500  | -R$375     | +R$250   | **-R$625**    | 22.75% |
-| L-L-L | -R$500  | -R$375     | -R$250   | **-R$1,125**  | 42.25% |
+| Path  | T1     | T2     | T3     | **Result**   | Prob   |
+| ----- | ------ | ------ | ------ | ------------ | ------ |
+| L-G   | -R$500 | +R$375 | —      | **-R$125**   | 35.0%  |
+| L-L-G | -R$500 | -R$375 | +R$250 | **-R$625**   | 22.75% |
+| L-L-L | -R$500 | -R$375 | -R$250 | **-R$1,125** | 42.25% |
 
 **E[Loss Mode] = 0.35(-125) + 0.2275(-625) + 0.4225(-1125) = -43.75 - 142.19 - 475.31 = -R$661.25**
 
 #### Gain Mode Paths (30% reinvest)
 
-| Path       | Result             | Probability |
-|------------|-------------------|-------------|
-| 1W, 1L     | **+R$350**        | 65.00%      |
-| 2W, 1L     | **+R$455**        | 22.75%      |
-| 3W+        | **+R$590+**       | 12.25%      |
+| Path   | Result      | Probability |
+| ------ | ----------- | ----------- |
+| 1W, 1L | **+R$350**  | 65.00%      |
+| 2W, 1L | **+R$455**  | 22.75%      |
+| 3W+    | **+R$590+** | 12.25%      |
 
 **E[Gain Mode] = 0.65(350) + 0.2275(455) + 0.1225(592) = +R$403.39**
 

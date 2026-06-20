@@ -156,22 +156,10 @@ const AnnualReportSectionAsync = async ({
 							)?.resultadoLiquido ?? 0
 						}
 						withdrawalTargetPercent={annualRollupData.withdrawalTargetPercent}
-						onLogged={() => {
-							// Refresh will be handled by Next.js
-						}}
 					/>
 				)}
 
-			<CapitalEventLog
-				events={capitalEvents}
-				year={currentYear}
-				onEventDeleted={() => {
-					// Refresh will be handled by Next.js
-				}}
-				onEventAdded={() => {
-					// Refresh will be handled by Next.js
-				}}
-			/>
+			<CapitalEventLog events={capitalEvents} year={currentYear} />
 		</section>
 	)
 }

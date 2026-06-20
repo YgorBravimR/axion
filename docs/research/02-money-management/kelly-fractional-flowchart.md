@@ -15,6 +15,7 @@
 **The safety divisor:** Full Kelly is notoriously volatile — drawdowns of 50%+ are expected. This template uses **Quarter-Kelly** (Kelly ÷ 4), which sacrifices ~25% of the growth rate but reduces drawdowns by ~75%. This is the standard approach used by professional Kelly practitioners.
 
 **When to use this strategy:**
+
 - You have reliable, stable estimates of your WR and R:R
 - You want mathematically optimal growth over the long term
 - You understand that Kelly sizing fluctuates with your edge
@@ -27,11 +28,11 @@
 ### Risk Limits
 
 | Scope     | Absolute (R$) | % of Initial Balance |
-|-----------|--------------|---------------------|
-| Per Trade | R$500        | varies (Kelly-based) |
-| Daily     | R$1,500      | 3%                  |
-| Weekly    | R$3,500      | 7%                  |
-| Monthly   | R$7,500      | 15%                 |
+| --------- | ------------- | -------------------- |
+| Per Trade | R$500         | varies (Kelly-based) |
+| Daily     | R$1,500       | 3%                   |
+| Weekly    | R$3,500       | 7%                   |
+| Monthly   | R$7,500       | 15%                  |
 
 > **Note:** Most generous limits of all templates. The Kelly formula self-regulates risk, so wider limits allow it to operate naturally.
 
@@ -47,15 +48,15 @@ Risk = Balance × Quarter-Kelly
 
 #### Kelly% at Common WR/RR Combinations
 
-| WR \ RR | 1:1   | 1:1.5 | 1:2   | 1:3   |
-|---------|-------|-------|-------|-------|
-| 40%     | -20%  | -7%   | 0%    | 7%    |
-| 50%     | 0%    | 8%    | 13%   | 17%   |
-| 55%     | 10%   | 17%   | 18%   | 18%   |
-| 60%     | 20%   | 23%   | 20%   | 20%   |
-| 65%     | 30%   | 28%   | 23%   | 22%   |
+| WR \ RR | 1:1  | 1:1.5 | 1:2 | 1:3 |
+| ------- | ---- | ----- | --- | --- |
+| 40%     | -20% | -7%   | 0%  | 7%  |
+| 50%     | 0%   | 8%    | 13% | 17% |
+| 55%     | 10%  | 17%   | 18% | 18% |
+| 60%     | 20%  | 23%   | 20% | 20% |
+| 65%     | 30%  | 28%   | 23% | 22% |
 
-*Negative Kelly% = no edge, don't trade. Quarter-Kelly divides these values by 4.*
+_Negative Kelly% = no edge, don't trade. Quarter-Kelly divides these values by 4._
 
 #### Example: WR 60%, R:R 1:1.5
 
@@ -73,10 +74,10 @@ Risk on R$50,000 balance = R$4,150
 
 ### Drawdown Control (2-Tier)
 
-| Tier | Drawdown % | Action            |
-|------|-----------|-------------------|
-| 1    | 10%       | Reduce risk by 50%|
-| 2    | 15%       | **PAUSE**         |
+| Tier | Drawdown % | Action             |
+| ---- | ---------- | ------------------ |
+| 1    | 10%        | Reduce risk by 50% |
+| 2    | 15%        | **PAUSE**          |
 
 Recovery threshold: 50%.
 
@@ -139,6 +140,7 @@ flowchart LR
 ```
 
 **Rules:**
+
 - Only **1 recovery trade** after the initial loss
 - `stopAfterSequence: true` — after Trade 2, the day is **over**
 - Maximum loss: R$500 + R$250 = **R$750** (50% of daily R$1,500 limit)
@@ -196,15 +198,15 @@ flowchart TD
 
 ### All Paths — Complete Table
 
-| #  | Path       | Accumulated | Risk (25%) | **Day Result** | Probability | Category      |
-|----|------------|------------|-----------|---------------|-------------|---------------|
-| 1  | L-L        | —          | —         | **-R$750**    | 25.00%      | Max loss      |
-| 2  | L-G        | —          | —         | **-R$125**    | 25.00%      | Near breakeven |
-| 3  | G-L        | R$750      | R$187.50  | **+R$562.50** | 25.00%      | Keep 75%      |
-| 4  | G-G-L      | R$1,031.25 | R$257.81  | **+R$773.44** | 12.50%      | Keep 75%      |
-| 5  | G-G-G-L    | R$1,417.97 | R$354.49  | **+R$1,063.48** | 6.25%    | Keep 75%      |
-| 6  | G-G-G-G-L  | R$1,949.71 | R$487.43  | **+R$1,462.28** | 3.125%   | Keep 75%      |
-| 7  | G-G-G-G-G+ | R$2,680.85+| —         | **continues** | 3.125%      | Geometric growth |
+| #   | Path       | Accumulated | Risk (25%) | **Day Result**  | Probability | Category         |
+| --- | ---------- | ----------- | ---------- | --------------- | ----------- | ---------------- |
+| 1   | L-L        | —           | —          | **-R$750**      | 25.00%      | Max loss         |
+| 2   | L-G        | —           | —          | **-R$125**      | 25.00%      | Near breakeven   |
+| 3   | G-L        | R$750       | R$187.50   | **+R$562.50**   | 25.00%      | Keep 75%         |
+| 4   | G-G-L      | R$1,031.25  | R$257.81   | **+R$773.44**   | 12.50%      | Keep 75%         |
+| 5   | G-G-G-L    | R$1,417.97  | R$354.49   | **+R$1,063.48** | 6.25%       | Keep 75%         |
+| 6   | G-G-G-G-L  | R$1,949.71  | R$487.43   | **+R$1,462.28** | 3.125%      | Keep 75%         |
+| 7   | G-G-G-G-G+ | R$2,680.85+ | —          | **continues**   | 3.125%      | Geometric growth |
 
 > **Key insight:** Compounding at 25% of accumulated with R:R 1:1.5 produces a win multiplier of **1.375× per consecutive win**. This is geometric growth — not convergent. Every gain-mode outcome is positive (minimum +R$562.50). The "keep 75%" rule means you always walk away with at least 75% of your peak accumulated gains.
 
@@ -243,12 +245,12 @@ After T1 WIN, each subsequent trade risks **25% of accumulated gains**. On a los
 **Compounding Walkthrough at R:R 1:1.5:**
 
 | Step   | Accumulated | Risk (25% of acc) | If WIN (+risk×1.5) | New Accumulated | If LOSS (keep 75%) |
-|--------|------------|-------------------|-------------------|----------------|-------------------|
-| T1 WIN | R$750      | —                 | —                 | R$750          | —                 |
-| T2     | R$750      | R$187.50          | +R$281.25         | R$1,031.25     | **+R$562.50**     |
-| T3     | R$1,031.25 | R$257.81          | +R$386.72         | R$1,417.97     | **+R$773.44**     |
-| T4     | R$1,417.97 | R$354.49          | +R$531.74         | R$1,949.71     | **+R$1,063.48**   |
-| T5     | R$1,949.71 | R$487.43          | +R$731.14         | R$2,680.85     | **+R$1,462.28**   |
+| ------ | ----------- | ----------------- | ------------------ | --------------- | ------------------ |
+| T1 WIN | R$750       | —                 | —                  | R$750           | —                  |
+| T2     | R$750       | R$187.50          | +R$281.25          | R$1,031.25      | **+R$562.50**      |
+| T3     | R$1,031.25  | R$257.81          | +R$386.72          | R$1,417.97      | **+R$773.44**      |
+| T4     | R$1,417.97  | R$354.49          | +R$531.74          | R$1,949.71      | **+R$1,063.48**    |
+| T5     | R$1,949.71  | R$487.43          | +R$731.14          | R$2,680.85      | **+R$1,462.28**    |
 
 **E[Gain Mode] = +R$450.00 / 0.50 = +R$900.00** (conditional on T1=GAIN)
 
@@ -283,11 +285,11 @@ Kelly% = (WR × (1 + RR) - 1) / RR
 Full Kelly maximizes the geometric growth rate but produces drawdowns that are psychologically and practically unbearable:
 
 | Kelly Fraction | Growth Rate | Max Expected Drawdown |
-|---------------|-------------|----------------------|
-| Full Kelly    | 100%        | ~50-80%              |
-| Half Kelly    | 75%         | ~25-40%              |
-| Quarter Kelly | 50%         | ~12-20%              |
-| Eighth Kelly  | 25%         | ~6-10%               |
+| -------------- | ----------- | --------------------- |
+| Full Kelly     | 100%        | ~50-80%               |
+| Half Kelly     | 75%         | ~25-40%               |
+| Quarter Kelly  | 50%         | ~12-20%               |
+| Eighth Kelly   | 25%         | ~6-10%                |
 
 Quarter-Kelly gives 50% of the maximum growth rate with only ~15% expected max drawdown. This is the standard professional recommendation.
 
@@ -331,28 +333,28 @@ At typical Quarter-Kelly values, the R$500 base risk cap is usually the binding 
 
 #### Loss Recovery Paths
 
-| Path | T1     | T2       | **Result**  | Prob   |
-|------|--------|----------|------------|--------|
-| L-L  | -R$500 | -R$250   | **-R$750** | 45.0%  |
-| L-G  | -R$500 | +R$500   | **R$0**    | 55.0%  |
+| Path | T1     | T2     | **Result** | Prob  |
+| ---- | ------ | ------ | ---------- | ----- |
+| L-L  | -R$500 | -R$250 | **-R$750** | 45.0% |
+| L-G  | -R$500 | +R$500 | **R$0**    | 55.0% |
 
 **E[Loss Mode] = 0.45(-750) + 0.55(0) = -R$337.50**
 
 #### Gain Mode Paths (25% reinvest, compounding)
 
-| Step | Last Gain | Risk (25%) | If WIN     | Accumulated | If LOSS (keep 75%) |
-|------|----------|-----------|-----------|------------|-------------------|
-| T1 WIN | —     | —         | +R$1,000  | R$1,000    | —                 |
-| T2   | R$1,000  | R$250     | +R$500    | R$1,500    | **+R$750**        |
-| T3   | R$500    | R$125     | +R$250    | R$1,750    | **+R$1,125**      |
-| T4   | R$250    | R$62.50   | +R$125    | R$1,875    | **+R$1,562.50**   |
+| Step   | Last Gain | Risk (25%) | If WIN   | Accumulated | If LOSS (keep 75%) |
+| ------ | --------- | ---------- | -------- | ----------- | ------------------ |
+| T1 WIN | —         | —          | +R$1,000 | R$1,000     | —                  |
+| T2     | R$1,000   | R$250      | +R$500   | R$1,500     | **+R$750**         |
+| T3     | R$500     | R$125      | +R$250   | R$1,750     | **+R$1,125**       |
+| T4     | R$250     | R$62.50    | +R$125   | R$1,875     | **+R$1,562.50**    |
 
-| Path       | Result             | Probability |
-|------------|-------------------|-------------|
-| 1W, 1L     | **+R$750**        | 45.00%      |
-| 2W, 1L     | **+R$1,125**      | 24.75%      |
-| 3W, 1L     | **+R$1,562.50**   | 13.61%      |
-| 4W+        | **+R$1,750+**     | 16.64%      |
+| Path   | Result          | Probability |
+| ------ | --------------- | ----------- |
+| 1W, 1L | **+R$750**      | 45.00%      |
+| 2W, 1L | **+R$1,125**    | 24.75%      |
+| 3W, 1L | **+R$1,562.50** | 13.61%      |
+| 4W+    | **+R$1,750+**   | 16.64%      |
 
 **E[Gain Mode] = 0.45(750) + 0.2475(1125) + 0.1361(1562.50) + 0.1664(1812.50) = +R$1,131.10**
 
@@ -372,21 +374,21 @@ Monthly (22 days): +R$10,345
 
 #### Loss Recovery Paths
 
-| Path | T1     | T2       | **Result**  | Prob   |
-|------|--------|----------|------------|--------|
-| L-L  | -R$500 | -R$250   | **-R$750** | 50.0%  |
-| L-G  | -R$500 | +R$375   | **-R$125** | 50.0%  |
+| Path | T1     | T2     | **Result** | Prob  |
+| ---- | ------ | ------ | ---------- | ----- |
+| L-L  | -R$500 | -R$250 | **-R$750** | 50.0% |
+| L-G  | -R$500 | +R$375 | **-R$125** | 50.0% |
 
 **E[Loss Mode] = -R$437.50**
 
 #### Gain Mode Paths (25% reinvest)
 
-| Path       | Result             | Probability |
-|------------|-------------------|-------------|
-| 1W, 1L     | **+R$562.50**     | 50.00%      |
-| 2W, 1L     | **+R$773.44**     | 25.00%      |
-| 3W, 1L     | **+R$1,063.48**   | 12.50%      |
-| 4W+        | **+R$1,149+**     | 12.50%      |
+| Path   | Result          | Probability |
+| ------ | --------------- | ----------- |
+| 1W, 1L | **+R$562.50**   | 50.00%      |
+| 2W, 1L | **+R$773.44**   | 25.00%      |
+| 3W, 1L | **+R$1,063.48** | 12.50%      |
+| 4W+    | **+R$1,149+**   | 12.50%      |
 
 **E[Gain Mode] = +R$752.98**
 
@@ -410,26 +412,26 @@ Monthly (22 days): +R$3,470
 
 #### Loss Recovery Paths
 
-| Path | T1     | T2       | **Result**  | Prob   |
-|------|--------|----------|------------|--------|
-| L-L  | -R$500 | -R$250   | **-R$750** | 60.0%  |
-| L-G  | -R$500 | +R$250   | **-R$250** | 40.0%  |
+| Path | T1     | T2     | **Result** | Prob  |
+| ---- | ------ | ------ | ---------- | ----- |
+| L-L  | -R$500 | -R$250 | **-R$750** | 60.0% |
+| L-G  | -R$500 | +R$250 | **-R$250** | 40.0% |
 
 **E[Loss Mode] = 0.60(-750) + 0.40(-250) = -R$550.00**
 
 #### Gain Mode Paths (25% reinvest)
 
-| Step | Last Gain | Risk (25%) | If WIN    | Accumulated | If LOSS (keep 75%) |
-|------|----------|-----------|----------|------------|-------------------|
-| T1 WIN | —     | —         | +R$500   | R$500      | —                 |
-| T2   | R$500    | R$125     | +R$125   | R$625      | **+R$375**        |
-| T3   | R$125    | R$31.25   | +R$31.25 | R$656.25   | **+R$500**        |
+| Step   | Last Gain | Risk (25%) | If WIN   | Accumulated | If LOSS (keep 75%) |
+| ------ | --------- | ---------- | -------- | ----------- | ------------------ |
+| T1 WIN | —         | —          | +R$500   | R$500       | —                  |
+| T2     | R$500     | R$125      | +R$125   | R$625       | **+R$375**         |
+| T3     | R$125     | R$31.25    | +R$31.25 | R$656.25    | **+R$500**         |
 
-| Path       | Result             | Probability |
-|------------|-------------------|-------------|
-| 1W, 1L     | **+R$375**        | 60.00%      |
-| 2W, 1L     | **+R$500**        | 24.00%      |
-| 3W+        | **+R$550+**       | 16.00%      |
+| Path   | Result      | Probability |
+| ------ | ----------- | ----------- |
+| 1W, 1L | **+R$375**  | 60.00%      |
+| 2W, 1L | **+R$500**  | 24.00%      |
+| 3W+    | **+R$550+** | 16.00%      |
 
 **E[Gain Mode] = 0.60(375) + 0.24(500) + 0.16(556.25) = +R$434.00**
 

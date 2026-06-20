@@ -6,25 +6,25 @@
 
 ## Evaluation Plans
 
-| Plan | Max Contracts | Meta Aprovação | Ref. Diária | Perda Diária | Perda Total | Exam Cost |
-|------|:---:|---:|---:|---:|---:|---:|
-| Iniciante | 2 | R$1,500 | R$75 | R$375 | R$1,500 | FREE |
-| Intermediário | 5 | R$2,500 | R$125 | R$625 | R$2,500 | R$1,499 |
-| Avançado | 12 | R$4,000 | R$200 | R$1,000 | R$4,000 | R$5,999 |
-| Master WIN/WDO | 20 | R$7,000 | R$350 | R$1,750 | R$7,000 | R$2,499 |
-| Black WIN/WDO | 20 | R$14,000 | R$700 | R$3,500 | R$14,000 | R$4,999 |
+| Plan           | Max Contracts | Meta Aprovação | Ref. Diária | Perda Diária | Perda Total | Exam Cost |
+| -------------- | :-----------: | -------------: | ----------: | -----------: | ----------: | --------: |
+| Iniciante      |       2       |        R$1,500 |        R$75 |        R$375 |     R$1,500 |      FREE |
+| Intermediário  |       5       |        R$2,500 |       R$125 |        R$625 |     R$2,500 |   R$1,499 |
+| Avançado       |      12       |        R$4,000 |       R$200 |      R$1,000 |     R$4,000 |   R$5,999 |
+| Master WIN/WDO |      20       |        R$7,000 |       R$350 |      R$1,750 |     R$7,000 |   R$2,499 |
+| Black WIN/WDO  |      20       |       R$14,000 |       R$700 |      R$3,500 |    R$14,000 |   R$4,999 |
 
 ---
 
 ## Plan Terms Explained
 
-| Term | Meaning |
-|------|---------|
-| **Meta Aprovação** | Net profit target to pass the evaluation (after all fees/costs) |
-| **Referência Diária** | Suggested daily reference — NOT mandatory, just a guideline |
-| **Perda Diária** | Max allowed loss in a single day. Hitting it triggers automatic stopper — no more trades that day |
-| **Perda Total** | Max allowed cumulative loss during the 30-day evaluation. Hitting it = **immediate disqualification** |
-| **Máximo Contratos** | Max contracts held simultaneously in any single position |
+| Term                  | Meaning                                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Meta Aprovação**    | Net profit target to pass the evaluation (after all fees/costs)                                       |
+| **Referência Diária** | Suggested daily reference — NOT mandatory, just a guideline                                           |
+| **Perda Diária**      | Max allowed loss in a single day. Hitting it triggers automatic stopper — no more trades that day     |
+| **Perda Total**       | Max allowed cumulative loss during the 30-day evaluation. Hitting it = **immediate disqualification** |
+| **Máximo Contratos**  | Max contracts held simultaneously in any single position                                              |
 
 ---
 
@@ -53,10 +53,10 @@
 
 ## Operating Costs — WIN (Mini-Índice)
 
-| Item | Cost |
-|------|------|
-| Per contract, per side | R$0.60 |
-| Round trip (1 contract) | R$1.20 |
+| Item                     | Cost   |
+| ------------------------ | ------ |
+| Per contract, per side   | R$0.60 |
+| Round trip (1 contract)  | R$1.20 |
 | Round trip (2 contracts) | R$2.40 |
 
 > Includes: B3/MRAF registration, B3 emolumentos + fundo garantidor, brokerage, IRRF, and all other fees.
@@ -69,8 +69,8 @@
 
 ## Platform Costs
 
-| Platform | Monthly |
-|----------|---------|
+| Platform  | Monthly       |
+| --------- | ------------- |
 | ProfitOne | R$129 + taxes |
 | ProfitPro | R$299 + taxes |
 

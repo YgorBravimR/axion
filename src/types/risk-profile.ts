@@ -89,7 +89,7 @@ interface ConsecutiveLossRule {
  * Governs day-level behavior: T1 loss recovery, T1 win gain mode, cascading
  * cap-hit actions. All magnitudes in R-multiples.
  *
- * @see docs/riskManagement/risk-management-flowchart.md
+ * @see docs/research/02-money-management/risk-management-flowchart.md
  */
 interface DecisionTreeConfig {
 	baseTrade: {

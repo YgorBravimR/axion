@@ -44,6 +44,10 @@ const FEATURE_MAP: Record<string, FeatureConfig> = {
 	"/": { requiredRole: "viewer", description: "Dashboard" },
 	"/command-center": { requiredRole: "viewer", description: "Command Center" },
 	"/journal": { requiredRole: "viewer", description: "Journal" },
+	"/journal/enrich": {
+		requiredRole: "trader",
+		description: "Journal enrichment ritual",
+	},
 	"/analytics": { requiredRole: "viewer", description: "Analytics" },
 	"/monte-carlo": { requiredRole: "viewer", description: "Monte Carlo" },
 	"/risk-simulation": {

@@ -30,12 +30,9 @@ const PageBreadcrumb = ({ navStructure }: PageBreadcrumbProps) => {
 
 	const matchedNavItem = useMemo(
 		() =>
-			navItems.find((item) => {
-				if (item.href === "/") {
-					return false
-				}
-				return pathname.startsWith(item.href)
-			}),
+			navItems
+				.filter((item) => item.href !== "/" && pathname.startsWith(item.href))
+				.sort((a, b) => b.href.length - a.href.length)[0],
 		[pathname, navItems]
 	)
 
@@ -139,6 +136,13 @@ const getNestedLabel = (
 		if (parentKey === "playbook") {
 			return t("editPlaybook")
 		}
+	}
+
+	if (segment === "enrich" && parentKey === "journal") {
+		return t("enrichJournal")
+	}
+	if (segment === "review" && parentKey === "journal") {
+		return t("enrichReview")
 	}
 
 	// UUID-like segments (trade/playbook detail pages)

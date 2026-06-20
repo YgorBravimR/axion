@@ -199,7 +199,7 @@ export const runBacktestAction = async (
 
 		const result = runBacktest(
 			candleResult.candles,
-			recipe,
+			recipe as Parameters<typeof runBacktest>[1],
 			assetConfig,
 			candles15m
 		)

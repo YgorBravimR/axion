@@ -66,6 +66,7 @@ flowchart LR
 ```
 
 **Rules:**
+
 - Execute **all 4 trades** regardless of intermediate wins/losses
 - After Trade 4 completes: **STOP for the day, no exceptions**
 - Worst case at 200pt = R$200 (53% of daily limit → **7 days to elimination**)
@@ -77,21 +78,21 @@ flowchart LR
 Contracts = Risk Amount / (Stop × R$0.20)
 ```
 
-| Trade | Contracts | Risk | Gain at R:R ~2:1 | Cost |
-|-------|:---------:|:----:|:-----------:|:----:|
-| T1 | **2** | R$80 | ~R$220 (partial exit) | R$2.40 |
-| T2 | **1** | R$40 | ~R$80 | R$1.20 |
-| T3 | **1** | R$40 | ~R$80 | R$1.20 |
-| T4 | **1** | R$40 | ~R$80 | R$1.20 |
+| Trade | Contracts | Risk |   Gain at R:R ~2:1    |  Cost  |
+| ----- | :-------: | :--: | :-------------------: | :----: |
+| T1    |   **2**   | R$80 | ~R$220 (partial exit) | R$2.40 |
+| T2    |   **1**   | R$40 |         ~R$80         | R$1.20 |
+| T3    |   **1**   | R$40 |         ~R$80         | R$1.20 |
+| T4    |   **1**   | R$40 |         ~R$80         | R$1.20 |
 
 ### Position Sizing at Other Stops
 
-| Stop | T1 (2ct) | T2–T4 (1ct) | Max Daily Loss | Days to Elimination |
-|------|:--------:|:-----------:|:--------------:|:-------------------:|
-| 120 pt | R$48 | R$24 | R$120 | 12 |
-| 150 pt | R$60 | R$30 | R$150 | 10 |
-| 180 pt | R$72 | R$36 | R$180 | 8 |
-| 200 pt | **R$80** | **R$40** | **R$200** | **7** |
+| Stop   | T1 (2ct) | T2–T4 (1ct) | Max Daily Loss | Days to Elimination |
+| ------ | :------: | :---------: | :------------: | :-----------------: |
+| 120 pt |   R$48   |    R$24     |     R$120      |         12          |
+| 150 pt |   R$60   |    R$30     |     R$150      |         10          |
+| 180 pt |   R$72   |    R$36     |     R$180      |          8          |
+| 200 pt | **R$80** |  **R$40**   |   **R$200**    |        **7**        |
 
 ---
 
@@ -263,6 +264,7 @@ flowchart TD
 ```
 
 > **Realistic path to pass (200pt stop, Approach A):**
+>
 > - ~9 winning days × R$220 avg = R$1,980
 > - ~5 losing days × R$100 avg = -R$500
 > - Net ≈ **+R$1,480** → borderline, need 1 more good day or smaller losses

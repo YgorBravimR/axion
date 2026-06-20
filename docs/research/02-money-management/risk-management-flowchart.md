@@ -75,6 +75,7 @@ flowchart LR
 ```
 
 **Rules:**
+
 - Execute **all 4 trades** regardless of intermediate wins/losses
 - After Trade 4 completes: **STOP for the day, no exceptions**
 - Worst case = daily limit hit exactly (R$1,000)
@@ -87,14 +88,14 @@ flowchart LR
 Contracts = Risk Amount / (Stop in points * Point Value per contract)
 ```
 
-| Trade | Risk    | Stop 100pt (R$0.20/pt) | Stop 150pt (R$0.20/pt) | Stop 200pt (R$0.20/pt) | Hard Cap |
-|-------|---------|------------------------|------------------------|------------------------|----------|
-| T1    | R$500   | 25 -> **20 (capped)**  | 16                     | 12                     | 20 max   |
-| T2    | R$250   | 12                     | 8                      | 6                      | 20 max   |
-| T3    | R$125   | 6                      | 4                      | 3                      | 20 max   |
-| T4    | R$125   | 6                      | 4                      | 3                      | 20 max   |
+| Trade | Risk  | Stop 100pt (R$0.20/pt) | Stop 150pt (R$0.20/pt) | Stop 200pt (R$0.20/pt) | Hard Cap |
+| ----- | ----- | ---------------------- | ---------------------- | ---------------------- | -------- |
+| T1    | R$500 | 25 -> **20 (capped)**  | 16                     | 12                     | 20 max   |
+| T2    | R$250 | 12                     | 8                      | 6                      | 20 max   |
+| T3    | R$125 | 6                      | 4                      | 3                      | 20 max   |
+| T4    | R$125 | 6                      | 4                      | 3                      | 20 max   |
 
-*Example above uses WIN mini-index (R$0.20 per point per contract). Adjust point value for your instrument.*
+_Example above uses WIN mini-index (R$0.20 per point per contract). Adjust point value for your instrument._
 
 > **If calculated contracts exceed 20: use 20 contracts and accept reduced risk.**
 > **If stop < 100 points: widen stop to 100 points and reduce contracts.**
