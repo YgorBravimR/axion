@@ -1,4 +1,4 @@
-Question: Let’s think a bit about R calculation, risk return and the stats about a month of trading, I follow an anti martingale pattern, so not all trades have the same risk, so, we should aggregate the R values based on the R per trade, in a general sense, if in a trade we risk 500 and loses, we lose 1R, in the second trade we risk 250, and we lose again 1R, right? But in real, for testing strategies, is that the real scenario? Should we consider the second trade as losing half R, since our risk per trade is 500? does that make sense?  How books, theory and the professionals from this market handle this?
+Question: Let’s think a bit about R calculation, risk return and the stats about a month of trading, I follow an anti martingale pattern, so not all trades have the same risk, so, we should aggregate the R values based on the R per trade, in a general sense, if in a trade we risk 500 and loses, we lose 1R, in the second trade we risk 250, and we lose again 1R, right? But in real, for testing strategies, is that the real scenario? Should we consider the second trade as losing half R, since our risk per trade is 500? does that make sense? How books, theory and the professionals from this market handle this?
 
 Answer: Great question. This is exactly where many traders mess up their statistics without realizing it.
 
@@ -20,17 +20,17 @@ By definition:
 
 So if:
 
-* Trade 1 risks $500 → 1R = $500
-* Trade 2 risks $250 → 1R = $250
+- Trade 1 risks $500 → 1R = $500
+- Trade 2 risks $250 → 1R = $250
 
 If both lose, each one is **–1R**.
 
 Even though in dollar terms:
 
-* Trade 1 = –$500
-* Trade 2 = –$250
+- Trade 1 = –$500
+- Trade 2 = –$250
 
-In *R-multiple terms*, they are both **–1R**.
+In _R-multiple terms_, they are both **–1R**.
 
 That is correct. That’s how R is defined in Van Tharp–style position sizing theory.
 
@@ -51,9 +51,9 @@ R is about **decision quality relative to risk taken**.
 
 If you chose to risk $250, then:
 
-* That trade’s 1R is $250.
-* Losing it = –1R.
-* Winning 2R = +$500.
+- That trade’s 1R is $250.
+- Losing it = –1R.
+- Winning 2R = +$500.
 
 Each trade’s R must be internally consistent.
 
@@ -67,19 +67,19 @@ There are two separate layers of evaluation:
 
 Professionals test:
 
-* Expectancy in R
-* Average R per trade
-* Win rate
-* Distribution of R
-* Standard deviation of R
-* Max drawdown in R
+- Expectancy in R
+- Average R per trade
+- Win rate
+- Distribution of R
+- Standard deviation of R
+- Max drawdown in R
 
 This keeps results:
 
-* Comparable
-* Risk-adjusted
-* Independent of account size
-* Independent of compounding
+- Comparable
+- Risk-adjusted
+- Independent of account size
+- Independent of compounding
 
 This is how hedge funds, prop firms, and systematic traders test edges.
 
@@ -93,20 +93,20 @@ Both trades are –1R. Period.
 
 Then separately, they analyze:
 
-* Dollar returns
-* Percentage returns
-* Compounded equity curve
-* Risk of ruin
-* Volatility of returns
-* Sharpe ratio
-* Sortino ratio
+- Dollar returns
+- Percentage returns
+- Compounded equity curve
+- Risk of ruin
+- Volatility of returns
+- Sharpe ratio
+- Sortino ratio
 
 Here your anti-martingale sizing matters.
 
 Because now:
 
-* Losing $500 hurts more than losing $250
-* Growth depends on position sizing
+- Losing $500 hurts more than losing $250
+- Growth depends on position sizing
 
 But this is portfolio math, not strategy edge math.
 
@@ -116,15 +116,15 @@ But this is portfolio math, not strategy edge math.
 
 If you redefine R across trades based on a fixed historical average risk, you break:
 
-* Expectancy calculation
-* Edge consistency
-* Statistical clarity
+- Expectancy calculation
+- Edge consistency
+- Statistical clarity
 
 You would be mixing:
 
-* Trade performance
+- Trade performance
   with
-* Capital allocation decisions
+- Capital allocation decisions
 
 Those are separate systems.
 
@@ -134,8 +134,8 @@ Those are separate systems.
 
 Anti-martingale means:
 
-* Increase risk after wins
-* Decrease risk after losses
+- Increase risk after wins
+- Decrease risk after losses
 
 When backtesting properly:
 
@@ -196,19 +196,19 @@ Never mix the two.
 
 Van Tharp (who formalized R-multiples):
 
-* Defines R per trade
-* Always relative to that trade’s initial risk
-* Separates system performance from position sizing
+- Defines R per trade
+- Always relative to that trade’s initial risk
+- Separates system performance from position sizing
 
 Quantitative finance:
 
-* Measures edge in normalized return units
-* Separates alpha from leverage
+- Measures edge in normalized return units
+- Separates alpha from leverage
 
 Prop firms:
 
-* Track performance in R
-* Control capital through risk limits
+- Track performance in R
+- Control capital through risk limits
 
 ---
 
@@ -216,8 +216,8 @@ Prop firms:
 
 Only if you're:
 
-* Comparing multiple systems with identical fixed risk
-* Or evaluating raw dollar exposure
+- Comparing multiple systems with identical fixed risk
+- Or evaluating raw dollar exposure
 
 But that’s portfolio accounting — not edge measurement.
 
@@ -231,8 +231,8 @@ You introduce bias.
 
 Because now:
 
-* Trades with smaller size look artificially weaker
-* Trades with larger size look artificially stronger
+- Trades with smaller size look artificially weaker
+- Trades with larger size look artificially stronger
 
 And your expectancy becomes distorted.
 
@@ -255,29 +255,29 @@ You do NOT count the second trade as –0.5R.
 
 If you'd like, we can go one level deeper and talk about:
 
-* How to compute expectancy correctly with variable position sizing
-* How to separate edge from compounding
-* Or how anti-martingale affects drawdown distribution
+- How to compute expectancy correctly with variable position sizing
+- How to separate edge from compounding
+- Or how anti-martingale affects drawdown distribution
 
 Which direction do you want to explore?
 
-Question: Lets talk about those three topics you pointed, also this is my anti martingale approach, i do it on winners and losers, always decreasing position, breakeven trades dont count, they are skipped: 
+Question: Lets talk about those three topics you pointed, also this is my anti martingale approach, i do it on winners and losers, always decreasing position, breakeven trades dont count, they are skipped:
 Trade 1: R$500 risk  
-Trade 2: R$250 risk  (50% of trade 1)
-Trade 3: R$125 risk  (50% of trade 2)
-Trade 4: R$125 risk  (same as trade 3 - FINAL, stop regardless of result)
+Trade 2: R$250 risk (50% of trade 1)
+Trade 3: R$125 risk (50% of trade 2)
+Trade 4: R$125 risk (same as trade 3 - FINAL, stop regardless of result)
 
 Answer: Perfect. Now we’re getting into professional-grade risk modeling.
 
 Your structure is:
 
-* Trade 1 → $500 risk
-* Trade 2 → $250 risk
-* Trade 3 → $125 risk
-* Trade 4 → $125 risk (cap, then reset)
-* Breakevens skipped
-* You decrease size regardless of win or loss
-* Hard stop after 4 trades
+- Trade 1 → $500 risk
+- Trade 2 → $250 risk
+- Trade 3 → $125 risk
+- Trade 4 → $125 risk (cap, then reset)
+- Breakevens skipped
+- You decrease size regardless of win or loss
+- Hard stop after 4 trades
 
 This is not classic anti-martingale.
 
@@ -299,10 +299,10 @@ Convert every trade into R relative to its own risk.
 
 Example:
 
-* Trade 1: risk 500 → win $1000 → +2R
-* Trade 2: risk 250 → loss $250 → –1R
-* Trade 3: risk 125 → win $125 → +1R
-* Trade 4: risk 125 → loss $125 → –1R
+- Trade 1: risk 500 → win $1000 → +2R
+- Trade 2: risk 250 → loss $250 → –1R
+- Trade 3: risk 125 → win $125 → +1R
+- Trade 4: risk 125 → loss $125 → –1R
 
 Expectancy in R:
 
@@ -337,30 +337,30 @@ This is critical.
 
 Edge lives in:
 
-* Win rate
-* Average R win
-* Average R loss
-* Distribution of R
+- Win rate
+- Average R win
+- Average R loss
+- Distribution of R
 
 Compounding lives in:
 
-* Position sizing
-* Equity %
-* Risk cycle rules
+- Position sizing
+- Equity %
+- Risk cycle rules
 
 If your R expectancy is positive, your system has edge.
 
 Then your sizing rule determines:
 
-* Volatility of returns
-* Max drawdown
-* Psychological pressure
-* Risk of ruin
+- Volatility of returns
+- Max drawdown
+- Psychological pressure
+- Risk of ruin
 
 You can have:
 
-* Good edge + bad sizing → blow up
-* Small edge + strong sizing → survive long-term
+- Good edge + bad sizing → blow up
+- Small edge + strong sizing → survive long-term
 
 Professionals isolate these two during testing.
 
@@ -428,17 +428,17 @@ This is extremely different from martingale (which accelerates drawdown).
 
 Your system does:
 
-* Risk deceleration
-* Exposure compression
-* Volatility dampening
-* Hard cycle reset
+- Risk deceleration
+- Exposure compression
+- Volatility dampening
+- Hard cycle reset
 
 That means:
 
-* Lower variance
-* Lower tail risk
-* Slower equity growth
-* Strong psychological stability
+- Lower variance
+- Lower tail risk
+- Slower equity growth
+- Strong psychological stability
 
 It behaves almost like a volatility targeting mechanism.
 
@@ -464,8 +464,8 @@ This reduces convexity.
 
 Professionals would call this:
 
-* Negative convexity sizing
-* Volatility dampening model
+- Negative convexity sizing
+- Volatility dampening model
 
 ---
 
@@ -491,18 +491,17 @@ They would:
 
 1. Extract raw trade R distribution
 2. Simulate:
+   - Fixed % sizing
+   - Your compression model
+   - Equal R per trade
 
-   * Fixed % sizing
-   * Your compression model
-   * Equal R per trade
 3. Run 10,000 Monte Carlo sequences
 4. Compare:
-
-   * CAGR
-   * Max DD
-   * Ulcer index
-   * Skewness
-   * Tail risk
+   - CAGR
+   - Max DD
+   - Ulcer index
+   - Skewness
+   - Tail risk
 
 They don’t assume sizing is good.
 They simulate it.

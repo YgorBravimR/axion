@@ -53,8 +53,8 @@ If a backlog item turns out to be more speculative than it looked, demote it bac
   - **UX shape to brainstorm**: side drawer? inline annotations under each cell? coach-mark overlay? a "Run assistant" button that opens a wizard? V1 is a structured form-with-insights — no chat, no LLM. Conversational chat is explicitly out of scope for this idea; if we ever want that, it belongs to the AI agent idea below, not here.
   - **Insight copy is templated, not generated.** Sentences like "your T1 sits at 3.33% per R; given your trailing 90-day std this implies ~140% expected drawdown" are string templates filled by deterministic numbers — same pattern as the existing engine output. No LLM call to author the explanation either.
 - **Hooks into existing stuff**:
-  - [`yearly-plan-profiles.md`](riskManagement/yearly-plan-profiles.md) — preset definitions the assistant suggests from
-  - [`risk-management-simulation.md`](riskManagement/risk-management-simulation.md) — Monte Carlo engine for live-consequences rendering
+  - [`yearly-plan-profiles.md`](research/02-money-management/yearly-plan-profiles.md) — preset definitions the assistant suggests from
+  - [`risk-management-simulation.md`](research/02-money-management/risk-management-simulation.md) — Monte Carlo engine for live-consequences rendering
   - `tradeStats` / analytics endpoints — input data (measured EV, std, win rate, DD)
   - Disciplina metric — feeds the step-up eligibility insight
 - **Why an idea, not a backlog item**: needs product call on which UX shape wins (structured-form-with-insights vs wizard vs drawer), whether the "give numbers" mode is on by default or opt-in, and whether the insights live in the editor drawer or in a separate "Assistant" page.

@@ -13,6 +13,7 @@
 **Core principle:** Capital preservation above all. Small, consistent returns compound into large absolute gains. A 50% drawdown requires 100% gain to recover — so preventing deep drawdowns is mathematically more important than chasing large wins.
 
 **When to use this strategy:**
+
 - You prioritize capital preservation over aggressive growth
 - You have a high win rate (60%+) with moderate R:R
 - You want institutional-grade drawdown protection
@@ -25,11 +26,11 @@
 ### Risk Limits
 
 | Scope     | Absolute (R$) | % of Initial Balance |
-|-----------|--------------|---------------------|
-| Per Trade | R$500        | 0.5%                |
-| Daily     | R$750        | 1.5%                |
-| Weekly    | R$2,000      | 4%                  |
-| Monthly   | R$4,000      | 8%                  |
+| --------- | ------------- | -------------------- |
+| Per Trade | R$500         | 0.5%                 |
+| Daily     | R$750         | 1.5%                 |
+| Weekly    | R$2,000       | 4%                   |
+| Monthly   | R$4,000       | 8%                   |
 
 > **Note:** The tightest limits of all 5 templates. Daily limit is only R$750 — the loss recovery sequence fills it exactly.
 
@@ -48,11 +49,11 @@ Contracts = Risk / (Stop points × Point value)
 
 ### Drawdown Control (3-Tier System)
 
-| Tier | Drawdown % | Action            | Effect                    |
-|------|-----------|-------------------|---------------------------|
-| 1    | 5%        | Reduce risk       | -25% position size        |
-| 2    | 8%        | Reduce risk       | -50% position size        |
-| 3    | 12%       | **PAUSE**         | Stop all trading          |
+| Tier | Drawdown % | Action      | Effect             |
+| ---- | ---------- | ----------- | ------------------ |
+| 1    | 5%         | Reduce risk | -25% position size |
+| 2    | 8%         | Reduce risk | -50% position size |
+| 3    | 12%        | **PAUSE**   | Stop all trading   |
 
 Recovery threshold: 50% — must recover half the drawdown before restoring previous tier.
 
@@ -131,6 +132,7 @@ flowchart LR
 ```
 
 **Rules:**
+
 - Only **1 recovery trade** after the initial loss
 - `stopAfterSequence: true` — after Trade 2, the day is **over**
 - Maximum loss: R$500 + R$250 = **R$750** — this matches the daily limit exactly
@@ -173,12 +175,12 @@ flowchart TD
 
 ### All Paths — Complete Table
 
-| #  | Path | T1      | T2       | **Day Result**  | Probability | Category            |
-|----|------|---------|----------|----------------|-------------|---------------------|
-| 1  | L-L  | -R$500  | -R$250   | **-R$750**     | 25%         | Max loss (= daily limit) |
-| 2  | L-G  | -R$500  | +R$375   | **-R$125**     | 25%         | Near breakeven      |
-| 3  | G-L  | +R$750  | -R$500   | **+R$250**     | 25%         | Small win           |
-| 4  | G-G  | +R$750  | +R$750   | **+R$1,500**   | 25%         | TARGET HIT          |
+| #   | Path | T1     | T2     | **Day Result** | Probability | Category                 |
+| --- | ---- | ------ | ------ | -------------- | ----------- | ------------------------ |
+| 1   | L-L  | -R$500 | -R$250 | **-R$750**     | 25%         | Max loss (= daily limit) |
+| 2   | L-G  | -R$500 | +R$375 | **-R$125**     | 25%         | Near breakeven           |
+| 3   | G-L  | +R$750 | -R$500 | **+R$250**     | 25%         | Small win                |
+| 4   | G-G  | +R$750 | +R$750 | **+R$1,500**   | 25%         | TARGET HIT               |
 
 > **Perfectly symmetric:** Each of the 4 paths has exactly 25% probability. The day always resolves in exactly 2 trades. This is the most predictable strategy structure of all templates.
 
@@ -246,18 +248,19 @@ flowchart LR
 **Why 3 tiers?**
 
 Institutional funds discovered that single-threshold systems create a cliff: you're either at full risk or shut down. The 3-tier approach provides:
+
 1. **Early warning** (5%) — slight reduction, still trading
 2. **Serious caution** (8%) — significant reduction, survival mode
 3. **Circuit breaker** (12%) — full stop, reassess everything
 
 ### Tightest Limits of All Templates
 
-| Metric          | Institutional | Fixed Fractional | R-Multiples |
-|-----------------|--------------|-----------------|-------------|
-| Daily loss      | 1.5%         | 2%              | 3R          |
-| Weekly loss     | 4%           | 5%              | 5R          |
-| Monthly loss    | 8%           | 10%             | 10R         |
-| Sizing          | 0.5%         | 0.75%           | Fixed       |
+| Metric       | Institutional | Fixed Fractional | R-Multiples |
+| ------------ | ------------- | ---------------- | ----------- |
+| Daily loss   | 1.5%          | 2%               | 3R          |
+| Weekly loss  | 4%            | 5%               | 5R          |
+| Monthly loss | 8%            | 10%              | 10R         |
+| Sizing       | 0.5%          | 0.75%            | Fixed       |
 
 The institutional template sacrifices upside for downside protection. This is the **slowest growth** but **most durable** model.
 
@@ -271,19 +274,19 @@ The institutional template sacrifices upside for downside protection. This is th
 
 #### Loss Recovery Paths
 
-| Path | T1     | T2       | **Result**  | Prob   |
-|------|--------|----------|------------|--------|
-| L-L  | -R$500 | -R$250   | **-R$750** | 35.0%  |
-| L-G  | -R$500 | +R$250   | **-R$250** | 65.0%  |
+| Path | T1     | T2     | **Result** | Prob  |
+| ---- | ------ | ------ | ---------- | ----- |
+| L-L  | -R$500 | -R$250 | **-R$750** | 35.0% |
+| L-G  | -R$500 | +R$250 | **-R$250** | 65.0% |
 
 **E[Loss Mode] = 0.35(-750) + 0.65(-250) = -R$425.00**
 
 #### Gain Mode Paths (need 2 wins for R$1,000)
 
-| Path       | Result       | Probability |
-|------------|-------------|-------------|
-| 1W, 1L     | **+R$0**    | 35.00%      |
-| 2W (target)| **+R$1,000**| 42.25%      |
+| Path        | Result       | Probability |
+| ----------- | ------------ | ----------- |
+| 1W, 1L      | **+R$0**     | 35.00%      |
+| 2W (target) | **+R$1,000** | 42.25%      |
 
 **E[Gain Mode] = 0.35(0) + 0.4225(1000) = +R$422.50**
 
@@ -304,20 +307,20 @@ Monthly (22 days): +R$2,769
 
 #### Loss Recovery Paths
 
-| Path | T1     | T2       | **Result**  | Prob   |
-|------|--------|----------|------------|--------|
-| L-L  | -R$500 | -R$250   | **-R$750** | 45.0%  |
-| L-G  | -R$500 | +R$200   | **-R$300** | 55.0%  |
+| Path | T1     | T2     | **Result** | Prob  |
+| ---- | ------ | ------ | ---------- | ----- |
+| L-L  | -R$500 | -R$250 | **-R$750** | 45.0% |
+| L-G  | -R$500 | +R$200 | **-R$300** | 55.0% |
 
 **E[Loss Mode] = 0.45(-750) + 0.55(-300) = -R$502.50**
 
 #### Gain Mode Paths (need 3 wins for R$1,000)
 
-| Path       | Result       | Probability |
-|------------|-------------|-------------|
-| 1W, 1L     | **-R$100**  | 45.00%      |
-| 2W, 1L     | **+R$300**  | 24.75%      |
-| 3W (target)| **+R$1,200**| 16.64%      |
+| Path        | Result       | Probability |
+| ----------- | ------------ | ----------- |
+| 1W, 1L      | **-R$100**   | 45.00%      |
+| 2W, 1L      | **+R$300**   | 24.75%      |
+| 3W (target) | **+R$1,200** | 16.64%      |
 
 **E[Gain Mode] = 0.45(-100) + 0.2475(300) + 0.1664(1200) = +R$128.93**
 
@@ -338,21 +341,21 @@ Monthly (22 days): -R$3,415
 
 #### Loss Recovery Paths
 
-| Path | T1     | T2       | **Result**  | Prob   |
-|------|--------|----------|------------|--------|
-| L-L  | -R$500 | -R$250   | **-R$750** | 55.0%  |
-| L-G  | -R$500 | +R$125   | **-R$375** | 45.0%  |
+| Path | T1     | T2     | **Result** | Prob  |
+| ---- | ------ | ------ | ---------- | ----- |
+| L-L  | -R$500 | -R$250 | **-R$750** | 55.0% |
+| L-G  | -R$500 | +R$125 | **-R$375** | 45.0% |
 
 **E[Loss Mode] = 0.55(-750) + 0.45(-375) = -R$581.25**
 
 #### Gain Mode Paths (need 4 wins for R$1,000)
 
-| Path       | Result       | Probability |
-|------------|-------------|-------------|
-| 1W, 1L     | **-R$250**  | 55.00%      |
-| 2W, 1L     | **+R$0**    | 24.75%      |
-| 3W, 1L     | **+R$250**  | 11.14%      |
-| 4W (target)| **+R$1,000**| 4.10%       |
+| Path        | Result       | Probability |
+| ----------- | ------------ | ----------- |
+| 1W, 1L      | **-R$250**   | 55.00%      |
+| 2W, 1L      | **+R$0**     | 24.75%      |
+| 3W, 1L      | **+R$250**   | 11.14%      |
+| 4W (target) | **+R$1,000** | 4.10%       |
 
 **E[Gain Mode] = 0.55(-250) + 0.2475(0) + 0.1114(250) + 0.041(1000) = -R$68.65**
 

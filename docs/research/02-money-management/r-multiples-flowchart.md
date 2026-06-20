@@ -8,13 +8,14 @@
 
 ## 1. Strategy Overview & Philosophy
 
-**R-Multiples** is a pure risk-unit framework popularized by **Van Tharp** in *Trade Your Way to Financial Freedom* and refined by **Larry Williams** (1987 World Cup Trading Championship winner, turning $10,000 into $1.1 million in one year). Every aspect of the system is measured in "R" — one unit of base risk.
+**R-Multiples** is a pure risk-unit framework popularized by **Van Tharp** in _Trade Your Way to Financial Freedom_ and refined by **Larry Williams** (1987 World Cup Trading Championship winner, turning $10,000 into $1.1 million in one year). Every aspect of the system is measured in "R" — one unit of base risk.
 
 **Core principle:** Forget dollar amounts. Think in R. A 2R win means you gained twice your risk. A -1R loss means you lost one risk unit. This framework normalizes all trades, making performance comparison across different position sizes, instruments, and time periods trivially easy.
 
 **Key distinction:** This is the only template where T2 uses `sameAsPrevious` — the recovery trade risks the **same amount as T1** (full R$500). This is the most aggressive recovery approach, based on Larry Williams' philosophy that "the best trade often follows a loss."
 
 **When to use this strategy:**
+
 - You think in R-multiples naturally
 - You want fixed, predictable risk per trade (no formula adjustments)
 - You believe in aggressive recovery after a loss
@@ -27,11 +28,11 @@
 ### Risk Limits (R-Multiple Mode)
 
 | Scope     | R-Multiples | Absolute (R$) |
-|-----------|------------|---------------|
-| Per Trade | 1R         | R$500         |
-| Daily     | 3R         | R$1,500       |
-| Weekly    | 5R         | R$2,500       |
-| Monthly   | 10R        | R$5,000       |
+| --------- | ----------- | ------------- |
+| Per Trade | 1R          | R$500         |
+| Daily     | 3R          | R$1,500       |
+| Weekly    | 5R          | R$2,500       |
+| Monthly   | 10R         | R$5,000       |
 
 ### Sizing Mode
 
@@ -51,6 +52,7 @@ No formulas, no percentage calculations, no scaling. The simplest sizing mode of
 ### No Drawdown Tiers or Consecutive Loss Rules
 
 This template has **neither drawdown tiers nor consecutive loss rules**. Risk control comes entirely from:
+
 1. The 3R daily limit (hard stop at 3 losses)
 2. The 5R weekly limit
 3. The 10R monthly limit
@@ -129,6 +131,7 @@ flowchart LR
 ```
 
 **Rules:**
+
 - **2 recovery trades**, but T2 uses `sameAsPrevious` — **FULL R$500 risk** (most aggressive)
 - T3 drops to 75% of base (R$375)
 - `stopAfterSequence: false` — a **win at any point exits recovery**
@@ -183,14 +186,14 @@ flowchart TD
 
 ### All Paths — Complete Table
 
-| #  | Path   | T1      | T2       | T3         | **Day Result**   | Probability | Category               |
-|----|--------|---------|----------|------------|-----------------|-------------|------------------------|
-| 1  | L-G    | -R$500  | +R$750   | —          | **+R$250**      | 25.0%       | Recovery win (unique!)  |
-| 2  | L-L-G  | -R$500  | -R$500   | +R$562.50  | **-R$437.50**   | 12.5%       | Late recovery          |
-| 3  | L-L-L  | -R$500  | -R$500   | -R$375     | **-R$1,375**    | 12.5%       | Max loss (2.75R)       |
-| 4  | G-L    | +R$750  | -R$500   | —          | **+R$250**      | 25.0%       | Small win              |
-| 5  | G-G-L  | +R$750  | +R$750   | -R$500     | **+R$1,000**    | 12.5%       | Good win               |
-| 6  | G-G-G  | +R$750  | +R$750   | +R$750     | **+R$2,250**    | 12.5%       | TARGET HIT             |
+| #   | Path  | T1     | T2     | T3        | **Day Result** | Probability | Category               |
+| --- | ----- | ------ | ------ | --------- | -------------- | ----------- | ---------------------- |
+| 1   | L-G   | -R$500 | +R$750 | —         | **+R$250**     | 25.0%       | Recovery win (unique!) |
+| 2   | L-L-G | -R$500 | -R$500 | +R$562.50 | **-R$437.50**  | 12.5%       | Late recovery          |
+| 3   | L-L-L | -R$500 | -R$500 | -R$375    | **-R$1,375**   | 12.5%       | Max loss (2.75R)       |
+| 4   | G-L   | +R$750 | -R$500 | —         | **+R$250**     | 25.0%       | Small win              |
+| 5   | G-G-L | +R$750 | +R$750 | -R$500    | **+R$1,000**   | 12.5%       | Good win               |
+| 6   | G-G-G | +R$750 | +R$750 | +R$750    | **+R$2,250**   | 12.5%       | TARGET HIT             |
 
 > **6 possible outcomes.** Paths 1 and 4 produce the same result (+R$250) through completely different routes — one from loss recovery, one from gain mode. The `sameAsPrevious` T2 makes path 1 positive, which is unique among all templates. Recovery exits (paths 1-2) may continue with a new trading cycle.
 
@@ -223,21 +226,21 @@ After T1 LOSS, 2-step recovery with `sameAsPrevious` T2 (FULL R$500), then T3 at
 Each win adds R$750 (at R:R 1:1.5). Target = R$2,000, needs **3 wins** (3 × R$750 = R$2,250 >= R$2,000). Risk stays flat at R$500. A loss stops the day.
 
 | Win # | Accumulated | Still Needed | P(reaching) at 50% WR |
-|-------|------------|-------------|----------------------|
-| 1     | R$750      | R$1,250     | 50.0%                |
-| 2     | R$1,500    | R$500       | 25.0%                |
-| 3     | R$2,250    | R$0 (HIT!)  | 12.5%                |
+| ----- | ----------- | ------------ | --------------------- |
+| 1     | R$750       | R$1,250      | 50.0%                 |
+| 2     | R$1,500     | R$500        | 25.0%                 |
+| 3     | R$2,250     | R$0 (HIT!)   | 12.5%                 |
 
 **E[Gain Mode] = 0.50(250) + 0.25(1000) + 0.125(2250) = +R$656.25**
 
 ### Comparison: T2 Risk Strategies
 
-| Template        | T2 Risk  | L-G Result | E[Loss Mode] |
-|-----------------|----------|-----------|-------------|
-| **R-Multiples** | R$500 (same) | **+R$250** | **-R$328.13** |
-| Fixed Ratio     | R$375 (75%)  | +R$62.50   | -R$375.00     |
-| Fixed Fractional| R$250 (50%)  | -R$125     | -R$437.50     |
-| Institutional   | R$250 (50%)  | -R$125     | -R$437.50     |
+| Template         | T2 Risk      | L-G Result | E[Loss Mode]  |
+| ---------------- | ------------ | ---------- | ------------- |
+| **R-Multiples**  | R$500 (same) | **+R$250** | **-R$328.13** |
+| Fixed Ratio      | R$375 (75%)  | +R$62.50   | -R$375.00     |
+| Fixed Fractional | R$250 (50%)  | -R$125     | -R$437.50     |
+| Institutional    | R$250 (50%)  | -R$125     | -R$437.50     |
 
 ---
 
@@ -255,6 +258,7 @@ R-Multiples approach: T1 R$500 (LOSS) → T2 R$500 (SAME) → T2 win = immediate
 **The math behind the aggression:**
 
 At WR 50% and R:R 1:1.5:
+
 - **Conservative T2 (R$250):** 50% chance of -R$125 net, 50% chance of -R$750 net
 - **Aggressive T2 (R$500):** 50% chance of **+R$250 net**, 50% chance of continuing to T3
 
@@ -273,24 +277,26 @@ Trade 1000: R$500
 ```
 
 **Advantages:**
+
 - Zero cognitive load on position sizing
 - Consistent risk makes R-multiple tracking trivial
 - No need to recalculate after balance changes
 - Easy to journal and analyze: every trade is 1R
 
 **Disadvantage:**
+
 - No geometric growth — as your account grows, R$500 becomes a smaller %. You must manually adjust base risk periodically.
 
 ### R-Multiple Tracking
 
 With fixed sizing, your daily P&L is directly expressed in R:
 
-| Day Result | R-Multiple | Meaning |
-|-----------|-----------|---------|
-| +R$2,250  | +4.5R     | Hit target (3 wins at 1:1.5) |
-| +R$250    | +0.5R     | 1 win, 1 loss in loss or gain mode |
-| -R$750    | -1.5R     | Loss mode: L-L (2 losses, stopped) |
-| -R$1,375  | -2.75R    | Loss mode: L-L-L (worst case) |
+| Day Result | R-Multiple | Meaning                            |
+| ---------- | ---------- | ---------------------------------- |
+| +R$2,250   | +4.5R      | Hit target (3 wins at 1:1.5)       |
+| +R$250     | +0.5R      | 1 win, 1 loss in loss or gain mode |
+| -R$750     | -1.5R      | Loss mode: L-L (2 losses, stopped) |
+| -R$1,375   | -2.75R     | Loss mode: L-L-L (worst case)      |
 
 This makes journaling and performance analysis natural — everything is normalized to R.
 
@@ -304,20 +310,20 @@ This makes journaling and performance analysis natural — everything is normali
 
 #### Loss Recovery Paths (3-leaf tree)
 
-| Path  | T1      | T2         | T3         | **Result**     | Prob   |
-|-------|---------|------------|------------|---------------|--------|
-| L-G   | -R$500  | +R$1,000   | —          | **+R$500**    | 50.0%  |
-| L-L-G | -R$500  | -R$500     | +R$750     | **-R$250**    | 25.0%  |
-| L-L-L | -R$500  | -R$500     | -R$375     | **-R$1,375**  | 25.0%  |
+| Path  | T1     | T2       | T3     | **Result**   | Prob  |
+| ----- | ------ | -------- | ------ | ------------ | ----- |
+| L-G   | -R$500 | +R$1,000 | —      | **+R$500**   | 50.0% |
+| L-L-G | -R$500 | -R$500   | +R$750 | **-R$250**   | 25.0% |
+| L-L-L | -R$500 | -R$500   | -R$375 | **-R$1,375** | 25.0% |
 
 **E[Loss Mode] = 0.50(500) + 0.25(-250) + 0.25(-1375) = 250 - 62.50 - 343.75 = -R$156.25**
 
 #### Gain Mode Paths (need 2 wins for R$2,000)
 
-| Path       | Result       | Probability |
-|------------|-------------|-------------|
-| 1W, 1L     | **+R$500**  | 50.00%      |
-| 2W (target)| **+R$2,000**| 25.00%      |
+| Path        | Result       | Probability |
+| ----------- | ------------ | ----------- |
+| 1W, 1L      | **+R$500**   | 50.00%      |
+| 2W (target) | **+R$2,000** | 25.00%      |
 
 **E[Gain Mode] = 0.50(500) + 0.25(2000) = +R$750.00**
 
@@ -336,21 +342,21 @@ Monthly (22 days): +R$6,531
 
 #### Loss Recovery Paths
 
-| Path  | T1      | T2         | T3         | **Result**      | Prob   |
-|-------|---------|------------|------------|----------------|--------|
-| L-G   | -R$500  | +R$750     | —          | **+R$250**     | 40.0%  |
-| L-L-G | -R$500  | -R$500     | +R$562.50  | **-R$437.50**  | 24.0%  |
-| L-L-L | -R$500  | -R$500     | -R$375     | **-R$1,375**   | 36.0%  |
+| Path  | T1     | T2     | T3        | **Result**    | Prob  |
+| ----- | ------ | ------ | --------- | ------------- | ----- |
+| L-G   | -R$500 | +R$750 | —         | **+R$250**    | 40.0% |
+| L-L-G | -R$500 | -R$500 | +R$562.50 | **-R$437.50** | 24.0% |
+| L-L-L | -R$500 | -R$500 | -R$375    | **-R$1,375**  | 36.0% |
 
 **E[Loss Mode] = 0.40(250) + 0.24(-437.50) + 0.36(-1375) = 100 - 105 - 495 = -R$500.00**
 
 #### Gain Mode Paths (need 3 wins for R$2,000)
 
-| Path       | Result       | Probability |
-|------------|-------------|-------------|
-| 1W, 1L     | **+R$250**  | 60.00%      |
-| 2W, 1L     | **+R$1,000**| 24.00%      |
-| 3W (target)| **+R$2,250**| 6.40%       |
+| Path        | Result       | Probability |
+| ----------- | ------------ | ----------- |
+| 1W, 1L      | **+R$250**   | 60.00%      |
+| 2W, 1L      | **+R$1,000** | 24.00%      |
+| 3W (target) | **+R$2,250** | 6.40%       |
 
 **E[Gain Mode] = 0.60(250) + 0.24(1000) + 0.064(2250) = 150 + 240 + 144 = +R$534.00**
 
@@ -371,22 +377,22 @@ Monthly (22 days): -R$1,901
 
 #### Loss Recovery Paths
 
-| Path  | T1      | T2         | T3       | **Result**      | Prob   |
-|-------|---------|------------|----------|----------------|--------|
-| L-G   | -R$500  | +R$500     | —        | **R$0**        | 35.0%  |
-| L-L-G | -R$500  | -R$500     | +R$375   | **-R$625**     | 22.75% |
-| L-L-L | -R$500  | -R$500     | -R$375   | **-R$1,375**   | 42.25% |
+| Path  | T1     | T2     | T3     | **Result**   | Prob   |
+| ----- | ------ | ------ | ------ | ------------ | ------ |
+| L-G   | -R$500 | +R$500 | —      | **R$0**      | 35.0%  |
+| L-L-G | -R$500 | -R$500 | +R$375 | **-R$625**   | 22.75% |
+| L-L-L | -R$500 | -R$500 | -R$375 | **-R$1,375** | 42.25% |
 
 **E[Loss Mode] = 0.35(0) + 0.2275(-625) + 0.4225(-1375) = 0 - 142.19 - 723.44 = -R$865.63**
 
 #### Gain Mode Paths (need 4 wins for R$2,000)
 
-| Path       | Result       | Probability |
-|------------|-------------|-------------|
-| 1W, 1L     | **+R$0**    | 65.00%      |
-| 2W, 1L     | **+R$500**  | 22.75%      |
-| 3W, 1L     | **+R$1,000**| 7.96%       |
-| 4W (target)| **+R$2,000**| 1.50%       |
+| Path        | Result       | Probability |
+| ----------- | ------------ | ----------- |
+| 1W, 1L      | **+R$0**     | 65.00%      |
+| 2W, 1L      | **+R$500**   | 22.75%      |
+| 3W, 1L      | **+R$1,000** | 7.96%       |
+| 4W (target) | **+R$2,000** | 1.50%       |
 
 **E[Gain Mode] = 0.65(0) + 0.2275(500) + 0.0796(1000) + 0.015(2000) = +R$223.35**
 

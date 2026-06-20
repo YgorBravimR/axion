@@ -32,7 +32,7 @@ const seedRiskProfiles = async () => {
 	// ==========================================
 	// PROFILE 1: Bravo Risk Management
 	// 1R reference = R$500 (1.25% of R$40k). Daily 2R, weekly 4R, monthly 15R.
-	// @see docs/riskManagement/risk-management-flowchart.md
+	// @see docs/research/02-money-management/risk-management-flowchart.md
 	// ==========================================
 	const bravoTree: DecisionTreeConfig = {
 		baseTrade: {
