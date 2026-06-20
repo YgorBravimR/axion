@@ -526,25 +526,24 @@ export const getAccountAssetSettings = async (): Promise<
 	try {
 		const { userId, accountId } = await requireAuth()
 
-		// Get enabled assets for this account
-		const enabledAccountAssets = await db.query.accountAssets.findMany({
-			where: and(
-				eq(accountAssets.accountId, accountId),
-				eq(accountAssets.isEnabled, true)
-			),
-		})
-
-		// Get existing account asset settings
-		const existingSettings = await db.query.accountAssetSettings.findMany({
-			where: and(
-				eq(accountAssetSettings.userId, userId),
-				eq(accountAssetSettings.accountId, accountId),
-				eq(accountAssetSettings.isActive, true)
-			),
-			with: {
-				asset: true,
-			},
-		})
+		const [enabledAccountAssets, existingSettings] = await Promise.all([
+			db.query.accountAssets.findMany({
+				where: and(
+					eq(accountAssets.accountId, accountId),
+					eq(accountAssets.isEnabled, true)
+				),
+			}),
+			db.query.accountAssetSettings.findMany({
+				where: and(
+					eq(accountAssetSettings.userId, userId),
+					eq(accountAssetSettings.accountId, accountId),
+					eq(accountAssetSettings.isActive, true)
+				),
+				with: {
+					asset: true,
+				},
+			}),
+		])
 
 		// Find enabled assets missing settings rows
 		const existingAssetIds = new Set(existingSettings.map((s) => s.assetId))
@@ -750,12 +749,27 @@ export const getCircuitBreakerStatus = async (
 		const today = date ? new Date(date) : await getServerEffectiveNow()
 		today.setHours(0, 0, 0, 0)
 
-		// Get today's trades (cached for request)
-		const todaysTrades = await getTodayTrades(accountId, today)
-
-		// Phase 4b: caps + behaviors come from the fractal-plan cascade.
-		const day = await resolveDay(accountId, today)
-		const behavior = await resolveBehavior({ accountId, date: today })
+		const monthStart = new Date(today)
+		monthStart.setDate(1)
+		const [todaysTrades, day, behavior, monthlyAgg] = await Promise.all([
+			getTodayTrades(accountId, today),
+			resolveDay(accountId, today),
+			resolveBehavior({ accountId, date: today }),
+			db
+				.select({
+					totalPnlCents: sum(sql`CAST(${trades.pnl} AS bigint)`).mapWith(
+						Number
+					),
+				})
+				.from(trades)
+				.where(
+					and(
+						eq(trades.accountId, accountId),
+						gte(trades.entryDate, monthStart),
+						eq(trades.isArchived, false)
+					)
+				),
+		])
 
 		// Calculate metrics
 		let dailyPnL = 0
@@ -834,23 +848,7 @@ export const getCircuitBreakerStatus = async (
 			dailyLossLimitCents - Math.abs(Math.min(0, toCents(dailyPnL)))
 		)
 
-		// Get monthly P&L using SQL aggregate (avoid loading all rows)
-		const monthStart = new Date(today)
-		monthStart.setDate(1)
-
-		const monthlyAgg = await db
-			.select({
-				totalPnlCents: sum(sql`CAST(${trades.pnl} AS bigint)`).mapWith(Number),
-			})
-			.from(trades)
-			.where(
-				and(
-					eq(trades.accountId, accountId),
-					gte(trades.entryDate, monthStart),
-					eq(trades.isArchived, false)
-				)
-			)
-
+		// monthlyAgg was pre-fetched in the Promise.all above.
 		const monthlyPnL = fromCents(monthlyAgg[0]?.totalPnlCents ?? 0)
 
 		// Monthly loss limit (resolver — month↔year cascade)

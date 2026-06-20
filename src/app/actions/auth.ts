@@ -429,26 +429,34 @@ export const getCurrentUser = async (): Promise<SafeUser | null> => {
 	return getCachedCurrentUser()
 }
 
+// Cached: `(app)/layout.tsx` and many downstream pages/actions re-call this
+// within a single request; cache() deduplicates the `tradingAccounts` lookup.
+const getCachedCurrentAccount = cache(
+	async (): Promise<TradingAccount | null> => {
+		const session = await auth()
+		if (!session || !session.user.accountId) {
+			return null
+		}
+
+		const account = await db.query.tradingAccounts.findFirst({
+			where: and(
+				eq(tradingAccounts.id, session.user.accountId),
+				eq(tradingAccounts.userId, session.user.id)
+			),
+		})
+
+		if (!account) {
+			// Account was deleted — delegate to route handler to clear session
+			// (can't call signOut() during rendering — cookies are read-only outside Server Actions)
+			redirect("/api/auth/force-signout")
+		}
+
+		return account
+	}
+)
+
 export const getCurrentAccount = async (): Promise<TradingAccount | null> => {
-	const session = await auth()
-	if (!session || !session.user.accountId) {
-		return null
-	}
-
-	const account = await db.query.tradingAccounts.findFirst({
-		where: and(
-			eq(tradingAccounts.id, session.user.accountId),
-			eq(tradingAccounts.userId, session.user.id)
-		),
-	})
-
-	if (!account) {
-		// Account was deleted — delegate to route handler to clear session
-		// (can't call signOut() during rendering — cookies are read-only outside Server Actions)
-		redirect("/api/auth/force-signout")
-	}
-
-	return account
+	return getCachedCurrentAccount()
 }
 
 export const getUserAccounts = async (): Promise<TradingAccount[]> => {

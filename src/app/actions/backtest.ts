@@ -169,33 +169,30 @@ export const runBacktestAction = async (
 
 		const { assetId, timeframeId, dateRange, recipe } = validated.data
 
-		const assetConfig = await fetchAssetConfig(assetId)
+		// Hawks playbook reads 15m candles for the `htfPivotAligned` booster
+		// (engine.ts → buildHtfWalker); skip the fetch for other strategies.
+		const needsHtf15m = recipe.entry.type === "hawks_playbook"
+		const [assetConfig, candleResult, candles15m] = await Promise.all([
+			fetchAssetConfig(assetId),
+			fetchCandles(
+				{
+					assetId,
+					timeframeId,
+					dateRange,
+					requiredIndicators: recipe.requiredIndicators,
+				},
+				t
+			),
+			needsHtf15m ? fetchCandles15m(assetId, dateRange) : Promise.resolve([]),
+		])
+
 		if (!assetConfig) {
 			return { success: false, error: t("errors.assetNotFound") }
 		}
 
-		const candleResult = await fetchCandles(
-			{
-				assetId,
-				timeframeId,
-				dateRange,
-				requiredIndicators: recipe.requiredIndicators,
-			},
-			t
-		)
-
 		if ("error" in candleResult) {
 			return { success: false, error: candleResult.error }
 		}
-
-		// Hawks playbook needs the 15m candle stream to power the
-		// `htfPivotAligned` booster (engine.ts → buildHtfWalker). Without it
-		// the AAA tier is unreachable. Fetch 15m candles alongside the
-		// primary stream when the recipe is hawks_playbook.
-		const candles15m =
-			recipe.entry.type === "hawks_playbook"
-				? await fetchCandles15m(assetId, dateRange)
-				: []
 
 		const result = runBacktest(
 			candleResult.candles,
@@ -255,19 +252,21 @@ export const fetchBacktestData = async (params: {
 }> => {
 	const t = await getTranslations("backtest")
 	try {
-		const assetConfig = await fetchAssetConfig(params.assetId)
+		const [assetConfig, candleResult, candles15m] = await Promise.all([
+			fetchAssetConfig(params.assetId),
+			fetchCandles(params, t),
+			params.includeHtf15m
+				? fetchCandles15m(params.assetId, params.dateRange)
+				: Promise.resolve(undefined),
+		])
+
 		if (!assetConfig) {
 			return { success: false, error: t("errors.assetNotFound") }
 		}
 
-		const candleResult = await fetchCandles(params, t)
 		if ("error" in candleResult) {
 			return { success: false, error: candleResult.error }
 		}
-
-		const candles15m = params.includeHtf15m
-			? await fetchCandles15m(params.assetId, params.dateRange)
-			: undefined
 
 		return {
 			success: true,

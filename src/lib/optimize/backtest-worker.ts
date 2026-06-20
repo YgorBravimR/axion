@@ -59,43 +59,51 @@ type WorkerOutMessage = ProgressMessage | CompleteMessage | ErrorMessage
 
 // ── Helper: compute match rate ───────────────────────────────────
 
-const computeMatchRate = (
-	trades: ReturnType<typeof runBacktest>["trades"],
+// Built once per (catalog, dateRange) and reused across every recipe in a sweep.
+interface MatchRateIndex {
+	readonly keys: Set<string>
+	readonly size: number
+}
+
+const buildMatchRateIndex = (
 	referenceCatalog: UserEntry[],
 	dateRange?: { from: string; to: string }
-): number | undefined => {
+): MatchRateIndex | null => {
 	if (!referenceCatalog.length) {
+		return null
+	}
+	const keys = new Set<string>()
+	let size = 0
+	for (const entry of referenceCatalog) {
+		if (
+			dateRange &&
+			(entry.date < dateRange.from || entry.date > dateRange.to)
+		) {
+			continue
+		}
+		keys.add(`${entry.date}|${entry.brickIndex}`)
+		size++
+	}
+	if (size === 0) {
+		return null
+	}
+	return { keys, size }
+}
+
+const computeMatchRate = (
+	trades: ReturnType<typeof runBacktest>["trades"],
+	index: MatchRateIndex | null
+): number | undefined => {
+	if (!index || !trades.length) {
 		return undefined
 	}
-	if (!trades.length) {
-		return undefined
-	}
 
-	// Filter catalog to date range if provided (for IS/OOS split)
-	let relevantCatalog = referenceCatalog
-	if (dateRange) {
-		relevantCatalog = referenceCatalog.filter(
-			(entry) => entry.date >= dateRange.from && entry.date <= dateRange.to
-		)
-	}
-
-	if (!relevantCatalog.length) {
-		return undefined
-	}
-
-	// Build a Set keyed on (date, brickIndex) tuples for O(1) lookups
-	const catalogSet = new Set<string>()
-	for (const entry of relevantCatalog) {
-		const key = `${entry.date}|${entry.brickIndex}`
-		catalogSet.add(key)
-	}
-
-	// Count trades matching catalog by (date, brickIndex) — now O(n) instead of O(n²)
+	// Count trades matching catalog by (date, brickIndex) — O(n) lookup.
 	let matches = 0
 	for (const trade of trades) {
 		if (trade.entryBrickIndex !== undefined) {
 			const key = `${trade.dayKey}|${trade.entryBrickIndex}`
-			if (catalogSet.has(key)) {
+			if (index.keys.has(key)) {
 				matches++
 			}
 		}
@@ -103,7 +111,7 @@ const computeMatchRate = (
 
 	// Match rate = matches / max(catalog.length, trades.length)
 	// This penalizes both missed catalog entries AND false-positive fires
-	const denominator = Math.max(relevantCatalog.length, trades.length)
+	const denominator = Math.max(index.size, trades.length)
 	return matches / denominator
 }
 
@@ -124,13 +132,33 @@ self.onmessage = (event: MessageEvent<StartMessage>) => {
 		const c15 = candles15m ?? []
 		const startTime = performance.now()
 
+		// Walk-forward mode needs IS+OOS slices; single-pass uses the full catalog.
+		// All recipes share the same candles, so the slice boundaries are stable.
+		let fullIndex: MatchRateIndex | null = null
+		let isIndex: MatchRateIndex | null = null
+		let oosIndex: MatchRateIndex | null = null
+		if (referenceCatalog) {
+			if (walkForward) {
+				const { isDateRange, oosDateRange } = splitCandles(
+					candles,
+					walkForward.inSamplePct
+				)
+				isIndex = buildMatchRateIndex(referenceCatalog, isDateRange)
+				oosIndex = buildMatchRateIndex(referenceCatalog, oosDateRange)
+			} else {
+				fullIndex = buildMatchRateIndex(referenceCatalog)
+			}
+		}
+
 		for (let i = 0; i < recipes.length; i++) {
 			const recipe = recipes[i]!
 
 			if (walkForward) {
 				// Walk-forward mode: split candles, run both, compute robustness
-				const { isCandles, oosCandles, isDateRange, oosDateRange } =
-					splitCandles(candles, walkForward.inSamplePct)
+				const { isCandles, oosCandles } = splitCandles(
+					candles,
+					walkForward.inSamplePct
+				)
 
 				const isCutoff = oosCandles[0]?.timestamp
 				const is15m =
@@ -165,16 +193,8 @@ self.onmessage = (event: MessageEvent<StartMessage>) => {
 					// Phase 3B match rate (if catalog provided and Hawks strategy)
 					...(referenceCatalog &&
 						recipe.entry.type === "hawks_playbook" && {
-							matchRateIS: computeMatchRate(
-								isResult.trades,
-								referenceCatalog,
-								isDateRange
-							),
-							matchRateOOS: computeMatchRate(
-								oosResult.trades,
-								referenceCatalog,
-								oosDateRange
-							),
+							matchRateIS: computeMatchRate(isResult.trades, isIndex),
+							matchRateOOS: computeMatchRate(oosResult.trades, oosIndex),
 						}),
 				}
 				self.postMessage(msg)
@@ -193,7 +213,7 @@ self.onmessage = (event: MessageEvent<StartMessage>) => {
 					// Phase 3B match rate (if catalog provided and Hawks strategy)
 					...(referenceCatalog &&
 						recipe.entry.type === "hawks_playbook" && {
-							matchRate: computeMatchRate(result.trades, referenceCatalog),
+							matchRate: computeMatchRate(result.trades, fullIndex),
 						}),
 				}
 				self.postMessage(msg)

@@ -18,8 +18,10 @@ const DashboardPage = async ({ params }: DashboardPageProps) => {
 	const initialYear = now.getFullYear()
 	const initialMonthIndex = now.getMonth()
 
-	// Single batch query replaces 6 independent DB queries
-	const batchResult = await getDashboardBatch(initialYear, initialMonthIndex)
+	const [batchResult, hawksCoachingResult] = await Promise.all([
+		getDashboardBatch(initialYear, initialMonthIndex),
+		getHawksCoachingInsights(90),
+	])
 	const batchData = batchResult.status === "success" ? batchResult.data : null
 
 	const stats = batchData?.stats ?? null
@@ -30,7 +32,6 @@ const DashboardPage = async ({ params }: DashboardPageProps) => {
 	const radarData = batchData?.radarData ?? []
 	const initialCapitalCents = batchData?.initialCapitalCents ?? 0
 
-	const hawksCoachingResult = await getHawksCoachingInsights(90)
 	const initialHawksContext =
 		hawksCoachingResult.status === "success" ? hawksCoachingResult.data : null
 

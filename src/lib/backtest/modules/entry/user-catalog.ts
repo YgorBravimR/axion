@@ -24,6 +24,23 @@ export const createInitialUserCatalogState = (): UserCatalogState => ({
 const makeKey = (dayKey: string, brickIndex: number): string =>
 	`${dayKey}:${brickIndex}`
 
+// WeakMap so identical catalog references shared across recipes in a sweep
+// build the index exactly once, and the index frees with the catalog.
+const catalogIndexCache = new WeakMap<UserEntry[], Map<string, UserEntry>>()
+
+const getCatalogIndex = (catalog: UserEntry[]): Map<string, UserEntry> => {
+	const cached = catalogIndexCache.get(catalog)
+	if (cached) {
+		return cached
+	}
+	const index = new Map<string, UserEntry>()
+	for (const entry of catalog) {
+		index.set(`${entry.date}:${entry.brickIndex}`, entry)
+	}
+	catalogIndexCache.set(catalog, index)
+	return index
+}
+
 // Find catalog entry matching the current candle. Returns undefined if no match.
 const findEntry = (
 	catalog: UserEntry[],
@@ -33,7 +50,7 @@ const findEntry = (
 	if (brickIndex === null) {
 		return undefined
 	}
-	return catalog.find((e) => e.date === dayKey && e.brickIndex === brickIndex)
+	return getCatalogIndex(catalog).get(`${dayKey}:${brickIndex}`)
 }
 
 // ─── Main processor ───────────────────────────────────────────────────────────

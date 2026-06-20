@@ -12,7 +12,7 @@ import { toSafeErrorMessage } from "@/lib/error-utils"
 import { fromCents } from "@/lib/money"
 import type { ActionResponse } from "@/types"
 import { and, eq, inArray } from "drizzle-orm"
-import { getAssetFees } from "./accounts"
+import { resolveFeeSnapshotsBatch } from "@/lib/tax/fee-resolver"
 import { getCurrentAccount, requireAuth } from "./auth"
 import type {
 	CsvImportResult,
@@ -88,12 +88,20 @@ export const validateCsvTrades = async (
 			foundAssets.map((a) => [a.symbol.toUpperCase(), a])
 		)
 
-		// Batch lookup fees for found assets
+		const feeSnapshots = await resolveFeeSnapshotsBatch({
+			accountId,
+			assetSymbols: foundAssets.map((a) => a.symbol),
+		})
 		const feesMap = new Map<string, { commission: number; fees: number }>()
 		for (const asset of foundAssets) {
-			// eslint-disable-next-line no-await-in-loop -- sequential asset fee lookups; small N (user-defined assets per account, typically <20)
-			const fees = await getAssetFees(asset.symbol, accountId)
-			feesMap.set(asset.symbol.toUpperCase(), fees)
+			const snap = feeSnapshots.get(asset.symbol) ?? {
+				commissionCents: 0,
+				feesCents: 0,
+			}
+			feesMap.set(asset.symbol.toUpperCase(), {
+				commission: snap.commissionCents,
+				fees: snap.feesCents,
+			})
 		}
 
 		// Get strategies, timeframes, and tags for the UI (tags & strategies are user-level, not account-level)

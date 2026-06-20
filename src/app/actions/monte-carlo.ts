@@ -14,7 +14,7 @@ import type {
 	SimulationParamsV2,
 	MonteCarloResultV2,
 } from "@/types/monte-carlo"
-import { eq, and, inArray, isNotNull, desc } from "drizzle-orm"
+import { eq, and, inArray, isNotNull, desc, count } from "drizzle-orm"
 import { z } from "zod"
 import {
 	simulationParamsSchema,
@@ -42,23 +42,54 @@ export const getDataSourceOptions = async (): Promise<
 
 		const options: DataSourceOption[] = []
 
-		// Get strategies for current user (strategies are user-level, not account-level)
-		const accountStrategies = await db.query.strategies.findMany({
-			where: and(eq(strategies.userId, userId), eq(strategies.isActive, true)),
-			orderBy: [desc(strategies.name)],
-		})
-
-		// Add individual strategy options
-		for (const strategy of accountStrategies) {
-			// eslint-disable-next-line no-await-in-loop -- trade count per strategy; small N, sequential to build data source options list
-			const tradesCount = await db
-				.select()
+		const wantsUniversal = showAllAccounts && allAccountIds.length > 1
+		const [
+			accountStrategies,
+			perStrategyCounts,
+			allAccountCountRow,
+			universalCountRow,
+		] = await Promise.all([
+			db.query.strategies.findMany({
+				where: and(
+					eq(strategies.userId, userId),
+					eq(strategies.isActive, true)
+				),
+				orderBy: [desc(strategies.name)],
+			}),
+			db
+				.select({
+					strategyId: trades.strategyId,
+					tradesCount: count(trades.id),
+				})
 				.from(trades)
-				.where(
-					and(eq(trades.strategyId, strategy.id), isNotNull(trades.outcome))
-				)
-				.then((rows) => rows.length)
+				.where(isNotNull(trades.outcome))
+				.groupBy(trades.strategyId),
+			db
+				.select({ tradesCount: count(trades.id) })
+				.from(trades)
+				.where(and(eq(trades.accountId, accountId), isNotNull(trades.outcome))),
+			wantsUniversal
+				? db
+						.select({ tradesCount: count(trades.id) })
+						.from(trades)
+						.where(
+							and(
+								inArray(trades.accountId, allAccountIds),
+								isNotNull(trades.outcome)
+							)
+						)
+				: Promise.resolve([] as Array<{ tradesCount: number }>),
+		])
 
+		const countsByStrategy = new Map<string, number>()
+		for (const row of perStrategyCounts) {
+			if (row.strategyId) {
+				countsByStrategy.set(row.strategyId, row.tradesCount)
+			}
+		}
+
+		for (const strategy of accountStrategies) {
+			const tradesCount = countsByStrategy.get(strategy.id) ?? 0
 			options.push({
 				type: "strategy",
 				strategyId: strategy.id,
@@ -72,12 +103,7 @@ export const getDataSourceOptions = async (): Promise<
 		}
 
 		// Add "All Strategies" option
-		const allAccountTrades = await db
-			.select()
-			.from(trades)
-			.where(and(eq(trades.accountId, accountId), isNotNull(trades.outcome)))
-			.then((rows) => rows.length)
-
+		const allAccountTrades = allAccountCountRow[0]?.tradesCount ?? 0
 		options.push({
 			type: "all_strategies",
 			label: t("dataSources.allStrategies"),
@@ -89,18 +115,8 @@ export const getDataSourceOptions = async (): Promise<
 		})
 
 		// Add "Universal" option if show all accounts is enabled
-		if (showAllAccounts && allAccountIds.length > 1) {
-			const universalTrades = await db
-				.select()
-				.from(trades)
-				.where(
-					and(
-						inArray(trades.accountId, allAccountIds),
-						isNotNull(trades.outcome)
-					)
-				)
-				.then((rows) => rows.length)
-
+		if (wantsUniversal) {
+			const universalTrades = universalCountRow[0]?.tradesCount ?? 0
 			options.push({
 				type: "universal",
 				label: t("dataSources.allAccountsStrategies"),
