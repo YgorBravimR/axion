@@ -2608,6 +2608,238 @@ export const hawksWeeklyOco = pgTable(
 )
 
 // ==========================================
+// AI ASSISTANT — admin-managed runtime config
+// ==========================================
+//
+// Singleton row (id = 1) the admin updates from /settings/admin to control
+// rollout of the AI Assistant feature WITHOUT a redeploy. Independent of the
+// build-time `AI_ASSISTANT_ENABLED` env flag; the assistant is visible only
+// when BOTH switches are on. See `src/lib/ai-assistant/access.ts` for the
+// runtime resolver and `docs/plans/ai-assistant-phase-1.md` §"Visibility
+// gating model" for the rationale.
+//
+// If the row doesn't exist OR `enabled = false`, the assistant is fully
+// invisible (UI returns null, API returns 404, no DB writes, no LLM calls).
+export const aiAssistantConfig = pgTable("ai_assistant_config", {
+	// Singleton: always id = 1. CHECK enforced via column constraint.
+	id: integer("id").primaryKey().default(1),
+	// Master kill-switch. Default false — admin must explicitly turn on.
+	enabled: boolean("enabled").notNull().default(false),
+	// Which roles see the assistant when enabled. JSON array of UserRole
+	// strings ("admin" | "premium" | "trader" | "viewer"). Default ["admin"]
+	// so initial rollout is admin-only even if `enabled = true`.
+	allowedRoles: jsonb("allowed_roles").notNull().default(["admin"]),
+	// Optional per-user allowlist (overrides allowedRoles when non-empty).
+	// Array of user_id strings. Empty array = no override; use allowedRoles.
+	// Useful for "dogfood on Ygor's account only" before broader rollout.
+	allowedUserIds: jsonb("allowed_user_ids").notNull().default([]),
+	// Surfaces enabled for this rollout. Array of surface keys
+	// ("trade_detail" | "day_detail" | "analytics" | ...). Empty = none.
+	// Lets admin enable the trade-detail narrator while keeping the
+	// dashboard Coach off, even if both are built.
+	allowedSurfaces: jsonb("allowed_surfaces").notNull().default([]),
+	// Monthly per-user cost ceiling in cents. Defaults to 500 (= $5/user/mo)
+	// per the Phase-1 spec. Admin can lower without a deploy if costs spike.
+	monthlyCostCapCents: integer("monthly_cost_cap_cents").notNull().default(500),
+	// Free-text reason for the last change (audit trail).
+	lastChangeReason: text("last_change_reason"),
+	updatedAt: timestamp("updated_at", { withTimezone: true })
+		.defaultNow()
+		.notNull(),
+	updatedBy: varchar("updated_by", { length: 50 }),
+})
+
+// AI Assistant — per-user conversation thread. One row per "Ask about this
+// trade" panel open; subsequent user messages on the same context reuse the
+// open conversation until closedAt is set.
+export const aiAssistantConversations = pgTable(
+	"ai_assistant_conversations",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		userId: uuid("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+		// Which surface opened this conversation. Matches allowedSurfaces
+		// entries in ai_assistant_config. "trade_detail" for Phase 1.
+		surface: text("surface").notNull(),
+		// Opaque ID of the thing being narrated (e.g. tradeId as string,
+		// dayKey, backtestRunId). Lets us look up all conversations about a
+		// single trade across multiple sessions.
+		contextRefId: text("context_ref_id").notNull(),
+		// Stamps which system prompt version drove this conversation, so we
+		// can correlate post-hoc when a prompt change regresses behavior.
+		promptVersion: text("prompt_version").notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		closedAt: timestamp("closed_at", { withTimezone: true }),
+	},
+	(table) => [
+		index("ai_assistant_conversations_user_created_idx").on(
+			table.userId,
+			table.createdAt
+		),
+		index("ai_assistant_conversations_context_idx").on(
+			table.surface,
+			table.contextRefId
+		),
+	]
+)
+
+// AI Assistant — every message (user prompt + assistant response) in a
+// conversation. Assistant rows carry the full tool-call trace + token/cost
+// accounting + validator verdicts. Source of truth for the audit log (spec
+// §2 hard rule 7).
+export const aiAssistantMessages = pgTable(
+	"ai_assistant_messages",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		conversationId: uuid("conversation_id")
+			.notNull()
+			.references(() => aiAssistantConversations.id, {
+				onDelete: "cascade",
+			}),
+		role: text("role").notNull(), // "user" | "assistant"
+		content: text("content").notNull(),
+		// Array of { name, args, result, latencyMs } objects. Null for user
+		// messages and assistant turns that didn't call any tool.
+		toolCalls: jsonb("tool_calls"),
+		// Anthropic model id used for this turn (e.g. "claude-sonnet-4-6").
+		// Null on user messages.
+		model: text("model"),
+		tokensIn: integer("tokens_in"),
+		tokensOut: integer("tokens_out"),
+		// Cost of this assistant turn in cents (fractional cents rounded up
+		// at write time). Null on user messages.
+		costCents: integer("cost_cents"),
+		latencyMs: integer("latency_ms"),
+		// Validator output: { unsourcedNumbers: [], recommendationsCaught:
+		// [], offTopicFlag: bool, ... }. Null on user messages.
+		validatorVerdicts: jsonb("validator_verdicts"),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		index("ai_assistant_messages_conversation_created_idx").on(
+			table.conversationId,
+			table.createdAt
+		),
+	]
+)
+
+// AI Assistant — per-user monthly usage rollup. Hard ceiling enforced
+// server-side BEFORE any LLM call (cheap PK lookup). Composite PK is
+// (userId, yearMonth) so each month is its own row; rollover is implicit.
+export const aiAssistantUsage = pgTable(
+	"ai_assistant_usage",
+	{
+		userId: uuid("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		// "YYYY-MM" format. Lexicographic comparison = chronological.
+		yearMonth: text("year_month").notNull(),
+		costCents: integer("cost_cents").notNull().default(0),
+		// bigint because token counts can exceed int4 over a busy month.
+		tokensIn: bigint("tokens_in", { mode: "number" }).notNull().default(0),
+		tokensOut: bigint("tokens_out", { mode: "number" }).notNull().default(0),
+		messageCount: integer("message_count").notNull().default(0),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [primaryKey({ columns: [table.userId, table.yearMonth] })]
+)
+
+// AI Assistant — validator catches. Every message whose response failed a
+// validator (unsourced number, recommendation phrasing, off-topic, prompt-
+// injection sink) creates one row per violation. Drives the eval-suite
+// promotion ritual (learning-loop spec §A.5).
+export const aiAssistantViolations = pgTable(
+	"ai_assistant_violations",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		messageId: uuid("message_id")
+			.notNull()
+			.references(() => aiAssistantMessages.id, { onDelete: "cascade" }),
+		// Validator name. Matches the validator catalog in
+		// src/lib/ai-assistant/validators.ts (ships PR 3).
+		kind: text("kind").notNull(),
+		// The substring (or full message) the validator caught. Bounded to
+		// 500 chars to avoid blowing row size on hostile inputs.
+		snippet: text("snippet").notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		index("ai_assistant_violations_kind_created_idx").on(
+			table.kind,
+			table.createdAt
+		),
+	]
+)
+
+// AI Assistant — per-message user feedback (👍/👎 + category + free text).
+// Drives the failure-to-eval pipeline (learning-loop spec §A.2/A.5). Feedback
+// is private to the user; cascade-deletes with the message it's about.
+export const aiAssistantFeedback = pgTable(
+	"ai_assistant_feedback",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		messageId: uuid("message_id")
+			.notNull()
+			.references(() => aiAssistantMessages.id, { onDelete: "cascade" }),
+		userId: uuid("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		// -1 (👎), 0 (neutral / no opinion), +1 (👍).
+		rating: integer("rating").notNull(),
+		// Optional category set by the 👎 form: "hallucinated_number" |
+		// "wrong_pattern" | "off_topic" | "useless" |
+		// "recommendation_phrasing" | "great" | "other". Stored free-form
+		// (text) so the eval-suite categories can evolve without a
+		// migration.
+		category: text("category"),
+		freeText: text("free_text"),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [index("ai_assistant_feedback_message_idx").on(table.messageId)]
+)
+
+// AI Assistant — daily telemetry rollup. One row per UTC date, written by a
+// cron at 02:00 UTC. Powers /dev/ai-assistant-health admin dashboard
+// (learning-loop spec §A.4) without scanning the messages table at read
+// time. Aggregates are non-PII (counts + rates only) so the admin page can
+// show org-wide trends without exposing any single user's content.
+export const aiAssistantDailyRollup = pgTable("ai_assistant_daily_rollup", {
+	// "YYYY-MM-DD". Lexicographic = chronological.
+	date: text("date").primaryKey(),
+	messagesTotal: integer("messages_total").notNull().default(0),
+	// { trade_detail: 23, day_detail: 5, ... } — surface name → count.
+	messagesBySurface: jsonb("messages_by_surface").notNull().default({}),
+	// { unsourced_number: 2, recommendation_phrase: 0, ... } — violation
+	// kind → count. Matches validator names.
+	violations: jsonb("violations").notNull().default({}),
+	// { up: 12, down: 3, byCategory: { hallucinated_number: 1, ... } }.
+	feedback: jsonb("feedback").notNull().default({}),
+	costCents: integer("cost_cents").notNull().default(0),
+	p50LatencyMs: integer("p50_latency_ms"),
+	p95LatencyMs: integer("p95_latency_ms"),
+	// Distinct user_id count for the day. Helps spot a spike of new users
+	// hitting the assistant after a rollout.
+	activeUsers: integer("active_users").notNull().default(0),
+	computedAt: timestamp("computed_at", { withTimezone: true })
+		.defaultNow()
+		.notNull(),
+})
+
+// ==========================================
 // RELATIONS
 // ==========================================
 
@@ -3288,3 +3520,31 @@ export type NewHawksRenkoSize = typeof hawksRenkoSizes.$inferInsert
 
 export type HawksWeeklyOco = typeof hawksWeeklyOco.$inferSelect
 export type NewHawksWeeklyOco = typeof hawksWeeklyOco.$inferInsert
+
+// ==========================================
+// AI ASSISTANT — inferred types
+// ==========================================
+
+export type AiAssistantConfig = typeof aiAssistantConfig.$inferSelect
+export type NewAiAssistantConfig = typeof aiAssistantConfig.$inferInsert
+
+export type AiAssistantConversation =
+	typeof aiAssistantConversations.$inferSelect
+export type NewAiAssistantConversation =
+	typeof aiAssistantConversations.$inferInsert
+
+export type AiAssistantMessage = typeof aiAssistantMessages.$inferSelect
+export type NewAiAssistantMessage = typeof aiAssistantMessages.$inferInsert
+
+export type AiAssistantUsage = typeof aiAssistantUsage.$inferSelect
+export type NewAiAssistantUsage = typeof aiAssistantUsage.$inferInsert
+
+export type AiAssistantViolation = typeof aiAssistantViolations.$inferSelect
+export type NewAiAssistantViolation = typeof aiAssistantViolations.$inferInsert
+
+export type AiAssistantFeedback = typeof aiAssistantFeedback.$inferSelect
+export type NewAiAssistantFeedback = typeof aiAssistantFeedback.$inferInsert
+
+export type AiAssistantDailyRollup = typeof aiAssistantDailyRollup.$inferSelect
+export type NewAiAssistantDailyRollup =
+	typeof aiAssistantDailyRollup.$inferInsert

@@ -41,6 +41,200 @@ Result: the active backlog is exactly what's still in front of us, priority-desc
 
 ---
 
+## AI Assistant — Phase 1 (Narrator) — promoted from ideas.md 2026-06-20
+
+Full spec at [`docs/plans/ai-assistant-phase-1.md`](plans/ai-assistant-phase-1.md). Phase-1 scope is locked: read-only conversational **narrator** of deterministic engine output, scoped to one trade at a time on `/journal/[id]`. Never invents numbers, never recommends parameter changes. Hard $5/user/month budget. All 5 tools are read-only. Four shippable PRs below — ship in order; flag stays `0` until PR 4 lands; dogfood on Ygor's account for 2 weeks before broader rollout.
+
+### PR 1 — AI Assistant schema + visibility gate + cost meter (no agent yet)
+
+- **Priority**: P1
+- **Effort**: S (~4-6h)
+- **Source**: [`docs/plans/ai-assistant-phase-1.md`](plans/ai-assistant-phase-1.md) §2a + §8 PR 1.
+- **What + Why**: Schema migration for `ai_assistant_conversations`, `ai_assistant_messages`, `ai_assistant_usage`, `ai_assistant_violations`, `ai_assistant_feedback` (per learning-loop spec §A.2), `ai_assistant_daily_rollup` (telemetry §A.4). Ship `src/lib/ai-assistant/budget.ts` (`getMonthlySpend`, `assertWithinBudget`, `recordSpend`) — reads `monthlyCostCapCents` from the admin config table. **Visibility gating already partially shipped 2026-06-22**: `src/lib/flags/ai-assistant.ts`, `ai_assistant_config` table in `src/db/schema.ts`, `src/lib/ai-assistant/access.ts` (`canUseAiAssistant()`), stub `/api/ai/narrate` route (404 closed / 501 open), stub `AskButton` component (null closed / placeholder open). PR 1 closes out the remaining work: generate the Drizzle migration to actually create `ai_assistant_config` in the DB, the 5 supporting tables, budget utility, unit tests for budget math edge cases + gate composition (every row of the 7-row truth table in §2a tested), CI lint that no tool action takes `userId`/`accountId` from input (per isolation §B.1). No env vars required to merge — assistant stays invisible by default because `AI_ASSISTANT_ENABLED` defaults to "0" AND the config row defaults to `enabled = false`.
+- **Done when**: `pnpm db:generate` clean; gate composition table tested; budget math tested; lint green; `/api/ai/narrate` returns 404 in dev (both flags off); `AskButton` renders zero DOM nodes in dev (both flags off).
+- **Date filed**: 2026-06-20. Updated 2026-06-22 to include the visibility-gate plumbing.
+
+### PR 2 — AI Assistant read-only tool registry (no UI, no LLM yet)
+
+- **Priority**: P1
+- **Effort**: M (1-2 days)
+- **Source**: [`docs/plans/ai-assistant-phase-1.md`](plans/ai-assistant-phase-1.md) §4 + §8 PR 2.
+- **What + Why**: Ship the 5 server actions the agent will call (`get_trade_with_enrichment`, `get_user_trade_aggregates`, `get_account_context`, `get_recent_backtest_runs`, `get_engine_replay_for_trade`). Each at `src/app/actions/ai-assistant/tools/*.ts`, each with `requireAuth()` + account-scope check + Zod input/output schemas. `src/lib/ai-assistant/tool-registry.ts` assembles the Anthropic tool schemas. Useful in isolation as typed query helpers so they earn their keep before the LLM wiring lands.
+- **Done when**: all 5 tools return typed payloads; account-isolation tested; lint + tests green.
+- **Date filed**: 2026-06-20.
+
+### PR 3 — AI Assistant stream endpoint + validators + system prompt (still no UI)
+
+- **Priority**: P1
+- **Effort**: L (2 days)
+- **Source**: [`docs/plans/ai-assistant-phase-1.md`](plans/ai-assistant-phase-1.md) §5-§6 + §8 PR 3.
+- **What + Why**: Ship `/api/ai/narrate` end-to-end (Node runtime, SSE), callable via `curl` behind `AI_ASSISTANT_ENABLED=1`. System prompt at `src/lib/ai-assistant/system-prompt.ts` versioned `narrator-v1.0`. Anthropic client wrapper at `src/lib/ai-assistant/anthropic-client.ts` reusing the pattern from `src/lib/vision/providers/claude.ts`. Validators (`unsourced-number`, `recommendation-phrase`, `off-topic`) at `src/lib/ai-assistant/validators.ts`. Agent loop at `src/lib/ai-assistant/agent-loop.ts` (max 6 iterations, budget check on entry + after each iteration). Integration test hits the endpoint with a fixture `tradeId` and asserts SSE events fire in order, messages + tool calls land in DB, validators write verdicts.
+- **Done when**: `curl -N` against a seeded trade streams a narration behind the flag; budget is decremented; violations table is empty for a well-formed prompt; tests green.
+- **Date filed**: 2026-06-20.
+
+### PR 4 — AI Assistant UI: "Ask about this trade" button + panel + flag for Ygor's account
+
+- **Priority**: P1
+- **Effort**: M (1-2 days)
+- **Source**: [`docs/plans/ai-assistant-phase-1.md`](plans/ai-assistant-phase-1.md) §3 + §8 PR 4.
+- **What + Why**: Ship `src/components/journal/ai-narrator-panel.tsx` (client SSE consumer) and `src/components/journal/ai-narrator-trigger.tsx` (the button on the trade-info panel). Use existing `Sheet` / inline panel patterns. Audit-trail drawer shows tool calls + payloads. i18n strings in `messages/en.json` + `messages/pt-BR.json` under `assistant` namespace. E2E test navigates to a trade, clicks the button, clicks a suggested prompt, asserts narration streams in. Flag flipped on for Ygor's dev account only for 2-week dogfood per the promote criteria in the plan §9.
+- **Done when**: button visible at `/journal/[id]` behind flag; clicking streams a narration; audit trail visible; i18n complete; e2e green.
+- **Date filed**: 2026-06-20.
+
+### Phase 1.5a — AI Assistant on Day Detail Modal (Narrator + Critic)
+
+- **Priority**: P2
+- **Effort**: S (~1 day)
+- **Source**: [`docs/plans/ai-assistant-full-footprint.md`](plans/ai-assistant-full-footprint.md) §3 #1.
+- **What + Why**: Ship the cheapest extension of the Phase-1 narrator to a day-scoped context. New tool `get_day_detail_with_enrichment(date, accountId)` returns: day P&L breakdown, each trade with its latest enrichment snapshot, day's equity curve. Reuses the agent loop, system prompt, and validators from Phase 1 unchanged. Button + inline panel inside the modal footer. End-of-day review is a daily ritual — high session frequency, lowest infra delta.
+- **Done when**: button in `day-detail-modal.tsx`, narration matches engine-replay JSON 1:1, e2e green, behind same `AI_ASSISTANT_ENABLED` flag.
+- **Blocked by**: Phase 1 PR 4 shipped + promote criteria hit per Phase-1 spec §9.
+- **Date filed**: 2026-06-22.
+
+### Phase 1.5b — AI Assistant on Analytics (Coach + Scout)
+
+- **Priority**: P2
+- **Effort**: S (~1 day)
+- **Source**: [`docs/plans/ai-assistant-full-footprint.md`](plans/ai-assistant-full-footprint.md) §3 #2.
+- **What + Why**: First "Coach" archetype surface — surfaces cross-trade patterns the user can't easily see in heatmaps (Monday-vs-Tuesday gap, hour-of-day under-performance, holding-period bands). New tool `get_analytics_cohorts(userId, accountId, window, groupBy)`. Validator addition: **Coach-archetype guard** that refuses prescriptive phrasing ("stop trading the afternoon", "you should") and enforces past-tense pattern description. Sample-size floor of 10 — no pattern surfaced below that.
+- **Done when**: panel renders patterns from real user data; signal hidden when sample < 10; Coach validator catches "should/try/consider" in test suite.
+- **Blocked by**: Phase 1.5a shipped (Coach archetype dogfooded alongside Day-Detail Narrator before moving to a more isolated Coach surface).
+- **Date filed**: 2026-06-22.
+
+### Phase 1.5c — AI Assistant on Reports (Narrator + Scout + Critic, tax-aware)
+
+- **Priority**: P2
+- **Effort**: S (~1-2 days)
+- **Source**: [`docs/plans/ai-assistant-full-footprint.md`](plans/ai-assistant-full-footprint.md) §3 #3.
+- **What + Why**: Tax/P&L narration is unique value — no other tool explains a DARF ledger in plain language. 2 new tools: `get_monthly_report(year, month, accountId)` + `get_tax_summary(year, accountId)`. Both pure-read against existing tables. Validator addition: **tax-archetype guard** — every tax number MUST trace to `monthlyTaxLedger`; tax rate MUST come from `getDayTradeIrRate(year)` constant; permanent CPA-disclaimer footer on tax messages.
+- **Done when**: tax numbers match `reports/page.tsx` 1:1 (auto-tested); carryover chain explained correctly; disclaimer banner present on every tax message.
+- **Risk note**: Medium (financial output). Read-only by spec; no novel tax computation.
+- **Date filed**: 2026-06-22.
+
+### Phase 1.5d — AI Assistant on Backtest Results (Narrator + Scout)
+
+- **Priority**: P2
+- **Effort**: S (~1 day)
+- **Source**: [`docs/plans/ai-assistant-full-footprint.md`](plans/ai-assistant-full-footprint.md) §3 #4.
+- **What + Why**: Post-run analysis benefits from natural-language framing (equity-curve plateaus, cohort gaps, day-of-week clusters are non-obvious in the chart UI). New tool `get_backtest_run_by_id(runId)` — reuses existing `BacktestResult` type (`src/types/backtest.ts:728`). Validator: **engine-internals guard** refuses "try widening exits" / "tighten stops"; allows "the cohort shows…", "the equity curve flattens between X and Y".
+- **Done when**: every cited number matches the run's `BacktestSummary`; cohort flags only at n≥10; engine-internals guard catches recommendation phrasing in test suite.
+- **Date filed**: 2026-06-22.
+
+### Phase 1.5e — AI Assistant on Command Center / Dashboard (Coach)
+
+- **Priority**: P2
+- **Effort**: M (~2 days)
+- **Source**: [`docs/plans/ai-assistant-full-footprint.md`](plans/ai-assistant-full-footprint.md) §3 #5.
+- **What + Why**: Highest visibility (first page users see), lowest depth per call. Ship LAST in Phase 1.5 so the Coach grammar is mature from Analytics dogfood. Extends existing `coaching-insights-card.tsx` slot. New tool `get_dashboard_kpis(accountId, window)` — KPI roll-up + Hawks bias alignment + circuit-breaker state. Card refreshes daily; lazy-loaded after initial paint to protect LCP.
+- **Done when**: card appears on dashboard; refreshes daily; never blocks page LCP; surfaces only patterns at n≥10.
+- **Blocked by**: Phase 1.5b (Analytics) shipped — uses the matured Coach validator.
+- **Date filed**: 2026-06-22.
+
+### Phase 1.5f — AI Assistant on Plan / Fractal (Narrator + Reviewer, ladder-boundary aware)
+
+- **Priority**: P2
+- **Effort**: M (~2 days)
+- **Source**: [`docs/plans/ai-assistant-full-footprint.md`](plans/ai-assistant-full-footprint.md) §3 #6.
+- **What + Why**: First "Reviewer" archetype surface. New tool `get_yearly_plan_with_projection(year, accountId)` — reuses projection + ladder + tier-change audit log. Validator addition: **boundary-with-Ladder-Assistant guard** — assistant may describe ladder values + flag anomalies via Reviewer phrasing, but MAY NOT propose new ladder values, compute Kelly fractions, or propose `f_target`. Cross-reference to the deterministic Ladder Assistant is fine ("see the Ladder Assistant").
+- **Done when**: ladder math narrated correctly; projection cited matches the page; Reviewer flag never proposes a number; cross-reference link to Ladder Assistant when anomaly detected.
+- **Date filed**: 2026-06-22.
+
+### Phase 1.5g — AI Assistant on Risk Simulation (Critic + Reviewer)
+
+- **Priority**: P2
+- **Effort**: M (~2 days)
+- **Source**: [`docs/plans/ai-assistant-full-footprint.md`](plans/ai-assistant-full-footprint.md) §3 #7.
+- **What + Why**: Critic compares chosen brake settings to historical breaches. New tool `get_risk_simulation_by_config(configId)`. Validator addition: **shield-archetype guard** refuses "you should loosen to -3R" / "tighten the weekly brake"; allows "the brake would have triggered N times" / "actual loss was X vs brake at Y".
+- **Done when**: every breach cited matches the actual day's P&L; no recommendation phrasing leaks.
+- **Date filed**: 2026-06-22.
+
+### Phase 1.5h — AI Assistant on Equity Shield (Critic, ships with Risk Sim)
+
+- **Priority**: P2
+- **Effort**: S (~½ day after 1.5g)
+- **Source**: [`docs/plans/ai-assistant-full-footprint.md`](plans/ai-assistant-full-footprint.md) §3 #8.
+- **What + Why**: Same Critic archetype, same tools as Risk Simulation (`get_risk_simulation_by_config`). Ship together or immediately after — purely a second mount point.
+- **Done when**: panel renders on `/equity-shield`; reuses Risk-Sim validator + tool.
+- **Blocked by**: Phase 1.5g shipped.
+- **Date filed**: 2026-06-22.
+
+### Phase 2a — AI Assistant on OPTIMIZE Sweep (Critic + Scout, write-adjacent risk)
+
+- **Priority**: P3
+- **Effort**: M (~2-3 days)
+- **Source**: [`docs/plans/ai-assistant-full-footprint.md`](plans/ai-assistant-full-footprint.md) §4 Phase 2a.
+- **What + Why**: Pareto-frontier + robustness narration. Hard challenge: distinguishing "the frontier _shows_ clustering" (allowed) from "you _should expand_ search" (forbidden) — narration is right next to a "Run sweep" button so a phrasing slip becomes a stealth recommendation. Defer until Coach/Critic validators have caught real phrasing slips on simpler surfaces. New tools: `get_optimization_sweep_by_id`, `compute_pareto_robustness_breakdown`.
+- **Risk note**: Medium (write-adjacent surface).
+- **Blocked by**: All Phase 1.5 surfaces shipped + 2-week dogfood with ≤2% violation rate.
+- **Date filed**: 2026-06-22.
+
+### Phase 2b — AI Assistant on OCO Weeks (Coach, requires new UI surface first)
+
+- **Priority**: P3
+- **Effort**: M (~2-3 days, plus dependency on OCO-week widget)
+- **Source**: [`docs/plans/ai-assistant-full-footprint.md`](plans/ai-assistant-full-footprint.md) §4 Phase 2b.
+- **What + Why**: Coach over OCO week envelope (start capital, target, current pace, days remaining). NO dedicated UI exists yet — Phase 2b ships the **widget first** (deterministic), then layers the Coach on top. Validator: standard Coach guard; "on pace to hit target" must be phrased descriptively not prescriptively.
+- **Blocked by**: dedicated OCO-week widget shipped (separate backlog entry not yet filed) + Phase 1.5 sign-off.
+- **Date filed**: 2026-06-22.
+
+### Phase 2c — AI Assistant on Monte Carlo (Narrator + Scout)
+
+- **Priority**: P3
+- **Effort**: M (~2-3 days)
+- **Source**: [`docs/plans/ai-assistant-full-footprint.md`](plans/ai-assistant-full-footprint.md) §4 Phase 2c.
+- **What + Why**: Narrate 10k-path simulation outputs (median DD, ruin probability, recovery distribution). Lower frequency feature so lower per-call value — bumped behind higher-frequency surfaces. Single new tool `get_monte_carlo_result_by_id`.
+- **Blocked by**: Phase 1.5 + 2-week dogfood.
+- **Date filed**: 2026-06-22.
+
+### Phase 2d — AI Assistant on Indicator Lab + Hawks Engine Lab (Narrator, dev-only)
+
+- **Priority**: P3
+- **Effort**: M (~2 days for both together)
+- **Source**: [`docs/plans/ai-assistant-full-footprint.md`](plans/ai-assistant-full-footprint.md) §4 Phase 2d.
+- **What + Why**: Narrate brick-by-brick engine state + indicator isolation metrics. Tiny audience (admin + dev). Low priority despite low risk. New tools: `get_indicator_lab_metrics`, `get_engine_replay_detailed`.
+- **Date filed**: 2026-06-22.
+
+### Phase 2e — AI Assistant on CSV Imports (Scout + Reviewer, write-adjacent risk)
+
+- **Priority**: P3
+- **Effort**: M (~2-3 days)
+- **Source**: [`docs/plans/ai-assistant-full-footprint.md`](plans/ai-assistant-full-footprint.md) §4 Phase 2e.
+- **What + Why**: Flag import anomalies (price mismatches, dedup conflicts, parse errors). Hard challenge: assistant narrating discrepancies right next to a "Commit import" button risks being read as approval. Validator MUST refuse "safe to commit" / "looks good" / "import this". Allowed: "118 matched, 6 unmatched, 1 parse error on row 47".
+- **Risk note**: Medium (write-adjacent).
+- **Tools**: `get_import_status`, `validate_import_against_trades`.
+- **Date filed**: 2026-06-22.
+
+### Phase 2f — AI Assistant Doc-helper (RAG over docs/, methodology Q&A)
+
+- **Priority**: P3
+- **Effort**: L (~4-5 days, includes vector store infra)
+- **Source**: [`docs/plans/ai-assistant-full-footprint.md`](plans/ai-assistant-full-footprint.md) §4 Phase 2f.
+- **What + Why**: Inline "What does AAA mean?" / "Explain the OCO rule" button on any technical term in the app. Requires: pgvector schema (or external vector store), embedding job over `docs/`, chunking strategy, retrieval tool with citation-mandatory output. New "Doc-helper" archetype validator: every paragraph must cite a doc + line range. Significant infra — defer until Phase 1.5 is stable so we're not building infra in parallel with validator-tuning.
+- **Blocked by**: Phase 1.5 shipped; pgvector vs external vector store decision made.
+- **Date filed**: 2026-06-22.
+
+### Phase 3a — AI Assistant Playbook Drafter (Drafter + Critic, HIGH RISK — write path)
+
+- **Priority**: P3 (placeholder)
+- **Effort**: L (~3-4 days)
+- **Source**: [`docs/plans/ai-assistant-full-footprint.md`](plans/ai-assistant-full-footprint.md) §5 Phase 3a.
+- **What + Why**: Cluster recent winning trades by shared conditions, produce a **draft** playbook entry the user reviews/edits/accepts before any write to `strategies` table. Hard constraint: Drafter validator MUST cross-check every condition in the draft against ≥80% of the cluster's source trades. Any unsupported condition rejects the draft. Tools: `cluster_trades_by_conditions`, `get_strategy_with_recent_trades`, plus a deterministic `save_drafted_playbook` write action (NOT LLM-driven).
+- **Ship gate**: Phase 1 + 1.5 must have ≤2% validator-caught violations across ≥500 messages. Drafter gets 4-week dogfood (not 2) because of higher risk.
+- **Risk note**: HIGH — first write-adjacent archetype. A hallucinated condition becomes a stealth recommendation the user adopts.
+- **Blocked by**: Phase 2 shipped + cumulative dogfood criteria met.
+- **Date filed**: 2026-06-22.
+
+### Phase 3b — AI Assistant Conversational Optimizer (global drawer + run_backtest tool)
+
+- **Priority**: P3 (placeholder)
+- **Effort**: XL (multi-sprint)
+- **Source**: [`docs/plans/ai-assistant-full-footprint.md`](plans/ai-assistant-full-footprint.md) §5 Phase 3b.
+- **What + Why**: Furthest-out surface. Global right-side drawer with page-aware context + ability to _trigger_ `run_backtest` / `run_optimize_sweep` server actions ("what if I tighten wave-2 retracement on Wednesdays only?"). Combines Narrator + Critic + Drafter archetypes plus a constrained write tool path. Risk is the highest. Wait until all read-only archetypes have stable validators and Drafter (3a) has proven the write-path discipline.
+- **Blocked by**: Phase 3a shipped + cumulative dogfood criteria met.
+- **Date filed**: 2026-06-22.
+
+---
+
 ## Journaling Workflow
 
 ### Enrichment UI — full asset/timeframe coverage check (v2 polish)

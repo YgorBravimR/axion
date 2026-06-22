@@ -169,6 +169,13 @@
 			"when": 1781603776193,
 			"tag": "0023_dry_thunderbird",
 			"breakpoints": true
+		},
+		{
+			"idx": 24,
+			"version": "7",
+			"when": 1782118998372,
+			"tag": "0024_quiet_slapstick",
+			"breakpoints": true
 		}
 	]
 }
