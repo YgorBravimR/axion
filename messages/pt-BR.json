@@ -586,7 +586,9 @@
 			"today": "Hoje",
 			"previousDay": "Dia anterior",
 			"nextDay": "Próximo dia",
-			"readOnlyNotice": "Visualizando dados históricos (somente leitura)"
+			"readOnlyNotice": "Visualizando dados históricos (somente leitura)",
+			"readOnlyBannerTitle": "Sessão passada — somente leitura",
+			"readOnlyBannerDescription": "Plano, notas, checklist e viés não podem ser editados em dias anteriores. Clique em \"Hoje\" para retomar a edição."
 		},
 		"circuitBreaker": {
 			"title": "Circuit Breaker",
@@ -2762,6 +2764,13 @@
 		"emptyState": "Nenhum dado de trade ainda. Comece a registrar trades para ver seus relatórios.",
 		"emptyStateHint": "Seus relatórios serão preenchidos conforme você registra trades no diário.",
 		"goToJournal": "Registre seu primeiro trade",
+		"darfAlert": {
+			"overdueTitle": "DARF em atraso — {count, plural, one {# mês} other {# meses}}",
+			"pendingTitle": "DARF pendente — {count, plural, one {# mês} other {# meses}}",
+			"overdueDetail": "{count, plural, one {# mês} other {# meses}} após o prazo de recolhimento · total devido {amount}",
+			"pendingDetail": "{count, plural, one {# mês} other {# meses}} pendente · total devido {amount}",
+			"filingHint": "O prazo de recolhimento é o último dia útil do mês seguinte ao da apuração. Após o pagamento, marque cada mês como pago no relatório anual."
+		},
 		"annualReportTitle": "Relatório Anual — {year}",
 		"weeklyMetaTitle": "Meta Semanal vs Real",
 		"annualRollupTitle": "Consolidado Anual",

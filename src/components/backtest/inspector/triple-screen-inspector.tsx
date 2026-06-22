@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { formatRSize } from "@/lib/enrichment/format-rsize"
 import {
 	buildCrosshairSyncMap,
 	candlesToBrickSeriesNative,
@@ -233,7 +234,7 @@ const HawksTripleScreenInspector = ({
 	}
 
 	const sizesLabel = windowData
-		? `5m=${windowData.sizes.size5m}  ·  15m=${windowData.sizes.size15m}  ·  60m=${windowData.sizes.size60m}`
+		? `5m=${formatRSize(windowData.sizes.size5m)}  ·  15m=${formatRSize(windowData.sizes.size15m)}  ·  60m=${formatRSize(windowData.sizes.size60m)}`
 		: ""
 
 	return (
@@ -252,7 +253,7 @@ const HawksTripleScreenInspector = ({
 			<div className="gap-s-300 grid h-96 grid-cols-1 md:h-[640px] md:grid-cols-[3fr_2fr]">
 				<RenkoPane
 					label="5m Renko"
-					subLabel={`size ${windowData?.sizes.size5m ?? "—"} pts`}
+					subLabel={`size ${formatRSize(windowData?.sizes.size5m)}`}
 					series={panes.pane5m.series}
 					indicators={panes.pane5m.indicators}
 					trade={panes.pane5m.trade}
@@ -263,7 +264,7 @@ const HawksTripleScreenInspector = ({
 				<div className="gap-s-300 grid grid-rows-2">
 					<RenkoPane
 						label="15m Renko"
-						subLabel={`size ${windowData?.sizes.size15m ?? "—"} pts`}
+						subLabel={`size ${formatRSize(windowData?.sizes.size15m)}`}
 						series={panes.pane15m.series}
 						indicators={panes.pane15m.indicators}
 						trade={panes.pane15m.trade}
@@ -272,7 +273,7 @@ const HawksTripleScreenInspector = ({
 					/>
 					<RenkoPane
 						label="60m Renko"
-						subLabel={`size ${windowData?.sizes.size60m ?? "—"} pts`}
+						subLabel={`size ${formatRSize(windowData?.sizes.size60m)}`}
 						series={panes.pane60m.series}
 						indicators={panes.pane60m.indicators}
 						trade={panes.pane60m.trade}

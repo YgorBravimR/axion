@@ -4,6 +4,7 @@ import type { ActionResponse } from "@/types"
 import { abandonDryRunImpl } from "@/lib/enrichment/actions/abandon-dry-run-impl"
 import { commitTradeImpl } from "@/lib/enrichment/actions/commit-trade-impl"
 import { getDryRunImpl } from "@/lib/enrichment/actions/get-dry-run-impl"
+import { saveDraftSelectionsImpl } from "@/lib/enrichment/actions/save-draft-selections-impl"
 import { startDryRunImpl } from "@/lib/enrichment/actions/start-dry-run-impl"
 import type {
 	StartDryRunInput,
@@ -11,6 +12,8 @@ import type {
 	GetDryRunOutput,
 	CommitTradeInput,
 	CommitTradeOutput,
+	SaveDraftSelectionsInput,
+	SaveDraftSelectionsOutput,
 	AbandonDryRunInput,
 	AbandonDryRunOutput,
 } from "./enrichment.types"
@@ -31,6 +34,12 @@ export const commitTrade = async (
 	input: CommitTradeInput
 ): Promise<ActionResponse<CommitTradeOutput>> => {
 	return commitTradeImpl(input)
+}
+
+export const saveDraftSelections = async (
+	input: SaveDraftSelectionsInput
+): Promise<ActionResponse<SaveDraftSelectionsOutput>> => {
+	return saveDraftSelectionsImpl(input)
 }
 
 export const abandonDryRun = async (

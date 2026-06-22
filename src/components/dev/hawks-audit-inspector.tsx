@@ -16,6 +16,7 @@ import {
 } from "@/lib/renko/bricks-to-chart"
 import type { BrickChartSeries } from "@/lib/renko/bricks-to-chart"
 import { getInspectorWindow } from "@/app/actions/inspector-data"
+import { formatRSize } from "@/lib/enrichment/format-rsize"
 import type { InspectorCandleRow, InspectorBrickSizes } from "@/types/inspector"
 import type { BacktestTrade } from "@/types/backtest"
 import { RenkoPane } from "@/components/backtest/inspector/renko-pane"
@@ -557,7 +558,7 @@ const HawksAuditInspector = ({
 	}
 
 	const sizesLabel = windowData
-		? `5m=${windowData.sizes.size5m}  ·  15m=${windowData.sizes.size15m}  ·  60m=${windowData.sizes.size60m}`
+		? `5m=${formatRSize(windowData.sizes.size5m)}  ·  15m=${formatRSize(windowData.sizes.size15m)}  ·  60m=${formatRSize(windowData.sizes.size60m)}`
 		: ""
 
 	return (
@@ -585,7 +586,7 @@ const HawksAuditInspector = ({
 			<div className="gap-s-300 grid h-[640px] grid-cols-[3fr_2fr]">
 				<RenkoPane
 					label="5m Renko"
-					subLabel={`size ${windowData?.sizes.size5m ?? "—"} pts`}
+					subLabel={`size ${formatRSize(windowData?.sizes.size5m)}`}
 					series={panes.pane5m.series}
 					indicators={panes.pane5m.indicators}
 					trade={panes.pane5m.trade}
@@ -599,7 +600,7 @@ const HawksAuditInspector = ({
 				<div className="gap-s-300 grid grid-rows-2">
 					<RenkoPane
 						label="15m Renko"
-						subLabel={`size ${windowData?.sizes.size15m ?? "—"} pts`}
+						subLabel={`size ${formatRSize(windowData?.sizes.size15m)}`}
 						series={panes.pane15m.series}
 						indicators={panes.pane15m.indicators}
 						trade={panes.pane15m.trade}
@@ -610,7 +611,7 @@ const HawksAuditInspector = ({
 					/>
 					<RenkoPane
 						label="60m Renko"
-						subLabel={`size ${windowData?.sizes.size60m ?? "—"} pts`}
+						subLabel={`size ${formatRSize(windowData?.sizes.size60m)}`}
 						series={panes.pane60m.series}
 						indicators={panes.pane60m.indicators}
 						trade={panes.pane60m.trade}

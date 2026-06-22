@@ -1,10 +1,14 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { useRouter } from "@/i18n/routing"
 import { useTranslations } from "next-intl"
 import { Loader2, ChevronLeft, ChevronRight } from "lucide-react"
-import { commitTrade, abandonDryRun } from "@/app/actions/enrichment"
+import {
+	commitTrade,
+	abandonDryRun,
+	saveDraftSelections,
+} from "@/app/actions/enrichment"
 import { useToast } from "@/components/ui/toast"
 import { Button } from "@/components/ui/button"
 import {
@@ -50,15 +54,67 @@ export const EnrichReview = ({
 	const [isHelpDialogOpen, setIsHelpDialogOpen] = useState(false)
 
 	// Per-snapshot field selections: Map from snapshotId -> { accepted, rejected }
+	// Seed from persisted acceptedFields/rejectedFields when present — that's how
+	// a resumed session restores the user's prior choices.
 	const [fieldSelections, setFieldSelections] = useState<
 		Map<string, { accepted: Set<string>; rejected: Set<string> }>
 	>(() => {
 		const map = new Map()
 		for (const snap of initialSnapshots) {
-			map.set(snap.snapshotId, { accepted: new Set(), rejected: new Set() })
+			map.set(snap.snapshotId, {
+				accepted: new Set(snap.acceptedFields ?? []),
+				rejected: new Set(snap.rejectedFields ?? []),
+			})
 		}
 		return map
 	})
+
+	// Auto-save: persist selections to the dry-run row whenever they change for
+	// the currently-viewed snapshot. Debounced 600ms so rapid toggles batch into
+	// one server roundtrip. Each pending-save call is keyed by snapshotId so
+	// switching trades cancels the prior timer for that trade only.
+	const saveTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+		new Map()
+	)
+	const scheduleSave = useCallback(
+		(
+			snapshotId: string,
+			tradeId: string,
+			accepted: Set<string>,
+			rejected: Set<string>
+		) => {
+			const existing = saveTimers.current.get(snapshotId)
+			if (existing) {
+				clearTimeout(existing)
+			}
+			const timer = setTimeout(() => {
+				void saveDraftSelections({
+					runId,
+					tradeId,
+					acceptedFields: Array.from(accepted),
+					rejectedFields: Array.from(rejected),
+				}).catch(() => {
+					// Silent: auto-save is best-effort. If it fails, the next toggle
+					// (or the final commit) recovers. Surfacing a toast here would be
+					// noisy because the user is mid-toggle.
+				})
+				saveTimers.current.delete(snapshotId)
+			}, 600)
+			saveTimers.current.set(snapshotId, timer)
+		},
+		[runId]
+	)
+	useEffect(() => {
+		// Flush all pending timers on unmount so an immediate nav-away still
+		// fires the latest selection. We can't await here, but the server
+		// action returns quickly and survives the page transition.
+		const timers = saveTimers.current
+		return () => {
+			for (const timer of timers.values()) {
+				clearTimeout(timer)
+			}
+		}
+	}, [])
 
 	const currentSnapshot = snapshots[currentIndex]
 	const currentSelection = fieldSelections.get(currentSnapshot.snapshotId) || {
@@ -84,6 +140,7 @@ export const EnrichReview = ({
 	const handleToggleField = useCallback(
 		(fieldName: string, state: "accepted" | "rejected" | "neither") => {
 			const snapshotId = currentSnapshot.snapshotId
+			const tradeId = currentSnapshot.tradeId
 			setFieldSelections((prev) => {
 				const selection = prev.get(snapshotId) ?? {
 					accepted: new Set<string>(),
@@ -103,12 +160,18 @@ export const EnrichReview = ({
 					newSelection.accepted.delete(fieldName)
 					newSelection.rejected.delete(fieldName)
 				}
+				scheduleSave(
+					snapshotId,
+					tradeId,
+					newSelection.accepted,
+					newSelection.rejected
+				)
 				const map = new Map(prev)
 				map.set(snapshotId, newSelection)
 				return map
 			})
 		},
-		[currentSnapshot.snapshotId]
+		[currentSnapshot.snapshotId, currentSnapshot.tradeId, scheduleSave]
 	)
 
 	// Save & next handler
@@ -240,29 +303,43 @@ export const EnrichReview = ({
 	// Accept all handler
 	const handleAcceptAll = useCallback(() => {
 		const snapshotId = currentSnapshot.snapshotId
+		const tradeId = currentSnapshot.tradeId
 		const mergedFields = Object.keys(currentSnapshot.dryRun.mergedFields)
 
 		setFieldSelections((prev) => {
 			const newSelection = {
 				accepted: new Set(mergedFields),
-				rejected: new Set(),
+				rejected: new Set<string>(),
 			}
+			scheduleSave(
+				snapshotId,
+				tradeId,
+				newSelection.accepted,
+				newSelection.rejected
+			)
 			return prev.set(snapshotId, newSelection)
 		})
-	}, [currentSnapshot])
+	}, [currentSnapshot, scheduleSave])
 
 	// Reject all handler
 	const handleRejectAll = useCallback(() => {
 		const snapshotId = currentSnapshot.snapshotId
+		const tradeId = currentSnapshot.tradeId
 
 		setFieldSelections((prev) => {
 			const newSelection = {
-				accepted: new Set(),
-				rejected: new Set(),
+				accepted: new Set<string>(),
+				rejected: new Set<string>(),
 			}
+			scheduleSave(
+				snapshotId,
+				tradeId,
+				newSelection.accepted,
+				newSelection.rejected
+			)
 			return prev.set(snapshotId, newSelection)
 		})
-	}, [currentSnapshot])
+	}, [currentSnapshot, scheduleSave])
 
 	// Setup keyboard shortcuts
 	useEnrichShortcuts({

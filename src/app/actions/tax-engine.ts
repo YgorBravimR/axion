@@ -12,6 +12,7 @@ import type {
 	MonthlyDarfRow,
 	YearTaxSummary,
 } from "@/lib/tax/types"
+import type { DarfAlertEntry, DarfAlertSummary } from "./tax-engine.types"
 import type { ActionResponse } from "@/types"
 import { recomputeLedgerSchema } from "@/lib/validations/tax-engine"
 import { and, asc, eq, gte, isNull, lte } from "drizzle-orm"
@@ -399,6 +400,88 @@ export const getYearTaxSummary = async (params: {
 			...summary,
 			irBurdenPercent: Math.round(irBurdenPercent * 100) / 100,
 			heuristicWarning: irBurdenPercent > 30,
+		},
+	}
+}
+
+// ─── getDarfAlertSummary ──────────────────────────────────────────────────────
+
+/**
+ * Returns months that need the user's attention: overdue DARF (status pending
+ * AND darfDueDate < now) and still-pending DARF (status pending AND
+ * darfDueDate >= now or null). recompute-month never writes "overdue" itself,
+ * so we derive it on read from darfDueDate. Window is last 24 months — long
+ * enough to surface anything still unfiled, short enough to keep the query
+ * trivially indexed.
+ */
+export const getDarfAlertSummary = async (params: {
+	accountId: string
+}): Promise<ActionResponse<DarfAlertSummary>> => {
+	const t = await getTranslations("tax.errors")
+	const { userId } = await requireAuth()
+	const { accountId } = params
+
+	const account = await verifyAccountOwnership(accountId, userId)
+
+	if (!account) {
+		return {
+			status: "error",
+			message: t("accountNotFound"),
+			errors: [{ code: "ACCOUNT_NOT_FOUND", detail: "Account not found." }],
+		}
+	}
+
+	const now = new Date()
+	const windowStart = new Date(
+		Date.UTC(now.getUTCFullYear() - 2, now.getUTCMonth(), 1, 0, 0, 0, 0)
+	)
+
+	const rows = await db
+		.select()
+		.from(monthlyTaxLedger)
+		.where(
+			and(
+				eq(monthlyTaxLedger.accountId, accountId),
+				eq(monthlyTaxLedger.darfStatus, "pending"),
+				gte(monthlyTaxLedger.month, windowStart)
+			)
+		)
+		.orderBy(asc(monthlyTaxLedger.month))
+
+	const overdue: DarfAlertEntry[] = []
+	const pending: DarfAlertEntry[] = []
+
+	for (const row of rows) {
+		if (row.darfDueCents <= 0) {
+			continue
+		}
+		const entry: DarfAlertEntry = {
+			year: row.month.getUTCFullYear(),
+			month: row.month.getUTCMonth() + 1,
+			darfDueCents: row.darfDueCents,
+			darfDueDate: row.darfDueDate ?? null,
+			derivedStatus:
+				row.darfDueDate !== null && row.darfDueDate < now
+					? "overdue"
+					: "pending",
+		}
+		if (entry.derivedStatus === "overdue") {
+			overdue.push(entry)
+		} else {
+			pending.push(entry)
+		}
+	}
+
+	return {
+		status: "success",
+		message: "ok",
+		data: {
+			overdueCount: overdue.length,
+			pendingCount: pending.length,
+			overdueTotalCents: overdue.reduce((s, e) => s + e.darfDueCents, 0),
+			pendingTotalCents: pending.reduce((s, e) => s + e.darfDueCents, 0),
+			overdue,
+			pending,
 		},
 	}
 }

@@ -20,6 +20,11 @@ interface DryRunSnapshotHydrated {
 	enrichedAt: Date
 	dryRun: DryRunResult
 	baseline: Record<string, unknown>
+	// Persisted per-field selections for resume. Null when the user hasn't
+	// touched the snapshot yet (distinct from an empty array, which means
+	// "explicitly rejected everything").
+	acceptedFields: string[] | null
+	rejectedFields: string[] | null
 }
 
 interface GetDryRunOutput {
@@ -47,6 +52,17 @@ interface CommitTradeOutput {
 	staleness: StalenessConflict[]
 }
 
+interface SaveDraftSelectionsInput {
+	runId: string
+	tradeId: string
+	acceptedFields: string[]
+	rejectedFields: string[]
+}
+
+interface SaveDraftSelectionsOutput {
+	snapshotId: string
+}
+
 interface AbandonDryRunInput {
 	runId: string
 }
@@ -64,6 +80,8 @@ export type {
 	CommitTradeInput,
 	StalenessConflict,
 	CommitTradeOutput,
+	SaveDraftSelectionsInput,
+	SaveDraftSelectionsOutput,
 	AbandonDryRunInput,
 	AbandonDryRunOutput,
 }

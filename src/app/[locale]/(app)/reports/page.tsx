@@ -24,6 +24,7 @@ import {
 	TaxSectionAsync,
 	RDistributionSectionAsync,
 } from "@/components/reports/async-sections"
+import { DarfAlertBanner } from "@/components/reports/darf-alert-banner"
 
 interface ReportsPageProps {
 	params: Promise<{ locale: string }>
@@ -45,6 +46,12 @@ const ReportsPage = async ({ params }: ReportsPageProps) => {
 		<div className="flex h-full flex-col">
 			<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto">
 				<div className="space-y-m-400 sm:space-y-m-500 lg:space-y-m-600">
+					{/* DARF overdue / pending alert — short-circuits to null when there's
+					    nothing to file. Lives above month-closing so it can't be missed. */}
+					<Suspense fallback={null}>
+						<DarfAlertBanner accountId={currentAccountId} locale={locale} />
+					</Suspense>
+
 					{/* Month Closing Section */}
 					<Suspense fallback={<MonthClosingSkeleton />}>
 						<MonthClosingSection

@@ -31,7 +31,7 @@ import type {
 } from "@/db/schema"
 import { HawksMissingBiasAlert } from "@/components/hawks/hawks-missing-bias-alert"
 import { DailyBiasForm } from "@/components/hawks/daily-bias-form"
-import { Crosshair } from "lucide-react"
+import { Crosshair, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
@@ -72,6 +72,7 @@ const CommandCenterContent = ({
 	const { isPremium } = useFeatureAccess()
 	const { isHawks: isHawksActive } = useAccountMode()
 	const tHawks = useTranslations("hawks.dailyCount")
+	const tNav = useTranslations("commandCenter.dateNavigator")
 	useRegisterPageGuide(commandCenterGuide)
 
 	// State
@@ -146,6 +147,25 @@ const CommandCenterContent = ({
 		<div className="px-s-200 sm:px-m-400 space-y-m-400 sm:space-y-m-500 lg:space-y-m-600 mx-auto max-w-7xl">
 			{/* Date Navigator */}
 			<DateNavigator currentDate={viewDate} isToday={isToday} />
+
+			{/* Read-only banner — past-date view. The DateNavigator chip is easy
+			    to miss; this banner is the unambiguous signal that the page's
+			    edit controls are disabled. */}
+			{isReadOnly && (
+				<div
+					className="p-s-300 gap-s-300 border-acc-100/30 bg-acc-100/5 flex items-center rounded-lg border"
+					role="status"
+					aria-live="polite"
+				>
+					<Clock className="text-acc-100 h-4 w-4 shrink-0" aria-hidden="true" />
+					<span className="text-small text-txt-100 font-medium">
+						{tNav("readOnlyBannerTitle")}
+					</span>
+					<span className="text-small text-txt-300">
+						{tNav("readOnlyBannerDescription")}
+					</span>
+				</div>
+			)}
 
 			{/* Hawks bias gate — shown only on today's view when bias not yet set */}
 			{isHawksActive && !initialHawksBias && isToday && (

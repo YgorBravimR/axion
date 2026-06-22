@@ -586,7 +586,9 @@
 			"today": "Today",
 			"previousDay": "Previous day",
 			"nextDay": "Next day",
-			"readOnlyNotice": "Viewing historical data (read-only)"
+			"readOnlyNotice": "Viewing historical data (read-only)",
+			"readOnlyBannerTitle": "Past session — read-only",
+			"readOnlyBannerDescription": "Plan, notes, checklist, and bias cannot be edited for prior days. Click \"Today\" to resume editing."
 		},
 		"circuitBreaker": {
 			"title": "Circuit Breaker",
@@ -2762,6 +2764,13 @@
 		"emptyState": "No trade data yet. Start logging trades to see your reports.",
 		"emptyStateHint": "Your reports will populate as you log trades in the journal.",
 		"goToJournal": "Log your first trade",
+		"darfAlert": {
+			"overdueTitle": "DARF overdue — {count, plural, one {# month} other {# months}}",
+			"pendingTitle": "DARF pending — {count, plural, one {# month} other {# months}}",
+			"overdueDetail": "{count, plural, one {# month} other {# months}} past the filing deadline · total due {amount}",
+			"pendingDetail": "{count, plural, one {# month} other {# months}} pending · total due {amount}",
+			"filingHint": "Filing deadline is the last business day of the month following the trade month. After filing, mark each month as paid in the annual report."
+		},
 		"annualReportTitle": "Annual Report — {year}",
 		"weeklyMetaTitle": "Weekly Meta vs Real",
 		"annualRollupTitle": "Annual Rollup",

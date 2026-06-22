@@ -48,6 +48,8 @@ const getDryRunImpl = async (
 				enrichedAt: snapshot.enrichedAt,
 				dryRun: dryRunOutput?.result ?? ({} as DryRunResult),
 				baseline: dryRunOutput?.baseline ?? {},
+				acceptedFields: snapshot.acceptedFields ?? null,
+				rejectedFields: snapshot.rejectedFields ?? null,
 			}
 		})
 
