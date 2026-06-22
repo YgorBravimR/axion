@@ -65,26 +65,26 @@ const runSeed = async (): Promise<void> => {
 	const accounts = await seedAccounts(sql, admin.id)
 	await seedAssets(sql, accounts)
 	await seedTimeframes(sql)
-	const strategyMap = await seedStrategies(sql, accounts)
+	// const strategyMap = await seedStrategies(sql, accounts)
 	await seedTags(sql, accounts)
 	await seedSettings(sql)
 
-	// Hawks methodology: global scenarios + user-scoped conditions + playbooks.
-	await seedHawksScenarios(sql)
-	const conditionMap = await seedTradingConditions(sql, admin.id)
-	const hawksPlaybooks = await seedHawksPlaybooks(sql, admin.id, conditionMap)
+	// // Hawks methodology: global scenarios + user-scoped conditions + playbooks.
+	// await seedHawksScenarios(sql)
+	// const conditionMap = await seedTradingConditions(sql, admin.id)
+	// const hawksPlaybooks = await seedHawksPlaybooks(sql, admin.id, conditionMap)
 
-	// Plan cascades + Hawks Renko/OCO.
-	const cascades = await seedPlanCascades(sql, accounts, hawksPlaybooks)
-	await seedHawksRenkoAndOco(sql, accounts)
+	// // Plan cascades + Hawks Renko/OCO.
+	// const cascades = await seedPlanCascades(sql, accounts, hawksPlaybooks)
+	// await seedHawksRenkoAndOco(sql, accounts)
 
-	// Trade generation per account narrative.
-	await seedPersonalTrades(sql, accounts, cascades, strategyMap)
-	await seedAtomFundedTrades(sql, accounts, cascades, strategyMap)
-	await seedHawksProTrades(sql, accounts, cascades, hawksPlaybooks)
-	await seedGreenlineTrades(sql, accounts, cascades, strategyMap)
-	await seedStopLossLabTrades(sql, accounts, cascades, strategyMap)
-	await seedBeginnerTrades(sql, accounts, cascades, strategyMap)
+	// // Trade generation per account narrative.
+	// await seedPersonalTrades(sql, accounts, cascades, strategyMap)
+	// await seedAtomFundedTrades(sql, accounts, cascades, strategyMap)
+	// await seedHawksProTrades(sql, accounts, cascades, hawksPlaybooks)
+	// await seedGreenlineTrades(sql, accounts, cascades, strategyMap)
+	// await seedStopLossLabTrades(sql, accounts, cascades, strategyMap)
+	// await seedBeginnerTrades(sql, accounts, cascades, strategyMap)
 
 	await verify(sql)
 
