@@ -29,6 +29,7 @@ import { resolveTier } from "@/lib/fractal-plan/capital-ladder"
 import { projectFromPace } from "@/lib/fractal-plan/projection"
 import type { AssetOption } from "@/components/fractal-plan/cockpit/what-if-calculator"
 import { EoyProjectionBanner } from "@/components/fractal-plan/cockpit/eoy-projection-banner"
+import { ComplianceRibbon } from "@/components/fractal-plan/cockpit/compliance-ribbon"
 import { PlanYearGuide } from "@/components/fractal-plan/cockpit/plan-year-guide"
 
 interface PageProps {
@@ -284,6 +285,7 @@ const PlanYearPage = async ({ params }: PageProps) => {
 			entryDate: trades.entryDate,
 			rOutcome: trades.rOutcome,
 			pnl: trades.pnl,
+			followedPlan: trades.followedPlan,
 		})
 		.from(trades)
 		.where(
@@ -322,6 +324,10 @@ const PlanYearPage = async ({ params }: PageProps) => {
 	}
 
 	const grossPnlByMonth = Array.from({ length: 12 }, () => 0)
+	const complianceByMonth = Array.from({ length: 12 }, () => ({
+		followed: 0,
+		rated: 0,
+	}))
 	for (const t of yearTrades) {
 		const r = t.rOutcome !== null ? Number(t.rOutcome) : 0
 		const pnlCents = t.pnl !== null ? Number(t.pnl) : 0
@@ -334,6 +340,12 @@ const PlanYearPage = async ({ params }: PageProps) => {
 		const iso = isoWeekOf(t.entryDate)
 		const map = weekIsoBucketsByMonth[m]!
 		map.set(iso, (map.get(iso) ?? 0) + r)
+		if (t.followedPlan !== null) {
+			complianceByMonth[m]!.rated += 1
+			if (t.followedPlan) {
+				complianceByMonth[m]!.followed += 1
+			}
+		}
 	}
 	for (let i = 0; i < 12; i++) {
 		const gross = grossPnlByMonth[i]!
@@ -548,6 +560,13 @@ const PlanYearPage = async ({ params }: PageProps) => {
 							lastActualMonthIdx={lastActualMonthIdx}
 						/>
 					)}
+					<ComplianceRibbon
+						cells={complianceByMonth.map((c, i) => ({
+							monthIndex: i,
+							followed: c.followed,
+							rated: c.rated,
+						}))}
+					/>
 					<AnnualCockpitGrid
 						year={year}
 						locale={locale}

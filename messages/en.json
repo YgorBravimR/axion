@@ -6171,6 +6171,13 @@
 			"weekly": "Weekly",
 			"monthly": "Monthly"
 		},
+		"complianceRibbon": {
+			"ariaLabel": "Monthly plan-compliance ribbon",
+			"title": "Plan compliance",
+			"description": "Followed-plan % per month — your discipline ribbon for the year.",
+			"ytdLabel": "{followed}/{rated} trades YTD",
+			"cellAriaLabel": "{month} — {pct}% followed across {rated} trades"
+		},
 		"darfStrip": {
 			"ariaLabel": "Monthly DARF — annual view",
 			"chipAriaLabel": "{month} — {status} — {amount}",

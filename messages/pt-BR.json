@@ -6171,6 +6171,13 @@
 			"weekly": "Semanal",
 			"monthly": "Mensal"
 		},
+		"complianceRibbon": {
+			"ariaLabel": "Faixa mensal de cumprimento do plano",
+			"title": "Cumprimento do plano",
+			"description": "% de trades dentro do plano por mês — sua disciplina visualizada no ano.",
+			"ytdLabel": "{followed}/{rated} trades no ano",
+			"cellAriaLabel": "{month} — {pct}% cumpridos em {rated} trades"
+		},
 		"darfStrip": {
 			"ariaLabel": "DARF mensal — visão anual",
 			"chipAriaLabel": "{month} — {status} — {amount}",
