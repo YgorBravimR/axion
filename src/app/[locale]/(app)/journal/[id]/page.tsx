@@ -39,6 +39,7 @@ import {
 } from "@/app/actions/candle-query"
 import { DeleteTradeButton } from "./delete-button"
 import { TradeDetailGuide } from "@/components/journal/trade-detail-guide"
+import { AskButton } from "@/components/ai-assistant/ask-button"
 
 interface TradeDetailPageProps {
 	params: Promise<{ id: string }>
@@ -233,6 +234,10 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 										</Link>
 									</Button>
 									<DeleteTradeButton tradeId={trade.id} />
+									<AskButton
+										surface="trade_detail"
+										contextRefId={trade.id.toString()}
+									/>
 									<div className="text-right">
 										<PnLDisplay value={pnl} size="xl" />
 										{realizedR !== 0 && (

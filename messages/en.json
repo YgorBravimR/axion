@@ -6803,5 +6803,36 @@
 				"notFoundForYear": "Yearly plan not found for this year"
 			}
 		}
+	},
+	"assistant": {
+		"title": "Trade narrator",
+		"subtitle": "I narrate what the engine computed on your data. I never recommend changes — use the optimizer for that.",
+		"trigger": {
+			"label": "Ask about this"
+		},
+		"suggested": {
+			"label": "Try one of these:",
+			"narrate": "Narrate what the engine saw on this trade.",
+			"indicators": "Which indicators were favorable vs unfavorable at entry?",
+			"cohort": "How does this trade compare to my last 30 days?"
+		},
+		"audit": {
+			"label": "Tool calls"
+		},
+		"streaming": "Reading your data…",
+		"input": {
+			"placeholder": "Ask a question about this trade…"
+		},
+		"actions": {
+			"send": "Send",
+			"streaming": "Working…",
+			"clear": "Clear"
+		},
+		"errors": {
+			"unavailable": "The assistant is not available right now.",
+			"network": "Network error. Try again.",
+			"generic": "Something went wrong.",
+			"budget": "Monthly assistant budget reached ({spent} of {cap}). Resets next month."
+		}
 	}
 }

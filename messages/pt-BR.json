@@ -6803,5 +6803,36 @@
 				"notFoundForYear": "Plano anual não encontrado para este ano"
 			}
 		}
+	},
+	"assistant": {
+		"title": "Narrador de trade",
+		"subtitle": "Eu narro o que o motor calculou nos seus dados. Nunca recomendo mudanças — use o otimizador para isso.",
+		"trigger": {
+			"label": "Perguntar sobre este"
+		},
+		"suggested": {
+			"label": "Experimente uma destas:",
+			"narrate": "Narre o que o motor viu neste trade.",
+			"indicators": "Quais indicadores estavam favoráveis vs desfavoráveis na entrada?",
+			"cohort": "Como este trade se compara aos meus últimos 30 dias?"
+		},
+		"audit": {
+			"label": "Chamadas de ferramentas"
+		},
+		"streaming": "Lendo seus dados…",
+		"input": {
+			"placeholder": "Faça uma pergunta sobre este trade…"
+		},
+		"actions": {
+			"send": "Enviar",
+			"streaming": "Processando…",
+			"clear": "Limpar"
+		},
+		"errors": {
+			"unavailable": "O assistente não está disponível no momento.",
+			"network": "Erro de rede. Tente novamente.",
+			"generic": "Algo deu errado.",
+			"budget": "Orçamento mensal do assistente atingido ({spent} de {cap}). Renova no próximo mês."
+		}
 	}
 }
