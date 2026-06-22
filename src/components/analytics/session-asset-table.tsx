@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { Trophy } from "lucide-react"
 import type { SessionAssetPerformance, TradingSession } from "@/types"
 import { formatBrlCompactWithSign, formatR } from "@/lib/formatting"
+import { Link } from "@/i18n/routing"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
 import {
 	Table,
@@ -141,7 +142,12 @@ export const SessionAssetTable = ({
 							className="border-bg-300/50 border-b last:border-b-0"
 						>
 							<TableCell className="py-s-200 text-small text-txt-100 font-medium">
-								{asset.asset}
+								<Link
+									href={`/journal?assets=${encodeURIComponent(asset.asset)}`}
+									className="hover:text-acc-100 hover:underline"
+								>
+									{asset.asset}
+								</Link>
 							</TableCell>
 							{sessions.map((session) => {
 								const sessionData = sessionMaps.get(asset.asset)?.get(session)

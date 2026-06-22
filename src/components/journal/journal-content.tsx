@@ -130,6 +130,7 @@ const JournalContent = () => {
 		const outcomesParam = urlParams.getArray("outcomes")
 		const directionsParam = urlParams.getArray("directions")
 		const assetsParam = urlParams.getArray("assets")
+		const tagsParam = urlParams.getArray("tags")
 		const ratingParam = urlParams.getArray("rating")
 		const followedPlanParam = urlParams.get("followedPlan")
 		const hourFromParam = urlParams.get("hourFrom")
@@ -146,6 +147,9 @@ const JournalContent = () => {
 		}
 		if (assetsParam.length > 0) {
 			filters.assets = assetsParam
+		}
+		if (tagsParam.length > 0) {
+			filters.tags = tagsParam
 		}
 		if (ratingParam.length > 0) {
 			filters.rating = ratingParam
@@ -189,6 +193,7 @@ const JournalContent = () => {
 				outcomes: (filters.outcomes as string[] | undefined) ?? null,
 				directions: (filters.directions as string[] | undefined) ?? null,
 				assets: (filters.assets as string[] | undefined) ?? null,
+				tags: (filters.tags as string[] | undefined) ?? null,
 				rating: (filters.rating as string[] | undefined) ?? null,
 				followedPlan: (filters.followedPlan as string | undefined) ?? null,
 				hourFrom: (filters.hourFrom as string | undefined) ?? null,
@@ -206,6 +211,7 @@ const JournalContent = () => {
 			outcomes: null,
 			directions: null,
 			assets: null,
+			tags: null,
 			rating: null,
 			followedPlan: null,
 			hourFrom: null,
@@ -244,6 +250,7 @@ const JournalContent = () => {
 								| Array<"long" | "short">
 								| undefined,
 							assets: extendedFilters.assets as string[] | undefined,
+							tagIds: extendedFilters.tags as string[] | undefined,
 							followedPlan:
 								extendedFilters.followedPlan === "true"
 									? true

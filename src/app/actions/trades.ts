@@ -1924,6 +1924,13 @@ export const getTradesGroupedByDay = async (
 		if (extendedFilters?.assets && extendedFilters.assets.length > 0) {
 			conditions.push(inArray(trades.asset, extendedFilters.assets))
 		}
+		if (extendedFilters?.tagIds && extendedFilters.tagIds.length > 0) {
+			const tradesWithTags = db
+				.select({ tradeId: tradeTags.tradeId })
+				.from(tradeTags)
+				.where(inArray(tradeTags.tagId, extendedFilters.tagIds))
+			conditions.push(inArray(trades.id, tradesWithTags))
+		}
 
 		const rawResult = await db.query.trades.findMany({
 			where: and(...conditions),

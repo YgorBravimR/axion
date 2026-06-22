@@ -10,6 +10,7 @@ import {
 	computeChartDomain,
 } from "@/lib/formatting"
 import { useChartConfig } from "@/hooks/use-chart-config"
+import { Link } from "@/i18n/routing"
 import type { HourlyPerformance } from "@/types"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
 
@@ -187,6 +188,14 @@ export const HourlyPerformanceChart = memo(
 							</span>
 							, {bestHour?.totalTrades} {t("time.trades").toLowerCase()})
 						</p>
+						{bestHour ? (
+							<Link
+								href={`/journal?hourFrom=${bestHour.hour}&hourTo=${bestHour.hour}`}
+								className="text-tiny text-acc-100 hover:underline"
+							>
+								{t("time.viewTrades")}
+							</Link>
+						) : null}
 					</div>
 					<div>
 						<p className="text-tiny text-txt-300">{t("time.worstHour")}</p>
@@ -198,6 +207,14 @@ export const HourlyPerformanceChart = memo(
 							</span>
 							, {worstHour?.totalTrades} {t("time.trades").toLowerCase()})
 						</p>
+						{worstHour ? (
+							<Link
+								href={`/journal?hourFrom=${worstHour.hour}&hourTo=${worstHour.hour}`}
+								className="text-tiny text-acc-100 hover:underline"
+							>
+								{t("time.viewTrades")}
+							</Link>
+						) : null}
 					</div>
 				</div>
 			</div>

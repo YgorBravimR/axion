@@ -2175,6 +2175,7 @@
 			"avgR": "R Médio",
 			"bestHour": "Melhor Hora",
 			"worstHour": "Pior Hora",
+			"viewTrades": "Ver trades →",
 			"bestDay": "Melhor Dia",
 			"worstDay": "Pior Dia",
 			"bestHourOnDay": "Melhor Hora",
@@ -2862,7 +2863,8 @@
 			"noMistakes": "Nenhum erro identificado",
 			"avg": "Média",
 			"insight": "Insight",
-			"insightText": "Eliminando seu principal erro ({mistake}), você poderia ter economizado {amount} neste período."
+			"insightText": "Eliminando seu principal erro ({mistake}), você poderia ter economizado {amount} neste período.",
+			"viewTrades": "Ver trades →"
 		},
 		"commissionFees": {
 			"title": "Impacto de Corretagem e Taxas",

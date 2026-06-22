@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { Badge } from "@/components/ui/badge"
 import { AlertTriangle } from "lucide-react"
 import { useFormatting } from "@/hooks/use-formatting"
+import { Link } from "@/i18n/routing"
 import type { MistakeCostAnalysis } from "@/app/actions/reports.types"
 
 interface MistakeCostCardProps {
@@ -103,6 +104,12 @@ export const MistakeCostCard = ({ data }: MistakeCostCardProps) => {
 									<span className="text-small text-trade-sell font-medium whitespace-nowrap">
 										{formatCurrencyWithSign(-mistake.totalLoss)}
 									</span>
+									<Link
+										href={`/journal?tags=${encodeURIComponent(mistake.tagId)}`}
+										className="text-tiny text-acc-100 whitespace-nowrap hover:underline"
+									>
+										{t("viewTrades")}
+									</Link>
 								</div>
 							</div>
 							{/* Cost bar */}

@@ -63,6 +63,7 @@ interface ExtendedTradeFilters {
 	outcomes?: Array<"win" | "loss" | "breakeven">
 	directions?: Array<"long" | "short">
 	assets?: string[]
+	tagIds?: string[]
 	// Post-query (require decrypted data or timezone)
 	hourFrom?: number
 	hourTo?: number

@@ -2175,6 +2175,7 @@
 			"avgR": "Avg R",
 			"bestHour": "Best Hour",
 			"worstHour": "Worst Hour",
+			"viewTrades": "View trades →",
 			"bestDay": "Best Day",
 			"worstDay": "Worst Day",
 			"bestHourOnDay": "Best Hour",
@@ -2862,7 +2863,8 @@
 			"noMistakes": "No mistakes identified",
 			"avg": "Avg",
 			"insight": "Insight",
-			"insightText": "By eliminating your top mistake ({mistake}), you could have saved {amount} during this period."
+			"insightText": "By eliminating your top mistake ({mistake}), you could have saved {amount} during this period.",
+			"viewTrades": "View trades →"
 		},
 		"commissionFees": {
 			"title": "Commission & Fee Impact",
