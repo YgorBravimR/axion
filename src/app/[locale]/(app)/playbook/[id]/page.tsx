@@ -24,6 +24,7 @@ import { ConditionTierDisplay } from "@/components/playbook/condition-tier-displ
 import { ConditionsScorecard } from "@/components/playbook/conditions-scorecard"
 import { HawksPlaybookPanel } from "@/components/playbook/hawks-playbook-panel"
 import { ComplianceTrendSparkline } from "@/components/playbook/compliance-trend-sparkline"
+import { PremiumFeatureTeaser } from "@/components/premium/premium-feature-teaser"
 import { ScenarioSection } from "@/components/playbook/scenario-section"
 import { getCurrentUser } from "@/app/actions/auth"
 import { hasAccess } from "@/lib/feature-access"
@@ -324,6 +325,20 @@ const StrategyDetailPage = async ({
 									</div>
 								</div>
 							)}
+						{!isPremium && (
+							<div className="mt-s-300 sm:mt-m-400 border-bg-300 pt-s-300 sm:pt-m-400 border-t">
+								<PremiumFeatureTeaser
+									title={t("complianceTrend.teaser.title")}
+									description={t("complianceTrend.teaser.description")}
+									bullets={[
+										t("complianceTrend.teaser.bullet1"),
+										t("complianceTrend.teaser.bullet2"),
+										t("complianceTrend.teaser.bullet3"),
+									]}
+									upgradeLabel={t("complianceTrend.teaser.upgradeLabel")}
+								/>
+							</div>
+						)}
 					</div>
 
 					{/* Risk Settings */}
@@ -420,6 +435,22 @@ const StrategyDetailPage = async ({
 								)}
 							</div>
 						</div>
+					)}
+
+					{/* Conditions teaser for non-premium — the conditions feature is
+					    invisible by default, so non-premium users don't even know it
+					    exists. The teaser surfaces the value once. */}
+					{!isPremium && (
+						<PremiumFeatureTeaser
+							title={t("conditions.teaser.title")}
+							description={t("conditions.teaser.description")}
+							bullets={[
+								t("conditions.teaser.bullet1"),
+								t("conditions.teaser.bullet2"),
+								t("conditions.teaser.bullet3"),
+							]}
+							upgradeLabel={t("conditions.teaser.upgradeLabel")}
+						/>
 					)}
 
 					{/* Conditions */}

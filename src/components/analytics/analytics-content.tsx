@@ -20,6 +20,7 @@ import {
 } from "@/components/analytics"
 import { LoadingSpinner } from "@/components/shared"
 import { AccountComparisonContent } from "@/components/account-comparison"
+import { PremiumFeatureTeaser } from "@/components/premium/premium-feature-teaser"
 import type { AccountOption } from "@/components/account-comparison/account-selector"
 import { useFeatureAccess } from "@/hooks/use-feature-access"
 import { useRegisterPageGuide } from "@/components/ui/page-guide"
@@ -126,6 +127,7 @@ const AnalyticsContent = ({
 	accounts,
 }: AnalyticsContentProps) => {
 	const t = useTranslations("analytics")
+	const tTeaser = useTranslations("premium")
 	const [isPending, setIsPending] = useState(false)
 	const { isPremium } = useFeatureAccess()
 	const showAccountComparison = isPremium && accounts.length >= 2
@@ -368,11 +370,29 @@ const AnalyticsContent = ({
 				/>
 			</section>
 
-			{/* Account Comparison section — only when admin + 2+ accounts */}
+			{/* Account Comparison section — premium + 2+ accounts.
+			    Non-premium with 2+ accounts gets a teaser so they know what
+			    they're missing. Single-account users see nothing (no value to
+			    upgrade for). */}
 			{showAccountComparison && (
 				<>
 					<div className="border-bg-300 border-t" />
 					<AccountComparisonContent accounts={accounts} />
+				</>
+			)}
+			{!isPremium && accounts.length >= 2 && (
+				<>
+					<div className="border-bg-300 border-t" />
+					<PremiumFeatureTeaser
+						title={tTeaser("accountComparison.title")}
+						description={tTeaser("accountComparison.description")}
+						bullets={[
+							tTeaser("accountComparison.bullet1"),
+							tTeaser("accountComparison.bullet2"),
+							tTeaser("accountComparison.bullet3"),
+						]}
+						upgradeLabel={tTeaser("accountComparison.upgradeLabel")}
+					/>
 				</>
 			)}
 		</div>

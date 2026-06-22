@@ -2499,6 +2499,14 @@
 		},
 		"conditions": {
 			"title": "Condições de Trading",
+			"teaser": {
+				"title": "Marque sua estratégia com condições de entrada",
+				"description": "Defina níveis A / AA / AAA de condições por estratégia. Cada trade passa a registrar qual nível atendeu — transformando a vaga \"qualidade do setup\" em um número auditável.",
+				"bullet1": "Condições em múltiplos níveis: obrigatórias, confirmação e ideais.",
+				"bullet2": "Scorecard mostra mediana de P&L quando condições são atendidas vs. quebradas.",
+				"bullet3": "Diff entre versões revela a regra que mudou o seu edge.",
+				"upgradeLabel": "Fazer upgrade Premium"
+			},
 			"mandatory": "Obrigatórias",
 			"tier2": "Nível 2",
 			"tier3": "Nível 3",
@@ -2751,13 +2759,31 @@
 			"subtitle": "Taxa semanal de aderência ao plano nos últimos 26 semanas.",
 			"last4WeeksAvg": "Média últimas 4 semanas: {pct}%",
 			"emptyState": "Trades insuficientes para traçar a tendência.",
-			"tooltipFormat": "Semana de {week}: {compliance}% ({followed}/{tracked} trades)"
+			"tooltipFormat": "Semana de {week}: {compliance}% ({followed}/{tracked} trades)",
+			"teaser": {
+				"title": "Veja a tendência de aderência ao longo do tempo",
+				"description": "Acompanhe semana a semana com que frequência seus trades seguiram o plano desta estratégia. Desvios aparecem como uma linha descendente — bem antes de aparecer no P&L.",
+				"bullet1": "Sparkline de 26 semanas da taxa de plano-seguido por estratégia.",
+				"bullet2": "Compare versões lado a lado para identificar a mudança que quebrou a disciplina.",
+				"bullet3": "Cruze com a aderência mensal do Plano para achar a semana mais fraca.",
+				"upgradeLabel": "Fazer upgrade Premium"
+			}
 		},
 		"messages": {
 			"conditionCreatedSuccessfully": "Condição criada com sucesso",
 			"conditionUpdatedSuccessfully": "Condição atualizada com sucesso",
 			"conditionsRetrievedSuccessfully": "Condições recuperadas com sucesso",
 			"conditionDeletedSuccessfully": "Condição excluída com sucesso"
+		}
+	},
+	"premium": {
+		"accountComparison": {
+			"title": "Comparação de Contas",
+			"description": "Coloque duas ou mais contas lado a lado — paper vs live, ou uma mesa proprietária contra outra — e veja a diferença em execução, drawdown e disciplina.",
+			"bullet1": "Curvas de equity e métricas ajustadas ao risco lado a lado.",
+			"bullet2": "Delta de execução: quanto do seu edge de backtest você perde no live.",
+			"bullet3": "Comparação entre mesas proprietárias: qual permite operar seu edge.",
+			"upgradeLabel": "Fazer upgrade Premium"
 		}
 	},
 	"reports": {

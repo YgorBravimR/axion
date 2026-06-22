@@ -2499,6 +2499,14 @@
 		},
 		"conditions": {
 			"title": "Trading Conditions",
+			"teaser": {
+				"title": "Tag your strategy with entry conditions",
+				"description": "Define A / AA / AAA condition tiers per strategy. Each trade then reports which tier it met — turning fuzzy \"setup quality\" into a ranked, audit-ready number.",
+				"bullet1": "Multi-tier conditions: mandatory, confirmation, ideal.",
+				"bullet2": "Scorecard shows median P&L when conditions are met vs. broken.",
+				"bullet3": "Cross-version diff finds the rule change that moved your edge.",
+				"upgradeLabel": "Upgrade to Premium"
+			},
 			"mandatory": "Mandatory",
 			"tier2": "Tier 2",
 			"tier3": "Tier 3",
@@ -2751,13 +2759,31 @@
 			"subtitle": "Weekly followed-plan rate over the last 26 weeks.",
 			"last4WeeksAvg": "Last 4 weeks avg: {pct}%",
 			"emptyState": "Not enough trades to draw a trend yet.",
-			"tooltipFormat": "Week of {week}: {compliance}% ({followed}/{tracked} trades)"
+			"tooltipFormat": "Week of {week}: {compliance}% ({followed}/{tracked} trades)",
+			"teaser": {
+				"title": "See your compliance trend over time",
+				"description": "Track week-by-week how often your trades followed this strategy's plan. Drift shows up as a sloping line — long before it shows up in your P&L.",
+				"bullet1": "26-week sparkline of followed-plan rate per strategy.",
+				"bullet2": "Compare versions side-by-side to spot the rule change that broke discipline.",
+				"bullet3": "Cross-reference with monthly Plan compliance to find the weakest week.",
+				"upgradeLabel": "Upgrade to Premium"
+			}
 		},
 		"messages": {
 			"conditionCreatedSuccessfully": "Condition created successfully",
 			"conditionUpdatedSuccessfully": "Condition updated successfully",
 			"conditionsRetrievedSuccessfully": "Conditions retrieved successfully",
 			"conditionDeletedSuccessfully": "Condition deleted successfully"
+		}
+	},
+	"premium": {
+		"accountComparison": {
+			"title": "Account Comparison",
+			"description": "Stack two or more accounts side-by-side — paper vs live, or one prop firm against another — and read the difference in execution drag, drawdown, and discipline.",
+			"bullet1": "Side-by-side equity curves and risk-adjusted metrics per account.",
+			"bullet2": "Execution-drag delta: how much of your backtest edge you're losing live.",
+			"bullet3": "Prop-firm comparison: which firm's rules let you trade your edge.",
+			"upgradeLabel": "Upgrade to Premium"
 		}
 	},
 	"reports": {
