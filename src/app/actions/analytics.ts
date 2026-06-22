@@ -2,7 +2,12 @@
 
 import { requireAuth } from "@/app/actions/auth"
 import { db } from "@/db/drizzle"
-import { settings, trades, tradingAccounts } from "@/db/schema"
+import {
+	accountCapitalEvents,
+	settings,
+	trades,
+	tradingAccounts,
+} from "@/db/schema"
 import {
 	getCachedAnalyticsDashboard,
 	getCachedDashboardData,
@@ -339,18 +344,60 @@ export const getEquityCurve = async (
 			}
 		}
 
+		const accountIdsForEvents = authContext.showAllAccounts
+			? authContext.allAccountIds
+			: [authContext.accountId]
+		const capitalEventConditions = [
+			inArray(accountCapitalEvents.accountId, accountIdsForEvents),
+		]
+		if (dateTo) {
+			capitalEventConditions.push(
+				lte(accountCapitalEvents.eventDate, formatDateKey(dateTo))
+			)
+		}
+		const capitalEvents = await db.query.accountCapitalEvents.findMany({
+			where: and(...capitalEventConditions),
+			orderBy: [asc(accountCapitalEvents.eventDate)],
+		})
+
+		// Sum signed (deposit positive, withdrawal negative) events per ISO date.
+		const dailyCapitalDelta = new Map<string, number>()
+		for (const event of capitalEvents) {
+			const signed =
+				event.eventType === "withdrawal"
+					? -fromCents(event.amountCents)
+					: fromCents(event.amountCents)
+			dailyCapitalDelta.set(
+				event.eventDate,
+				(dailyCapitalDelta.get(event.eventDate) ?? 0) + signed
+			)
+		}
+		const sortedEventDates = Array.from(dailyCapitalDelta.keys()).toSorted()
+
 		const equityPoints: EquityPoint[] = []
 
 		if (mode === "trade") {
 			// Per-trade equity curve
 			let cumulativePnL = 0
+			let cumulativeCapital = 0
+			let nextEventIdx = 0
 			let peak = initialBalance
 
 			for (let i = 0; i < result.length; i++) {
 				const trade = result[i]!
+				const dateKey = formatDateKey(trade.entryDate)
+				while (
+					nextEventIdx < sortedEventDates.length &&
+					sortedEventDates[nextEventIdx]! <= dateKey
+				) {
+					cumulativeCapital += dailyCapitalDelta.get(
+						sortedEventDates[nextEventIdx]!
+					)!
+					nextEventIdx++
+				}
 				const pnl = fromCents(trade.pnl)
 				cumulativePnL += pnl
-				const accountEquity = initialBalance + cumulativePnL
+				const accountEquity = initialBalance + cumulativeCapital + cumulativePnL
 
 				if (accountEquity > peak) {
 					peak = accountEquity
@@ -359,7 +406,7 @@ export const getEquityCurve = async (
 				const drawdown = peak > 0 ? ((peak - accountEquity) / peak) * 100 : 0
 
 				equityPoints.push({
-					date: formatDateKey(trade.entryDate),
+					date: dateKey,
 					equity: cumulativePnL,
 					accountEquity,
 					drawdown,
@@ -376,15 +423,19 @@ export const getEquityCurve = async (
 				dailyPnlMap.set(dateKey, existing + pnl)
 			}
 
-			const sortedDates = Array.from(dailyPnlMap.keys()).toSorted()
+			const sortedDates = Array.from(
+				new Set([...dailyPnlMap.keys(), ...sortedEventDates])
+			).toSorted()
 
 			let cumulativePnL = 0
+			let cumulativeCapital = 0
 			let peak = initialBalance
 
 			for (const date of sortedDates) {
 				const dailyPnl = dailyPnlMap.get(date) || 0
 				cumulativePnL += dailyPnl
-				const accountEquity = initialBalance + cumulativePnL
+				cumulativeCapital += dailyCapitalDelta.get(date) ?? 0
+				const accountEquity = initialBalance + cumulativeCapital + cumulativePnL
 
 				if (accountEquity > peak) {
 					peak = accountEquity

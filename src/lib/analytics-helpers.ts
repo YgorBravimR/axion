@@ -232,8 +232,19 @@ const computeExpectedValue = (trades: TradeForStats[]): ExpectedValueData => {
  * Compute daily equity curve from decrypted trades.
  * Mirrors the daily mode in getEquityCurve (analytics.ts lines 377-409).
  */
-const computeEquityCurve = (trades: TradeForEquity[]): EquityPoint[] => {
-	if (trades.length === 0) {
+const computeEquityCurve = (
+	trades: TradeForEquity[],
+	options?: {
+		initialBalance?: number
+		dailyCapitalDelta?: Map<string, number>
+	}
+): EquityPoint[] => {
+	const initialBalance = options?.initialBalance ?? 0
+	const dailyCapitalDelta = options?.dailyCapitalDelta
+	if (
+		trades.length === 0 &&
+		(!dailyCapitalDelta || dailyCapitalDelta.size === 0)
+	) {
 		return []
 	}
 
@@ -246,15 +257,23 @@ const computeEquityCurve = (trades: TradeForEquity[]): EquityPoint[] => {
 		dailyPnlMap.set(dateKey, existing + pnl)
 	}
 
-	const sortedDates = Array.from(dailyPnlMap.keys()).toSorted()
+	const sortedDates = Array.from(
+		new Set([
+			...dailyPnlMap.keys(),
+			...(dailyCapitalDelta ? dailyCapitalDelta.keys() : []),
+		])
+	).toSorted()
 
 	const equityPoints: EquityPoint[] = []
 	let cumulativePnL = 0
+	let cumulativeCapital = 0
 	let peak: number | null = null
 
 	for (const date of sortedDates) {
 		const dailyPnl = dailyPnlMap.get(date) || 0
 		cumulativePnL += dailyPnl
+		cumulativeCapital += dailyCapitalDelta?.get(date) ?? 0
+		const accountEquity = initialBalance + cumulativeCapital + cumulativePnL
 
 		if (peak === null || cumulativePnL > peak) {
 			peak = cumulativePnL
@@ -266,7 +285,7 @@ const computeEquityCurve = (trades: TradeForEquity[]): EquityPoint[] => {
 		equityPoints.push({
 			date,
 			equity: cumulativePnL,
-			accountEquity: cumulativePnL, // no initial balance context for comparison
+			accountEquity,
 			drawdown,
 		})
 	}

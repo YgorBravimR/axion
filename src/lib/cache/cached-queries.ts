@@ -15,7 +15,12 @@
 
 import { cacheTag, cacheLife } from "next/cache"
 import { db } from "@/db/drizzle"
-import { trades, settings, tradingAccounts } from "@/db/schema"
+import {
+	accountCapitalEvents,
+	trades,
+	settings,
+	tradingAccounts,
+} from "@/db/schema"
 import { and, asc, desc, eq, gte, lte, inArray } from "drizzle-orm"
 import type {
 	TradeFilters,
@@ -27,6 +32,13 @@ import type {
 	DailyPnL,
 	RadarChartData,
 } from "@/types"
+
+type CapitalEventRow = {
+	eventType: "deposit" | "withdrawal"
+	amountCents: number
+	eventDate: string
+}
+type AccountStartingBalanceRow = { startingBalanceCents: number | null }
 import {
 	computeOverallStats,
 	computeExpectedValue,
@@ -115,15 +127,35 @@ const getCachedAnalyticsDashboard = async (
 	cacheLife("minutes") // 5 min TTL as safety net
 
 	const conditions = buildCacheConditions(ctx, filters)
+	const accountIdsForEvents = ctx.showAllAccounts
+		? ctx.allAccountIds
+		: [ctx.accountId]
 
-	const result = await db.query.trades.findMany({
-		where: and(...conditions),
-		with: {
-			strategy: true,
-			timeframe: true,
-		},
-		orderBy: [asc(trades.entryDate)],
-	})
+	const [result, capitalEventsForAnalytics, accountRowsForAnalytics] =
+		await Promise.all([
+			db.query.trades.findMany({
+				where: and(...conditions),
+				with: {
+					strategy: true,
+					timeframe: true,
+				},
+				orderBy: [asc(trades.entryDate)],
+			}),
+			accountIdsForEvents.length > 0
+				? db.query.accountCapitalEvents.findMany({
+						where: inArray(accountCapitalEvents.accountId, accountIdsForEvents),
+						orderBy: [asc(accountCapitalEvents.eventDate)],
+					})
+				: Promise.resolve([] as CapitalEventRow[]),
+			accountIdsForEvents.length > 0
+				? db
+						.select({
+							startingBalanceCents: tradingAccounts.startingBalanceCents,
+						})
+						.from(tradingAccounts)
+						.where(inArray(tradingAccounts.id, accountIdsForEvents))
+				: Promise.resolve([] as AccountStartingBalanceRow[]),
+		])
 
 	const tradesForComputation = result.map((t) => ({
 		...t,
@@ -131,13 +163,33 @@ const getCachedAnalyticsDashboard = async (
 		timeframeName: t.timeframe?.name ?? null,
 	}))
 
+	const dailyCapitalDeltaForAnalytics = new Map<string, number>()
+	for (const event of capitalEventsForAnalytics) {
+		const signed =
+			event.eventType === "withdrawal"
+				? -fromCents(event.amountCents)
+				: fromCents(event.amountCents)
+		dailyCapitalDeltaForAnalytics.set(
+			event.eventDate,
+			(dailyCapitalDeltaForAnalytics.get(event.eventDate) ?? 0) + signed
+		)
+	}
+	const initialBalanceForAnalytics =
+		accountRowsForAnalytics.reduce(
+			(sum, r) => sum + (r.startingBalanceCents ?? 0),
+			0
+		) / 100
+
 	const groupBy = filters?.groupBy ?? "asset"
 
 	const data = {
 		performance: computePerformanceByVariable(tradesForComputation, groupBy),
 		expectedValue: computeExpectedValue(tradesForComputation),
 		rDistribution: computeRDistribution(tradesForComputation),
-		equityCurve: computeEquityCurve(tradesForComputation),
+		equityCurve: computeEquityCurve(tradesForComputation, {
+			initialBalance: initialBalanceForAnalytics,
+			dailyCapitalDelta: dailyCapitalDeltaForAnalytics,
+		}),
 		hourlyPerformance: computeHourlyPerformance(tradesForComputation),
 		dayOfWeekPerformance: computeDayOfWeekPerformance(tradesForComputation),
 		timeHeatmap: computeTimeHeatmap(tradesForComputation),
@@ -293,9 +345,13 @@ const computeStreaks = (
  */
 const computeEquityCurveFromTrades = (
 	sortedAscTrades: Array<{ entryDate: Date; pnl: number | string | null }>,
-	initialBalance: number
+	initialBalance: number,
+	dailyCapitalDelta?: Map<string, number>
 ): EquityPoint[] => {
-	if (sortedAscTrades.length === 0) {
+	if (
+		sortedAscTrades.length === 0 &&
+		(!dailyCapitalDelta || dailyCapitalDelta.size === 0)
+	) {
 		return []
 	}
 
@@ -307,15 +363,22 @@ const computeEquityCurveFromTrades = (
 		dailyPnlMap.set(dateKey, existing + pnl)
 	}
 
-	const sortedDates = Array.from(dailyPnlMap.keys()).toSorted()
+	const sortedDates = Array.from(
+		new Set([
+			...dailyPnlMap.keys(),
+			...(dailyCapitalDelta ? dailyCapitalDelta.keys() : []),
+		])
+	).toSorted()
 	const equityPoints: EquityPoint[] = []
 	let cumulativePnL = 0
+	let cumulativeCapital = 0
 	let peak = initialBalance
 
 	for (const date of sortedDates) {
 		const dailyPnl = dailyPnlMap.get(date) || 0
 		cumulativePnL += dailyPnl
-		const accountEquity = initialBalance + cumulativePnL
+		cumulativeCapital += dailyCapitalDelta?.get(date) ?? 0
+		const accountEquity = initialBalance + cumulativeCapital + cumulativePnL
 		if (accountEquity > peak) {
 			peak = accountEquity
 		}
@@ -520,24 +583,44 @@ const getCachedDashboardData = async (
 		: [ctx.accountId]
 
 	// 1 DB query: all non-archived trades + 1 for legacy initial balance setting +
-	// 1 for starting balances of the accounts in scope (used by Capital cards).
-	const [allTrades, accountBalanceSetting, accountRows] = await Promise.all([
-		db.query.trades.findMany({
-			where: and(accountCondition, eq(trades.isArchived, false)),
-			orderBy: [desc(trades.entryDate)],
-		}),
-		db.query.settings.findFirst({
-			where: eq(settings.key, "account_balance"),
-		}),
-		accountIdsInScope.length > 0
-			? db
-					.select({
-						startingBalanceCents: tradingAccounts.startingBalanceCents,
+	// 1 for starting balances of the accounts in scope (used by Capital cards) +
+	// 1 for capital events (layered into accountEquity on the equity curve).
+	const [allTrades, accountBalanceSetting, accountRows, capitalEvents] =
+		await Promise.all([
+			db.query.trades.findMany({
+				where: and(accountCondition, eq(trades.isArchived, false)),
+				orderBy: [desc(trades.entryDate)],
+			}),
+			db.query.settings.findFirst({
+				where: eq(settings.key, "account_balance"),
+			}),
+			accountIdsInScope.length > 0
+				? db
+						.select({
+							startingBalanceCents: tradingAccounts.startingBalanceCents,
+						})
+						.from(tradingAccounts)
+						.where(inArray(tradingAccounts.id, accountIdsInScope))
+				: Promise.resolve([] as AccountStartingBalanceRow[]),
+			accountIdsInScope.length > 0
+				? db.query.accountCapitalEvents.findMany({
+						where: inArray(accountCapitalEvents.accountId, accountIdsInScope),
+						orderBy: [asc(accountCapitalEvents.eventDate)],
 					})
-					.from(tradingAccounts)
-					.where(inArray(tradingAccounts.id, accountIdsInScope))
-			: Promise.resolve([] as { startingBalanceCents: number | null }[]),
-	])
+				: Promise.resolve([] as CapitalEventRow[]),
+		])
+
+	const dailyCapitalDelta = new Map<string, number>()
+	for (const event of capitalEvents) {
+		const signed =
+			event.eventType === "withdrawal"
+				? -fromCents(event.amountCents)
+				: fromCents(event.amountCents)
+		dailyCapitalDelta.set(
+			event.eventDate,
+			(dailyCapitalDelta.get(event.eventDate) ?? 0) + signed
+		)
+	}
 
 	const initialBalance = accountBalanceSetting
 		? Number(accountBalanceSetting.value) || 10000
@@ -555,7 +638,11 @@ const getCachedDashboardData = async (
 
 	const stats = computeOverallStats(sortedAsc)
 	const discipline = computeDiscipline(sortedDesc)
-	const equityCurve = computeEquityCurveFromTrades(sortedAsc, initialBalance)
+	const equityCurve = computeEquityCurveFromTrades(
+		sortedAsc,
+		initialBalance,
+		dailyCapitalDelta
+	)
 	const streakData = computeStreaks(sortedDesc)
 	const dailyPnL = computeDailyPnLFromTrades(sortedAsc, year, monthIndex)
 	const radarData = computeRadar(sortedAsc, initialCapitalCents)
