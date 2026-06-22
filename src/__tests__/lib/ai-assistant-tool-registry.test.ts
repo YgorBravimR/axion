@@ -63,16 +63,16 @@ describe("tool-registry — isolation invariant", () => {
 })
 
 describe("tool-registry — schema basics", () => {
-	it("exposes exactly the 5 Phase-1 tools", () => {
-		expect(TOOL_SCHEMAS.map((t) => t.name).sort()).toEqual(
-			[
-				"get_account_context",
-				"get_engine_replay_for_trade",
-				"get_recent_backtest_runs",
-				"get_trade_with_enrichment",
-				"get_user_trade_aggregates",
-			].sort()
-		)
+	it("exposes the registered tools (Phase-1 five + weekly review)", () => {
+		const expected = [
+			"get_account_context",
+			"get_engine_replay_for_trade",
+			"get_recent_backtest_runs",
+			"get_trade_with_enrichment",
+			"get_user_trade_aggregates",
+			"get_weekly_review_payload",
+		].sort()
+		expect(TOOL_SCHEMAS.map((t) => t.name).sort()).toEqual(expected)
 	})
 
 	it("every tool has a non-trivial description (LLM uses these to pick)", () => {

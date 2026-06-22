@@ -237,6 +237,34 @@ Full spec at [`docs/plans/ai-assistant-phase-1.md`](plans/ai-assistant-phase-1.m
 
 ## Journaling Workflow
 
+### Weekly Review — emotional-state capture on every trade
+
+- **Priority**: P2 — Steenbarger ranks this as the #1 missing data field in any review surface. We capture P&L, R, plan-adherence, and lessonLearned, but never _how the trader felt entering the trade_. Without it the emotion×outcome correlation can never be surfaced — and that's the insight literature ties to behaviour change.
+- **Effort**: M (~1-2 days — Drizzle enum + columns on `trades`, segmented control on the trade form's notes tab + new-trade flow, optional inline-edit in the weekly-review replay phase, backfill is OK to leave NULL).
+- **Source**: 2026-06-22 — research synthesis behind the Weekly Review feature (commit landing `/review/weekly/[year]/[week]`). Brett Steenbarger, _The Daily Trading Coach_ and _Trading Psychology 2.0_; reinforced by Mark Douglas (_Trading in the Zone_) on plan-deviation triggers.
+- **What + Why**: add `emotional_state_pre` and `emotional_state_post` enum columns to `trades` (values: `calm | frustrated | overconfident | bored | regretful`). Editable from the trade form's notes tab via a segmented control next to `followedPlan`. The Weekly Review's replay phase exposes them in the trade card and a new metrics slice on the analytics page surfaces win-rate-by-emotional-state once we have ≥10 tagged trades.
+- **Done when**: Drizzle migration adds the enum + columns; trade form (new + edit) lets the user pick a state; replay phase renders the state when set; analytics page shows a win-rate-by-emotion stat with the standard n≥10 gate.
+- **Date filed**: 2026-06-22.
+
+### Weekly Review — inline AI draft into the Forward phase form
+
+- **Priority**: P3
+- **Effort**: S (~½ day)
+- **Source**: 2026-06-22 — Narrator AI shipped alongside Weekly Review v1 (surface `weekly_review`, tool `get_weekly_review_payload`, prompt `narrator-v1.1`). The right-side Sheet panel narrates on demand; the Forward form (lesson / ruleChange / focusNextWeek) still requires the user to write from scratch.
+- **What + Why**: add a "Draft from this week" button next to each Forward textarea. Clicking opens the narrator with a pre-baked prompt scoped to that field (e.g. "Suggest a lesson from this week's data; I will edit before saving"), and the user can copy/paste the narration into the textarea. The narrator already has the week's payload via `get_weekly_review_payload` — no new tool needed. This stays distinct from auto-fill (never write to the form without the user pasting).
+- **Done when**: each Forward textarea has a "Draft" button that opens the panel with a field-scoped suggested prompt; no auto-write to the form; the existing Narrator validators still gate prescriptive phrasing.
+- **Blocked by**: nothing — Narrator on `weekly_review` surface is live.
+- **Date filed**: 2026-06-22.
+
+### Weekly Review — surface "focus for next week" inside the daily plan
+
+- **Priority**: P3
+- **Effort**: XS — read `weekly_review.focusNextWeek` for the week the daily plan belongs to; render in the daily-plan cockpit header as a non-editable banner.
+- **Source**: 2026-06-22 — Weekly Review v1 captures the forward-week focus but doesn't yet feed it back into the trading week. Closing the loop is what turns the review from an artifact into a feedback system.
+- **What + Why**: Each morning, the daily-plan view surfaces "Your focus for this week: …" pulled from the most recent `weekly_review.focusNextWeek` whose ISO week contains today. Read-only, dismissible.
+- **Done when**: banner visible at the top of `/plan/[year]/[quarter]/[month]` and on the daily plan cockpit; resolves to the right week; gracefully hides when no review is saved.
+- **Date filed**: 2026-06-22.
+
 ### Enrichment UI — full asset/timeframe coverage check (v2 polish)
 
 - **Priority**: P3

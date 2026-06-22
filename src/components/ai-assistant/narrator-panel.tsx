@@ -29,7 +29,8 @@ import { cn } from "@/lib/utils"
 interface NarratorPanelProps {
 	open: boolean
 	onOpenChange: (_open: boolean) => void
-	tradeId: string
+	surface: string
+	contextRefId: string
 }
 
 interface ToolTraceEntry {
@@ -44,7 +45,8 @@ interface AgentEventBase {
 const NarratorPanel = ({
 	open: isOpen,
 	onOpenChange,
-	tradeId,
+	surface,
+	contextRefId,
 }: NarratorPanelProps): React.ReactElement => {
 	const t = useTranslations("assistant")
 	const [prompt, setPrompt] = useState("")
@@ -79,7 +81,7 @@ const NarratorPanel = ({
 				const response = await fetch("/api/ai/narrate", {
 					method: "POST",
 					headers: { "content-type": "application/json" },
-					body: JSON.stringify({ tradeId, userMessage }),
+					body: JSON.stringify({ surface, contextRefId, userMessage }),
 					signal: controller.signal,
 				})
 
@@ -134,7 +136,7 @@ const NarratorPanel = ({
 				abortRef.current = null
 			}
 		},
-		[reset, streaming, t, tradeId]
+		[reset, streaming, t, surface, contextRefId]
 	)
 
 	const handleEvent = (event: AgentEventBase) => {
@@ -195,11 +197,18 @@ const NarratorPanel = ({
 		setPrompt("")
 	}
 
-	const suggestedPrompts = [
-		t("suggested.narrate"),
-		t("suggested.indicators"),
-		t("suggested.cohort"),
-	]
+	const suggestedPrompts =
+		surface === "weekly_review"
+			? [
+					t("suggested.weeklySummary"),
+					t("suggested.weeklyMistakes"),
+					t("suggested.weeklyAdherence"),
+				]
+			: [
+					t("suggested.narrate"),
+					t("suggested.indicators"),
+					t("suggested.cohort"),
+				]
 
 	return (
 		<Sheet open={isOpen} onOpenChange={onOpenChange}>

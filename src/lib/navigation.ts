@@ -19,6 +19,7 @@ import {
 	Activity,
 	Sparkle,
 	NotebookPen,
+	ClipboardCheck,
 	type LucideIcon,
 } from "lucide-react"
 
@@ -30,6 +31,7 @@ type NavLabelKey =
 	| "analytics"
 	| "playbook"
 	| "reports"
+	| "weeklyReview"
 	| "monthlyPlan"
 	| "quarterlyPlan"
 	| "yearlyPlan"
@@ -144,6 +146,11 @@ const buildNavStructure = (now: Date): NavEntry[] => {
 		},
 		{ labelKey: "playbook", href: "/playbook", icon: FileText },
 		{ labelKey: "reports", href: "/reports", icon: FileBarChart },
+		{
+			labelKey: "weeklyReview",
+			href: "/review/weekly",
+			icon: ClipboardCheck,
+		},
 		{ labelKey: "settings", href: "/settings", icon: Settings },
 	]
 }

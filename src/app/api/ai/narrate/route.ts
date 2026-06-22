@@ -8,11 +8,23 @@
  * Gate-closed responses MUST return 404 (not 403, not 401) — 403 leaks that
  * the feature exists. The fail-closed gate is the first line of the
  * isolation model; a wrong status code here punches a hole in it.
+ *
+ * Request body shape (forwards-compatible):
+ *   - { surface, contextRefId, userMessage, conversationId? } — generic form
+ *   - { tradeId, userMessage, conversationId? }                — legacy alias
+ *     for surface=trade_detail. Kept so the existing trade-detail client
+ *     does not have to ship in the same PR.
  */
 import { canUseAiAssistant } from "@/lib/ai-assistant/access"
-import { runAgentTurn } from "@/lib/ai-assistant/agent-loop"
+import {
+	runAgentTurn,
+	isAssistantSurface,
+	type AssistantSurface,
+} from "@/lib/ai-assistant/agent-loop"
 
 interface NarrateRequestBody {
+	surface?: unknown
+	contextRefId?: unknown
 	tradeId?: unknown
 	userMessage?: unknown
 	conversationId?: unknown
@@ -25,33 +37,47 @@ const isString = (v: unknown): v is string =>
 const sseFrame = (payload: unknown): string =>
 	`data: ${JSON.stringify(payload)}\n\n`
 
-const POST = async (request: Request): Promise<Response> => {
-	// Gate: fail-closed, identical 404 for every "no" path.
-	const access = await canUseAiAssistant("trade_detail")
-	if (!access.canUse) {
-		return new Response(null, { status: 404 })
-	}
+/** Build a JSON error response. */
+const errorResponse = (error: string, status: number = 400): Response =>
+	new Response(JSON.stringify({ error }), {
+		status,
+		headers: { "content-type": "application/json" },
+	})
 
+const POST = async (request: Request): Promise<Response> => {
 	let body: NarrateRequestBody
 	try {
 		body = (await request.json()) as NarrateRequestBody
 	} catch {
-		return new Response(JSON.stringify({ error: "Invalid JSON body." }), {
-			status: 400,
-			headers: { "content-type": "application/json" },
-		})
+		return errorResponse("Invalid JSON body.")
 	}
 
-	if (!isString(body.tradeId) || !isString(body.userMessage)) {
-		return new Response(
-			JSON.stringify({
-				error: "Missing required fields: tradeId, userMessage.",
-			}),
-			{
-				status: 400,
-				headers: { "content-type": "application/json" },
-			}
+	// Resolve surface + contextRefId. Legacy `tradeId` aliases to trade_detail.
+	let surface: AssistantSurface
+	let contextRefId: string
+	if (isString(body.surface) && isAssistantSurface(body.surface)) {
+		surface = body.surface
+		if (!isString(body.contextRefId)) {
+			return errorResponse("Missing required field: contextRefId.")
+		}
+		contextRefId = body.contextRefId
+	} else if (isString(body.tradeId)) {
+		surface = "trade_detail"
+		contextRefId = body.tradeId
+	} else {
+		return errorResponse(
+			"Missing required fields: surface+contextRefId or tradeId."
 		)
+	}
+
+	if (!isString(body.userMessage)) {
+		return errorResponse("Missing required field: userMessage.")
+	}
+
+	// Gate: fail-closed, identical 404 for every "no" path. Surface-aware.
+	const access = await canUseAiAssistant(surface)
+	if (!access.canUse) {
+		return new Response(null, { status: 404 })
 	}
 
 	const conversationId = isString(body.conversationId)
@@ -63,7 +89,8 @@ const POST = async (request: Request): Promise<Response> => {
 		async start(controller) {
 			try {
 				for await (const event of runAgentTurn({
-					tradeId: body.tradeId as string,
+					surface,
+					contextRefId,
 					userMessage: body.userMessage as string,
 					conversationId,
 				})) {

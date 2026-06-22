@@ -55,7 +55,11 @@ import type {
 } from "@anthropic-ai/sdk/resources/messages"
 
 const ITER_CAP = 6
-const SURFACE = "trade_detail"
+
+type AssistantSurface = "trade_detail" | "weekly_review"
+
+const isAssistantSurface = (s: string): s is AssistantSurface =>
+	s === "trade_detail" || s === "weekly_review"
 
 /** Pricing (cents per 1M tokens) for Sonnet 4.6. Phase 1 ignores the cache-
  * hit discount in the recorded cost — overestimates spend slightly, errs on
@@ -64,7 +68,12 @@ const SONNET_INPUT_CENTS_PER_M = 300
 const SONNET_OUTPUT_CENTS_PER_M = 1500
 
 interface AgentTurnInput {
-	tradeId: string
+	surface: AssistantSurface
+	/** Opaque scope id. Shape depends on surface:
+	 *   - "trade_detail": trade UUID
+	 *   - "weekly_review": `${isoYear}-W${isoWeek}` (e.g. "2026-W25")
+	 */
+	contextRefId: string
 	userMessage: string
 	conversationId?: string
 }
@@ -97,8 +106,23 @@ const computeCostCents = (tokensIn: number, tokensOut: number): number => {
 
 const anthropicTools = (): ToolUnion[] => TOOL_SCHEMAS as unknown as ToolUnion[]
 
-const buildOpeningMessage = (tradeId: string, userMessage: string): string =>
-	`Trade in scope: ${tradeId}\n\nUser question: ${userMessage}`
+const buildOpeningMessage = (
+	surface: AssistantSurface,
+	contextRefId: string,
+	userMessage: string
+): string => {
+	if (surface === "weekly_review") {
+		// contextRefId shape: "YYYY-Www" (e.g. "2026-W25"). Parse for clarity in
+		// the opening so the model can call get_weekly_review_payload without
+		// re-parsing.
+		const match = /^(\d{4})-W(\d{1,2})$/.exec(contextRefId)
+		const scope = match
+			? `ISO year ${match[1]}, ISO week ${match[2]}`
+			: contextRefId
+		return `Surface: weekly_review. Week in scope: ${scope}.\n\nUser question: ${userMessage}`
+	}
+	return `Surface: trade_detail. Trade in scope: ${contextRefId}\n\nUser question: ${userMessage}`
+}
 
 const extractTextFromContent = (content: ContentBlock[]): string =>
 	content
@@ -119,7 +143,7 @@ const runAgentTurn = async function* (
 ): AsyncGenerator<AgentEvent, void, unknown> {
 	// Gate 1: visibility. Fail-closed; identical error code regardless of
 	// reason so the user never learns which gate denied them.
-	const access = await canUseAiAssistant(SURFACE)
+	const access = await canUseAiAssistant(input.surface)
 	if (!access.canUse) {
 		yield {
 			type: "error",
@@ -152,8 +176,8 @@ const runAgentTurn = async function* (
 			.values({
 				userId,
 				accountId,
-				surface: SURFACE,
-				contextRefId: input.tradeId,
+				surface: input.surface,
+				contextRefId: input.contextRefId,
 				promptVersion: PROMPT_VERSION,
 			})
 			.returning({ id: aiAssistantConversations.id })
@@ -179,7 +203,11 @@ const runAgentTurn = async function* (
 	const history: MessageParam[] = [
 		{
 			role: "user",
-			content: buildOpeningMessage(input.tradeId, input.userMessage),
+			content: buildOpeningMessage(
+				input.surface,
+				input.contextRefId,
+				input.userMessage
+			),
 		},
 	]
 	const toolTrace: Array<{
@@ -328,5 +356,5 @@ const runAgentTurn = async function* (
 	}
 }
 
-export { runAgentTurn, computeCostCents, ITER_CAP }
-export type { AgentTurnInput, AgentEvent }
+export { runAgentTurn, computeCostCents, ITER_CAP, isAssistantSurface }
+export type { AgentTurnInput, AgentEvent, AssistantSurface }

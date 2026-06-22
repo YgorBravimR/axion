@@ -39,7 +39,8 @@ const AskButtonClient = ({
 				<NarratorPanel
 					open={open}
 					onOpenChange={setOpen}
-					tradeId={contextRefId}
+					surface={surface}
+					contextRefId={contextRefId}
 				/>
 			) : null}
 		</>

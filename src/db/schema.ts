@@ -1743,6 +1743,41 @@ export const dailyPlan = pgTable(
 	]
 )
 
+// Weekly Review — Friday/Saturday ritual artifact, scoped per account + ISO week.
+// Stores the forward-looking output of the 6-phase review flow at
+// /review/weekly/[year]/[week]. Decoupled from weekly_plan so the feature
+// works even before a user has built the fractal plan tree.
+export const weeklyReview = pgTable(
+	"weekly_review",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		accountId: uuid("account_id")
+			.notNull()
+			.references(() => tradingAccounts.id, { onDelete: "cascade" }),
+		isoYear: integer("iso_year").notNull(),
+		isoWeek: integer("iso_week").notNull(),
+
+		lesson: text("lesson"),
+		ruleChange: text("rule_change"),
+		focusNextWeek: text("focus_next_week"),
+
+		completedAt: timestamp("completed_at", { withTimezone: true }),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		uniqueIndex("weekly_review_account_year_week_idx").on(
+			table.accountId,
+			table.isoYear,
+			table.isoWeek
+		),
+	]
+)
+
 // Tier Change Log — audit trail of every 1R/tier transition.
 export const tierChangeLog = pgTable(
 	"tier_change_log",
@@ -3451,6 +3486,9 @@ export type NewStrategyScenario = typeof strategyScenarios.$inferInsert
 
 export type ScenarioImage = typeof scenarioImages.$inferSelect
 export type NewScenarioImage = typeof scenarioImages.$inferInsert
+
+export type WeeklyReview = typeof weeklyReview.$inferSelect
+export type NewWeeklyReview = typeof weeklyReview.$inferInsert
 
 // Bug Report Types
 export type BugReport = typeof bugReports.$inferSelect

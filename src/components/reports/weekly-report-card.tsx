@@ -10,6 +10,7 @@ import {
 	TrendingDown,
 	Loader2,
 	Download,
+	ClipboardCheck,
 } from "lucide-react"
 import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
@@ -29,6 +30,7 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 	const t = useTranslations("reports.weekly")
 	const tStats = useTranslations("reports.stats")
 	const tCommon = useTranslations("common")
+	const tReview = useTranslations("review.weekly")
 	const locale = useLocale()
 	const dateLocale = locale === "pt-BR" ? ptBR : enUS
 	const { formatCurrencyWithSign, formatCurrency } = useFormatting()
@@ -144,6 +146,17 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 						aria-label={t("downloadPdf")}
 					>
 						<Download className="h-4 w-4" aria-hidden="true" />
+					</Button>
+					<Button
+						id="weekly-report-start-review"
+						variant="outline"
+						size="sm"
+						asChild
+					>
+						<Link href="/review/weekly">
+							<ClipboardCheck className="mr-s-100 h-4 w-4" aria-hidden="true" />
+							<span className="text-tiny">{tReview("ctaFromReports")}</span>
+						</Link>
 					</Button>
 				</div>
 			</div>

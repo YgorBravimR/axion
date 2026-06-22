@@ -18,6 +18,7 @@ import { getEngineReplayForTrade } from "./tools/get-engine-replay-for-trade"
 import { getRecentBacktestRuns } from "./tools/get-recent-backtest-runs"
 import { getTradeWithEnrichment } from "./tools/get-trade-with-enrichment"
 import { getUserTradeAggregates } from "./tools/get-user-trade-aggregates"
+import { getWeeklyReviewPayloadTool } from "./tools/get-weekly-review-payload"
 
 type ToolName =
 	| "get_trade_with_enrichment"
@@ -25,6 +26,7 @@ type ToolName =
 	| "get_account_context"
 	| "get_recent_backtest_runs"
 	| "get_engine_replay_for_trade"
+	| "get_weekly_review_payload"
 
 interface AnthropicToolSchema {
 	name: ToolName
@@ -126,6 +128,30 @@ const TOOL_SCHEMAS: AnthropicToolSchema[] = [
 			additionalProperties: false,
 		},
 	},
+	{
+		name: "get_weekly_review_payload",
+		description:
+			"Deterministic weekly-review aggregate for a specific ISO week: trades, plan-adherence (followed vs. deviated count + deviation rate), segmented metrics, recurring-mistake rollup (this-week count × last-90-day count), and B3 risco flags (consecutive-loss streak, worst-day P&L). Use ONLY on the weekly_review surface. Refuse to narrate cross-trade patterns when totalTrades < 10.",
+		input_schema: {
+			type: "object",
+			properties: {
+				isoYear: {
+					type: "integer",
+					minimum: 2000,
+					maximum: 2100,
+					description: "ISO week-year (e.g. 2026).",
+				},
+				isoWeek: {
+					type: "integer",
+					minimum: 1,
+					maximum: 53,
+					description: "ISO week number (1–53).",
+				},
+			},
+			required: ["isoYear", "isoWeek"],
+			additionalProperties: false,
+		},
+	},
 ]
 
 const isToolName = (name: string): name is ToolName =>
@@ -149,6 +175,8 @@ const dispatchTool = async (
 			return getRecentBacktestRuns(args as never)
 		case "get_engine_replay_for_trade":
 			return getEngineReplayForTrade(args as never)
+		case "get_weekly_review_payload":
+			return getWeeklyReviewPayloadTool(args as never)
 	}
 }
 

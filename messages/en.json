@@ -142,6 +142,7 @@
 		"monteCarlo": "Monte Carlo",
 		"playbook": "Playbook",
 		"reports": "Reports",
+		"weeklyReview": "Weekly Review",
 		"monthlyPlan": "Monthly Plan",
 		"quarterlyPlan": "Quarterly Plan",
 		"yearlyPlan": "Yearly Plan",
@@ -2785,6 +2786,103 @@
 			"bullet2": "Execution-drag delta: how much of your backtest edge you're losing live.",
 			"bullet3": "Prop-firm comparison: which firm's rules let you trade your edge.",
 			"upgradeLabel": "Upgrade to Premium"
+		}
+	},
+	"review": {
+		"weekly": {
+			"title": "Weekly Review",
+			"weekHeader": "Week {week} · {year}",
+			"completed": "Completed",
+			"saved": "Review saved",
+			"noTrades": "No trades this week — skip to the forward-looking section below.",
+			"skipToForward": "Skip to next-week focus",
+			"prevPhase": "Back",
+			"nextPhase": "Next",
+			"ctaFromReports": "Start Weekly Review",
+			"phases": {
+				"replay": {
+					"label": "Replay",
+					"title": "Trade-by-trade replay",
+					"subtitle": "Walk every trade. Read your notes back. Ask: would I take this again?"
+				},
+				"adherence": {
+					"label": "Plan adherence",
+					"title": "Did you follow the plan?",
+					"subtitle": "The single most predictive number in a week of trading: % deviations."
+				},
+				"metrics": {
+					"label": "Metrics",
+					"title": "Segmented metrics",
+					"subtitle": "Aggregate numbers lie. Look at the cohorts."
+				},
+				"mistakes": {
+					"label": "Mistakes",
+					"title": "Recurring mistakes",
+					"subtitle": "Patterns only become undeniable around the 10th repetition (Steenbarger)."
+				},
+				"risco": {
+					"label": "Risco",
+					"title": "Risk discipline (B3)",
+					"subtitle": "Gestão de risco: any flag here outweighs a green week."
+				},
+				"forward": {
+					"label": "Forward",
+					"title": "One lesson, one rule, one focus",
+					"subtitle": "Tharp's 30-minute review ends here. Without this artifact the review is noise."
+				}
+			},
+			"trade": {
+				"outcome": "Outcome",
+				"rating": "Rating",
+				"followedPlan": "Plan?",
+				"mistakes": "Mistakes",
+				"yes": "Yes",
+				"no": "No",
+				"lessonLearned": "Lesson learned",
+				"postTradeReflection": "Post-trade reflection",
+				"disciplineNotes": "Discipline notes",
+				"openInJournal": "Open in journal"
+			},
+			"adherence": {
+				"deviationRate": "Deviation rate",
+				"followed": "Followed plan",
+				"deviated": "Deviated",
+				"uncategorized": "{count} trades have no plan-adherence flag set — tag them in the journal so this number lands.",
+				"deviationsTitle": "Trades that broke the plan",
+				"noDeviations": "No tagged deviations this week."
+			},
+			"metrics": {
+				"netPnl": "Net P&L",
+				"winRate": "Win rate",
+				"avgR": "Avg R",
+				"profitFactor": "Profit factor",
+				"dailyBreakdown": "Daily breakdown",
+				"patternsTitle": "Patterns detected this week"
+			},
+			"mistakes": {
+				"intro": "Each row shows the mistake tag's week count vs. its 90-day count. Repetition is the signal.",
+				"weekCount": "{n}× this week",
+				"last90": "{n}× last 90d",
+				"noneTagged": "No mistakes tagged this week. If you skipped tagging, the review can't surface what to fix."
+			},
+			"risco": {
+				"consecutiveLosses": "Hit a streak of {n} consecutive losses in a single day — gestão de risco breach watch.",
+				"worstDay": "Worst day: {date} at {pnl}.",
+				"highDeviation": "Plan deviation rate at {pct}% — above the 20% threshold where edge typically vanishes.",
+				"allClear": "No risk-discipline flags this week."
+			},
+			"forward": {
+				"lessonLabel": "The single most important lesson this week",
+				"lessonHint": "Tie it to a specific trade or pattern, not a vague feeling.",
+				"ruleChangeLabel": "One rule to add, remove, or tweak",
+				"ruleChangeHint": "Example: 'No new entries after 14:00 BRT.'",
+				"focusLabel": "Focus for next week",
+				"focusHint": "Pick one thing. Not a list.",
+				"saveDraft": "Save draft",
+				"complete": "Mark review complete",
+				"resave": "Save changes",
+				"footerHint": "Review is data, not judgement. Diagnose, then move forward."
+			}
 		}
 	},
 	"reports": {
@@ -6814,7 +6912,10 @@
 			"label": "Try one of these:",
 			"narrate": "Narrate what the engine saw on this trade.",
 			"indicators": "Which indicators were favorable vs unfavorable at entry?",
-			"cohort": "How does this trade compare to my last 30 days?"
+			"cohort": "How does this trade compare to my last 30 days?",
+			"weeklySummary": "Summarise what happened this week — wins, losses, and where the edge lived.",
+			"weeklyMistakes": "Which recurring mistakes showed up this week, and how many times in the last 90 days?",
+			"weeklyAdherence": "Did I follow my plan this week? Walk me through any deviations."
 		},
 		"audit": {
 			"label": "Tool calls"

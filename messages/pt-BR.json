@@ -142,6 +142,7 @@
 		"monteCarlo": "Monte Carlo",
 		"playbook": "Playbook",
 		"reports": "Relatórios",
+		"weeklyReview": "Revisão Semanal",
 		"monthlyPlan": "Plano Mensal",
 		"quarterlyPlan": "Plano Trimestral",
 		"yearlyPlan": "Plano Anual",
@@ -2785,6 +2786,103 @@
 			"bullet2": "Delta de execução: quanto do seu edge de backtest você perde no live.",
 			"bullet3": "Comparação entre mesas proprietárias: qual permite operar seu edge.",
 			"upgradeLabel": "Fazer upgrade Premium"
+		}
+	},
+	"review": {
+		"weekly": {
+			"title": "Revisão Semanal",
+			"weekHeader": "Semana {week} · {year}",
+			"completed": "Concluída",
+			"saved": "Revisão salva",
+			"noTrades": "Sem trades nesta semana — pule para a seção de próxima semana abaixo.",
+			"skipToForward": "Ir para foco da próxima semana",
+			"prevPhase": "Voltar",
+			"nextPhase": "Próximo",
+			"ctaFromReports": "Iniciar Revisão Semanal",
+			"phases": {
+				"replay": {
+					"label": "Replay",
+					"title": "Replay trade-a-trade",
+					"subtitle": "Passe por cada trade. Releia suas anotações. Pergunte: faria de novo?"
+				},
+				"adherence": {
+					"label": "Aderência",
+					"title": "Você seguiu o plano?",
+					"subtitle": "O número mais preditivo da semana: % de desvios do plano."
+				},
+				"metrics": {
+					"label": "Métricas",
+					"title": "Métricas segmentadas",
+					"subtitle": "Agregados mentem. Olhe os cohorts."
+				},
+				"mistakes": {
+					"label": "Erros",
+					"title": "Erros recorrentes",
+					"subtitle": "Padrões só viram inegáveis na ~10ª repetição (Steenbarger)."
+				},
+				"risco": {
+					"label": "Risco",
+					"title": "Disciplina de risco (B3)",
+					"subtitle": "Gestão de risco: qualquer flag aqui pesa mais que uma semana verde."
+				},
+				"forward": {
+					"label": "Próxima",
+					"title": "Uma lição, uma regra, um foco",
+					"subtitle": "A caixa de 30min do Tharp termina aqui. Sem este artefato, a revisão vira ruído."
+				}
+			},
+			"trade": {
+				"outcome": "Resultado",
+				"rating": "Nota",
+				"followedPlan": "Plano?",
+				"mistakes": "Erros",
+				"yes": "Sim",
+				"no": "Não",
+				"lessonLearned": "Lição aprendida",
+				"postTradeReflection": "Reflexão pós-trade",
+				"disciplineNotes": "Notas de disciplina",
+				"openInJournal": "Abrir no diário"
+			},
+			"adherence": {
+				"deviationRate": "Taxa de desvio",
+				"followed": "Seguiu o plano",
+				"deviated": "Desviou",
+				"uncategorized": "{count} trades sem flag de aderência — marque no diário para este número fazer sentido.",
+				"deviationsTitle": "Trades que romperam o plano",
+				"noDeviations": "Sem desvios marcados nesta semana."
+			},
+			"metrics": {
+				"netPnl": "P&L líquido",
+				"winRate": "Taxa de acerto",
+				"avgR": "R médio",
+				"profitFactor": "Fator de lucro",
+				"dailyBreakdown": "Quebra diária",
+				"patternsTitle": "Padrões detectados nesta semana"
+			},
+			"mistakes": {
+				"intro": "Cada linha mostra o erro nesta semana vs. nos últimos 90 dias. Repetição é o sinal.",
+				"weekCount": "{n}× esta semana",
+				"last90": "{n}× últimos 90d",
+				"noneTagged": "Nenhum erro marcado esta semana. Se você pulou a tagueação, a revisão não tem o que corrigir."
+			},
+			"risco": {
+				"consecutiveLosses": "Sequência de {n} losses em um único dia — alerta de gestão de risco.",
+				"worstDay": "Pior dia: {date} em {pnl}.",
+				"highDeviation": "Taxa de desvio em {pct}% — acima do limiar de 20% onde o edge tipicamente some.",
+				"allClear": "Sem alertas de disciplina de risco nesta semana."
+			},
+			"forward": {
+				"lessonLabel": "A lição mais importante da semana",
+				"lessonHint": "Ancore num trade ou padrão específico, não num sentimento genérico.",
+				"ruleChangeLabel": "Uma regra para adicionar, remover ou ajustar",
+				"ruleChangeHint": "Exemplo: 'Sem novas entradas depois das 14h.'",
+				"focusLabel": "Foco para a próxima semana",
+				"focusHint": "Escolha uma coisa. Não uma lista.",
+				"saveDraft": "Salvar rascunho",
+				"complete": "Marcar revisão como concluída",
+				"resave": "Salvar alterações",
+				"footerHint": "Revisão é dado, não julgamento. Diagnostique e siga em frente."
+			}
 		}
 	},
 	"reports": {
@@ -6814,7 +6912,10 @@
 			"label": "Experimente uma destas:",
 			"narrate": "Narre o que o motor viu neste trade.",
 			"indicators": "Quais indicadores estavam favoráveis vs desfavoráveis na entrada?",
-			"cohort": "Como este trade se compara aos meus últimos 30 dias?"
+			"cohort": "Como este trade se compara aos meus últimos 30 dias?",
+			"weeklySummary": "Resuma o que aconteceu nesta semana — ganhos, perdas e onde o edge esteve.",
+			"weeklyMistakes": "Quais erros recorrentes apareceram esta semana, e quantas vezes nos últimos 90 dias?",
+			"weeklyAdherence": "Eu segui meu plano esta semana? Me mostre onde houve desvio."
 		},
 		"audit": {
 			"label": "Chamadas de ferramentas"
