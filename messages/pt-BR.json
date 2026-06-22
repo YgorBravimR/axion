@@ -1924,6 +1924,7 @@
 			"tradeCreateFailed": "Falha ao criar operação",
 			"hawksPayloadRequired": "Modo Hawks ativo — preencha cenário e telas confirmadoras",
 			"hawksBiasMissing": "Confirme o viés diário Hawks antes de registrar a operação",
+			"hawksTimeframeMissing": "Modo Hawks requer o timeframe hawk_5m_win — execute scripts/materialize-hawks-timeframes.ts",
 			"tradeUpdateFailed": "Falha ao atualizar operação",
 			"tradeDeleteFailed": "Falha ao arquivar operação",
 			"tradesRetrieved": "Operações obtidas com sucesso",

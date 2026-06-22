@@ -15,6 +15,7 @@ import {
 	dailyHawksBias,
 	tradeHawksMetadata,
 	tradeConditions,
+	timeframes,
 } from "@/db/schema"
 import { getActiveAccountModeForUser } from "@/lib/hawks/account-context"
 import { resolveCurrentVersionIdForTrade } from "@/lib/strategy-versions"
@@ -213,6 +214,29 @@ export const createTrade = async (
 		const accountMode = await getActiveAccountModeForUser()
 		const isThinEntry =
 			tradeData.source === "quick-add" || tradeData.source === "csv-import"
+		// Hawks-mode trades always use the canonical hawk_5m_win timeframe for
+		// candle lookups — the trade-detail chart depends on this for renko bricks.
+		let hawksTimeframeId: string | null = null
+		if (accountMode === "hawks") {
+			const hawkTf = await db.query.timeframes.findFirst({
+				where: eq(timeframes.code, "hawk_5m_win"),
+				columns: { id: true },
+			})
+			if (!hawkTf) {
+				return {
+					status: "error",
+					message: t("actions.hawksTimeframeMissing"),
+					errors: [
+						{
+							code: "HAWKS_TIMEFRAME_MISSING",
+							detail:
+								"hawk_5m_win timeframe is not registered — run scripts/materialize-hawks-timeframes.ts",
+						},
+					],
+				}
+			}
+			hawksTimeframeId = hawkTf.id
+		}
 		let hawksSidecar: typeof tradeHawksMetadata.$inferInsert | null = null
 		if (accountMode === "hawks" && !isThinEntry) {
 			if (!tradeData.hawks) {
@@ -307,7 +331,7 @@ export const createTrade = async (
 			accountId,
 			asset: tradeData.asset,
 			direction: tradeData.direction,
-			timeframeId: tradeData.timeframeId || null,
+			timeframeId: hawksTimeframeId ?? tradeData.timeframeId ?? null,
 			entryDate: tradeData.entryDate,
 			exitDate: tradeData.exitDate,
 			entryPrice: toNumericString(tradeData.entryPrice),

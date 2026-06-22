@@ -37,9 +37,11 @@ import {
 	getCandleDataForAsset,
 	getCandlesForTrade,
 } from "@/app/actions/candle-query"
+import { getActiveAccountModeForUser } from "@/lib/hawks/account-context"
 import { DeleteTradeButton } from "./delete-button"
 import { TradeDetailGuide } from "@/components/journal/trade-detail-guide"
 import { AskButton } from "@/components/ai-assistant/ask-button"
+import type { BacktestTrade } from "@/types/backtest"
 
 interface TradeDetailPageProps {
 	params: Promise<{ id: string }>
@@ -64,12 +66,26 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 
 	const trade = result.data
 
-	// Fetch asset data + candle availability + condition snapshot in parallel
-	const [asset, candleSource, conditionsResult] = await Promise.all([
-		getAssetBySymbol(trade.asset),
-		getCandleDataForAsset(trade.asset),
-		getTradeConditions(trade.id),
-	])
+	// Fetch asset data + candle availability + condition snapshot in parallel.
+	// `accountMode` decides whether the chart switches to the hawks
+	// triple-screen layout (5m/15m/60m renko panes) or the default single-pane
+	// candle chart.
+	const [asset, assetCandleSource, conditionsResult, accountMode] =
+		await Promise.all([
+			getAssetBySymbol(trade.asset),
+			getCandleDataForAsset(trade.asset),
+			getTradeConditions(trade.id),
+			getActiveAccountModeForUser(),
+		])
+
+	// Prefer the trade's own timeframe when present — it's the source of truth
+	// for which renko/time series the chart should render. Falls back to the
+	// asset-level default (which itself prefers hawk_5m_win in hawks mode).
+	const candleSource = assetCandleSource
+		? trade.timeframeId
+			? { assetId: assetCandleSource.assetId, timeframeId: trade.timeframeId }
+			: assetCandleSource
+		: null
 
 	const conditions =
 		conditionsResult.status === "success" && conditionsResult.data
@@ -78,15 +94,20 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 	const conditionsMetCount = conditions.filter((c) => c.met).length
 	const conditionsTotalCount = conditions.length
 
-	// If candle data exists, fetch candles for the trade's time range
-	const candleResult = candleSource
-		? await getCandlesForTrade({
-				assetId: candleSource.assetId,
-				timeframeId: candleSource.timeframeId,
-				entryDate: trade.entryDate.toISOString(),
-				exitDate: trade.exitDate?.toISOString() ?? null,
-			})
-		: null
+	// In hawks WIN mode the triple-screen inspector owns the chart — skip the
+	// single-pane candle fetch entirely so we don't pay for parquet I/O the
+	// page will never render.
+	const willRenderTripleScreen =
+		accountMode === "hawks" && trade.asset.toUpperCase() === "WIN"
+	const candleResult =
+		candleSource && !willRenderTripleScreen
+			? await getCandlesForTrade({
+					assetId: candleSource.assetId,
+					timeframeId: candleSource.timeframeId,
+					entryDate: trade.entryDate.toISOString(),
+					exitDate: trade.exitDate?.toISOString() ?? null,
+				})
+			: null
 
 	const hasChart =
 		candleResult?.status === "success" &&
@@ -105,6 +126,39 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 	const setupTags = tags.filter((t) => t.type === "setup")
 	const mistakeTags = tags.filter((t) => t.type === "mistake")
 	const generalTags = tags.filter((t) => t.type === "general")
+
+	// In hawks mode, the chart switches to the triple-screen renko inspector
+	// (5m / 15m / 60m panes). The inspector fetches its own data client-side
+	// via `getInspectorWindow`; here we only need to project the journal
+	// trade into the `BacktestTrade` shape it expects.
+	// Triple-screen renko panes only exist for WIN — `hawk_5m_win`,
+	// `hawk_15m_win`, `hawk_60m_win`. WDO and other hawks-mode trades fall
+	// back to the regular single-pane chart. Open trades (no exit yet) still
+	// render — the inspector treats the entry as both anchor and current
+	// price so the trade overlay shows just the entry marker.
+	const exitDateForInspector = trade.exitDate ?? trade.entryDate
+	const exitPriceForInspector =
+		trade.exitPrice !== null
+			? Number(trade.exitPrice)
+			: Number(trade.entryPrice)
+	const tripleScreenTrade: BacktestTrade | null = willRenderTripleScreen
+		? {
+				id: 0,
+				dayKey: trade.entryDate.toISOString().slice(0, 10),
+				direction: trade.direction,
+				entryPrice: Number(trade.entryPrice),
+				entryTime: trade.entryDate.toISOString(),
+				exitPrice: exitPriceForInspector,
+				exitTime: exitDateForInspector.toISOString(),
+				exitReason: "target1",
+				contracts: Number(trade.positionSize),
+				grossPnlCents: Number(trade.pnl ?? 0),
+				slippageCostCents: 0,
+				netPnlCents: Number(trade.pnl ?? 0),
+				rMultiple: Number(trade.realizedRMultiple) || 0,
+				label: trade.asset,
+			}
+		: null
 
 	// Build chart data if candle data is available
 	const chartData =
@@ -156,8 +210,13 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 				}
 			: null
 
+	const tripleScreen =
+		willRenderTripleScreen && tripleScreenTrade
+			? { trade: tripleScreenTrade, assetSymbol: trade.asset }
+			: null
+
 	return (
-		<TradeDetailLayout chartData={chartData}>
+		<TradeDetailLayout chartData={chartData} tripleScreen={tripleScreen}>
 			<div className="flex h-full flex-col">
 				<TradeDetailGuide />
 				<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto">

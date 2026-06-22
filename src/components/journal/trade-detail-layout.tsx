@@ -22,6 +22,8 @@ import type {
 } from "@/types/candle"
 import { TradeChartView } from "./trade-chart-view"
 import type { TradeInfoPanelProps } from "./trade-info-panel"
+import { HawksTripleScreenInspector } from "@/components/backtest/inspector/triple-screen-inspector"
+import type { BacktestTrade } from "@/types/backtest"
 
 interface TradeDetailLayoutProps {
 	children: ReactNode
@@ -34,13 +36,24 @@ interface TradeDetailLayoutProps {
 		tickSize?: number
 		tickValue?: number
 	} | null
+	// When set, the chart view renders the hawks triple-screen renko panes
+	// (5m / 15m / 60m) instead of the default single-pane candle chart.
+	tripleScreen?: {
+		trade: BacktestTrade
+		assetSymbol: string
+	} | null
 }
 
-const TradeDetailLayout = ({ children, chartData }: TradeDetailLayoutProps) => {
+const TradeDetailLayout = ({
+	children,
+	chartData,
+	tripleScreen,
+}: TradeDetailLayoutProps) => {
 	const tChart = useTranslations("trade.chart")
 	const tDialog = useTranslations("trade.unsavedDialog")
+	const hasChartView = Boolean(chartData) || Boolean(tripleScreen)
 	const [view, setView] = useState<"chart" | "details">(
-		chartData ? "chart" : "details"
+		hasChartView ? "chart" : "details"
 	)
 	const [chartKey, setChartKey] = useState(0)
 	const isDirtyRef = useRef(false)
@@ -106,7 +119,7 @@ const TradeDetailLayout = ({ children, chartData }: TradeDetailLayoutProps) => {
 		setPendingNavUrl(null)
 	}
 
-	if (!chartData) {
+	if (!hasChartView) {
 		return <>{children}</>
 	}
 
@@ -117,19 +130,42 @@ const TradeDetailLayout = ({ children, chartData }: TradeDetailLayoutProps) => {
 				className="flex h-[calc(100dvh-var(--app-header-height))] flex-col"
 			>
 				{view === "chart" ? (
-					<div className="h-full overflow-hidden">
-						<TradeChartView
-							key={chartKey}
-							trade={chartData.trade}
-							executions={chartData.executions}
-							candles={chartData.candles}
-							indicatorGroups={chartData.indicatorGroups}
-							fullTrade={chartData.fullTrade}
-							tickSize={chartData.tickSize}
-							tickValue={chartData.tickValue}
-							onToggleView={() => setView("details")}
-							onDirtyChange={handleDirtyChange}
-						/>
+					<div className="flex h-full flex-col overflow-hidden">
+						{tripleScreen ? (
+							<div className="p-m-400 sm:p-m-500 flex flex-1 flex-col overflow-auto">
+								<HawksTripleScreenInspector
+									key={chartKey}
+									trade={tripleScreen.trade}
+									assetSymbol={tripleScreen.assetSymbol}
+								/>
+								<div className="mt-m-400 flex justify-end">
+									<Button
+										id="toggle-detail-view-triple-screen"
+										size="sm"
+										variant="outline"
+										onClick={() => setView("details")}
+										className="border-acc-100/40 text-acc-100 hover:bg-acc-100/10 gap-s-200"
+										aria-label={tChart("switchToDetailView")}
+									>
+										<BarChart3 className="h-4 w-4" aria-hidden="true" />
+										{tChart("switchToDetailView")}
+									</Button>
+								</div>
+							</div>
+						) : chartData ? (
+							<TradeChartView
+								key={chartKey}
+								trade={chartData.trade}
+								executions={chartData.executions}
+								candles={chartData.candles}
+								indicatorGroups={chartData.indicatorGroups}
+								fullTrade={chartData.fullTrade}
+								tickSize={chartData.tickSize}
+								tickValue={chartData.tickValue}
+								onToggleView={() => setView("details")}
+								onDirtyChange={handleDirtyChange}
+							/>
+						) : null}
 					</div>
 				) : (
 					<div className="flex-1 overflow-auto">

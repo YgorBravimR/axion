@@ -15,11 +15,14 @@ import {
 	trades,
 	assets,
 	priceDataVersions,
+	timeframes,
 } from "@/db/schema"
 import { and, eq, asc } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getCandleStore } from "@/lib/candle-store"
+import { getActiveAccountModeForUser } from "@/lib/hawks/account-context"
+import { getBrtDateParts } from "@/lib/dates"
 
 // Fetch candles for a specific time range
 export const getCandlesForRange = async (
@@ -293,6 +296,33 @@ export const getCandleDataForAsset = async (
 			return null
 		}
 
+		// In hawks mode the canonical chart timeframe is hawk_5m_win.
+		// Without this preference the fallback picks an arbitrary first
+		// price_data_versions row (often a tiny R36/etc. parquet), so the
+		// trade detail chart renders only a handful of bricks.
+		const mode = await getActiveAccountModeForUser()
+		if (mode === "hawks") {
+			const hawkTf = await db.query.timeframes.findFirst({
+				where: eq(timeframes.code, "hawk_5m_win"),
+				columns: { id: true },
+			})
+			if (hawkTf) {
+				const hawkVersion = await db.query.priceDataVersions.findFirst({
+					where: and(
+						eq(priceDataVersions.assetId, asset.id),
+						eq(priceDataVersions.timeframeId, hawkTf.id)
+					),
+					columns: { assetId: true, timeframeId: true },
+				})
+				if (hawkVersion) {
+					return {
+						assetId: hawkVersion.assetId,
+						timeframeId: hawkVersion.timeframeId,
+					}
+				}
+			}
+		}
+
 		const version = await db.query.priceDataVersions.findFirst({
 			where: eq(priceDataVersions.assetId, asset.id),
 			columns: { assetId: true, timeframeId: true },
@@ -327,8 +357,12 @@ export const getCandlesForTrade = async (params: {
 	try {
 		const entryTime = new Date(params.entryDate)
 
-		// Full trading day (09:00-18:00 BRT) of the entry date
-		const entryDateStr = entryTime.toISOString().slice(0, 10) // YYYY-MM-DD
+		// Full trading day (09:00-18:00 BRT) of the entry date.
+		// Slicing toISOString() returns the UTC date — for late-evening BRT
+		// entries that crosses into the next day. Resolve the BRT-local date
+		// explicitly so the window stays on the correct trading day.
+		const { year, month, day } = getBrtDateParts(entryTime)
+		const entryDateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
 		const from = new Date(`${entryDateStr}T09:00:00-03:00`)
 		const to = new Date(`${entryDateStr}T18:00:00-03:00`)
 

@@ -1924,6 +1924,7 @@
 			"tradeCreateFailed": "Failed to create trade",
 			"hawksPayloadRequired": "Hawks mode active — fill scenario and confirmation screens",
 			"hawksBiasMissing": "Confirm the daily Hawks bias before logging the trade",
+			"hawksTimeframeMissing": "Hawks mode requires the hawk_5m_win timeframe — run scripts/materialize-hawks-timeframes.ts",
 			"tradeUpdateFailed": "Failed to update trade",
 			"tradeDeleteFailed": "Failed to archive trade",
 			"tradesRetrieved": "Trades retrieved successfully",
