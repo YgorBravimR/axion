@@ -139,8 +139,9 @@ describe("abandonDryRunImpl", () => {
 
 		await abandonDryRunImpl({ runId: "run-1" })
 
-		expect(capturedPayload?.dryRunOutput).toEqual({})
-		expect(capturedPayload?.status).toBe("abandoned")
+		expect(capturedPayload).toBeDefined()
+		expect(capturedPayload!.dryRunOutput).toEqual({})
+		expect(capturedPayload!.status).toBe("abandoned")
 	})
 
 	it("returns runId in response", async () => {

@@ -92,7 +92,8 @@ const quickAddTradeSchema = z
 		}
 	})
 
-type QuickAddTradeFormInput = z.infer<typeof quickAddTradeSchema>
+type QuickAddTradeFormInput = z.input<typeof quickAddTradeSchema>
+type QuickAddTradeFormOutput = z.output<typeof quickAddTradeSchema>
 
 interface QuickAddTradeModalProps {
 	isOpen: boolean
@@ -115,7 +116,12 @@ export const QuickAddTradeModal = ({
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const [savedCount, setSavedCount] = useState(0)
 
-	const form = useForm<QuickAddTradeFormInput>({
+	const form = useForm<
+		QuickAddTradeFormInput,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		any,
+		QuickAddTradeFormOutput
+	>({
 		resolver: zodResolver(quickAddTradeSchema),
 		defaultValues: {
 			asset: lastAsset || "",
@@ -129,7 +135,7 @@ export const QuickAddTradeModal = ({
 	})
 
 	const onSubmit = useCallback(
-		async (data: QuickAddTradeFormInput, keepOpen: boolean = false) => {
+		async (data: QuickAddTradeFormOutput, keepOpen: boolean = false) => {
 			setIsSubmitting(true)
 			try {
 				const result = await createTrade({
@@ -201,7 +207,10 @@ export const QuickAddTradeModal = ({
 								name="asset"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel htmlFor="quick-add-asset">
+										<FormLabel
+											id="quick-add-asset-label"
+											htmlFor="quick-add-asset"
+										>
 											{t("labels.asset")}
 										</FormLabel>
 										<Select
@@ -241,7 +250,10 @@ export const QuickAddTradeModal = ({
 								name="direction"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel htmlFor="quick-add-direction">
+										<FormLabel
+											id="quick-add-direction-label"
+											htmlFor="quick-add-direction"
+										>
 											{t("labels.direction")}
 										</FormLabel>
 										<Select
@@ -274,7 +286,10 @@ export const QuickAddTradeModal = ({
 									name="entryDate"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel htmlFor="quick-add-entryDate">
+											<FormLabel
+												id="quick-add-entryDate-label"
+												htmlFor="quick-add-entryDate"
+											>
 												{t("labels.entryDate")}
 											</FormLabel>
 											<FormControl>
@@ -296,7 +311,10 @@ export const QuickAddTradeModal = ({
 									name="exitDate"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel htmlFor="quick-add-exitDate">
+											<FormLabel
+												id="quick-add-exitDate-label"
+												htmlFor="quick-add-exitDate"
+											>
 												{t("labels.exitDate")}
 											</FormLabel>
 											<FormControl>
@@ -320,7 +338,10 @@ export const QuickAddTradeModal = ({
 									name="entryPrice"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel htmlFor="quick-add-entryPrice">
+											<FormLabel
+												id="quick-add-entryPrice-label"
+												htmlFor="quick-add-entryPrice"
+											>
 												{t("labels.entryPrice")}
 											</FormLabel>
 											<FormControl>
@@ -330,6 +351,7 @@ export const QuickAddTradeModal = ({
 													step="0.01"
 													placeholder="0.00"
 													{...field}
+													value={(field.value ?? "") as string | number}
 													disabled={isSubmitting}
 												/>
 											</FormControl>
@@ -343,7 +365,10 @@ export const QuickAddTradeModal = ({
 									name="exitPrice"
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel htmlFor="quick-add-exitPrice">
+											<FormLabel
+												id="quick-add-exitPrice-label"
+												htmlFor="quick-add-exitPrice"
+											>
 												{t("labels.exitPrice")}
 											</FormLabel>
 											<FormControl>
@@ -353,6 +378,7 @@ export const QuickAddTradeModal = ({
 													step="0.01"
 													placeholder="0.00"
 													{...field}
+													value={(field.value ?? "") as string | number}
 													disabled={isSubmitting}
 												/>
 											</FormControl>
@@ -367,7 +393,10 @@ export const QuickAddTradeModal = ({
 								name="positionSize"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel htmlFor="quick-add-positionSize">
+										<FormLabel
+											id="quick-add-positionSize-label"
+											htmlFor="quick-add-positionSize"
+										>
 											{t("labels.positionSize")}
 										</FormLabel>
 										<FormControl>
@@ -377,6 +406,7 @@ export const QuickAddTradeModal = ({
 												step="1"
 												placeholder="1"
 												{...field}
+												value={(field.value ?? "") as string | number}
 												disabled={isSubmitting}
 											/>
 										</FormControl>

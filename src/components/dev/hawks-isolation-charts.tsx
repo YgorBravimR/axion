@@ -1258,12 +1258,22 @@ const HawksIsolationCharts = ({
 						(state.side === "below" && isFarBelow) ||
 						(state.side === "above" && isFarAbove)
 					) {
-						state = { ...state, bricksLeft: state.bricksLeft - 1 }
+						state = {
+							name: "cooldown",
+							side: state.side,
+							bricksLeft: state.bricksLeft - 1,
+							level: state.level,
+						}
 						if (state.bricksLeft <= 0) {
 							state = { name: state.side, tag: "fresh" }
 						}
 					} else {
-						state = { ...state, bricksLeft: COOLDOWN_BRICKS }
+						state = {
+							name: "cooldown",
+							side: state.side,
+							bricksLeft: COOLDOWN_BRICKS,
+							level: state.level,
+						}
 					}
 				} else if (state.name === "below" || state.name === "above") {
 					const onSide = state.name
@@ -1376,7 +1386,12 @@ const HawksIsolationCharts = ({
 						// confirming and confirmAboveStreak handles it next iteration.
 						state = { name: "above", tag: "fresh" }
 					} else {
-						state = { ...state, countdown: state.countdown - 1 }
+						state = {
+							name: "armed_from_below",
+							archetype: state.archetype,
+							countdown: state.countdown - 1,
+							level: state.level,
+						}
 						if (state.countdown <= 0) {
 							state =
 								c.close >= level
@@ -1401,7 +1416,12 @@ const HawksIsolationCharts = ({
 					} else if (c.close < lo) {
 						state = { name: "below", tag: "fresh" }
 					} else {
-						state = { ...state, countdown: state.countdown - 1 }
+						state = {
+							name: "armed_from_above",
+							archetype: state.archetype,
+							countdown: state.countdown - 1,
+							level: state.level,
+						}
 						if (state.countdown <= 0) {
 							state =
 								c.close >= level
@@ -1533,7 +1553,7 @@ const HawksIsolationCharts = ({
 			const rollMean = rollCount >= MIN_ROLL_BRICKS ? rollSum / rollCount : null
 			const dayMean = dayCount >= MIN_DAY_BRICKS ? daySum / dayCount : null
 			out.push({
-				value: values[i],
+				value: values[i]!,
 				rollMean,
 				dayMean,
 				dayBrickCount: dayCount,

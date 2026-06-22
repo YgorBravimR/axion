@@ -13,30 +13,65 @@ vi.mock("@/lib/backtest/hawks-indicators")
 // Minimal Trade fixture
 const createTrade = (overrides?: Partial<Trade>): Trade => ({
 	id: "trade-123",
-	userId: "user-1",
 	accountId: "account-1",
 	entryDate: new Date("2026-06-15T09:35:00Z"),
-	entryTime: "09:35:00",
 	exitDate: new Date("2026-06-15T10:15:00Z"),
-	exitTime: "10:15:00",
 	asset: "WIN",
 	direction: "long",
-	entryPrice: 75500,
-	exitPrice: 75600,
-	positionSize: 10,
-	pnl: 1000,
+	entryPrice: "75500",
+	exitPrice: "75600",
+	positionSize: "10",
+	timeframeId: null,
+	pnl: "1000",
+	pnlPercent: null,
+	pointsPnl: null,
 	mfe: null,
 	mae: null,
+	mfeR: null,
+	maeR: null,
+	stopLoss: null,
+	takeProfit: null,
+	plannedRiskAmount: null,
+	plannedRMultiple: null,
+	realizedRMultiple: null,
+	oneRSnapshotCents: null,
+	rOutcome: null,
+	outcome: null,
+	commission: null,
+	fees: null,
+	contractsExecuted: null,
+	preTradeThoughts: null,
+	postTradeReflection: null,
+	lessonLearned: null,
 	profitOperationNumber: null,
 	profitMetadata: null,
 	strategyId: null,
-	strategyCode: null,
-	timeframeCode: null,
-	tags: [],
-	notes: null,
+	strategyVersionId: null,
+	setupRank: null,
+	screenshotUrl: null,
+	screenshotS3Key: null,
+	followedPlan: null,
+	disciplineNotes: null,
+	rating: null,
+	executionMode: "simple",
+	totalEntryQuantity: null,
+	totalExitQuantity: null,
+	avgEntryPrice: null,
+	avgExitPrice: null,
+	remainingQuantity: null,
+	deduplicationHash: null,
+	enrichmentStatus: "pending",
+	enrichmentVersion: 0,
+	enrichedAt: null,
+	enrichmentOpsStatus: null,
+	enrichmentCandleStatus: null,
+	enrichmentIndicatorStatus: null,
+	enrichmentSlTargetStatus: null,
 	indicatorReadout: null,
 	createdAt: new Date(),
 	updatedAt: new Date(),
+	isArchived: false,
+	source: null,
 	...overrides,
 })
 
@@ -347,7 +382,7 @@ describe("indicatorReadoutPass", () => {
 		)
 
 		const trade = createTrade({
-			indicatorReadout: snapshot as Record<string, unknown>,
+			indicatorReadout: snapshot as unknown as Record<string, unknown>,
 		})
 		const ctx: EnrichmentContext = {
 			candles: [],
@@ -371,7 +406,7 @@ describe("indicatorReadoutPass", () => {
 		)
 
 		const trade = createTrade({
-			indicatorReadout: differentSnapshot as Record<string, unknown>,
+			indicatorReadout: differentSnapshot as unknown as Record<string, unknown>,
 		})
 		const ctx: EnrichmentContext = {
 			candles: [],
@@ -433,6 +468,7 @@ describe("indicatorReadoutPass", () => {
 		).toHaveBeenCalled()
 		const callArgs = vi.mocked(hawksIndicatorsModule.getHawksIndicatorsAt).mock
 			.calls[0]
-		expect(callArgs[1]).toBe("2026-06-15T09:35:00.000Z")
+		expect(callArgs).toBeDefined()
+		expect(callArgs?.[1]).toBe("2026-06-15T09:35:00.000Z")
 	})
 })

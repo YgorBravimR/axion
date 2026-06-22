@@ -35,12 +35,7 @@ export const EnrichSidebar = ({
 		for (let i = 0; i < snapshots.length; i++) {
 			const snapshot = snapshots[i]!
 			const entryDate = snapshot.dryRun.trade.entryDate
-			const dateStr =
-				entryDate instanceof Date
-					? entryDate.toISOString().split("T")[0]
-					: typeof entryDate === "string"
-						? entryDate.split("T")[0]
-						: ""
+			const dateStr = entryDate.toISOString().split("T")[0]
 
 			if (!dateStr) {
 				continue
@@ -54,7 +49,7 @@ export const EnrichSidebar = ({
 			group.trades.push({
 				index: i,
 				timestamp: formatTimeForReview(entryDate),
-				status: snapshot.status,
+				status: snapshot.status === "abandoned" ? "skipped" : snapshot.status,
 			})
 		}
 

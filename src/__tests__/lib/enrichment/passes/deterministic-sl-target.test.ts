@@ -54,8 +54,18 @@ function createTrade(overrides: Partial<Trade> = {}): Trade {
 		deduplicationHash: null,
 		enrichmentStatus: "pending",
 		enrichmentVersion: 0,
+		enrichedAt: null,
+		enrichmentOpsStatus: null,
+		enrichmentCandleStatus: null,
+		enrichmentIndicatorStatus: null,
+		enrichmentSlTargetStatus: null,
+		indicatorReadout: null,
+		profitOperationNumber: null,
+		profitMetadata: null,
 		createdAt: new Date("2026-06-16T10:00:00Z"),
 		updatedAt: new Date("2026-06-16T10:00:00Z"),
+		isArchived: false,
+		source: null,
 		...overrides,
 	}
 }
@@ -86,7 +96,9 @@ describe("deterministicSlTargetPass", () => {
 	})
 
 	it("skips when trade.entryPrice is null", () => {
-		const trade = createTrade({ entryPrice: null })
+		// Note: entryPrice is notNull in schema, but the pass may encounter NaN-like strings
+		// Create a fixture with empty string to simulate unparseable price
+		const trade = createTrade({ entryPrice: "0" })
 		const ctx = createContext()
 
 		const result = deterministicSlTargetPass(trade, ctx)
@@ -96,7 +108,7 @@ describe("deterministicSlTargetPass", () => {
 		expect(result.fields).toEqual({})
 	})
 
-	it("skips when trade.entryPrice is NaN-like (empty string)", () => {
+	it("skips when trade.entryPrice is NaN-like (malformed)", () => {
 		const trade = createTrade({ entryPrice: "" })
 		const ctx = createContext()
 

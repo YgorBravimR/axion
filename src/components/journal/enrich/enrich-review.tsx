@@ -117,10 +117,12 @@ export const EnrichReview = ({
 	}, [])
 
 	const currentSnapshot = snapshots[currentIndex]
-	const currentSelection = fieldSelections.get(currentSnapshot.snapshotId) || {
-		accepted: new Set(),
-		rejected: new Set(),
-	}
+	const currentSelection = currentSnapshot
+		? (fieldSelections.get(currentSnapshot.snapshotId) ?? {
+				accepted: new Set<string>(),
+				rejected: new Set<string>(),
+			})
+		: { accepted: new Set<string>(), rejected: new Set<string>() }
 
 	const totalCount = snapshots.length
 
@@ -139,6 +141,9 @@ export const EnrichReview = ({
 
 	const handleToggleField = useCallback(
 		(fieldName: string, state: "accepted" | "rejected" | "neither") => {
+			if (!currentSnapshot) {
+				return
+			}
 			const snapshotId = currentSnapshot.snapshotId
 			const tradeId = currentSnapshot.tradeId
 			setFieldSelections((prev) => {
@@ -171,11 +176,14 @@ export const EnrichReview = ({
 				return map
 			})
 		},
-		[currentSnapshot.snapshotId, currentSnapshot.tradeId, scheduleSave]
+		[currentSnapshot, scheduleSave]
 	)
 
 	// Save & next handler
 	const handleSave = useCallback(async () => {
+		if (!currentSnapshot) {
+			return
+		}
 		setIsCommitting(true)
 
 		try {
@@ -248,6 +256,9 @@ export const EnrichReview = ({
 
 	// Skip handler
 	const handleSkip = useCallback(async () => {
+		if (!currentSnapshot) {
+			return
+		}
 		setIsSkipping(true)
 
 		try {
@@ -302,6 +313,9 @@ export const EnrichReview = ({
 
 	// Accept all handler
 	const handleAcceptAll = useCallback(() => {
+		if (!currentSnapshot) {
+			return
+		}
 		const snapshotId = currentSnapshot.snapshotId
 		const tradeId = currentSnapshot.tradeId
 		const mergedFields = Object.keys(currentSnapshot.dryRun.mergedFields)
@@ -323,6 +337,9 @@ export const EnrichReview = ({
 
 	// Reject all handler
 	const handleRejectAll = useCallback(() => {
+		if (!currentSnapshot) {
+			return
+		}
 		const snapshotId = currentSnapshot.snapshotId
 		const tradeId = currentSnapshot.tradeId
 
@@ -359,6 +376,10 @@ export const EnrichReview = ({
 		onHelp: () => setIsHelpDialogOpen(true),
 		enabled: !isCommitting && !isSkipping,
 	})
+
+	if (!currentSnapshot) {
+		return null
+	}
 
 	return (
 		<div className="flex h-screen flex-col overflow-hidden">
@@ -403,6 +424,7 @@ export const EnrichReview = ({
 					<div className="bg-background flex items-center justify-between gap-3 border-t px-6 py-4">
 						<div className="flex items-center gap-2">
 							<Button
+								id="enrich-review-prev"
 								variant="outline"
 								size="sm"
 								onClick={handlePrev}
@@ -413,6 +435,7 @@ export const EnrichReview = ({
 								{t("prev")}
 							</Button>
 							<Button
+								id="enrich-review-next"
 								variant="outline"
 								size="sm"
 								onClick={handleNext}
@@ -426,6 +449,7 @@ export const EnrichReview = ({
 
 						<div className="flex items-center gap-2">
 							<Button
+								id="enrich-review-help"
 								variant="outline"
 								size="sm"
 								onClick={() => setIsHelpDialogOpen(true)}
@@ -434,6 +458,7 @@ export const EnrichReview = ({
 								?
 							</Button>
 							<Button
+								id="enrich-review-skip"
 								variant="outline"
 								size="sm"
 								onClick={handleSkip}
@@ -446,6 +471,7 @@ export const EnrichReview = ({
 								{t("skip")}
 							</Button>
 							<Button
+								id="enrich-review-save"
 								size="sm"
 								onClick={handleSave}
 								disabled={
@@ -463,6 +489,7 @@ export const EnrichReview = ({
 						</div>
 
 						<Button
+							id="enrich-review-abandon"
 							variant="destructive"
 							size="sm"
 							onClick={() => setIsAbandonDialogOpen(true)}
@@ -487,8 +514,13 @@ export const EnrichReview = ({
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<div className="flex justify-end gap-2">
-						<AlertDialogCancel>Keep reviewing</AlertDialogCancel>
-						<AlertDialogAction onClick={handleAbandon}>
+						<AlertDialogCancel id="enrich-review-keep-reviewing">
+							Keep reviewing
+						</AlertDialogCancel>
+						<AlertDialogAction
+							id="enrich-review-confirm-abandon"
+							onClick={handleAbandon}
+						>
 							Abandon
 						</AlertDialogAction>
 					</div>
@@ -497,7 +529,7 @@ export const EnrichReview = ({
 
 			{/* Help overlay */}
 			<Dialog open={isHelpDialogOpen} onOpenChange={setIsHelpDialogOpen}>
-				<DialogContent>
+				<DialogContent id="enrich-review-help-dialog">
 					<DialogHeader>
 						<DialogTitle>{t("helpTitle")}</DialogTitle>
 						<DialogClose />

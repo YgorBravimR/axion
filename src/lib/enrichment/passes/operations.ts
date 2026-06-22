@@ -3,6 +3,7 @@ import type {
 	EnrichmentDelta,
 	EnrichmentPass,
 	EnrichmentContext,
+	EnrichmentField,
 } from "@/lib/enrichment/types"
 
 const operationsPass: EnrichmentPass = (
@@ -36,7 +37,7 @@ const operationsPass: EnrichmentPass = (
 		}
 	}
 
-	const fields: Record<string, unknown> = {}
+	const fields: Record<string, EnrichmentField<unknown>> = {}
 
 	try {
 		const { profitOperation } = ctx
@@ -101,13 +102,17 @@ const operationsPass: EnrichmentPass = (
 		)
 		checkAndAdd(
 			"mfe",
-			profitOperation.mfe ?? null,
+			typeof profitOperation.mfe === "string"
+				? Number(profitOperation.mfe)
+				: (profitOperation.mfe ?? null),
 			trade.mfe != null ? Number(trade.mfe) : null,
 			true
 		)
 		checkAndAdd(
 			"mae",
-			profitOperation.mae ?? null,
+			typeof profitOperation.mae === "string"
+				? Number(profitOperation.mae)
+				: (profitOperation.mae ?? null),
 			trade.mae != null ? Number(trade.mae) : null,
 			true
 		)

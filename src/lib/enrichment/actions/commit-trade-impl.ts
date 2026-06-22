@@ -64,7 +64,7 @@ export const commitTradeImpl = async (
 		// Authorization check: user's account or in showAllAccounts list
 		if (
 			trade.accountId !== authContext.accountId &&
-			!authContext.allAccountIds.includes(trade.accountId)
+			!authContext.allAccountIds.includes(trade.accountId ?? "")
 		) {
 			return {
 				status: "error",

@@ -50,7 +50,7 @@ export const saveDraftSelectionsImpl = async (
 
 		if (
 			trade.accountId !== authContext.accountId &&
-			!authContext.allAccountIds.includes(trade.accountId)
+			!authContext.allAccountIds.includes(trade.accountId ?? "")
 		) {
 			return {
 				status: "error",

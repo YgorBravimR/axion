@@ -652,21 +652,21 @@ const HawksEngineLab = ({
 				markers15.push({
 					time: startIdx as UTCTimestamp,
 					position: startIsTopo ? "aboveBar" : "belowBar",
-					shape: "text",
+					shape: "circle",
 					color: COLOR_FIB_ANCHOR_START,
 					text: `#${fireGlobalSeq}`,
 				})
 				markers15.push({
 					time: endIdx as UTCTimestamp,
 					position: endIsTopo ? "aboveBar" : "belowBar",
-					shape: "text",
+					shape: "circle",
 					color: COLOR_FIB_ANCHOR_END,
 					text: `#${fireGlobalSeq}`,
 				})
 				markers15.push({
 					time: peakIdx as UTCTimestamp,
 					position: b.direction === "short" ? "aboveBar" : "belowBar",
-					shape: "text",
+					shape: "circle",
 					color: COLOR_FIB_ANCHOR,
 					text: `#${fireGlobalSeq}`,
 				})

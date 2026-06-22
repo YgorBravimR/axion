@@ -212,10 +212,10 @@ export const fetchHawksIsolationData = async (
 			if (!payload) {
 				continue
 			}
-			const current = (c.indicators ?? {}) as Record<string, unknown>
+			const current = (c.indicators ?? {}) as Record<string, number>
 			for (const [k, v] of Object.entries(payload)) {
 				if (!(k in current)) {
-					current[k] = v
+					current[k] = typeof v === "number" ? v : 0
 				}
 			}
 			c.indicators = current

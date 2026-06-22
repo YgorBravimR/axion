@@ -3,6 +3,7 @@ import type {
 	EnrichmentDelta,
 	EnrichmentPass,
 	EnrichmentContext,
+	EnrichmentField,
 } from "@/lib/enrichment/types"
 import { getHawksIndicatorsAt } from "@/lib/backtest/hawks-indicators"
 
@@ -44,7 +45,7 @@ const indicatorReadoutPass: EnrichmentPass = (
 			}
 		}
 
-		const fields: Record<string, unknown> = {}
+		const fields: Record<string, EnrichmentField<unknown>> = {}
 
 		const confidence: "high" | "medium" | "low" =
 			snapshot.favorableCount >= 4

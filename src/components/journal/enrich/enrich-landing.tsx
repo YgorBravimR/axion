@@ -198,7 +198,7 @@ export const EnrichLanding = ({
 			</div>
 
 			{/* Main content */}
-			<Card className="space-y-m-600 p-m-600">
+			<Card id="enrich-landing-card" className="space-y-m-600 p-m-600">
 				{/* Pending count */}
 				<div className="bg-acc-100/10 p-m-500 rounded-lg">
 					<p className="text-small text-txt-300">{t("landing.pendingLabel")}</p>
@@ -267,6 +267,7 @@ export const EnrichLanding = ({
 								</span>
 							</div>
 							<Button
+								id="enrich-landing-clear-file"
 								variant="ghost"
 								size="icon"
 								onClick={handleClearCsv}
@@ -329,6 +330,7 @@ export const EnrichLanding = ({
 									</p>
 									<div className="mt-m-400 flex justify-center">
 										<Button
+											id="enrich-landing-select-file"
 											type="button"
 											variant="default"
 											onClick={(e) => {
@@ -359,10 +361,16 @@ export const EnrichLanding = ({
 
 				{/* Actions */}
 				<div className="gap-m-400 pt-m-400 flex">
-					<Button variant="outline" onClick={handleCancel} disabled={isPending}>
+					<Button
+						id="enrich-landing-cancel"
+						variant="outline"
+						onClick={handleCancel}
+						disabled={isPending}
+					>
 						{t("landing.cancel")}
 					</Button>
 					<Button
+						id="enrich-landing-start"
 						onClick={handleStartDryRun}
 						disabled={isPending || pendingCount === 0}
 					>
