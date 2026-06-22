@@ -26,6 +26,7 @@ interface CalculatorFormProps {
 	manualContracts: string
 	maxRiskOverride: string
 	settingsRiskCents: number
+	riskSource: "breaker" | "settings" | "none"
 	onAssetChange: (_id: string) => void
 	onDirectionChange: (_dir: "long" | "short") => void
 	onEntryPriceChange: (_value: string) => void
@@ -58,6 +59,7 @@ const CalculatorForm = memo(
 		manualContracts,
 		maxRiskOverride,
 		settingsRiskCents,
+		riskSource,
 		onAssetChange,
 		onDirectionChange,
 		onEntryPriceChange,
@@ -260,12 +262,20 @@ const CalculatorForm = memo(
 						onChange={(e) => onMaxRiskOverrideChange(e.target.value)}
 						placeholder={
 							settingsRiskCents > 0
-								? `${fromCents(settingsRiskCents).toFixed(2)} (${t("fromSettings")})`
+								? `${fromCents(settingsRiskCents).toFixed(2)} (${
+										riskSource === "breaker"
+											? t("fromBreaker")
+											: t("fromSettings")
+									})`
 								: t("enterMaxRisk")
 						}
 						aria-label={t("maxRisk")}
 					/>
-					<p className="mt-s-100 text-tiny text-txt-300">{t("maxRiskHelp")}</p>
+					<p className="mt-s-100 text-tiny text-txt-300">
+						{riskSource === "breaker"
+							? t("maxRiskHelpBreaker")
+							: t("maxRiskHelp")}
+					</p>
 				</div>
 
 				{/* Manual Contracts Override */}

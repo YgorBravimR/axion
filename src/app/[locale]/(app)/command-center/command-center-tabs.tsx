@@ -151,6 +151,12 @@ const CommandCenterTabs = ({
 						strategies={strategies}
 						assetSettings={assetSettings}
 						defaultAssetId={defaultAssetId}
+						recommendedRiskCents={
+							commandCenterProps.isToday
+								? (commandCenterProps.initialCircuitBreaker
+										?.recommendedRiskCents ?? null)
+								: null
+						}
 					/>
 				</Suspense>
 			</AnimatedTabsContent>

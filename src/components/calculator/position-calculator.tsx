@@ -21,6 +21,10 @@ interface PositionCalculatorProps {
 	strategies: StrategyWithStats[]
 	assetSettings: AssetSettingWithAsset[]
 	defaultAssetId?: string
+	// Resolved by the circuit breaker for today (today only — non-today views
+	// pass null). When present, this is the canonical R cap the trader should
+	// respect and takes precedence over the static account-settings value.
+	recommendedRiskCents?: number | null
 }
 
 const PositionCalculator = ({
@@ -29,6 +33,7 @@ const PositionCalculator = ({
 	strategies,
 	assetSettings,
 	defaultAssetId,
+	recommendedRiskCents = null,
 }: PositionCalculatorProps) => {
 	const t = useTranslations("commandCenter.calculator")
 
@@ -83,8 +88,13 @@ const PositionCalculator = ({
 		[strategiesWithTarget, selectedStrategyId]
 	)
 
-	// Derived: max risk from account settings (used as default / placeholder)
+	// Derived: max risk default. Circuit-breaker recommendation wins when
+	// available because it already factors in today's daily-loss cap and
+	// post-loss reduction. Falls back to account settings, then maxDailyLoss.
 	const settingsRiskCents = useMemo(() => {
+		if (recommendedRiskCents !== null && recommendedRiskCents > 0) {
+			return recommendedRiskCents
+		}
 		if (accountSettings.defaultRiskPerTrade) {
 			return toCents(accountSettings.defaultRiskPerTrade)
 		}
@@ -92,7 +102,14 @@ const PositionCalculator = ({
 			return accountSettings.maxDailyLoss
 		}
 		return 0
-	}, [accountSettings])
+	}, [accountSettings, recommendedRiskCents])
+
+	const riskSource: "breaker" | "settings" | "none" =
+		recommendedRiskCents !== null && recommendedRiskCents > 0
+			? "breaker"
+			: accountSettings.defaultRiskPerTrade || accountSettings.maxDailyLoss
+				? "settings"
+				: "none"
 
 	// Effective max risk: manual override takes priority over settings
 	const maxAllowedRiskCents = useMemo(() => {
@@ -293,6 +310,7 @@ const PositionCalculator = ({
 					manualContracts={manualContracts}
 					maxRiskOverride={maxRiskOverride}
 					settingsRiskCents={settingsRiskCents}
+					riskSource={riskSource}
 					onAssetChange={setSelectedAssetId}
 					onDirectionChange={setDirection}
 					onEntryPriceChange={setEntryPrice}
