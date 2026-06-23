@@ -3,12 +3,7 @@ import { db } from "@/db/drizzle"
 import { hawksRenkoSizes } from "@/db/schema"
 import { weekStart } from "@/lib/calendar/iso-week"
 import { format } from "date-fns"
-
-const POINTS_PER_TICK = 5
-
-const rNumberToPoints = (rNumber: number): number => {
-	return (rNumber - 1) * POINTS_PER_TICK
-}
+import { rNumberToPoints } from "./r-number"
 
 const resolveBrickSize5mPoints = async (
 	assetId: string,

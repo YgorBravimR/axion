@@ -2,8 +2,11 @@
 
 import { dbWs } from "@/db/drizzle-ws"
 import { assets, hawksRenkoSizes } from "@/db/schema"
-import { eq, sql } from "drizzle-orm"
-import type { RenkoSizeRow } from "./hawks-renko.types"
+import { weekStart, getIsoWeekOfDate } from "@/lib/calendar/iso-week"
+import { eq, sql, desc } from "drizzle-orm"
+import { format } from "date-fns"
+import { revalidatePath } from "next/cache"
+import type { RenkoSizeRecord, RenkoSizeRow } from "./hawks-renko.types"
 
 // ─── CSV parser ───────────────────────────────────────────────────────────────
 
@@ -34,15 +37,25 @@ const parseRenkoSizeCsv = (csvText: string): RenkoSizeRow[] => {
 
 	const weekIdx = headers.indexOf("WEEK")
 	const dateIdx = headers.indexOf("DATA")
+	const oneIdx = headers.indexOf("1M")
 	const fiveIdx = headers.indexOf("5M")
 	const fifteenIdx = headers.indexOf("15M")
 	const sixtyIdx = headers.indexOf("60M")
+	const dailyIdx = headers.indexOf("1D")
 	const assetIdx = headers.indexOf("ASSET")
 
 	if ([weekIdx, dateIdx, fiveIdx, fifteenIdx, sixtyIdx].some((i) => i === -1)) {
 		throw new Error(
 			"Renko size CSV missing required columns: WEEK, DATA, 5m, 15m, 60m"
 		)
+	}
+
+	const intOrNull = (raw: string | undefined): number | null => {
+		if (!raw || !raw.trim()) {
+			return null
+		}
+		const n = parseInt(raw.trim(), 10)
+		return Number.isFinite(n) ? n : null
 	}
 
 	const rows: RenkoSizeRow[] = []
@@ -59,16 +72,19 @@ const parseRenkoSizeCsv = (csvText: string): RenkoSizeRow[] => {
 			continue
 		}
 		const [dd, mm, yy] = parts
-		const year = 2000 + parseInt(yy!, 10)
+		const yearRaw = parseInt(yy!, 10)
+		const year = yearRaw < 100 ? 2000 + yearRaw : yearRaw
 		const effectiveDate = `${year}-${mm!.padStart(2, "0")}-${dd!.padStart(2, "0")}`
 
 		const rawAsset = assetIdx >= 0 ? cols[assetIdx]?.trim() : ""
 		rows.push({
 			effectiveDate,
 			weekNumber: parseInt(cols[weekIdx]!, 10),
+			size1m: oneIdx >= 0 ? intOrNull(cols[oneIdx]) : null,
 			size5m: parseInt(cols[fiveIdx]!, 10),
 			size15m: parseInt(cols[fifteenIdx]!, 10),
 			size60m: parseInt(cols[sixtyIdx]!, 10),
+			size1d: dailyIdx >= 0 ? intOrNull(cols[dailyIdx]) : null,
 			assetSymbol: rawAsset ? rawAsset.toUpperCase() : null,
 		})
 	}
@@ -139,9 +155,11 @@ export const importHawksRenkoSizes = async (
 						assetId: symbolToAssetId.get(sym)!,
 						effectiveDate: r.effectiveDate,
 						weekNumber: r.weekNumber,
+						size1m: r.size1m,
 						size5m: r.size5m,
 						size15m: r.size15m,
 						size60m: r.size60m,
+						size1d: r.size1d,
 					}
 				})
 			)
@@ -149,9 +167,11 @@ export const importHawksRenkoSizes = async (
 				target: [hawksRenkoSizes.assetId, hawksRenkoSizes.effectiveDate],
 				set: {
 					weekNumber: sql`EXCLUDED.week_number`,
+					size1m: sql`EXCLUDED.size_1m`,
 					size5m: sql`EXCLUDED.size_5m`,
 					size15m: sql`EXCLUDED.size_15m`,
 					size60m: sql`EXCLUDED.size_60m`,
+					size1d: sql`EXCLUDED.size_1d`,
 				},
 			})
 
@@ -162,5 +182,122 @@ export const importHawksRenkoSizes = async (
 			imported: 0,
 			error: error instanceof Error ? error.message : "Unknown import error",
 		}
+	}
+}
+
+// ─── Table actions (UI) ───────────────────────────────────────────────────────
+
+/**
+ * List all WIN renko-size rows ordered by effectiveDate desc.
+ * The /dev/renko-sizes table reads this.
+ */
+export const listHawksRenkoSizes = async (
+	assetSymbol: string = "WIN"
+): Promise<RenkoSizeRecord[]> => {
+	const sym = assetSymbol.toUpperCase()
+	const asset = await dbWs.query.assets.findFirst({
+		where: eq(assets.symbol, sym),
+	})
+	if (!asset) {
+		return []
+	}
+
+	const rows = await dbWs
+		.select({
+			id: hawksRenkoSizes.id,
+			effectiveDate: hawksRenkoSizes.effectiveDate,
+			weekNumber: hawksRenkoSizes.weekNumber,
+			size1m: hawksRenkoSizes.size1m,
+			size5m: hawksRenkoSizes.size5m,
+			size15m: hawksRenkoSizes.size15m,
+			size60m: hawksRenkoSizes.size60m,
+			size1d: hawksRenkoSizes.size1d,
+		})
+		.from(hawksRenkoSizes)
+		.where(eq(hawksRenkoSizes.assetId, asset.id))
+		.orderBy(desc(hawksRenkoSizes.effectiveDate))
+
+	return rows
+}
+
+interface UpsertRenkoSizeInput {
+	effectiveDate: string // ISO YYYY-MM-DD (Monday of the ISO week)
+	weekNumber: number
+	size1m: number | null
+	size5m: number
+	size15m: number
+	size60m: number
+	size1d: number | null
+}
+
+/**
+ * Upsert a single WIN renko-size row. Used by the "Add this week" modal.
+ * Normalizes effectiveDate to the ISO-week Monday so the join key matches
+ * how trades pick up the row.
+ */
+export const upsertHawksRenkoSize = async (
+	input: UpsertRenkoSizeInput,
+	assetSymbol: string = "WIN"
+): Promise<{ success: boolean; error?: string }> => {
+	try {
+		const sym = assetSymbol.toUpperCase()
+		const asset = await dbWs.query.assets.findFirst({
+			where: eq(assets.symbol, sym),
+		})
+		if (!asset) {
+			return { success: false, error: `Asset ${sym} not found` }
+		}
+
+		const monday = weekStart(new Date(`${input.effectiveDate}T00:00:00Z`))
+		const effectiveDate = format(monday, "yyyy-MM-dd")
+
+		await dbWs
+			.insert(hawksRenkoSizes)
+			.values({
+				assetId: asset.id,
+				effectiveDate,
+				weekNumber: input.weekNumber,
+				size1m: input.size1m,
+				size5m: input.size5m,
+				size15m: input.size15m,
+				size60m: input.size60m,
+				size1d: input.size1d,
+			})
+			.onConflictDoUpdate({
+				target: [hawksRenkoSizes.assetId, hawksRenkoSizes.effectiveDate],
+				set: {
+					weekNumber: sql`EXCLUDED.week_number`,
+					size1m: sql`EXCLUDED.size_1m`,
+					size5m: sql`EXCLUDED.size_5m`,
+					size15m: sql`EXCLUDED.size_15m`,
+					size60m: sql`EXCLUDED.size_60m`,
+					size1d: sql`EXCLUDED.size_1d`,
+				},
+			})
+
+		revalidatePath("/dev/renko-sizes")
+		return { success: true }
+	} catch (error) {
+		return {
+			success: false,
+			error: error instanceof Error ? error.message : "Unknown upsert error",
+		}
+	}
+}
+
+/**
+ * Returns the ISO-week Monday for the current week so the modal can default
+ * to "this week" without leaking date-math into the client.
+ */
+export const currentWeekAnchor = async (): Promise<{
+	effectiveDate: string
+	weekNumber: number
+}> => {
+	const now = new Date()
+	const monday = weekStart(now)
+	const weekNumber = getIsoWeekOfDate(now)
+	return {
+		effectiveDate: format(monday, "yyyy-MM-dd"),
+		weekNumber,
 	}
 }

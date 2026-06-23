@@ -2480,9 +2480,11 @@ export const hawksRenkoSizes = pgTable(
 			.references(() => assets.id, { onDelete: "cascade" }),
 		effectiveDate: date("effective_date").notNull(),
 		weekNumber: smallint("week_number").notNull(),
+		size1m: smallint("size_1m"),
 		size5m: smallint("size_5m").notNull(),
 		size15m: smallint("size_15m").notNull(),
 		size60m: smallint("size_60m").notNull(),
+		size1d: smallint("size_1d"),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.defaultNow()
 			.notNull(),

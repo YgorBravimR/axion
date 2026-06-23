@@ -34,6 +34,11 @@ interface GetInspectorWindowParams {
 	readonly paddingMs5m?: number
 	readonly paddingMs15m?: number
 	readonly paddingMs60m?: number
+	// Asymmetric window — when provided, overrides the symmetric padding
+	// fields above. Caller picks how much history vs. follow-through to
+	// load (e.g. 20 days before, 3 days after for journal context).
+	readonly paddingMsBefore?: number
+	readonly paddingMsAfter?: number
 }
 
 type InspectorWindowResult =

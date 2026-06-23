@@ -5,6 +5,8 @@ import {
 	ArrowUpRight,
 	ArrowDownRight,
 	Calendar,
+	ChevronLeft,
+	ChevronRight,
 	Edit,
 	Target,
 	TrendingUp,
@@ -30,7 +32,7 @@ import {
 	TradeTag,
 	type RatingGrade,
 } from "@/components/journal"
-import { getTrade } from "@/app/actions/trades"
+import { getAdjacentTrades, getTrade } from "@/app/actions/trades"
 import { getTradeConditions } from "@/app/actions/trade-conditions"
 import { getAssetBySymbol } from "@/app/actions/assets"
 import {
@@ -70,12 +72,13 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 	// `accountMode` decides whether the chart switches to the hawks
 	// triple-screen layout (5m/15m/60m renko panes) or the default single-pane
 	// candle chart.
-	const [asset, assetCandleSource, conditionsResult, accountMode] =
+	const [asset, assetCandleSource, conditionsResult, accountMode, adjacent] =
 		await Promise.all([
 			getAssetBySymbol(trade.asset),
 			getCandleDataForAsset(trade.asset),
 			getTradeConditions(trade.id),
 			getActiveAccountModeForUser(),
+			getAdjacentTrades(trade.id),
 		])
 
 	// Prefer the trade's own timeframe when present — it's the source of truth
@@ -210,13 +213,73 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 				}
 			: null
 
+	const tripleScreenJournalTrade = willRenderTripleScreen
+		? {
+				id: trade.id,
+				direction: trade.direction,
+				entryDate: trade.entryDate.toISOString(),
+				exitDate: trade.exitDate?.toISOString() ?? null,
+				entryPrice: Number(trade.entryPrice),
+				exitPrice: trade.exitPrice ? Number(trade.exitPrice) : null,
+				stopLoss: trade.stopLoss ? Number(trade.stopLoss) : null,
+				takeProfit: trade.takeProfit ? Number(trade.takeProfit) : null,
+				pnl: trade.pnl ? Number(trade.pnl) : null,
+				outcome: trade.outcome,
+				asset: trade.asset,
+				positionSize: Number(trade.positionSize),
+			}
+		: null
+	const tripleScreenExecutions = willRenderTripleScreen
+		? (trade.executions ?? []).map((e) => ({
+				type: e.executionType as "entry" | "exit",
+				price: Number(e.price),
+				quantity: Number(e.quantity),
+				timestamp: e.executionDate.toISOString(),
+			}))
+		: []
+	const tripleScreenFullTrade = willRenderTripleScreen
+		? {
+				preTradeThoughts: trade.preTradeThoughts,
+				postTradeReflection: trade.postTradeReflection,
+				lessonLearned: trade.lessonLearned,
+				disciplineNotes: trade.disciplineNotes,
+				strategy: trade.strategy,
+				rating: trade.rating,
+				followedPlan: trade.followedPlan,
+				mfe: trade.mfe,
+				mae: trade.mae,
+				plannedRMultiple: trade.plannedRMultiple,
+				realizedRMultiple: trade.realizedRMultiple,
+				plannedRiskAmount: trade.plannedRiskAmount
+					? Number(trade.plannedRiskAmount)
+					: null,
+				executionMode: trade.executionMode,
+				tradeTags: trade.tradeTags,
+				timeframe: trade.timeframe,
+			}
+		: null
 	const tripleScreen =
-		willRenderTripleScreen && tripleScreenTrade
-			? { trade: tripleScreenTrade, assetSymbol: trade.asset }
+		willRenderTripleScreen &&
+		tripleScreenTrade &&
+		tripleScreenJournalTrade &&
+		tripleScreenFullTrade
+			? {
+					trade: tripleScreenTrade,
+					assetSymbol: trade.asset,
+					journalTrade: tripleScreenJournalTrade,
+					executions: tripleScreenExecutions,
+					fullTrade: tripleScreenFullTrade,
+					tickSize: asset ? Number(asset.tickSize) : undefined,
+					tickValue: asset ? Number(asset.tickValue) / 100 : undefined,
+				}
 			: null
 
 	return (
-		<TradeDetailLayout chartData={chartData} tripleScreen={tripleScreen}>
+		<TradeDetailLayout
+			chartData={chartData}
+			tripleScreen={tripleScreen}
+			adjacent={{ prevId: adjacent.prevId, nextId: adjacent.nextId }}
+		>
 			<div className="flex h-full flex-col">
 				<TradeDetailGuide />
 				<div className="p-m-400 sm:p-m-500 lg:p-m-600 flex-1 overflow-auto">
@@ -280,6 +343,40 @@ const TradeDetailPage = async ({ params }: TradeDetailPageProps) => {
 								</div>
 
 								<div className="gap-s-300 flex items-center self-end sm:self-auto">
+									<Button
+										id="trade-detail-prev"
+										asChild={Boolean(adjacent.prevId)}
+										variant="ghost"
+										size="icon"
+										className="h-9 w-9"
+										disabled={!adjacent.prevId}
+										aria-label={tTrade("prevTrade")}
+									>
+										{adjacent.prevId ? (
+											<Link href={`/journal/${adjacent.prevId}`}>
+												<ChevronLeft className="h-4 w-4" aria-hidden="true" />
+											</Link>
+										) : (
+											<ChevronLeft className="h-4 w-4" aria-hidden="true" />
+										)}
+									</Button>
+									<Button
+										id="trade-detail-next"
+										asChild={Boolean(adjacent.nextId)}
+										variant="ghost"
+										size="icon"
+										className="h-9 w-9"
+										disabled={!adjacent.nextId}
+										aria-label={tTrade("nextTrade")}
+									>
+										{adjacent.nextId ? (
+											<Link href={`/journal/${adjacent.nextId}`}>
+												<ChevronRight className="h-4 w-4" aria-hidden="true" />
+											</Link>
+										) : (
+											<ChevronRight className="h-4 w-4" aria-hidden="true" />
+										)}
+									</Button>
 									<Button
 										id="trade-detail-edit"
 										asChild

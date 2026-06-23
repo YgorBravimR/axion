@@ -100,13 +100,13 @@ const JournalContent = () => {
 	const urlParams = useUrlParams()
 	const latestRequestRef = useRef(0)
 
-	// Read period from URL, default to "week"
-	const periodParam = urlParams.get("period") ?? "week"
+	// Read period from URL, default to "month"
+	const periodParam = urlParams.get("period") ?? "month"
 	const period: JournalPeriod = VALID_PERIODS.includes(
 		periodParam as JournalPeriod
 	)
 		? (periodParam as JournalPeriod)
-		: "week"
+		: "month"
 
 	// Read custom date range from URL (only relevant when period=custom)
 	const customDateRange = useMemo(() => {
@@ -321,7 +321,7 @@ const JournalContent = () => {
 				})
 			} else {
 				urlParams.set({
-					period: newPeriod === "week" ? null : newPeriod,
+					period: newPeriod === "month" ? null : newPeriod,
 					from: null,
 					to: null,
 				})

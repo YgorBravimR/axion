@@ -1,4 +1,4 @@
-import { rNumberToPoints } from "./brick-size-resolver"
+import { rNumberToPoints } from "./r-number"
 
 export const formatRSize = (size: number | null | undefined): string => {
 	if (size === null || size === undefined) {

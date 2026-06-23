@@ -1,8 +1,13 @@
 "use server"
 
-import { and, desc, eq, lte } from "drizzle-orm"
+import { and, between, desc, eq, lte } from "drizzle-orm"
 import { db } from "@/db/drizzle"
-import { assets, hawksRenkoSizes, timeframes } from "@/db/schema"
+import {
+	assets,
+	assetSessionAnchors,
+	hawksRenkoSizes,
+	timeframes,
+} from "@/db/schema"
 import { requireAuth } from "@/app/actions/auth"
 import { getCandleStore } from "@/lib/candle-store"
 import type {
@@ -36,9 +41,16 @@ export const getInspectorWindow = async (
 		if (!Number.isFinite(centerMs)) {
 			return { status: "error", message: "Invalid centerTime" }
 		}
+		// Asymmetric override wins when provided — same window across all three
+		// timeframes so the panes share a comparable time slice.
 		const padding5m = params.paddingMs5m ?? DEFAULT_PADDING_5M
 		const padding15m = params.paddingMs15m ?? DEFAULT_PADDING_15M
 		const padding60m = params.paddingMs60m ?? DEFAULT_PADDING_60M
+		const useAsymmetric =
+			params.paddingMsBefore !== undefined ||
+			params.paddingMsAfter !== undefined
+		const paddingBefore = params.paddingMsBefore ?? 0
+		const paddingAfter = params.paddingMsAfter ?? 0
 
 		const assetRow = (
 			await db
@@ -70,20 +82,86 @@ export const getInspectorWindow = async (
 		}
 
 		const store = getCandleStore()
-		const fetchRange = (tfId: string, paddingMs: number) =>
-			store.fetchRange({
+		const fetchRange = (tfId: string, paddingMs: number) => {
+			const from = useAsymmetric
+				? new Date(centerMs - paddingBefore)
+				: new Date(centerMs - paddingMs)
+			const to = useAsymmetric
+				? new Date(centerMs + paddingAfter)
+				: new Date(centerMs + paddingMs)
+			return store.fetchRange({
 				assetId: assetRow.id,
 				timeframeId: tfId,
-				from: new Date(centerMs - paddingMs),
-				to: new Date(centerMs + paddingMs),
+				from,
+				to,
 				indicatorKeys: "*",
 			})
+		}
 
 		const [rows5m, rows15m, rows60m] = await Promise.all([
 			fetchRange(tfId5m, padding5m),
 			fetchRange(tfId15m, padding15m),
 			fetchRange(tfId60m, padding60m),
 		])
+
+		// `ajuste` / `ajuste_adj` live in `asset_session_anchors` (one row per
+		// day, not in parquet — see docs/hawks-strategy/indicator-isolation/
+		// group-d-vwap.md). Inject them onto each 5m brick's indicators map
+		// so the chart can render them as horizontal-by-day step lines.
+		const windowFrom = useAsymmetric
+			? new Date(centerMs - paddingBefore)
+			: new Date(centerMs - padding5m)
+		const windowTo = useAsymmetric
+			? new Date(centerMs + paddingAfter)
+			: new Date(centerMs + padding5m)
+		const anchorRows = await db
+			.select({
+				date: assetSessionAnchors.date,
+				payload: assetSessionAnchors.payload,
+			})
+			.from(assetSessionAnchors)
+			.where(
+				and(
+					eq(assetSessionAnchors.assetId, assetRow.id),
+					between(
+						assetSessionAnchors.date,
+						windowFrom.toISOString().slice(0, 10),
+						windowTo.toISOString().slice(0, 10)
+					)
+				)
+			)
+		const ajusteByDay = new Map<
+			string,
+			{ ajuste?: number; ajusteAdj?: number }
+		>()
+		for (const a of anchorRows) {
+			const payload = a.payload as {
+				ajuste?: number | null
+				ajuste_adj?: number | null
+			}
+			ajusteByDay.set(a.date, {
+				ajuste: payload.ajuste ?? undefined,
+				ajusteAdj: payload.ajuste_adj ?? undefined,
+			})
+		}
+		const injectAjuste = (rows: typeof rows5m) => {
+			for (const r of rows) {
+				const dayKey = r.timestamp.slice(0, 10)
+				const anchor = ajusteByDay.get(dayKey)
+				if (!anchor) {
+					continue
+				}
+				if (anchor.ajuste !== undefined) {
+					r.indicators.ajuste = anchor.ajuste
+				}
+				if (anchor.ajusteAdj !== undefined) {
+					r.indicators.ajuste_adj = anchor.ajusteAdj
+				}
+			}
+		}
+		injectAjuste(rows5m)
+		injectAjuste(rows15m)
+		injectAjuste(rows60m)
 
 		const centerDateStr = new Date(centerMs).toISOString().slice(0, 10)
 		const sizeRow = (

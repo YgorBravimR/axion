@@ -183,6 +183,13 @@
 			"when": 1782136849671,
 			"tag": "0025_orange_black_cat",
 			"breakpoints": true
+		},
+		{
+			"idx": 26,
+			"version": "7",
+			"when": 1782215695751,
+			"tag": "0026_hawks_renko_sizes_add_1m_1d",
+			"breakpoints": true
 		}
 	]
 }

@@ -20,10 +20,20 @@ import type {
 	IndicatorGroupWithKeys,
 	TradeChartData,
 } from "@/types/candle"
+import dynamic from "next/dynamic"
 import { TradeChartView } from "./trade-chart-view"
 import type { TradeInfoPanelProps } from "./trade-info-panel"
-import { HawksTripleScreenInspector } from "@/components/backtest/inspector/triple-screen-inspector"
 import type { BacktestTrade } from "@/types/backtest"
+
+// Lazy-load the triple-screen view to keep its lightweight-charts +
+// inspector dependency graph out of every other journal render.
+const HawksTripleScreenView = dynamic(
+	() =>
+		import("./hawks-triple-screen-view").then((m) => ({
+			default: m.HawksTripleScreenView,
+		})),
+	{ ssr: false }
+)
 
 interface TradeDetailLayoutProps {
 	children: ReactNode
@@ -41,13 +51,25 @@ interface TradeDetailLayoutProps {
 	tripleScreen?: {
 		trade: BacktestTrade
 		assetSymbol: string
+		journalTrade: TradeChartData["trade"]
+		executions: TradeChartData["executions"]
+		fullTrade: TradeInfoPanelProps["fullTrade"]
+		tickSize?: number
+		tickValue?: number
 	} | null
+	// Prev / next trade IDs for in-chart navigation arrows. Null when no
+	// neighbor exists (first or last trade chronologically).
+	adjacent?: {
+		prevId: string | null
+		nextId: string | null
+	}
 }
 
 const TradeDetailLayout = ({
 	children,
 	chartData,
 	tripleScreen,
+	adjacent,
 }: TradeDetailLayoutProps) => {
 	const tChart = useTranslations("trade.chart")
 	const tDialog = useTranslations("trade.unsavedDialog")
@@ -130,28 +152,22 @@ const TradeDetailLayout = ({
 				className="flex h-[calc(100dvh-var(--app-header-height))] flex-col"
 			>
 				{view === "chart" ? (
-					<div className="flex h-full flex-col overflow-hidden">
+					<div className="h-full overflow-hidden">
 						{tripleScreen ? (
-							<div className="p-m-400 sm:p-m-500 flex flex-1 flex-col overflow-auto">
-								<HawksTripleScreenInspector
-									key={chartKey}
-									trade={tripleScreen.trade}
-									assetSymbol={tripleScreen.assetSymbol}
-								/>
-								<div className="mt-m-400 flex justify-end">
-									<Button
-										id="toggle-detail-view-triple-screen"
-										size="sm"
-										variant="outline"
-										onClick={() => setView("details")}
-										className="border-acc-100/40 text-acc-100 hover:bg-acc-100/10 gap-s-200"
-										aria-label={tChart("switchToDetailView")}
-									>
-										<BarChart3 className="h-4 w-4" aria-hidden="true" />
-										{tChart("switchToDetailView")}
-									</Button>
-								</div>
-							</div>
+							<HawksTripleScreenView
+								key={chartKey}
+								trade={tripleScreen.trade}
+								assetSymbol={tripleScreen.assetSymbol}
+								journalTrade={tripleScreen.journalTrade}
+								executions={tripleScreen.executions}
+								fullTrade={tripleScreen.fullTrade}
+								tickSize={tripleScreen.tickSize}
+								tickValue={tripleScreen.tickValue}
+								prevTradeId={adjacent?.prevId ?? null}
+								nextTradeId={adjacent?.nextId ?? null}
+								onToggleView={() => setView("details")}
+								onDirtyChange={handleDirtyChange}
+							/>
 						) : chartData ? (
 							<TradeChartView
 								key={chartKey}
