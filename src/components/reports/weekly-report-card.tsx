@@ -16,6 +16,8 @@ import { useTranslations, useLocale } from "next-intl"
 import { cn } from "@/lib/utils"
 import { formatFinite } from "@/lib/formatting"
 import { useFormatting } from "@/hooks/use-formatting"
+import { classifySample, wilsonInterval } from "@/lib/statistics"
+import { SampleBadge } from "@/components/analytics/sample-confidence"
 import { getWeeklyReport } from "@/app/actions/reports"
 import type { WeeklyReport } from "@/app/actions/reports.types"
 import { format, parseISO } from "date-fns"
@@ -198,12 +200,37 @@ export const WeeklyReportCard = ({ initialReport }: WeeklyReportCardProps) => {
 							<p className="text-h3 text-txt-100 font-bold">
 								{summary.winRate.toFixed(0)}%
 							</p>
+							{(() => {
+								// Win rate from one week's trades is a noisy estimate.
+								// Surface the Wilson CI so the user sees the band, not just
+								// the point estimate. Weekly counts under MIN_RELIABLE get
+								// an explicit low-confidence flag.
+								const decided = summary.winCount + summary.lossCount
+								if (decided < 5) {
+									return null
+								}
+								const [lo, hi] = wilsonInterval(summary.winCount, decided)
+								return (
+									<p className="text-tiny text-txt-300 mt-s-100">
+										95% CI {(lo * 100).toFixed(0)}–{(hi * 100).toFixed(0)}%
+									</p>
+								)
+							})()}
 						</div>
 						<div>
 							<p className="text-tiny text-txt-200">{tStats("trades")}</p>
 							<p className="text-h3 text-txt-100 font-bold">
 								{summary.totalTrades}
 							</p>
+							{(() => {
+								// Win-rate confidence must key on decided trades, not total —
+								// a week with many break-evens/open trades would otherwise hide
+								// a tiny win-rate sample behind a large headline count.
+								const decided = summary.winCount + summary.lossCount
+								return classifySample(decided) !== "reliable" ? (
+									<SampleBadge n={decided} className="mt-s-100" />
+								) : null
+							})()}
 						</div>
 						<div>
 							<p className="text-tiny text-txt-200">{tStats("profitFactor")}</p>

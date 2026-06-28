@@ -12,6 +12,8 @@ import {
 import { cn } from "@/lib/utils"
 import { TrendingUp, TrendingDown } from "lucide-react"
 import { useChartConfig } from "@/hooks/use-chart-config"
+import { SAMPLE_THRESHOLDS, classifySample } from "@/lib/statistics"
+import { SampleBadge, WinRateCi } from "./sample-confidence"
 import { useIsMobile } from "@/hooks/use-is-mobile"
 import type { SessionPerformance } from "@/types"
 import {
@@ -167,7 +169,20 @@ export const SessionPerformanceChart = memo(
 			const dMax = isRMode
 				? Math.ceil(maxAbs * 1.2 * 100) / 100
 				: Math.ceil(maxAbs * 1.1)
-			const sorted = withTrades.toSorted((a, b) => b[metricKey] - a[metricKey])
+			// Only sessions with enough data to rank — a 1-trade session must not
+			// win or lose the "best/worst" race. Ties to MIN_FOR_RANKING match the
+			// heatmap's threshold so the page tells the same story.
+			const rankable = withTrades.filter(
+				(s) => s.totalTrades >= SAMPLE_THRESHOLDS.MIN_FOR_RANKING
+			)
+			// Sort rankable sessions by Wilson lower bound when metric is win-rate-ish,
+			// raw metric otherwise — once n ≥ 10 the noise floor is acceptable.
+			const sorted = rankable.toSorted((a, b) => {
+				if (isRMode) {
+					return b.avgR - a.avgR
+				}
+				return b[metricKey] - a[metricKey]
+			})
 			const pnl = data.reduce((sum, s) => sum + s.totalPnl, 0)
 			const trades = data.reduce((sum, s) => sum + s.totalTrades, 0)
 			const avgR =
@@ -178,7 +193,7 @@ export const SessionPerformanceChart = memo(
 				sessionsWithTrades: withTrades,
 				domainMax: dMax,
 				bestSession: sorted[0],
-				worstSession: sorted[sorted.length - 1],
+				worstSession: sorted.length > 1 ? sorted[sorted.length - 1] : undefined,
 				totalPnl: pnl,
 				totalTrades: trades,
 				weightedAvgR: avgR,
@@ -320,25 +335,36 @@ export const SessionPerformanceChart = memo(
 									{hasTrades ? formatMetric(metricValue) : "\u2014"}
 								</p>
 								{hasTrades && (
-									<p className="text-tiny text-txt-300 mt-s-100">
-										{session.winRate.toFixed(0)}% {tCommon("winRateAbbr")} ·{" "}
-										{t("session.totalTrades", {
-											count: session.totalTrades,
-										})}
-									</p>
+									<>
+										<p className="text-tiny text-txt-300 mt-s-100">
+											{session.winRate.toFixed(0)}% {tCommon("winRateAbbr")} ·{" "}
+											{t("session.totalTrades", {
+												count: session.totalTrades,
+											})}
+										</p>
+										{classifySample(session.totalTrades) !== "reliable" && (
+											<div className="mt-s-100">
+												<SampleBadge n={session.totalTrades} />
+											</div>
+										)}
+									</>
 								)}
 							</div>
 						)
 					})}
 				</div>
 
-				{/* Actionable Insights — Best vs Worst table */}
+				{/* Actionable Insights — Best vs Worst table.
+				   Rendered only when at least one session has enough data
+				   (n ≥ MIN_FOR_RANKING). A 1-trade session no longer wins or
+				   loses the race; instead, low-n sessions get an explicit
+				   "insufficient" badge in their stat card above. */}
 				{bestSession &&
-					worstSession &&
 					(() => {
 						const isSameSession = bestSession === worstSession
 						const showBest = !isSameSession || bestSession[metricKey] >= 0
-						const showWorst = !isSameSession || worstSession[metricKey] < 0
+						const showWorst =
+							worstSession && (!isSameSession || worstSession[metricKey] < 0)
 
 						return (
 							<div className="mt-s-300 sm:mt-m-400">
@@ -407,8 +433,16 @@ export const SessionPerformanceChart = memo(
 															{formatMetric(bestSession[metricKey])}
 														</TableCell>
 														<TableCell className="px-s-300 py-s-200 text-txt-300 text-center whitespace-nowrap">
-															{bestSession.winRate.toFixed(0)}% ·{" "}
-															{bestSession.totalTrades}
+															<div className="gap-s-100 flex flex-col items-center">
+																<span>
+																	{bestSession.winRate.toFixed(0)}% ·{" "}
+																	{bestSession.totalTrades}
+																</span>
+																<WinRateCi
+																	wins={bestSession.wins}
+																	losses={bestSession.losses}
+																/>
+															</div>
 														</TableCell>
 													</>
 												) : (
@@ -416,10 +450,10 @@ export const SessionPerformanceChart = memo(
 														colSpan={3}
 														className="px-s-300 py-s-200 text-txt-300 text-center"
 													>
-														\u2014
+														{t("time.insufficientData")}
 													</TableCell>
 												)}
-												{showWorst ? (
+												{showWorst && worstSession ? (
 													<>
 														<TableCell className="px-s-300 py-s-200 text-txt-100 text-center font-semibold whitespace-nowrap">
 															{tLabels(worstSession.session)}
@@ -428,8 +462,16 @@ export const SessionPerformanceChart = memo(
 															{formatMetric(worstSession[metricKey])}
 														</TableCell>
 														<TableCell className="px-s-300 py-s-200 text-txt-300 text-center whitespace-nowrap">
-															{worstSession.winRate.toFixed(0)}% ·{" "}
-															{worstSession.totalTrades}
+															<div className="gap-s-100 flex flex-col items-center">
+																<span>
+																	{worstSession.winRate.toFixed(0)}% ·{" "}
+																	{worstSession.totalTrades}
+																</span>
+																<WinRateCi
+																	wins={worstSession.wins}
+																	losses={worstSession.losses}
+																/>
+															</div>
 														</TableCell>
 													</>
 												) : (
@@ -437,7 +479,7 @@ export const SessionPerformanceChart = memo(
 														colSpan={3}
 														className="px-s-300 py-s-200 text-txt-300 text-center"
 													>
-														\u2014
+														{t("time.insufficientData")}
 													</TableCell>
 												)}
 											</TableRow>

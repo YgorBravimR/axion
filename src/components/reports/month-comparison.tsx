@@ -8,6 +8,8 @@ import { format } from "date-fns"
 import { ptBR, enUS } from "date-fns/locale"
 import { useFormatting } from "@/hooks/use-formatting"
 import type { MonthlyResultsWithProp } from "@/app/actions/reports.types"
+import { classifySample } from "@/lib/statistics"
+import { SampleBadge } from "@/components/analytics/sample-confidence"
 
 interface MonthComparisonProps {
 	current: MonthlyResultsWithProp
@@ -141,12 +143,29 @@ export const MonthComparison = ({
 			id="monthly-comparison"
 			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
 		>
-			<h3 className="gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
-				<GitCompare className="text-acc-100 h-5 w-5" aria-hidden="true" />
-				{t("titleWithMonth", { month: previousMonthName })}
-			</h3>
+			<div className="gap-s-200 flex flex-wrap items-center justify-between">
+				<h3 className="gap-s-200 text-small sm:text-body text-txt-100 flex items-center font-semibold">
+					<GitCompare className="text-acc-100 h-5 w-5" aria-hidden="true" />
+					{t("titleWithMonth", { month: previousMonthName })}
+				</h3>
+				{/* Comparing two months is only signal when each has enough trades.
+				   Flag low-n on either side so deltas aren't read as edge changes
+				   when they're actually noise. */}
+				{(classifySample(current.report.totalTrades) !== "reliable" ||
+					classifySample(previous.report.totalTrades) !== "reliable") && (
+					<SampleBadge
+						n={Math.min(
+							current.report.totalTrades,
+							previous.report.totalTrades
+						)}
+					/>
+				)}
+			</div>
 
 			<div className="mt-s-300 sm:mt-m-500 space-y-s-200 sm:space-y-s-300">
+				{/* Header closed by div wrapper above; legacy h3 styling preserved
+				   via the inner span. The wrapper div balances the open/close after
+				   adding the SampleBadge alongside the title. */}
 				{comparisonRows.map((row) => (
 					<div
 						key={row.label}

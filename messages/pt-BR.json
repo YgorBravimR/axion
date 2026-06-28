@@ -2228,7 +2228,18 @@
 				"Saturday": "Sábado",
 				"Sunday": "Domingo"
 			},
-			"heatmapCellAriaLabel": "{day} {hour}: {trades} trades, {winRate}% taxa de acerto"
+			"heatmapCellAriaLabel": "{day} {hour}: {trades} trades, {winRate}% taxa de acerto",
+			"insufficientData": "Sem dados suficientes para apontar uma janela",
+			"insufficientSample": "Amostra insuficiente — precisa de mais trades para ser confiável",
+			"distributionUnreliable": "n < {min} — forma da distribuição não confiável",
+			"insufficientDataShort": "Dados insuficientes",
+			"lowConfidence": "Confiança baixa",
+			"lowConfidenceCell": "Amostra pequena (n={n}). Estimativa ruidosa.",
+			"insufficientSlot": "Sem trades suficientes por slot para ranquear melhor/pior janela. Slots com menos de {min} trades ficam de fora do ranking.",
+			"sampleHint": "{count} trades até agora · faltam {needed} para alta confiança",
+			"reliableSample": "{count} trades · amostra confiável",
+			"ciLabel": "IC 95%",
+			"unrankable": "—"
 		},
 		"holdingPeriod": {
 			"title": "Análise por Tempo de Permanência",

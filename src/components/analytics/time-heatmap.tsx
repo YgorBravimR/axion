@@ -5,8 +5,19 @@ import { useTranslations } from "next-intl"
 import type { TimeHeatmapCell } from "@/types"
 import { formatBrlCompactWithSign, formatR } from "@/lib/formatting"
 import { cn } from "@/lib/utils"
-import { TrendingUp, TrendingDown } from "lucide-react"
+import { TrendingUp, TrendingDown, AlertTriangle, Info } from "lucide-react"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
+import {
+	SAMPLE_THRESHOLDS,
+	classifySample,
+	wilsonInterval,
+	wilsonLowerBound,
+} from "@/lib/statistics"
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip"
 import {
 	Table,
 	TableHeader,
@@ -24,26 +35,34 @@ interface TimeHeatmapProps {
 /** B3 Trading hours (9:00 - 18:00) */
 const TRADING_HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17]
 
+type HeatmapMetric = "pnl" | "avgR" | "winRate" | "trades"
+
 /**
- * Displays a heatmap of trading performance by day of week and hour.
- * Cells are colored and sized based on P&L or avgR intensity, with a tooltip overlay
- * and actionable insights highlighting best/worst trading windows.
+ * Heatmap of trading performance by day × hour.
+ *
+ * Sample-size handling (the whole point of this rewrite):
+ *  - n < MIN_VISIBLE  → cell is gray with the count + an "insufficient
+ *                       data" badge. No P&L/R/win-rate color is shown
+ *                       because the estimate is dominated by noise.
+ *  - n < MIN_RELIABLE → cell renders with a desaturated color and a small
+ *                       low-confidence dot. Tooltip surfaces the win-rate
+ *                       95% Wilson CI so the user sees how wide the band is.
+ *  - n ≥ MIN_RELIABLE → cell renders at full intensity. CI still visible
+ *                       in the tooltip for honesty.
+ *
+ * Best/Worst ranking uses Wilson lower-bound (for win-rate metric) or
+ * skips entirely when no slot/hour/day has ≥ MIN_FOR_RANKING trades.
+ * This kills the "Mon 11:00 = 100% TA / 1 trade = best window" lie.
  *
  * @param data - Array of heatmap cells with performance data per time slot
  * @param expectancyMode - Whether to color/sort by R-multiples or $ P&L
  */
-type HeatmapMetric = "pnl" | "avgR" | "winRate" | "trades"
-
 const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 	const t = useTranslations("analytics")
 	const tDays = useTranslations("analytics.time.heatmapDays")
 	const tDayNames = useTranslations("analytics.time.dayNames")
 	const [hoveredCell, setHoveredCell] = useState<TimeHeatmapCell | null>(null)
 
-	// Heatmap-local metric switcher. Defaults to whatever the page-level
-	// expectancy toggle is set to (R → avgR, $ → pnl) so the first paint
-	// matches the rest of the page; the trader can then drill into win-rate
-	// or trade-count without changing the global mode for sibling charts.
 	const [metric, setMetric] = useState<HeatmapMetric>(
 		expectancyMode === "edge" ? "avgR" : "pnl"
 	)
@@ -65,7 +84,6 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 		[tDays]
 	)
 
-	// Get translated short day name from English day name
 	const getTranslatedDayShort = (dayName: string): string => {
 		const dayMap: Record<string, string> = {
 			Sunday: tDays("sun"),
@@ -79,16 +97,16 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 		return dayMap[dayName] || dayName.slice(0, 3)
 	}
 
-	// Metric-aware value extraction. Each metric defines (a) the signed value
-	// used for sorting / display, (b) the magnitude used for intensity, and
-	// (c) the direction (buy/sell color) — winRate's neutral line is 50%,
-	// trade-count has no negative direction.
-	const valueOf = (cell: {
+	type CellLike = {
 		totalPnl: number
 		avgR: number
 		winRate: number
 		totalTrades: number
-	}): number => {
+		wins: number
+		losses: number
+	}
+
+	const valueOf = (cell: CellLike): number => {
 		switch (metric) {
 			case "pnl":
 				return cell.totalPnl
@@ -100,12 +118,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 				return cell.totalTrades
 		}
 	}
-	const magnitudeOf = (cell: {
-		totalPnl: number
-		avgR: number
-		winRate: number
-		totalTrades: number
-	}): number => {
+	const magnitudeOf = (cell: CellLike): number => {
 		switch (metric) {
 			case "pnl":
 				return Math.abs(cell.totalPnl)
@@ -117,12 +130,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 				return cell.totalTrades
 		}
 	}
-	const directionOf = (cell: {
-		totalPnl: number
-		avgR: number
-		winRate: number
-		totalTrades: number
-	}): "buy" | "sell" => {
+	const directionOf = (cell: CellLike): "buy" | "sell" => {
 		switch (metric) {
 			case "pnl":
 				return cell.totalPnl >= 0 ? "buy" : "sell"
@@ -148,6 +156,28 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 		}
 	}
 
+	/**
+	 * Score a cell/aggregate for best-worst ranking. Returns NaN when
+	 * the sample is too small to support a ranking claim. This is the
+	 * single chokepoint that prevents n=1 cells from winning.
+	 */
+	const rankScoreOf = (cell: CellLike): number => {
+		if (cell.totalTrades < SAMPLE_THRESHOLDS.MIN_FOR_RANKING) {
+			return Number.NaN
+		}
+		if (metric === "winRate") {
+			const decided = cell.wins + cell.losses
+			if (decided === 0) {
+				return Number.NaN
+			}
+			// Center the Wilson LB on 50% so positive = above-chance window.
+			return (wilsonLowerBound(cell.wins, decided) - 0.5) * 100
+		}
+		// For avgR/pnl/trades, raw value is fine once n is large enough,
+		// because the threshold already guards against single-trade noise.
+		return valueOf(cell)
+	}
+
 	const {
 		cellMap,
 		cellsWithTrades,
@@ -158,6 +188,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 		worstHour,
 		bestDay,
 		worstDay,
+		rankingAvailable,
 	} = useMemo(() => {
 		const map = new Map<string, TimeHeatmapCell>()
 		for (const cell of data) {
@@ -165,13 +196,25 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 		}
 
 		const withTrades = data.filter((c) => c.totalTrades > 0)
-		const maxAbs = withTrades.reduce(
+		// Color intensity scales against the largest reliable cell only. If we
+		// included insufficient cells in the denominator, a single 1-trade
+		// outlier with a giant R could flatten every well-sampled cell down to
+		// the lightest opacity step while itself rendering gray.
+		const colorScaleCells = withTrades.filter(
+			(c) => classifySample(c.totalTrades) !== "insufficient"
+		)
+		const maxAbs = colorScaleCells.reduce(
 			(max, cell) => Math.max(max, magnitudeOf(cell)),
 			0
 		)
 
-		const sortedByMetric = withTrades.toSorted(
-			(a, b) => valueOf(b) - valueOf(a)
+		// Filter ranking candidates to cells with enough data; sort by Wilson
+		// lower bound (winRate) or raw value (others).
+		const rankableSlots = withTrades.filter(
+			(c) => c.totalTrades >= SAMPLE_THRESHOLDS.MIN_FOR_RANKING
+		)
+		const sortedRankable = rankableSlots.toSorted(
+			(a, b) => rankScoreOf(b) - rankScoreOf(a)
 		)
 
 		const hourAggregates = TRADING_HOURS.map((hour) => {
@@ -194,11 +237,13 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 				totalPnl,
 				winRate,
 				avgR: weightedAvgR,
+				wins: totalWins,
+				losses: totalLosses,
 			}
-		}).filter((h) => h.totalTrades > 0)
+		}).filter((h) => h.totalTrades >= SAMPLE_THRESHOLDS.MIN_FOR_RANKING)
 
 		const sortedHours = hourAggregates.toSorted(
-			(a, b) => valueOf(b) - valueOf(a)
+			(a, b) => rankScoreOf(b) - rankScoreOf(a)
 		)
 
 		const dayAggregates = days
@@ -223,58 +268,80 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 					totalPnl,
 					winRate,
 					avgR: weightedAvgR,
+					wins: totalWins,
+					losses: totalLosses,
 				}
 			})
-			.filter((d) => d.totalTrades > 0)
+			.filter((d) => d.totalTrades >= SAMPLE_THRESHOLDS.MIN_FOR_RANKING)
 
-		const sortedDays = dayAggregates.toSorted((a, b) => valueOf(b) - valueOf(a))
+		const sortedDays = dayAggregates.toSorted(
+			(a, b) => rankScoreOf(b) - rankScoreOf(a)
+		)
 
 		return {
 			cellMap: map,
 			cellsWithTrades: withTrades,
 			maxAbsValue: maxAbs,
-			bestSlot: sortedByMetric[0],
-			worstSlot: sortedByMetric[sortedByMetric.length - 1],
+			bestSlot: sortedRankable[0],
+			worstSlot: sortedRankable[sortedRankable.length - 1],
 			bestHour: sortedHours[0],
 			worstHour: sortedHours[sortedHours.length - 1],
 			bestDay: sortedDays[0],
 			worstDay: sortedDays[sortedDays.length - 1],
+			rankingAvailable:
+				sortedRankable.length > 0 ||
+				sortedHours.length > 0 ||
+				sortedDays.length > 0,
 		}
-		// `isRMode` is intentionally NOT a dep — the helpers `valueOf` /
-		// `magnitudeOf` close over `metric` directly and recompute when it
-		// changes via the surrounding `metric` state.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data, metric, days, dayLabels])
 
 	const getMetricValue = (cell: TimeHeatmapCell): number => valueOf(cell)
 
-	// Get cell color with intensity scaled relative to max magnitude. For
-	// winRate the "buy" cutoff is 50%; for trade-count there is no negative
-	// half, so the ramp is always gold→full-buy.
+	/** Cell color depends on direction AND sample confidence. */
 	const getCellStyle = (cell: TimeHeatmapCell | undefined): string => {
 		if (!cell || cell.totalTrades === 0) {
 			return "bg-bg-300/30"
 		}
+		const confidence = classifySample(cell.totalTrades)
+		if (confidence === "insufficient") {
+			// Gray cell — we do NOT render a verdict color here. The number is
+			// still visible so the user knows "yes, I traded here once".
+			return "bg-bg-300/50"
+		}
 		const intensity = maxAbsValue > 0 ? magnitudeOf(cell) / maxAbsValue : 0.5
 		const base = directionOf(cell) === "buy" ? "bg-trade-buy" : "bg-trade-sell"
-		if (intensity > 0.7) {
+		// Low-confidence cells render at half the usual opacity — visually
+		// still hinted as buy/sell, but desaturated.
+		const dimming = confidence === "low" ? 0.5 : 1
+		const adjusted = intensity * dimming
+		if (adjusted > 0.7) {
 			return base
 		}
-		if (intensity > 0.4) {
+		if (adjusted > 0.4) {
 			return `${base}/70`
 		}
-		if (intensity > 0.15) {
+		if (adjusted > 0.15) {
 			return `${base}/50`
 		}
 		return `${base}/30`
 	}
 
-	const formatAggregateMetric = (agg: {
-		totalPnl: number
-		avgR: number
-		winRate: number
-		totalTrades: number
-	}): string => formatMetric(valueOf(agg))
+	const formatAggregateMetric = (agg: CellLike): string =>
+		formatMetric(valueOf(agg))
+
+	const formatCount = (cell: CellLike): string =>
+		`${cell.winRate.toFixed(0)}% · ${cell.totalTrades}`
+
+	/** Format win-rate CI band for tooltips. */
+	const formatWinRateCi = (cell: CellLike): string => {
+		const decided = cell.wins + cell.losses
+		if (decided === 0) {
+			return "—"
+		}
+		const [lo, hi] = wilsonInterval(cell.wins, decided)
+		return `${(lo * 100).toFixed(0)}–${(hi * 100).toFixed(0)}%`
+	}
 
 	if (data.length === 0) {
 		return (
@@ -291,6 +358,10 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 			</div>
 		)
 	}
+
+	const hoveredConfidence = hoveredCell
+		? classifySample(hoveredCell.totalTrades)
+		: null
 
 	return (
 		<div
@@ -362,6 +433,9 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 									const cell = cellMap.get(`${dayOfWeek}-${hour}`)
 									const hasData = cell && cell.totalTrades > 0
 									const isHovered = hoveredCell === cell
+									const confidence = cell
+										? classifySample(cell.totalTrades)
+										: null
 									const cellClass = cn(
 										"relative flex h-11 items-center justify-center rounded-md transition-all",
 										getCellStyle(cell),
@@ -396,9 +470,24 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 													winRate: cell.winRate.toFixed(0),
 												})}
 											>
-												<span className="text-micro text-txt-100 font-semibold drop-shadow-sm">
+												<span
+													className={cn(
+														"text-micro font-semibold drop-shadow-sm",
+														confidence === "insufficient"
+															? "text-txt-300"
+															: "text-txt-100"
+													)}
+												>
 													{cell.totalTrades}
 												</span>
+												{/* Low-confidence dot — small visual cue that this
+												   cell's color is desaturated due to low n. */}
+												{confidence === "low" && (
+													<span
+														className="bg-warning absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full"
+														aria-hidden="true"
+													/>
+												)}
 											</button>
 										)
 									}
@@ -420,77 +509,39 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 				)}
 			>
 				{hoveredCell ? (
-					<div className="gap-m-400 flex items-center justify-between">
-						<div>
-							<p className="text-small text-txt-100 font-semibold">
-								{tDayNames(
-									hoveredCell.dayName as
-										| "Monday"
-										| "Tuesday"
-										| "Wednesday"
-										| "Thursday"
-										| "Friday"
-										| "Saturday"
-										| "Sunday"
-								)}{" "}
-								{hoveredCell.hourLabel}
-							</p>
-							<p className="text-tiny text-txt-300">
-								{t("time.totalTrades", { count: hoveredCell.totalTrades })}
-							</p>
-						</div>
-						<div className="gap-m-500 flex items-center">
-							<div className="text-right">
-								<p className="text-tiny text-txt-300">{t("time.winRate")}</p>
+					<div className="gap-s-300 flex flex-col">
+						<div className="gap-m-400 flex items-center justify-between">
+							<div>
 								<p className="text-small text-txt-100 font-semibold">
-									{hoveredCell.winRate.toFixed(0)}%
+									{tDayNames(
+										hoveredCell.dayName as
+											| "Monday"
+											| "Tuesday"
+											| "Wednesday"
+											| "Thursday"
+											| "Friday"
+											| "Saturday"
+											| "Sunday"
+									)}{" "}
+									{hoveredCell.hourLabel}
+								</p>
+								<p className="text-tiny text-txt-300">
+									{t("time.totalTrades", { count: hoveredCell.totalTrades })}
+									{" · "}
+									<span className="text-txt-300">
+										{t("time.ciLabel")} {formatWinRateCi(hoveredCell)}
+									</span>
 								</p>
 							</div>
-							{isRMode ? (
-								<>
-									<div className="text-right">
-										<p className="text-tiny text-txt-300">{t("time.avgR")}</p>
-										<p
-											className={cn(
-												"text-small font-semibold",
-												hoveredCell.avgR >= 0
-													? "text-trade-buy"
-													: "text-trade-sell"
-											)}
-										>
-											{formatR(hoveredCell.avgR)}
-										</p>
-									</div>
-									<div className="text-right">
-										<p className="text-tiny text-txt-300">{t("time.pnl")}</p>
-										<p
-											className={cn(
-												"text-small font-semibold",
-												hoveredCell.totalPnl >= 0
-													? "text-trade-buy"
-													: "text-trade-sell"
-											)}
-										>
-											{formatBrlCompactWithSign(hoveredCell.totalPnl)}
-										</p>
-									</div>
-								</>
-							) : (
-								<>
-									<div className="text-right">
-										<p className="text-tiny text-txt-300">{t("time.pnl")}</p>
-										<p
-											className={cn(
-												"text-small font-semibold",
-												hoveredCell.totalPnl >= 0
-													? "text-trade-buy"
-													: "text-trade-sell"
-											)}
-										>
-											{formatBrlCompactWithSign(hoveredCell.totalPnl)}
-										</p>
-									</div>
-									{hoveredCell.avgR !== 0 && (
+							<div className="gap-m-500 flex items-center">
+								<div className="text-right">
+									<p className="text-tiny text-txt-300">{t("time.winRate")}</p>
+									<p className="text-small text-txt-100 font-semibold">
+										{hoveredCell.winRate.toFixed(0)}%
+									</p>
+								</div>
+								{isRMode ? (
+									<>
 										<div className="text-right">
 											<p className="text-tiny text-txt-300">{t("time.avgR")}</p>
 											<p
@@ -501,14 +552,84 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 														: "text-trade-sell"
 												)}
 											>
-												{hoveredCell.avgR >= 0 ? "+" : ""}
-												{hoveredCell.avgR.toFixed(2)}R
+												{formatR(hoveredCell.avgR)}
 											</p>
 										</div>
-									)}
-								</>
-							)}
+										<div className="text-right">
+											<p className="text-tiny text-txt-300">{t("time.pnl")}</p>
+											<p
+												className={cn(
+													"text-small font-semibold",
+													hoveredCell.totalPnl >= 0
+														? "text-trade-buy"
+														: "text-trade-sell"
+												)}
+											>
+												{formatBrlCompactWithSign(hoveredCell.totalPnl)}
+											</p>
+										</div>
+									</>
+								) : (
+									<>
+										<div className="text-right">
+											<p className="text-tiny text-txt-300">{t("time.pnl")}</p>
+											<p
+												className={cn(
+													"text-small font-semibold",
+													hoveredCell.totalPnl >= 0
+														? "text-trade-buy"
+														: "text-trade-sell"
+												)}
+											>
+												{formatBrlCompactWithSign(hoveredCell.totalPnl)}
+											</p>
+										</div>
+										{hoveredCell.avgR !== 0 && (
+											<div className="text-right">
+												<p className="text-tiny text-txt-300">
+													{t("time.avgR")}
+												</p>
+												<p
+													className={cn(
+														"text-small font-semibold",
+														hoveredCell.avgR >= 0
+															? "text-trade-buy"
+															: "text-trade-sell"
+													)}
+												>
+													{hoveredCell.avgR >= 0 ? "+" : ""}
+													{hoveredCell.avgR.toFixed(2)}R
+												</p>
+											</div>
+										)}
+									</>
+								)}
+							</div>
 						</div>
+						{/* Confidence flag below the numbers — keeps the reading honest
+						   for low-n cells the user is hovering. */}
+						{hoveredConfidence !== "reliable" && (
+							<div
+								className={cn(
+									"gap-s-200 text-tiny flex items-center",
+									hoveredConfidence === "insufficient"
+										? "text-warning"
+										: "text-txt-300"
+								)}
+							>
+								<AlertTriangle
+									className="h-3 w-3 shrink-0"
+									aria-hidden="true"
+								/>
+								<span>
+									{hoveredConfidence === "insufficient"
+										? t("time.insufficientDataShort")
+										: t("time.lowConfidenceCell", {
+												n: hoveredCell.totalTrades,
+											})}
+								</span>
+							</div>
+						)}
 					</div>
 				) : (
 					<p className="text-tiny text-txt-300 text-center">
@@ -517,8 +638,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 				)}
 			</div>
 
-			{/* Legend — intensity ramp shows magnitude as well as direction,
-			    mirroring the opacity steps in getCellStyle (30/50/70/full). */}
+			{/* Legend — intensity ramp + low-confidence dot indicator. */}
 			<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 text-tiny text-txt-300 flex flex-wrap items-center justify-center">
 				<div className="gap-s-200 flex items-center">
 					<span className="text-trade-sell font-medium tabular-nums">
@@ -543,10 +663,49 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 					<div className="bg-bg-300/30 h-3 w-3 rounded-sm" />
 					<span>{t("time.noTrades")}</span>
 				</div>
+				<div className="gap-s-200 flex items-center">
+					<div className="relative h-3 w-3">
+						<div className="bg-trade-buy/30 absolute inset-0 rounded-sm" />
+						<span className="bg-warning absolute top-0 right-0 h-1.5 w-1.5 rounded-full" />
+					</div>
+					<span>{t("time.lowConfidence")}</span>
+				</div>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<span className="gap-s-100 inline-flex cursor-help items-center">
+							<Info className="h-3 w-3" aria-hidden="true" />
+							<span>
+								{t("time.sampleHint", {
+									count: cellsWithTrades.reduce(
+										(sum, c) => sum + c.totalTrades,
+										0
+									),
+									needed: Math.max(
+										0,
+										SAMPLE_THRESHOLDS.MIN_RELIABLE -
+											Math.max(0, ...cellsWithTrades.map((c) => c.totalTrades))
+									),
+								})}
+							</span>
+						</span>
+					</TooltipTrigger>
+					<TooltipContent
+						id="tooltip-heatmap-sample-hint"
+						side="top"
+						className="border-bg-300 bg-bg-100 text-txt-200 p-s-300 max-w-xs border shadow-lg"
+					>
+						{t("time.insufficientSlot", {
+							min: SAMPLE_THRESHOLDS.MIN_FOR_RANKING,
+						})}
+					</TooltipContent>
+				</Tooltip>
 			</div>
 
-			{/* Actionable Insights — Best vs Worst table */}
-			{cellsWithTrades.length > 0 && (
+			{/* Actionable Insights — Best vs Worst table.
+			   Only renders when at least one row (slot/hour/day) has enough
+			   data to rank. Empty rows show a clear insufficient-data state
+			   instead of laundering a 1-trade observation into a "winner". */}
+			{rankingAvailable ? (
 				<div className="mt-s-300 sm:mt-m-400">
 					<div className="border-bg-300 rounded-lg border">
 						<Table className="text-tiny w-full">
@@ -620,7 +779,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 												{formatMetric(getMetricValue(bestSlot))}
 											</TableCell>
 											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center whitespace-nowrap">
-												{bestSlot.winRate.toFixed(0)}% · {bestSlot.totalTrades}
+												{formatCount(bestSlot)}
 											</TableCell>
 										</>
 									) : (
@@ -628,10 +787,12 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 											colSpan={3}
 											className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center"
 										>
-											—
+											{t("time.insufficientData")}
 										</TableCell>
 									)}
-									{worstSlot && getMetricValue(worstSlot) < 0 ? (
+									{worstSlot &&
+									worstSlot !== bestSlot &&
+									getMetricValue(worstSlot) < 0 ? (
 										<>
 											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-100 text-center font-semibold whitespace-nowrap">
 												{getTranslatedDayShort(worstSlot.dayName)}{" "}
@@ -641,8 +802,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 												{formatMetric(getMetricValue(worstSlot))}
 											</TableCell>
 											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center whitespace-nowrap">
-												{worstSlot.winRate.toFixed(0)}% ·{" "}
-												{worstSlot.totalTrades}
+												{formatCount(worstSlot)}
 											</TableCell>
 										</>
 									) : (
@@ -650,7 +810,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 											colSpan={3}
 											className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center"
 										>
-											—
+											{t("time.insufficientData")}
 										</TableCell>
 									)}
 								</TableRow>
@@ -669,7 +829,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 												{formatAggregateMetric(bestHour)}
 											</TableCell>
 											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center whitespace-nowrap">
-												{bestHour.winRate.toFixed(0)}% · {bestHour.totalTrades}
+												{formatCount(bestHour)}
 											</TableCell>
 										</>
 									) : (
@@ -677,10 +837,10 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 											colSpan={3}
 											className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center"
 										>
-											—
+											{t("time.insufficientData")}
 										</TableCell>
 									)}
-									{worstHour ? (
+									{worstHour && worstHour !== bestHour ? (
 										<>
 											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-100 text-center font-semibold whitespace-nowrap">
 												{worstHour.label}
@@ -689,8 +849,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 												{formatAggregateMetric(worstHour)}
 											</TableCell>
 											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center whitespace-nowrap">
-												{worstHour.winRate.toFixed(0)}% ·{" "}
-												{worstHour.totalTrades}
+												{formatCount(worstHour)}
 											</TableCell>
 										</>
 									) : (
@@ -698,7 +857,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 											colSpan={3}
 											className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center"
 										>
-											—
+											{t("time.insufficientData")}
 										</TableCell>
 									)}
 								</TableRow>
@@ -717,7 +876,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 												{formatAggregateMetric(bestDay)}
 											</TableCell>
 											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center whitespace-nowrap">
-												{bestDay.winRate.toFixed(0)}% · {bestDay.totalTrades}
+												{formatCount(bestDay)}
 											</TableCell>
 										</>
 									) : (
@@ -725,10 +884,10 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 											colSpan={3}
 											className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center"
 										>
-											—
+											{t("time.insufficientData")}
 										</TableCell>
 									)}
-									{worstDay ? (
+									{worstDay && worstDay !== bestDay ? (
 										<>
 											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-100 text-center font-semibold whitespace-nowrap">
 												{worstDay.dayLabel}
@@ -737,7 +896,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 												{formatAggregateMetric(worstDay)}
 											</TableCell>
 											<TableCell className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center whitespace-nowrap">
-												{worstDay.winRate.toFixed(0)}% · {worstDay.totalTrades}
+												{formatCount(worstDay)}
 											</TableCell>
 										</>
 									) : (
@@ -745,7 +904,7 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 											colSpan={3}
 											className="px-s-300 py-s-200 text-tiny sm:text-small text-txt-300 text-center"
 										>
-											—
+											{t("time.insufficientData")}
 										</TableCell>
 									)}
 								</TableRow>
@@ -753,6 +912,27 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 						</Table>
 					</div>
 				</div>
+			) : (
+				cellsWithTrades.length > 0 && (
+					<div className="mt-s-300 sm:mt-m-400 border-bg-300 bg-bg-100 p-s-300 sm:p-m-400 rounded-lg border">
+						<div className="gap-s-200 flex items-start">
+							<AlertTriangle
+								className="text-warning mt-s-100 h-4 w-4 shrink-0"
+								aria-hidden="true"
+							/>
+							<div className="text-tiny text-txt-200">
+								<p className="text-txt-100 font-medium">
+									{t("time.insufficientData")}
+								</p>
+								<p className="mt-s-100 text-txt-300">
+									{t("time.insufficientSlot", {
+										min: SAMPLE_THRESHOLDS.MIN_FOR_RANKING,
+									})}
+								</p>
+							</div>
+						</div>
+					</div>
+				)
 			)}
 		</div>
 	)

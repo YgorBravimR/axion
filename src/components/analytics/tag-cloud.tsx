@@ -7,6 +7,8 @@ import type { TagStats, TagType } from "@/types"
 import { formatCompactCurrencyWithSign, formatR } from "@/lib/formatting"
 import { TradeTag } from "@/components/journal/trade-badges"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
+import { SAMPLE_THRESHOLDS } from "@/lib/statistics"
+import { SampleBadge } from "./sample-confidence"
 import {
 	Table,
 	TableHeader,
@@ -183,12 +185,18 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 	const { totalMistakeCost, bestSetup } = useMemo(() => {
 		const metric = (tag: TagStats): number =>
 			isRMode ? tag.avgR : tag.totalPnl
+		// Only rank setups with enough trades — a 1-trade tag can otherwise
+		// claim "Best Setup" trophy permanently. Sample-size gate matches
+		// the heatmap's threshold so the page reads consistently.
+		const rankableSetups = setupTags.filter(
+			(t) => t.tradeCount >= SAMPLE_THRESHOLDS.MIN_FOR_RANKING
+		)
 		return {
 			totalMistakeCost: mistakeTags.reduce(
 				(sum, tag) => sum + Math.abs(Math.min(0, metric(tag))),
 				0
 			),
-			bestSetup: setupTags.reduce(
+			bestSetup: rankableSetups.reduce(
 				(best, tag) => (!best || metric(tag) > metric(best) ? tag : best),
 				null as TagStats | null
 			),
@@ -235,8 +243,11 @@ export const TagCloud = ({ data, expectancyMode }: TagCloudProps) => {
 							{bestSetup.tagName}
 						</p>
 						<p className="text-tiny text-txt-200">
-							{formatMetric(getMetric(bestSetup))}
+							{formatMetric(getMetric(bestSetup))} · {bestSetup.tradeCount}
 						</p>
+						<div className="mt-s-100 flex justify-center">
+							<SampleBadge n={bestSetup.tradeCount} />
+						</div>
 					</div>
 				)}
 				{totalMistakeCost > 0 && (

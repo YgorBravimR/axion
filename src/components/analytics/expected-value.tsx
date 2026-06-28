@@ -10,6 +10,9 @@ import {
 import type { ExpectedValueData } from "@/types"
 import { formatCompactCurrencyWithSign, formatR } from "@/lib/formatting"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
+import { SAMPLE_THRESHOLDS, classifySample } from "@/lib/statistics"
+import { SampleBadge } from "./sample-confidence"
+import { AlertTriangle } from "lucide-react"
 
 const StatLabel = ({ label, tooltip }: { label: string; tooltip: string }) => (
 	<Tooltip>
@@ -291,6 +294,7 @@ const CapitalExpectancyDisplay = ({ data }: { data: ExpectedValueData }) => {
 
 export const ExpectedValue = ({ data, mode }: ExpectedValueProps) => {
 	const t = useTranslations("analytics.expectedValue")
+	const tTime = useTranslations("analytics.time")
 
 	if (!data || data.sampleSize === 0) {
 		return (
@@ -325,12 +329,35 @@ export const ExpectedValue = ({ data, mode }: ExpectedValueProps) => {
 						{mode === "edge" ? t("edgeTitle") : t("capitalTitle")}
 					</h3>
 				</div>
-				<span className="text-tiny text-txt-300">
-					{t("basedOn", {
-						count: mode === "edge" ? data.rSampleSize : data.sampleSize,
-					})}
-				</span>
+				<div className="gap-s-200 flex items-center">
+					<span className="text-tiny text-txt-300">
+						{t("basedOn", {
+							count: mode === "edge" ? data.rSampleSize : data.sampleSize,
+						})}
+					</span>
+					<SampleBadge
+						n={mode === "edge" ? data.rSampleSize : data.sampleSize}
+					/>
+				</div>
 			</div>
+			{/* EV is famously sample-size sensitive. Below MIN_RELIABLE the headline
+			   number is dominated by a handful of trades; surface that prominently
+			   instead of letting the formula's confidence borrow false authority. */}
+			{classifySample(mode === "edge" ? data.rSampleSize : data.sampleSize) ===
+				"insufficient" && (
+				<div className="border-warning/30 bg-warning/5 p-s-300 gap-s-200 mt-s-300 flex items-start rounded-lg border">
+					<AlertTriangle
+						className="text-warning mt-s-100 h-4 w-4 shrink-0"
+						aria-hidden="true"
+					/>
+					<p className="text-tiny text-txt-200">
+						{tTime("insufficientSample")} —{" "}
+						<span className="text-txt-300">
+							n &lt; {SAMPLE_THRESHOLDS.MIN_VISIBLE}
+						</span>
+					</p>
+				</div>
+			)}
 
 			{mode === "edge" ? (
 				hasRData ? (

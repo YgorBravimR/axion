@@ -12,6 +12,8 @@ import {
 import { useChartConfig } from "@/hooks/use-chart-config"
 import type { DayOfWeekPerformance } from "@/types"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
+import { SAMPLE_THRESHOLDS } from "@/lib/statistics"
+import { SampleBadge, InsufficientDataNote } from "./sample-confidence"
 
 interface DayOfWeekChartProps {
 	data: DayOfWeekPerformance[]
@@ -108,7 +110,7 @@ export const DayOfWeekChart = memo(
 		const isRMode = expectancyMode === "edge"
 		const metricKey = isRMode ? "avgR" : "totalPnl"
 
-		const { tradingDays, domain, bestDay, worstDay } = useMemo(() => {
+		const { tradingDays, domain, bestDay, worstDay, rankable } = useMemo(() => {
 			// B3 (Bovespa) is closed Saturday + Sunday, so weekend bars are noise.
 			// Drop them defensively even if the dataset leaks weekend rows.
 			const WEEKEND = new Set(["Saturday", "Sunday"])
@@ -120,12 +122,20 @@ export const DayOfWeekChart = memo(
 				days.map((d) => d[metricKey]),
 				fallback
 			)
-			const sorted = days.toSorted((a, b) => b[metricKey] - a[metricKey])
+			// Best/Worst summary only ranks days with enough trades. Keeps a 1-trade
+			// day from getting "Best Day" trophy.
+			const rankableDays = days.filter(
+				(d) => d.totalTrades >= SAMPLE_THRESHOLDS.MIN_FOR_RANKING
+			)
+			const sorted = rankableDays.toSorted(
+				(a, b) => b[metricKey] - a[metricKey]
+			)
 			return {
 				tradingDays: days,
 				domain: domainTuple,
 				bestDay: sorted[0],
-				worstDay: sorted[sorted.length - 1],
+				worstDay: sorted.length > 1 ? sorted[sorted.length - 1] : undefined,
+				rankable: rankableDays.length > 0,
 			}
 		}, [data, metricKey, isRMode])
 
@@ -233,31 +243,49 @@ export const DayOfWeekChart = memo(
 						</Bar>
 					</BarChart>
 				</ChartContainer>
-				{/* Summary */}
-				<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 border-bg-300 pt-s-300 sm:pt-m-400 grid grid-cols-1 border-t sm:grid-cols-2">
-					<div>
-						<p className="text-tiny text-txt-300">{t("time.bestDay")}</p>
-						<p className="text-small text-txt-100 font-medium">
-							{bestDay ? getTranslatedDayName(bestDay.dayName) : ""} (
-							{bestDay?.winRate.toFixed(0)}% {tCommon("winRateAbbr")},{" "}
-							<span className="text-trade-buy">
-								{formatMetric(bestDay?.[metricKey] ?? 0)}
-							</span>
-							)
-						</p>
+				{/* Summary — only renders if at least one day has ≥ MIN_FOR_RANKING trades. */}
+				{rankable ? (
+					<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 border-bg-300 pt-s-300 sm:pt-m-400 grid grid-cols-1 border-t sm:grid-cols-2">
+						<div>
+							<p className="text-tiny text-txt-300">{t("time.bestDay")}</p>
+							<p className="text-small text-txt-100 font-medium">
+								{bestDay ? getTranslatedDayName(bestDay.dayName) : ""} (
+								{bestDay?.winRate.toFixed(0)}% {tCommon("winRateAbbr")},{" "}
+								<span className="text-trade-buy">
+									{formatMetric(bestDay?.[metricKey] ?? 0)}
+								</span>
+								)
+							</p>
+							{bestDay && (
+								<SampleBadge n={bestDay.totalTrades} className="mt-s-100" />
+							)}
+						</div>
+						<div>
+							<p className="text-tiny text-txt-300">{t("time.worstDay")}</p>
+							{worstDay ? (
+								<>
+									<p className="text-small text-txt-100 font-medium">
+										{getTranslatedDayName(worstDay.dayName)} (
+										{worstDay.winRate.toFixed(0)}% {tCommon("winRateAbbr")},{" "}
+										<span className="text-trade-sell">
+											{formatMetric(worstDay[metricKey])}
+										</span>
+										)
+									</p>
+									<SampleBadge n={worstDay.totalTrades} className="mt-s-100" />
+								</>
+							) : (
+								<p className="text-tiny text-txt-300">
+									{t("time.insufficientData")}
+								</p>
+							)}
+						</div>
 					</div>
-					<div>
-						<p className="text-tiny text-txt-300">{t("time.worstDay")}</p>
-						<p className="text-small text-txt-100 font-medium">
-							{worstDay ? getTranslatedDayName(worstDay.dayName) : ""} (
-							{worstDay?.winRate.toFixed(0)}% {tCommon("winRateAbbr")},{" "}
-							<span className="text-trade-sell">
-								{formatMetric(worstDay?.[metricKey] ?? 0)}
-							</span>
-							)
-						</p>
+				) : (
+					<div className="mt-s-300 sm:mt-m-400 border-bg-300 pt-s-300 sm:pt-m-400 border-t">
+						<InsufficientDataNote />
 					</div>
-				</div>
+				)}
 			</div>
 		)
 	}

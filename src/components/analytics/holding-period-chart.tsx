@@ -14,6 +14,8 @@ import { useChartConfig } from "@/hooks/use-chart-config"
 import { cn } from "@/lib/utils"
 import type { HoldingPeriodBucket } from "@/types"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
+import { SAMPLE_THRESHOLDS } from "@/lib/statistics"
+import { SampleBadge, InsufficientDataNote } from "./sample-confidence"
 
 interface HoldingPeriodChartProps {
 	data: HoldingPeriodBucket[]
@@ -155,13 +157,17 @@ const HoldingPeriodChart = memo(
 			isRMode ? 0.5 : 100
 		)
 
-		// Best and worst buckets (only show worst if different from best)
-		const sorted = activeBuckets.toSorted((a, b) => b[metricKey] - a[metricKey])
-		const [bestBucket] = sorted
+		// Best and worst buckets — rank only buckets with enough trades.
+		// A 1-trade bucket should not become "Best Duration".
+		const rankableBuckets = activeBuckets.filter(
+			(b) => b.totalTrades >= SAMPLE_THRESHOLDS.MIN_FOR_RANKING
+		)
+		const sorted = rankableBuckets.toSorted(
+			(a, b) => b[metricKey] - a[metricKey]
+		)
+		const bestBucket = sorted[0]
 		const worstBucket = sorted.length > 1 ? sorted[sorted.length - 1] : null
-		if (!bestBucket) {
-			return null
-		}
+		const rankable = sorted.length > 0
 
 		const formatMetric = (value: number): string =>
 			isRMode
@@ -235,31 +241,48 @@ const HoldingPeriodChart = memo(
 					</BarChart>
 				</ChartContainer>
 
-				{/* Summary */}
-				<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 border-bg-300 pt-s-300 sm:pt-m-400 grid grid-cols-1 border-t sm:grid-cols-2">
-					<div>
-						<p className="text-tiny text-txt-300">{t("bestBucket")}</p>
-						<p className="text-small text-txt-100 font-medium">
-							{bestBucket.bucket} ({bestBucket.winRate.toFixed(0)}% WR,{" "}
-							<span className="text-trade-buy">
-								{formatMetric(bestBucket[metricKey])}
-							</span>
-							)
-						</p>
-					</div>
-					{worstBucket && (
+				{/* Summary — gated by sample size like the rest of the page. */}
+				{rankable && bestBucket ? (
+					<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 border-bg-300 pt-s-300 sm:pt-m-400 grid grid-cols-1 border-t sm:grid-cols-2">
 						<div>
-							<p className="text-tiny text-txt-300">{t("worstBucket")}</p>
+							<p className="text-tiny text-txt-300">{t("bestBucket")}</p>
 							<p className="text-small text-txt-100 font-medium">
-								{worstBucket.bucket} ({worstBucket.winRate.toFixed(0)}% WR,{" "}
-								<span className="text-trade-sell">
-									{formatMetric(worstBucket[metricKey])}
+								{bestBucket.bucket} ({bestBucket.winRate.toFixed(0)}% WR,{" "}
+								<span className="text-trade-buy">
+									{formatMetric(bestBucket[metricKey])}
 								</span>
 								)
 							</p>
+							<SampleBadge n={bestBucket.totalTrades} className="mt-s-100" />
 						</div>
-					)}
-				</div>
+						<div>
+							<p className="text-tiny text-txt-300">{t("worstBucket")}</p>
+							{worstBucket ? (
+								<>
+									<p className="text-small text-txt-100 font-medium">
+										{worstBucket.bucket} ({worstBucket.winRate.toFixed(0)}% WR,{" "}
+										<span className="text-trade-sell">
+											{formatMetric(worstBucket[metricKey])}
+										</span>
+										)
+									</p>
+									<SampleBadge
+										n={worstBucket.totalTrades}
+										className="mt-s-100"
+									/>
+								</>
+							) : (
+								// Keep the second column reserved so this chart matches the
+								// hourly/day-of-week layout right at the sample-threshold edge.
+								<InsufficientDataNote />
+							)}
+						</div>
+					</div>
+				) : (
+					<div className="mt-s-300 sm:mt-m-400 border-bg-300 pt-s-300 sm:pt-m-400 border-t">
+						<InsufficientDataNote />
+					</div>
+				)}
 			</div>
 		)
 	}

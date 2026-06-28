@@ -7,6 +7,8 @@ import type { SessionAssetPerformance, TradingSession } from "@/types"
 import { formatBrlCompactWithSign, formatR } from "@/lib/formatting"
 import { Link } from "@/i18n/routing"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
+import { SAMPLE_THRESHOLDS, classifySample } from "@/lib/statistics"
+import { SampleBadge } from "./sample-confidence"
 import {
 	Table,
 	TableHeader,
@@ -193,14 +195,52 @@ export const SessionAssetTable = ({
 								)
 							})}
 							<TableCell className="py-s-200 text-center">
-								{asset.bestSession ? (
-									<span className="gap-s-100 bg-acc-100/10 px-s-200 text-tiny text-acc-100 inline-flex items-center rounded-full py-px font-medium">
-										<Trophy className="h-3 w-3" aria-hidden="true" />
-										{getSessionLabel(asset.bestSession)}
-									</span>
-								) : (
-									<span className="text-tiny text-txt-300">-</span>
-								)}
+								{(() => {
+									// Recompute the best session from RANKABLE sessions only — if the
+									// precomputed asset.bestSession lands on a 1-trade session we'd
+									// otherwise hide a perfectly good winner in another rankable session.
+									const metricFor = (
+										s: SessionAssetPerformance["sessions"][0]
+									): number => (isRMode ? s.avgR : s.pnl)
+									const rankableSessions = asset.sessions.filter(
+										(s) => s.trades >= SAMPLE_THRESHOLDS.MIN_FOR_RANKING
+									)
+									const bestSessionData = rankableSessions.reduce(
+										(
+											best: SessionAssetPerformance["sessions"][0] | undefined,
+											s
+										) => (!best || metricFor(s) > metricFor(best) ? s : best),
+										undefined as
+											| SessionAssetPerformance["sessions"][0]
+											| undefined
+									)
+									if (!bestSessionData) {
+										const fallbackTrades = asset.bestSession
+											? (sessionMaps.get(asset.asset)?.get(asset.bestSession)
+													?.trades ?? 0)
+											: 0
+										return (
+											<span className="text-tiny text-txt-300">
+												{fallbackTrades > 0 ? (
+													<SampleBadge n={fallbackTrades} showCount={false} />
+												) : (
+													"-"
+												)}
+											</span>
+										)
+									}
+									const showBadge =
+										classifySample(bestSessionData.trades) !== "reliable"
+									return (
+										<div className="gap-s-100 flex flex-col items-center">
+											<span className="gap-s-100 bg-acc-100/10 px-s-200 text-tiny text-acc-100 inline-flex items-center rounded-full py-px font-medium">
+												<Trophy className="h-3 w-3" aria-hidden="true" />
+												{getSessionLabel(bestSessionData.session)}
+											</span>
+											{showBadge && <SampleBadge n={bestSessionData.trades} />}
+										</div>
+									)
+								})()}
 							</TableCell>
 							<TableCell className="py-s-200 text-right">
 								{isRMode ? (

@@ -13,6 +13,8 @@ import { useChartConfig } from "@/hooks/use-chart-config"
 import { Link } from "@/i18n/routing"
 import type { HourlyPerformance } from "@/types"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
+import { SAMPLE_THRESHOLDS } from "@/lib/statistics"
+import { SampleBadge, InsufficientDataNote } from "./sample-confidence"
 
 interface HourlyPerformanceChartProps {
 	data: HourlyPerformance[]
@@ -86,17 +88,25 @@ export const HourlyPerformanceChart = memo(
 		const isRMode = expectancyMode === "edge"
 		const metricKey = isRMode ? "avgR" : "totalPnl"
 
-		const { domain, bestHour, worstHour } = useMemo(() => {
+		const { domain, bestHour, worstHour, rankable } = useMemo(() => {
 			const fallback = isRMode ? 0.5 : 100
 			const domainTuple = computeChartDomain(
 				data.map((d) => d[metricKey]),
 				fallback
 			)
-			const sorted = data.toSorted((a, b) => b[metricKey] - a[metricKey])
+			// Only rank hours with enough trades — keeps a 1-trade hour from
+			// claiming "best hour" status.
+			const rankableHours = data.filter(
+				(d) => d.totalTrades >= SAMPLE_THRESHOLDS.MIN_FOR_RANKING
+			)
+			const sorted = rankableHours.toSorted(
+				(a, b) => b[metricKey] - a[metricKey]
+			)
 			return {
 				domain: domainTuple,
 				bestHour: sorted[0],
-				worstHour: sorted[sorted.length - 1],
+				worstHour: sorted.length > 1 ? sorted[sorted.length - 1] : undefined,
+				rankable: rankableHours.length > 0,
 			}
 		}, [data, metricKey, isRMode])
 
@@ -176,47 +186,73 @@ export const HourlyPerformanceChart = memo(
 						</Bar>
 					</BarChart>
 				</ChartContainer>
-				{/* Summary */}
-				<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 border-bg-300 pt-s-300 sm:pt-m-400 grid grid-cols-1 border-t sm:grid-cols-2">
-					<div>
-						<p className="text-tiny text-txt-300">{t("time.bestHour")}</p>
-						<p className="text-small text-txt-100 font-medium">
-							{bestHour?.hourLabel} ({bestHour?.winRate.toFixed(0)}%{" "}
-							{tCommon("winRateAbbr")},{" "}
-							<span className="text-trade-buy">
-								{formatMetric(bestHour?.[metricKey] ?? 0)}
-							</span>
-							, {bestHour?.totalTrades} {t("time.trades").toLowerCase()})
-						</p>
-						{bestHour ? (
-							<Link
-								href={`/journal?hourFrom=${bestHour.hour}&hourTo=${bestHour.hour}`}
-								className="text-tiny text-acc-100 hover:underline"
-							>
-								{t("time.viewTrades")}
-							</Link>
-						) : null}
+				{/* Summary — only renders best/worst when at least one hour has
+				   ≥ MIN_FOR_RANKING trades. Below that, the page tells the user it
+				   doesn't have enough data to pick a winner. */}
+				{rankable ? (
+					<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 border-bg-300 pt-s-300 sm:pt-m-400 grid grid-cols-1 border-t sm:grid-cols-2">
+						<div>
+							<p className="text-tiny text-txt-300">{t("time.bestHour")}</p>
+							{bestHour ? (
+								<>
+									<p className="text-small text-txt-100 font-medium">
+										{bestHour.hourLabel} ({bestHour.winRate.toFixed(0)}%{" "}
+										{tCommon("winRateAbbr")},{" "}
+										<span className="text-trade-buy">
+											{formatMetric(bestHour[metricKey])}
+										</span>
+										, {bestHour.totalTrades} {t("time.trades").toLowerCase()})
+									</p>
+									<div className="gap-s-200 mt-s-100 flex items-center">
+										<Link
+											href={`/journal?hourFrom=${bestHour.hour}&hourTo=${bestHour.hour}`}
+											className="text-tiny text-acc-100 hover:underline"
+										>
+											{t("time.viewTrades")}
+										</Link>
+										<SampleBadge n={bestHour.totalTrades} />
+									</div>
+								</>
+							) : (
+								<p className="text-tiny text-txt-300">
+									{t("time.insufficientData")}
+								</p>
+							)}
+						</div>
+						<div>
+							<p className="text-tiny text-txt-300">{t("time.worstHour")}</p>
+							{worstHour ? (
+								<>
+									<p className="text-small text-txt-100 font-medium">
+										{worstHour.hourLabel} ({worstHour.winRate.toFixed(0)}%{" "}
+										{tCommon("winRateAbbr")},{" "}
+										<span className="text-trade-sell">
+											{formatMetric(worstHour[metricKey])}
+										</span>
+										, {worstHour.totalTrades} {t("time.trades").toLowerCase()})
+									</p>
+									<div className="gap-s-200 mt-s-100 flex items-center">
+										<Link
+											href={`/journal?hourFrom=${worstHour.hour}&hourTo=${worstHour.hour}`}
+											className="text-tiny text-acc-100 hover:underline"
+										>
+											{t("time.viewTrades")}
+										</Link>
+										<SampleBadge n={worstHour.totalTrades} />
+									</div>
+								</>
+							) : (
+								<p className="text-tiny text-txt-300">
+									{t("time.insufficientData")}
+								</p>
+							)}
+						</div>
 					</div>
-					<div>
-						<p className="text-tiny text-txt-300">{t("time.worstHour")}</p>
-						<p className="text-small text-txt-100 font-medium">
-							{worstHour?.hourLabel} ({worstHour?.winRate.toFixed(0)}%{" "}
-							{tCommon("winRateAbbr")},{" "}
-							<span className="text-trade-sell">
-								{formatMetric(worstHour?.[metricKey] ?? 0)}
-							</span>
-							, {worstHour?.totalTrades} {t("time.trades").toLowerCase()})
-						</p>
-						{worstHour ? (
-							<Link
-								href={`/journal?hourFrom=${worstHour.hour}&hourTo=${worstHour.hour}`}
-								className="text-tiny text-acc-100 hover:underline"
-							>
-								{t("time.viewTrades")}
-							</Link>
-						) : null}
+				) : (
+					<div className="mt-s-300 sm:mt-m-400 border-bg-300 pt-s-300 sm:pt-m-400 border-t">
+						<InsufficientDataNote />
 					</div>
-				</div>
+				)}
 			</div>
 		)
 	}

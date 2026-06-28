@@ -15,6 +15,8 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useFormatting } from "@/hooks/use-formatting"
+import { classifySample, wilsonInterval } from "@/lib/statistics"
+import { SampleBadge } from "@/components/analytics/sample-confidence"
 import { getMonthlyReport } from "@/app/actions/reports"
 import type { MonthlyReport } from "@/app/actions/reports.types"
 import { format, parseISO } from "date-fns"
@@ -192,12 +194,34 @@ export const MonthlyReportCard = ({
 							<p className="text-h3 text-txt-100 font-bold">
 								{summary.winRate.toFixed(0)}%
 							</p>
+							{(() => {
+								// Monthly win rate, like weekly, deserves a CI — the headline
+								// figure can swing 10pp on a couple of unlucky weeks.
+								const decided = summary.winCount + summary.lossCount
+								if (decided < 5) {
+									return null
+								}
+								const [lo, hi] = wilsonInterval(summary.winCount, decided)
+								return (
+									<p className="text-tiny text-txt-300 mt-s-100">
+										95% CI {(lo * 100).toFixed(0)}–{(hi * 100).toFixed(0)}%
+									</p>
+								)
+							})()}
 						</div>
 						<div>
 							<p className="text-tiny text-txt-200">{tStats("trades")}</p>
 							<p className="text-h3 text-txt-100 font-bold">
 								{summary.totalTrades}
 							</p>
+							{(() => {
+								// Confidence cue is keyed on decided trades so it matches the
+								// Wilson CI above — see weekly card for rationale.
+								const decided = summary.winCount + summary.lossCount
+								return classifySample(decided) !== "reliable" ? (
+									<SampleBadge n={decided} className="mt-s-100" />
+								) : null
+							})()}
 						</div>
 						<div>
 							<p className="text-tiny text-txt-200">{t("avgR")}</p>

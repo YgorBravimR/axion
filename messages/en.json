@@ -2228,7 +2228,18 @@
 				"Saturday": "Saturday",
 				"Sunday": "Sunday"
 			},
-			"heatmapCellAriaLabel": "{day} {hour}: {trades} trades, {winRate}% win rate"
+			"heatmapCellAriaLabel": "{day} {hour}: {trades} trades, {winRate}% win rate",
+			"insufficientData": "Need more trades to call a winner",
+			"insufficientSample": "Insufficient sample — needs more trades to be reliable",
+			"distributionUnreliable": "n < {min} — distribution shape unreliable",
+			"insufficientDataShort": "Need more data",
+			"lowConfidence": "Low confidence",
+			"lowConfidenceCell": "Low sample (n={n}). Estimate is noisy.",
+			"insufficientSlot": "Not enough trades per slot to rank a best/worst window. Slots with fewer than {min} trades are excluded from ranking.",
+			"sampleHint": "{count} trades so far · {needed} more for high confidence",
+			"reliableSample": "{count} trades · reliable sample",
+			"ciLabel": "95% CI",
+			"unrankable": "—"
 		},
 		"holdingPeriod": {
 			"title": "Holding Period Analysis",

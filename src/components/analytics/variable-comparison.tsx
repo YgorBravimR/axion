@@ -20,6 +20,8 @@ import {
 import { formatCompactCurrency } from "@/lib/formatting"
 import { useChartConfig } from "@/hooks/use-chart-config"
 import type { PerformanceByGroup } from "@/types"
+import { classifySample } from "@/lib/statistics"
+import { SampleBadge } from "./sample-confidence"
 import {
 	Table,
 	TableHeader,
@@ -447,7 +449,12 @@ export const VariableComparison = ({
 							{data.map((row) => (
 								<TableRow key={row.group} className="border-bg-300/50 border-b">
 									<TableCell className="px-s-300 py-s-200 text-small text-txt-100 font-medium">
-										{translateGroup(row.group)}
+										<div className="gap-s-200 flex items-center">
+											<span>{translateGroup(row.group)}</span>
+											{classifySample(row.tradeCount) !== "reliable" && (
+												<SampleBadge n={row.tradeCount} showCount={false} />
+											)}
+										</div>
 									</TableCell>
 									<TableCell className="px-s-300 py-s-200 text-small text-txt-200 text-right">
 										{row.tradeCount}

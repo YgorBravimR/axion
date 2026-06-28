@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/tooltip"
 import { formatCompactCurrencyWithSign } from "@/lib/formatting"
 import type { RDistributionBucket } from "@/types"
+import { SAMPLE_THRESHOLDS, classifySample } from "@/lib/statistics"
+import { SampleBadge } from "./sample-confidence"
 
 const StatLabel = ({ label, tooltip }: { label: string; tooltip: string }) => (
 	<Tooltip>
@@ -79,6 +81,7 @@ const AXIS_TICK = { fill: "var(--color-txt-300)", fontSize: 11 } as const
 
 export const RDistribution = memo(({ data }: RDistributionProps) => {
 	const t = useTranslations("analytics.rDistribution")
+	const tTime = useTranslations("analytics.time")
 
 	const { totalTrades, positiveCount, negativeCount, mode } = useMemo(() => {
 		if (data.length === 0) {
@@ -131,12 +134,26 @@ export const RDistribution = memo(({ data }: RDistributionProps) => {
 			id="analytics-r-distribution"
 			className="border-bg-300 bg-bg-200 p-s-300 sm:p-m-400 lg:p-m-500 rounded-lg border"
 		>
-			<div className="gap-s-200 flex items-center">
-				<BarChart3 className="text-txt-300 h-5 w-5" aria-hidden="true" />
-				<h3 className="text-small sm:text-body text-txt-100 font-semibold">
-					{t("title")}
-				</h3>
+			<div className="gap-s-200 flex items-center justify-between">
+				<div className="gap-s-200 flex items-center">
+					<BarChart3 className="text-txt-300 h-5 w-5" aria-hidden="true" />
+					<h3 className="text-small sm:text-body text-txt-100 font-semibold">
+						{t("title")}
+					</h3>
+				</div>
+				{classifySample(totalTrades) !== "reliable" && (
+					<SampleBadge n={totalTrades} />
+				)}
 			</div>
+			{/* Histograms with very few trades produce visually misleading "modes"
+			   — flag explicitly below MIN_VISIBLE. */}
+			{totalTrades < SAMPLE_THRESHOLDS.MIN_VISIBLE && (
+				<p className="text-tiny text-txt-300 mt-s-200">
+					{tTime("distributionUnreliable", {
+						min: SAMPLE_THRESHOLDS.MIN_VISIBLE,
+					})}
+				</p>
+			)}
 
 			{/* Summary Stats */}
 			<div className="mt-s-300 sm:mt-m-400 gap-s-300 sm:gap-m-400 grid grid-cols-2 md:grid-cols-4 [&_p]:truncate [&>div]:min-w-0">
