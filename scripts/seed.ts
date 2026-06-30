@@ -3,23 +3,23 @@ import { ADMIN_EMAIL, seedAdminUser } from "./seed/admin-user"
 import { seedAccounts } from "./seed/accounts"
 import { seedAssets } from "./seed/assets"
 import { cleanup } from "./seed/cleanup"
-import { seedTradingConditions } from "./seed/conditions"
-import { seedHawksScenarios } from "./seed/hawks-scenarios"
-import { seedHawksPlaybooks } from "./seed/playbooks-hawks"
-import { seedHawksRenkoAndOco } from "./seed/hawks-renko-oco"
-import { seedPlanCascades } from "./seed/plans"
 import { closeSeedSql, createSeedSql } from "./seed/helpers/sql"
 import { seedSettings } from "./seed/settings"
-import { seedStrategies } from "./seed/strategies"
 import { seedTags } from "./seed/tags"
 import { seedTimeframes } from "./seed/timeframes"
-import { seedAtomFundedTrades } from "./seed/trades/atom-funded"
-import { seedBeginnerTrades } from "./seed/trades/beginner"
-import { seedGreenlineTrades } from "./seed/trades/greenline"
-import { seedHawksProTrades } from "./seed/trades/hawks-pro"
-import { seedPersonalTrades } from "./seed/trades/personal"
-import { seedStopLossLabTrades } from "./seed/trades/stop-loss-lab"
 import { verify } from "./seed/verify"
+
+// Heavy seeders (scenarios/conditions/playbooks/plans/renko-oco + all
+// per-account trade generators) are intentionally OFF for fast local
+// resets — see the recent `chore(seed): comment out heavy seeders for
+// fast local resets` commit. To re-enable, uncomment the matching calls
+// below AND re-import their factories from:
+//   ./seed/hawks-scenarios     · ./seed/conditions
+//   ./seed/playbooks-hawks     · ./seed/hawks-renko-oco
+//   ./seed/plans               · ./seed/strategies
+//   ./seed/trades/personal     · ./seed/trades/atom-funded
+//   ./seed/trades/hawks-pro    · ./seed/trades/greenline
+//   ./seed/trades/stop-loss-lab · ./seed/trades/beginner
 
 /**
  * Axion seed orchestrator

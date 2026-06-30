@@ -198,6 +198,10 @@ export default [
 			"e2e/**",
 			".claude/**",
 			".agents/**",
+			// Scratch buffer for the /remember workflow — contains
+			// timestamp markers and other throwaway tmp files that have
+			// no business being linted.
+			".remember/**",
 		],
 	},
 ]
