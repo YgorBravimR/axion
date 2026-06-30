@@ -241,14 +241,11 @@ const JournalContent = () => {
 				Object.keys(extendedFilters).length > 0
 					? {
 							rating: extendedFilters.rating as
-								| Array<"A" | "B" | "C" | "D" | "F">
-								| undefined,
+								Array<"A" | "B" | "C" | "D" | "F"> | undefined,
 							outcomes: extendedFilters.outcomes as
-								| Array<"win" | "loss" | "breakeven">
-								| undefined,
+								Array<"win" | "loss" | "breakeven"> | undefined,
 							directions: extendedFilters.directions as
-								| Array<"long" | "short">
-								| undefined,
+								Array<"long" | "short"> | undefined,
 							assets: extendedFilters.assets as string[] | undefined,
 							tagIds: extendedFilters.tags as string[] | undefined,
 							followedPlan:
@@ -308,7 +305,7 @@ const JournalContent = () => {
 		}
 
 		void fetchTrades()
-	}, [period, customDateRange, effectiveDate, extendedFilters])
+	}, [dateRange, extendedFilters])
 
 	// Memoized handlers to prevent unnecessary re-renders in child components
 	const handlePeriodChange = useCallback(

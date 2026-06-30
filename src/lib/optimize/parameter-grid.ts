@@ -120,7 +120,7 @@ const cartesianProduct = <T>(arrays: T[][]): T[][] => {
 	}
 
 	const result: T[][] = []
-	const indices = new Array(arrays.length).fill(0)
+	const indices: number[] = new Array<number>(arrays.length).fill(0)
 
 	// Generate all combinations by treating indices as a mixed-radix number
 	for (let i = 0; i < productSize; i++) {

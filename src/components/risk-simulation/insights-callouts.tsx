@@ -84,9 +84,9 @@ const InsightsCallouts = ({ summary }: InsightsCalloutsProps) => {
 
 	return (
 		<div className="space-y-s-300">
-			{insights.map((insight, idx) => (
+			{insights.map((insight) => (
 				<div
-					key={idx}
+					key={insight.title}
 					className="border-warning/30 bg-warning/5 p-m-400 gap-m-400 flex rounded-lg border"
 				>
 					<AlertCircle

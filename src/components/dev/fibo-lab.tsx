@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import type { SeriesMarker, UTCTimestamp } from "lightweight-charts"
 import { Button } from "@/components/ui/button"
 import { RenkoPane } from "@/components/backtest/inspector/renko-pane"
@@ -118,7 +118,7 @@ const FiboLab = ({ days, from, to }: FiboLabProps) => {
 			return null
 		}
 		const ts15 = c15.map((c) => new Date(c.timestamp).getTime())
-		const out: number[] = new Array(c5.length)
+		const out: number[] = new Array<number>(c5.length)
 		let cursor = 0
 		for (let i = 0; i < c5.length; i++) {
 			const t = new Date(c5[i]!.timestamp).getTime()
@@ -216,8 +216,11 @@ const FiboLab = ({ days, from, to }: FiboLabProps) => {
 		return stats
 	}, [activeDay])
 
-	const pickT = (a: NonNullable<EngineLabBrick["fiboAnchors"]>) =>
-		tier === "T1" ? a.t1 : tier === "T2" ? a.t2 : a.t3
+	const pickT = useCallback(
+		(a: NonNullable<EngineLabBrick["fiboAnchors"]>) =>
+			tier === "T1" ? a.t1 : tier === "T2" ? a.t2 : a.t3,
+		[tier]
+	)
 
 	// ─── 5m chart payload (global, all days concatenated) ───────────
 	const payload5m = useMemo(() => {
@@ -297,7 +300,7 @@ const FiboLab = ({ days, from, to }: FiboLabProps) => {
 			})
 		}
 		return { series, indicators, markers }
-	}, [globalSeries, fires, tier, clampedTradeIdx])
+	}, [globalSeries, fires, tier, clampedTradeIdx, pickT])
 
 	// ─── 15m chart payload (global, all days concatenated) ──────────
 	const payload15m = useMemo(() => {
@@ -412,7 +415,7 @@ const FiboLab = ({ days, from, to }: FiboLabProps) => {
 			})
 		}
 		return { series, indicators, markers }
-	}, [globalSeries, fires, tier, clampedTradeIdx])
+	}, [globalSeries, fires, tier, clampedTradeIdx, pickT])
 
 	return (
 		<div className="flex h-full flex-col gap-2 p-2">

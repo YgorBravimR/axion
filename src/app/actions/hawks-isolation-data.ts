@@ -74,30 +74,40 @@ const fetchAssetId = async (): Promise<string> => {
 	return assetRow.id
 }
 
+// Narrow an arbitrary JSON value into a CatalogEntry. Returns null when the
+// value doesn't satisfy the catalog contract; the caller filters nulls out.
+// Lives outside `loadCatalogForDate` so the type-narrowed `entry` access
+// happens against a typed local (Record<string, unknown>) instead of `any`.
+const isCatalogEntry = (value: unknown): value is CatalogEntry => {
+	if (typeof value !== "object" || value === null) {
+		return false
+	}
+	const entry = value as Record<string, unknown>
+	const brickIndex = entry.brickIndex
+	const direction = entry.direction
+	return (
+		typeof brickIndex === "number" &&
+		Number.isFinite(brickIndex) &&
+		brickIndex >= 1 &&
+		typeof direction === "string" &&
+		(direction === "short" || direction === "long")
+	)
+}
+
 const loadCatalogForDate = (date: string): CatalogEntry[] => {
 	const path = resolve(ENTRIES_DIR, `${date}.json`)
 	if (!existsSync(path)) {
 		return []
 	}
 	try {
-		const parsed = JSON.parse(readFileSync(path, "utf-8"))
+		const parsed: unknown = JSON.parse(readFileSync(path, "utf-8"))
 		if (!Array.isArray(parsed)) {
 			return []
 		}
-		// Validate each entry has required fields with correct types.
-		// brickIndex must be >= 1 (1-based in file, as per catalog offset logic).
-		// direction must be "short" or "long" to match CatalogMarker contract.
-		return parsed.filter((e) => {
-			return (
-				typeof e === "object" &&
-				e !== null &&
-				typeof e.brickIndex === "number" &&
-				Number.isFinite(e.brickIndex) &&
-				e.brickIndex >= 1 &&
-				typeof e.direction === "string" &&
-				(e.direction === "short" || e.direction === "long")
-			)
-		}) as CatalogEntry[]
+		// brickIndex must be >= 1 (1-based in file, as per catalog offset
+		// logic). direction must be "short" or "long" to match the
+		// CatalogMarker contract. See `isCatalogEntry` above.
+		return parsed.filter(isCatalogEntry)
 	} catch {
 		// Malformed JSON, file read error, or validation failure — return empty
 		// catalog. Engine will render with no trade markers, which is safe.

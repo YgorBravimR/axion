@@ -1,6 +1,12 @@
 "use client"
 
-import { Calculator, TrendingUp, TrendingDown, Info } from "lucide-react"
+import {
+	AlertTriangle,
+	Calculator,
+	Info,
+	TrendingDown,
+	TrendingUp,
+} from "lucide-react"
 import { useTranslations } from "next-intl"
 import {
 	Tooltip,
@@ -12,7 +18,6 @@ import { formatCompactCurrencyWithSign, formatR } from "@/lib/formatting"
 import type { ExpectancyMode } from "./expectancy-mode-toggle"
 import { SAMPLE_THRESHOLDS, classifySample } from "@/lib/statistics"
 import { SampleBadge } from "./sample-confidence"
-import { AlertTriangle } from "lucide-react"
 
 const StatLabel = ({ label, tooltip }: { label: string; tooltip: string }) => (
 	<Tooltip>

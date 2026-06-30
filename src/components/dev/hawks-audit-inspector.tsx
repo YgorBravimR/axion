@@ -465,6 +465,7 @@ const HawksAuditInspector = ({
 						type: "hline",
 						price: event.price,
 						color: "rgb(234, 179, 8)",
+						lastModifiedMs: Date.now(),
 					},
 				])
 				return
@@ -484,6 +485,7 @@ const HawksAuditInspector = ({
 						endTimeMs: event.timeMs,
 						endPrice: event.price,
 						color: "rgb(96, 165, 250)",
+						lastModifiedMs: Date.now(),
 					},
 				])
 				setPendingTrendline(null)

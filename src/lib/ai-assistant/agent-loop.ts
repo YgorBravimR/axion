@@ -116,9 +116,10 @@ const buildOpeningMessage = (
 		// the opening so the model can call get_weekly_review_payload without
 		// re-parsing.
 		const match = /^(\d{4})-W(\d{1,2})$/.exec(contextRefId)
-		const scope = match
-			? `ISO year ${match[1]}, ISO week ${match[2]}`
-			: contextRefId
+		const scope =
+			match && match[1] && match[2]
+				? `ISO year ${match[1]}, ISO week ${match[2]}`
+				: contextRefId
 		return `Surface: weekly_review. Week in scope: ${scope}.\n\nUser question: ${userMessage}`
 	}
 	return `Surface: trade_detail. Trade in scope: ${contextRefId}\n\nUser question: ${userMessage}`

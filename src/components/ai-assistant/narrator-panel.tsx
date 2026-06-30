@@ -34,6 +34,11 @@ interface NarratorPanelProps {
 }
 
 interface ToolTraceEntry {
+	// Stable monotonic id assigned at append time. Used as the React list
+	// key so the list reconciler doesn't fall back to position — two calls
+	// to the same tool would otherwise share a key and confuse Strict Mode
+	// double-render.
+	id: number
 	name: string
 	result: unknown
 }
@@ -66,6 +71,64 @@ const NarratorPanel = ({
 		setErrorMsg(null)
 		setBudgetExceeded(null)
 	}, [])
+
+	const handleEvent = useCallback(
+		(event: AgentEventBase) => {
+			switch (event.type) {
+				case "tool_call": {
+					const ev = event as AgentEventBase & { name: string }
+					setTools((prev) => [
+						...prev,
+						{ id: prev.length, name: ev.name, result: null },
+					])
+					break
+				}
+				case "tool_result": {
+					const ev = event as AgentEventBase & {
+						name: string
+						result: unknown
+					}
+					setTools((prev) => {
+						const next = [...prev]
+						for (let i = next.length - 1; i >= 0; i -= 1) {
+							const entry = next[i]
+							if (entry && entry.name === ev.name && entry.result === null) {
+								next[i] = { ...entry, result: ev.result }
+								return next
+							}
+						}
+						return next
+					})
+					break
+				}
+				case "token": {
+					const ev = event as AgentEventBase & { text: string }
+					setNarration(ev.text)
+					break
+				}
+				case "budget_exceeded": {
+					const ev = event as AgentEventBase & {
+						capCents: number
+						spentCents: number
+					}
+					setBudgetExceeded({
+						capCents: ev.capCents,
+						spentCents: ev.spentCents,
+					})
+					break
+				}
+				case "error": {
+					const ev = event as AgentEventBase & { code: string; message: string }
+					setErrorMsg(ev.message || t("errors.generic"))
+					break
+				}
+				case "done":
+				default:
+					break
+			}
+		},
+		[t]
+	)
 
 	const send = useCallback(
 		async (userMessage: string) => {
@@ -136,60 +199,8 @@ const NarratorPanel = ({
 				abortRef.current = null
 			}
 		},
-		[reset, streaming, t, surface, contextRefId]
+		[reset, streaming, t, surface, contextRefId, handleEvent]
 	)
-
-	const handleEvent = (event: AgentEventBase) => {
-		switch (event.type) {
-			case "tool_call": {
-				const ev = event as AgentEventBase & { name: string }
-				setTools((prev) => [...prev, { name: ev.name, result: null }])
-				break
-			}
-			case "tool_result": {
-				const ev = event as AgentEventBase & {
-					name: string
-					result: unknown
-				}
-				setTools((prev) => {
-					const next = [...prev]
-					for (let i = next.length - 1; i >= 0; i -= 1) {
-						const entry = next[i]
-						if (entry && entry.name === ev.name && entry.result === null) {
-							next[i] = { ...entry, result: ev.result }
-							return next
-						}
-					}
-					return next
-				})
-				break
-			}
-			case "token": {
-				const ev = event as AgentEventBase & { text: string }
-				setNarration(ev.text)
-				break
-			}
-			case "budget_exceeded": {
-				const ev = event as AgentEventBase & {
-					capCents: number
-					spentCents: number
-				}
-				setBudgetExceeded({
-					capCents: ev.capCents,
-					spentCents: ev.spentCents,
-				})
-				break
-			}
-			case "error": {
-				const ev = event as AgentEventBase & { code: string; message: string }
-				setErrorMsg(ev.message || t("errors.generic"))
-				break
-			}
-			case "done":
-			default:
-				break
-		}
-	}
 
 	const onSubmit = (e: React.FormEvent) => {
 		e.preventDefault()
@@ -244,11 +255,8 @@ const NarratorPanel = ({
 							{t("audit.label")}
 						</p>
 						<ul className="space-y-1">
-							{tools.map((tc, i) => (
-								<li
-									key={`${tc.name}-${i}`}
-									className="text-tiny text-txt-300 font-mono"
-								>
+							{tools.map((tc) => (
+								<li key={tc.id} className="text-tiny text-txt-300 font-mono">
 									→ {tc.name}
 									{tc.result === null ? "…" : " ✓"}
 								</li>

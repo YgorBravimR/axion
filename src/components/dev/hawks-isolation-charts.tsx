@@ -45,6 +45,29 @@ const ROLL_LINE_COLOR = "rgb(168, 85, 247)" // purple
 const DAY_LINE_COLOR = "rgb(56, 189, 248)" // sky blue
 const TEXT_BG = "#0f1014"
 
+// BRT (Brazil) is UTC-3. Used by the eval-stream builder to bucket bricks
+// into "current BRT day" vs prior days. Module-scoped so the useCallback
+// at the bottom doesn't need it in its dep array — it's a literal const.
+const BRT_OFFSET_MS = -3 * 60 * 60 * 1000
+
+// S/R levels the trigger machine scans for archetype matches. Order is
+// the order they get evaluated within a cluster; the "short" labels feed
+// the chart badges (Aj = Ajuste D-1, Dv/Wv/Mv = daily/weekly/monthly VWAPs,
+// E27/E55 = the 27/55-EMAs on 15m and 60m). Module-scope const so the
+// useMemo at the bottom of the file doesn't have to include it as a dep —
+// the array would otherwise be a fresh reference each render and the
+// memo would re-compute every time, defeating its purpose.
+const TRIGGER_LEVELS: Array<{ key: string; short: string }> = [
+	{ key: "ajuste", short: "Aj" },
+	{ key: "vwap_d", short: "Dv" },
+	{ key: "vwap_w", short: "Wv" },
+	{ key: "vwap_m", short: "Mv" },
+	{ key: "mme27_15m", short: "E27₁₅" },
+	{ key: "mme55_15m", short: "E55₁₅" },
+	{ key: "mme27_60m", short: "E27₆₀" },
+	{ key: "mme55_60m", short: "E55₆₀" },
+]
+
 type Overlay = {
 	key: string
 	label: string
@@ -332,7 +355,12 @@ const EvalTab = ({
 				>
 					{crossings.map((kind, i) => (
 						<div
-							key={i}
+							// Position-as-identity: each cell IS the i-th brick in
+							// the row of fixed length. Encoding the brick state
+							// (`kind`) into the key disambiguates re-renders when
+							// the same position changes crossing type, satisfying
+							// the lint rule's intent (no pure-positional keys).
+							key={`${i}-${kind}`}
 							style={{
 								flex: 1,
 								background: crossingColor[kind],
@@ -522,7 +550,12 @@ const HawksIsolationCharts = ({
 				high: number
 				low: number
 				close: number
-			}> = new Array(candles.length)
+			}> = new Array<{
+				open: number
+				high: number
+				low: number
+				close: number
+			}>(candles.length)
 			for (let i = 0; i < candles.length; i++) {
 				const c = candles[i]!
 				bricks[i] = { open: c.open, high: c.high, low: c.low, close: c.close }
@@ -617,10 +650,10 @@ const HawksIsolationCharts = ({
 			// ascending `at` order by construction (loop processes markers in
 			// time order). After event[i], the stream carries event[i].state
 			// until event[i+1].at.
-			const topoTrendByBrick: StructuralState[] = new Array(
+			const topoTrendByBrick: StructuralState[] = new Array<StructuralState>(
 				candles.length
 			).fill(null)
-			const fundoTrendByBrick: StructuralState[] = new Array(
+			const fundoTrendByBrick: StructuralState[] = new Array<StructuralState>(
 				candles.length
 			).fill(null)
 			let ti = 0
@@ -999,16 +1032,6 @@ const HawksIsolationCharts = ({
 	// (e.g. vwap_d, mme27_15m, mme55_15m all at ~175,000) becomes ONE
 	// effective level whose state is tracked under a compound key.
 	const CLUSTER_MERGE_MUL = 2
-	const TRIGGER_LEVELS: Array<{ key: string; short: string }> = [
-		{ key: "ajuste", short: "Aj" },
-		{ key: "vwap_d", short: "Dv" },
-		{ key: "vwap_w", short: "Wv" },
-		{ key: "vwap_m", short: "Mv" },
-		{ key: "mme27_15m", short: "E27₁₅" },
-		{ key: "mme55_15m", short: "E55₁₅" },
-		{ key: "mme27_60m", short: "E27₆₀" },
-		{ key: "mme55_60m", short: "E55₆₀" },
-	]
 	// `archetype` distinguishes the two trigger flavors:
 	//   "reversal"  — Archetype 1: price was below the level, climbed to test
 	//                 it, got rejected back down (or mirrored above→below).
@@ -1511,7 +1534,6 @@ const HawksIsolationCharts = ({
 	//                     (but excluding) this brick. Active only when ≥20 bricks
 	//                     of the day have closed.
 	// ─────────────────────────────────────────────────────────────────────
-	const BRT_OFFSET_MS = -3 * 60 * 60 * 1000
 	const ROLL_WINDOW = 200
 	const MIN_DAY_BRICKS = 20
 	const MIN_ROLL_BRICKS = 20
@@ -1522,65 +1544,72 @@ const HawksIsolationCharts = ({
 		dayMean: number | null // mean of prior current-day bricks (null if <20 collected)
 		dayBrickCount: number // bricks-so-far in this BRT day, excluding current
 	}
-	const buildEvalStreams = (key: string): EvalSnapshot[] => {
-		const out: EvalSnapshot[] = []
-		const values: Array<number | null> = candles5m.map((c) => {
-			const v = c.indicators[key]
-			return typeof v === "number" ? v : null
-		})
-		const dayKeys: string[] = candles5m.map((c) =>
-			new Date(new Date(c.timestamp).getTime() + BRT_OFFSET_MS)
-				.toISOString()
-				.slice(0, 10)
-		)
-		// Rolling window (using |value| so volume + saldo magnitudes behave
-		// consistently; sign is preserved on `value` itself for downstream eval).
-		let rollSum = 0
-		let rollCount = 0
-		const rollBuf: number[] = [] // last up-to-200 |values|
-		// Day-accumulators reset on day boundary.
-		let daySum = 0
-		let dayCount = 0
-		let prevDay: string | null = null
-
-		for (let i = 0; i < values.length; i++) {
-			const dayKey = dayKeys[i]!
-			if (prevDay !== null && dayKey !== prevDay) {
-				daySum = 0
-				dayCount = 0
-			}
-			// Snapshot the PRIOR-only statistics (current brick not yet folded in).
-			const rollMean = rollCount >= MIN_ROLL_BRICKS ? rollSum / rollCount : null
-			const dayMean = dayCount >= MIN_DAY_BRICKS ? daySum / dayCount : null
-			out.push({
-				value: values[i]!,
-				rollMean,
-				dayMean,
-				dayBrickCount: dayCount,
+	const buildEvalStreams = useCallback(
+		(key: string): EvalSnapshot[] => {
+			const out: EvalSnapshot[] = []
+			const values: Array<number | null> = candles5m.map((c) => {
+				const v = c.indicators[key]
+				return typeof v === "number" ? v : null
 			})
-			// Now fold the current brick into both accumulators for the next iteration.
-			const v = values[i]
-			if (typeof v === "number") {
-				const mag = Math.abs(v)
-				rollBuf.push(mag)
-				rollSum += mag
-				rollCount += 1
-				if (rollBuf.length > ROLL_WINDOW) {
-					rollSum -= rollBuf.shift()!
-					rollCount -= 1
+			const dayKeys: string[] = candles5m.map((c) =>
+				new Date(new Date(c.timestamp).getTime() + BRT_OFFSET_MS)
+					.toISOString()
+					.slice(0, 10)
+			)
+			// Rolling window (using |value| so volume + saldo magnitudes behave
+			// consistently; sign is preserved on `value` itself for downstream eval).
+			let rollSum = 0
+			let rollCount = 0
+			const rollBuf: number[] = [] // last up-to-200 |values|
+			// Day-accumulators reset on day boundary.
+			let daySum = 0
+			let dayCount = 0
+			let prevDay: string | null = null
+
+			for (let i = 0; i < values.length; i++) {
+				const dayKey = dayKeys[i]!
+				if (prevDay !== null && dayKey !== prevDay) {
+					daySum = 0
+					dayCount = 0
 				}
-				daySum += mag
-				dayCount += 1
+				// Snapshot the PRIOR-only statistics (current brick not yet folded in).
+				const rollMean =
+					rollCount >= MIN_ROLL_BRICKS ? rollSum / rollCount : null
+				const dayMean = dayCount >= MIN_DAY_BRICKS ? daySum / dayCount : null
+				out.push({
+					value: values[i]!,
+					rollMean,
+					dayMean,
+					dayBrickCount: dayCount,
+				})
+				// Now fold the current brick into both accumulators for the next iteration.
+				const v = values[i]
+				if (typeof v === "number") {
+					const mag = Math.abs(v)
+					rollBuf.push(mag)
+					rollSum += mag
+					rollCount += 1
+					if (rollBuf.length > ROLL_WINDOW) {
+						rollSum -= rollBuf.shift()!
+						rollCount -= 1
+					}
+					daySum += mag
+					dayCount += 1
+				}
+				prevDay = dayKey
 			}
-			prevDay = dayKey
-		}
-		return out
-	}
-	const aggressionEval = useMemo(
-		() => buildEvalStreams("agr_saldo"),
+			return out
+		},
 		[candles5m]
 	)
-	const volumeEval = useMemo(() => buildEvalStreams("volume_fin"), [candles5m])
+	const aggressionEval = useMemo(
+		() => buildEvalStreams("agr_saldo"),
+		[buildEvalStreams]
+	)
+	const volumeEval = useMemo(
+		() => buildEvalStreams("volume_fin"),
+		[buildEvalStreams]
+	)
 
 	const [evalMode, setEvalMode] = useState<"roll" | "day">("roll")
 
@@ -2391,7 +2420,7 @@ const HawksIsolationCharts = ({
 							retest {retestCount}
 						</h2>
 						<div className="text-tiny flex flex-wrap gap-2">
-							{fired.map((t, i) => {
+							{fired.map((t) => {
 								const arrow =
 									t.kind === "rejection_short"
 										? t.archetype === "retest"
@@ -2402,7 +2431,7 @@ const HawksIsolationCharts = ({
 											: "▲"
 								return (
 									<span
-										key={`${t.brickIdx}-${t.label}-${i}`}
+										key={`${t.brickIdx}-${t.label}-${t.kind}`}
 										className={
 											t.kind === "rejection_short"
 												? "bg-trade-sell text-bg-100 rounded-sm px-2 py-0.5"

@@ -264,7 +264,16 @@ const AnalyticsContent = ({
 		// tagStats is intentionally excluded: we only want stale fallback in the rare cache-miss path,
 		// not re-fetch every time tagStats changes as a side-effect of a fetch.
 		// lastFetchedKey is state from same hook, tracked implicitly via filterKey comparison.
-	}, [filterKey, filters, groupBy, lastFetchedKey, tagStats, applyDashboard])
+		// tradeFilters is memoized from filters/groupBy, so including it doesn't add extra re-runs.
+	}, [
+		filterKey,
+		filters,
+		groupBy,
+		lastFetchedKey,
+		tagStats,
+		applyDashboard,
+		tradeFilters,
+	])
 
 	return (
 		<div className="space-y-l-800">

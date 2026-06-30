@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect, useRef } from "react"
+import { useState, useCallback, useEffect, useRef, useMemo } from "react"
 import { useRouter } from "@/i18n/routing"
 import { useTranslations } from "next-intl"
 import { Loader2, ChevronLeft, ChevronRight } from "lucide-react"
@@ -117,12 +117,16 @@ export const EnrichReview = ({
 	}, [])
 
 	const currentSnapshot = snapshots[currentIndex]
-	const currentSelection = currentSnapshot
-		? (fieldSelections.get(currentSnapshot.snapshotId) ?? {
-				accepted: new Set<string>(),
-				rejected: new Set<string>(),
-			})
-		: { accepted: new Set<string>(), rejected: new Set<string>() }
+	const currentSelection = useMemo(
+		() =>
+			currentSnapshot
+				? (fieldSelections.get(currentSnapshot.snapshotId) ?? {
+						accepted: new Set<string>(),
+						rejected: new Set<string>(),
+					})
+				: { accepted: new Set<string>(), rejected: new Set<string>() },
+		[currentSnapshot, fieldSelections]
+	)
 
 	const totalCount = snapshots.length
 
