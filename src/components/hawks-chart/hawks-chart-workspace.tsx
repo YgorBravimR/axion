@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useState, useTransition } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Loader2 } from "lucide-react"
 import type { UTCTimestamp } from "lightweight-charts"
 import { useTranslations } from "next-intl"
@@ -19,11 +19,7 @@ import {
 import type { BrickChartSeries } from "@/lib/renko/bricks-to-chart"
 import { HAWKS_PALETTE } from "@/lib/chart/hawks-palette"
 import { formatRSize } from "@/lib/enrichment/format-rsize"
-import {
-	clearDrawings as clearDrawingsAction,
-	deleteDrawing as deleteDrawingAction,
-	saveDrawing as saveDrawingAction,
-} from "@/app/actions/hawks-chart-drawings"
+import { useDrawingsCache } from "./use-drawings-cache"
 import type {
 	HawksChartFullWindowResult,
 	HawksChartTradeMarker,
@@ -358,8 +354,13 @@ const HawksChartWorkspace = ({
 }: HawksChartWorkspaceProps) => {
 	const t = useTranslations("hawksChart")
 	const [windowResult] = useState(initialWindow)
-	const [drawings, setDrawings] =
-		useState<ReadonlyArray<Drawing>>(initialDrawings)
+	// Drawings live in localStorage as the source of truth at runtime; a
+	// debounced background flush mirrors them up to the DB. This replaces
+	// the old "per-mutation server-action call" pattern that was hammering
+	// the network with one request per stroke. See use-drawings-cache.ts
+	// for the merge/diff/conflict-resolution mechanics.
+	const drawingsCache = useDrawingsCache(assetSymbol, initialDrawings)
+	const drawings = drawingsCache.drawings
 	const [activeTool, setActiveTool] = useState<DrawingTool>("cursor")
 	const [pendingAnchor, setPendingAnchor] = useState<{
 		timeMs: number
@@ -369,8 +370,15 @@ const HawksChartWorkspace = ({
 		DEFAULT_INDICATOR_TOGGLES
 	)
 	const [hoveredIdx5m, setHoveredIdx5m] = useState<number | null>(null)
-	const [, startTransition] = useTransition()
 	const [errorMessage, setErrorMessage] = useState<string | null>(null)
+	// Surface sync errors from the localStorage→DB flush. Local mutations
+	// keep working regardless; this only signals "the server hasn't seen
+	// your latest edits yet" so the user knows there's drift.
+	useEffect(() => {
+		if (drawingsCache.lastSyncError) {
+			setErrorMessage(drawingsCache.lastSyncError)
+		}
+	}, [drawingsCache.lastSyncError])
 	// Drawing id currently being edited via the inline editor. Only one
 	// drawing edits at a time; null means "no editor open." Selecting a
 	// drawing == opening its editor.
@@ -475,43 +483,22 @@ const HawksChartWorkspace = ({
 		setErrorMessage(null)
 	}, [])
 
-	// Optimistic drawing add: push into local state immediately, then persist.
-	// On server failure we don't roll back (just surface the error) — losing a
-	// freshly-drawn line to a server hiccup would be more annoying than the
-	// occasional out-of-sync state. The user can always redraw or refresh.
-	const persistDrawing = useCallback(
-		(drawing: Drawing) => {
-			startTransition(async () => {
-				const res = await saveDrawingAction({
-					assetSymbol,
-					drawing,
-				})
-				if (res.status === "error") {
-					setErrorMessage(res.message)
-				}
-			})
-		},
-		[assetSymbol]
-	)
-
+	// All drawing mutations route through the localStorage cache. Each
+	// path stamps a fresh `lastModifiedMs` so the per-id newer-wins merge
+	// at next mount stays accurate. Network is invisible here — the cache
+	// debounces a batch flush to syncDrawings every 5s.
 	const appendDrawing = useCallback(
 		(drawing: Drawing) => {
-			setDrawings((prev) => [...prev, drawing])
-			persistDrawing(drawing)
+			drawingsCache.add(drawing)
 		},
-		[persistDrawing]
+		[drawingsCache]
 	)
 
-	// Replace an existing drawing in place. `saveDrawing` is upsert on the
-	// server side (it matches by id), so we reuse the same persistDrawing
-	// flow — optimistic local update + server write — that we use for
-	// adding.
 	const updateDrawing = useCallback(
 		(next: Drawing) => {
-			setDrawings((prev) => prev.map((d) => (d.id === next.id ? next : d)))
-			persistDrawing(next)
+			drawingsCache.update({ ...next, lastModifiedMs: Date.now() })
 		},
-		[persistDrawing]
+		[drawingsCache]
 	)
 
 	// After committing any drawing, snap the tool back to "cursor" so the
@@ -538,6 +525,7 @@ const HawksChartWorkspace = ({
 					type: "hline",
 					price: event.price,
 					color: HAWKS_PALETTE.drawing.hline,
+					lastModifiedMs: Date.now(),
 				})
 				finishDrawing()
 				return
@@ -549,6 +537,7 @@ const HawksChartWorkspace = ({
 					type: "vline",
 					timeMs: event.timeMs,
 					color: HAWKS_PALETTE.drawing.vline,
+					lastModifiedMs: Date.now(),
 				})
 				finishDrawing()
 				return
@@ -569,6 +558,7 @@ const HawksChartWorkspace = ({
 						endTimeMs: event.timeMs,
 						endPrice: event.price,
 						color: HAWKS_PALETTE.drawing.trendline,
+						lastModifiedMs: Date.now(),
 					})
 				} else {
 					appendDrawing({
@@ -579,6 +569,7 @@ const HawksChartWorkspace = ({
 						endTimeMs: event.timeMs,
 						endPrice: event.price,
 						color: HAWKS_PALETTE.drawing.fibo,
+						lastModifiedMs: Date.now(),
 					})
 				}
 				finishDrawing()
@@ -635,6 +626,7 @@ const HawksChartWorkspace = ({
 					qty: DEFAULT_QTY,
 					valuePerPoint: VALUE_PER_POINT_WIN,
 					color,
+					lastModifiedMs: Date.now(),
 				})
 				finishDrawing()
 			}
@@ -642,25 +634,16 @@ const HawksChartWorkspace = ({
 		[activeTool, appendDrawing, pendingAnchor, finishDrawing]
 	)
 
-	const handleRemoveDrawing = useCallback((id: string) => {
-		setDrawings((prev) => prev.filter((d) => d.id !== id))
-		startTransition(async () => {
-			const res = await deleteDrawingAction(id)
-			if (res.status === "error") {
-				setErrorMessage(res.message)
-			}
-		})
-	}, [])
+	const handleRemoveDrawing = useCallback(
+		(id: string) => {
+			drawingsCache.remove(id)
+		},
+		[drawingsCache]
+	)
 
 	const handleClearAll = useCallback(() => {
-		setDrawings([])
-		startTransition(async () => {
-			const res = await clearDrawingsAction(assetSymbol)
-			if (res.status === "error") {
-				setErrorMessage(res.message)
-			}
-		})
-	}, [assetSymbol])
+		drawingsCache.clearAll()
+	}, [drawingsCache])
 
 	const handleToggle = useCallback(
 		(key: keyof IndicatorToggles, value: boolean) => {

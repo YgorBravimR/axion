@@ -29,6 +29,13 @@ interface BaseDrawing {
 	readonly id: string
 	readonly color: string
 	readonly label?: string
+	// Epoch ms when this drawing was last mutated locally. Required field —
+	// the localStorage→DB sync uses per-id `lastModifiedMs` to resolve
+	// conflicts (newer wins) on mount when the SSR-loaded server list
+	// differs from the local cache. Stamp it on every create AND every
+	// edit; never reuse a stale timestamp from a previous mutation.
+	// Maps to `hawks_chart_drawings.updated_at` on the server.
+	readonly lastModifiedMs: number
 }
 
 interface HLineDrawing extends BaseDrawing {

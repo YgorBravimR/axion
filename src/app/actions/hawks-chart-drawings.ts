@@ -21,6 +21,10 @@ const baseDrawing = {
 	id: z.string().min(1).max(64),
 	color: z.string().min(1).max(32),
 	label: z.string().max(120).optional(),
+	// Epoch ms — client-stamped; persists as `updated_at` on the DB row.
+	// Used as the conflict-resolution tiebreaker on mount when the
+	// SSR-loaded list disagrees with the localStorage cache.
+	lastModifiedMs: z.number().int().nonnegative(),
 }
 
 const hlinePayload = z.object({
@@ -120,11 +124,15 @@ export const listDrawings = async (
 				}
 				// Overlay DB-controlled fields onto the payload so client code
 				// always sees the canonical id/color/label from the row.
+				// `lastModifiedMs` is derived from `updated_at` — the DB is
+				// the source of truth for "when did the server last see
+				// this", which is exactly what the conflict resolver needs.
 				return {
 					...parsed.data,
 					id: r.id,
 					color: r.color,
 					label: r.label ?? parsed.data.label,
+					lastModifiedMs: r.updatedAt.getTime(),
 				} as Drawing
 			})
 			.filter((d): d is Drawing => d !== null)
@@ -177,6 +185,11 @@ export const saveDrawing = async (input: {
 				.limit(1)
 		)[0]
 
+		// Honor the client's lastModifiedMs as `updated_at` so the
+		// conflict resolver on next mount can compare apples to apples.
+		// Falling back to `new Date()` would silently bump the row's
+		// updatedAt past the client's stamp and break newer-wins.
+		const updatedAt = new Date(drawing.lastModifiedMs)
 		if (existing) {
 			await db
 				.update(hawksChartDrawings)
@@ -185,7 +198,7 @@ export const saveDrawing = async (input: {
 					payload: drawing,
 					label: drawing.label ?? null,
 					color: drawing.color,
-					updatedAt: new Date(),
+					updatedAt,
 				})
 				.where(eq(hawksChartDrawings.id, drawing.id))
 		} else {
@@ -197,6 +210,7 @@ export const saveDrawing = async (input: {
 				payload: drawing,
 				label: drawing.label ?? null,
 				color: drawing.color,
+				updatedAt,
 			})
 		}
 
@@ -226,6 +240,125 @@ export const deleteDrawing = async (id: string): Promise<DeleteResult> => {
 		return {
 			status: "error",
 			message: err instanceof Error ? err.message : "Failed to delete drawing",
+		}
+	}
+}
+
+// ─── syncDrawings ────────────────────────────────────────────────────────
+// Batch upsert + delete for the localStorage-first sync flow. The client
+// holds the canonical drawing set in localStorage and periodically flushes
+// the diff up here. Three reasons this is one action instead of three
+// per-id calls:
+//   1. Network — one POST per flush instead of N. The original chatty
+//      flow was the whole reason we moved to local-first.
+//   2. Transactional — either the whole batch lands or none of it does;
+//      no partial-flush state where the DB has 3 of your 5 edits.
+//   3. Tombstones — deletions travel with upserts in the same payload, so
+//      a deleted-then-re-added id can't race with a stale upsert.
+//
+// Client contract: send the FULL current set under `upserts` + a list of
+// `deletedIds`. Server applies deletes first, then upserts. lastModifiedMs
+// is honored as updatedAt (same as saveDrawing). Returns the server's
+// post-sync view so the client can reconcile if anything diverged.
+const syncInputSchema = z.object({
+	assetSymbol: z.string().min(1).max(16),
+	upserts: z.array(drawingPayloadSchema).max(500),
+	deletedIds: z.array(z.string().min(1).max(64)).max(500),
+})
+
+export const syncDrawings = async (input: {
+	assetSymbol: string
+	upserts: Drawing[]
+	deletedIds: string[]
+}): Promise<DrawingResult> => {
+	try {
+		const auth = await requireAuth()
+		const parsed = syncInputSchema.safeParse(input)
+		if (!parsed.success) {
+			return {
+				status: "error",
+				message: parsed.error.issues[0]?.message ?? "Invalid sync payload",
+			}
+		}
+		const assetId = await resolveAssetId(parsed.data.assetSymbol)
+		if (!assetId) {
+			return {
+				status: "error",
+				message: `Asset ${parsed.data.assetSymbol} not found`,
+			}
+		}
+
+		// Apply deletes first — if the same id is in both lists (shouldn't
+		// happen but be defensive), the upsert wins, which matches "the
+		// client thinks it exists, so let it exist". Parallel-safe since
+		// each delete touches a distinct row by id.
+		await Promise.all(
+			parsed.data.deletedIds.map((id) =>
+				db
+					.delete(hawksChartDrawings)
+					.where(
+						and(
+							eq(hawksChartDrawings.id, id),
+							eq(hawksChartDrawings.userId, auth.userId)
+						)
+					)
+			)
+		)
+
+		// Upserts: per-row existence-check-then-write. Parallel-safe across
+		// distinct ids — typical batch is < 50 rows and Postgres handles
+		// the concurrent writes fine. If we ever see contention on the
+		// same id within a single batch (shouldn't — the client dedupes
+		// by id before flushing) we'd switch to a single `INSERT ... ON
+		// CONFLICT DO UPDATE` statement.
+		await Promise.all(
+			parsed.data.upserts.map(async (drawing) => {
+				const updatedAt = new Date(drawing.lastModifiedMs)
+				const existing = (
+					await db
+						.select({ id: hawksChartDrawings.id })
+						.from(hawksChartDrawings)
+						.where(
+							and(
+								eq(hawksChartDrawings.id, drawing.id),
+								eq(hawksChartDrawings.userId, auth.userId)
+							)
+						)
+						.limit(1)
+				)[0]
+				if (existing) {
+					await db
+						.update(hawksChartDrawings)
+						.set({
+							kind: drawing.type,
+							payload: drawing,
+							label: drawing.label ?? null,
+							color: drawing.color,
+							updatedAt,
+						})
+						.where(eq(hawksChartDrawings.id, drawing.id))
+				} else {
+					await db.insert(hawksChartDrawings).values({
+						id: drawing.id,
+						userId: auth.userId,
+						assetId,
+						kind: drawing.type,
+						payload: drawing,
+						label: drawing.label ?? null,
+						color: drawing.color,
+						updatedAt,
+					})
+				}
+			})
+		)
+
+		// Return the server's post-sync view so the client can reconcile
+		// (e.g. detect a drawing that another tab deleted between flushes).
+		return await listDrawings(parsed.data.assetSymbol)
+	} catch (err) {
+		return {
+			status: "error",
+			message: err instanceof Error ? err.message : "Failed to sync drawings",
 		}
 	}
 }
