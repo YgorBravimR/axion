@@ -61,6 +61,10 @@ interface TradeOverlay {
 	// "breakeven" (within ±BE-tick band). Both render with the breakeven
 	// color on the hawks-chart route; semantically identical.
 	readonly outcome: "win" | "loss" | "neutral" | "breakeven"
+	// When the trade is ALSO rendered as a position-box (entry/stop/target
+	// solid lines), the entry stub is redundant — caller sets this to true
+	// and only the dotted exit stub is drawn. Hawks-chart uses this.
+	readonly hideEntryStub?: boolean
 }
 
 // Optional sub-pane histogram (e.g., MACD). When provided, RenkoPane creates a
@@ -153,18 +157,6 @@ interface RenkoPaneProps {
 		readonly qty: number
 		readonly valuePerPoint: number
 		readonly color: string
-		// Optional realized-exit overlay. When present, renders a vertical
-		// outcome-colored line at exitBrickIdx and a small horizontal stub
-		// at exitPrice. Omit (or set null) for open trades / planning-only
-		// boxes — the renderer skips the exit overlay cleanly.
-		readonly exit?: {
-			readonly brickIdx: number
-			readonly price: number
-			// Drives the color of both the vertical exit line and the
-			// horizontal exit-price tick. Caller resolves the breakeven
-			// band (e.g. |R| < 0.25) into "breakeven" before passing.
-			readonly outcome: "win" | "loss" | "breakeven"
-		} | null
 	}>
 	readonly histogram?: HistogramOverlay | null
 	readonly markerColorMode?: MarkerColorMode
@@ -238,11 +230,6 @@ const RenkoPane = ({
 	const tradeOverlayLinesRef = useRef<Map<string, ISeriesApi<"Line">[]>>(
 		new Map()
 	)
-	// Realized-exit overlays for trades rendered as position-boxes. One
-	// vertical exit-line + one horizontal exit-price stub per trade. Kept
-	// in a parallel map (instead of growing the positionRefs tuple) so the
-	// user-drawing position renderer stays unchanged.
-	const tradeExitRefs = useRef<Map<string, ISeriesApi<"Line">[]>>(new Map())
 	const seriesTimesRef = useRef<ReadonlyArray<number>>([])
 	const markersPluginRef = useRef<ISeriesMarkersPluginApi<UTCTimestamp> | null>(
 		null
@@ -695,9 +682,11 @@ const RenkoPane = ({
 						? (lossColor ?? "#fca5a5")
 						: (beColor ?? "#facc15")
 
-			const eLine = stub(t.entryBrickIdx, t.entryPrice, entryColor)
-			if (eLine) {
-				lines.push(eLine)
+			if (!t.hideEntryStub) {
+				const eLine = stub(t.entryBrickIdx, t.entryPrice, entryColor)
+				if (eLine) {
+					lines.push(eLine)
+				}
 			}
 			const xLine = stub(t.exitBrickIdx, t.exitPrice, exitColor)
 			if (xLine) {
@@ -1145,139 +1134,13 @@ const RenkoPane = ({
 				{ time: p.startBrickIdx as UTCTimestamp, value: p.targetPrice },
 				{ time: p.endBrickIdx as UTCTimestamp, value: p.targetPrice },
 			])
-
-			// ── Realized-exit overlay (trades only) ─────────────────────────
-			// User-drawing positions don't have a realized exit; the type
-			// union narrows `exit` away. For trade positions, paint:
-			//   1. A vertical outcome-colored line at exitBrickIdx spanning
-			//      the price range between stop and target (so it sits
-			//      INSIDE the box, easy to see against the bands).
-			//   2. A short solid horizontal tick (±2 bricks) at exitPrice,
-			//      same color, so the user reads BOTH where (which brick)
-			//      and at what price the trade closed.
-			// Reconciler creates the two series on first encounter, then
-			// reuses them on subsequent renders.
-			const tradeExit = (
-				p as typeof p & {
-					exit?: {
-						readonly brickIdx: number
-						readonly price: number
-						readonly outcome: "win" | "loss" | "breakeven"
-					} | null
-				}
-			).exit
-			if (tradeExit) {
-				const outcomeColor =
-					tradeExit.outcome === "win"
-						? HAWKS_PALETTE.outcome.win
-						: tradeExit.outcome === "loss"
-							? HAWKS_PALETTE.outcome.loss
-							: HAWKS_PALETTE.outcome.breakeven
-				// Clamp exit-brick to the box's painted span so the vertical
-				// always lands inside the bands (never floats outside).
-				const exitIdx = Math.max(
-					p.startBrickIdx,
-					Math.min(p.endBrickIdx, tradeExit.brickIdx)
-				)
-				// Vertical extent: from stop to target (full box height).
-				const vTop = Math.max(p.targetPrice, p.stopPrice)
-				const vBot = Math.min(p.targetPrice, p.stopPrice)
-
-				const existingExit = tradeExitRefs.current.get(p.id)
-				let vLine: ISeriesApi<"Line">
-				let hTick: ISeriesApi<"Line">
-				const vLineOpts = {
-					color: outcomeColor,
-					lineWidth: 2 as const,
-					lineStyle: 0, // solid
-					priceLineVisible: false,
-					lastValueVisible: false,
-					crosshairMarkerVisible: false,
-				}
-				const hTickOpts = {
-					color: outcomeColor,
-					lineWidth: 3 as const,
-					lineStyle: 0, // solid
-					priceLineVisible: false,
-					lastValueVisible: false,
-					crosshairMarkerVisible: false,
-					title: "exit",
-				}
-				if (existingExit && existingExit.length === 2) {
-					;[vLine, hTick] = existingExit as [
-						ISeriesApi<"Line">,
-						ISeriesApi<"Line">,
-					]
-					vLine.applyOptions(vLineOpts)
-					hTick.applyOptions(hTickOpts)
-				} else {
-					if (existingExit) {
-						for (const s of existingExit) {
-							try {
-								chart.removeSeries(s)
-							} catch {
-								// ignore
-							}
-						}
-					}
-					vLine = chart.addSeries(LineSeries, vLineOpts)
-					hTick = chart.addSeries(LineSeries, hTickOpts)
-					tradeExitRefs.current.set(p.id, [vLine, hTick])
-				}
-				// Vertical: lightweight-charts requires strictly-ascending
-				// time, so render the vertical as a 2-point line at the
-				// same brick index? That would collide. Instead use TWO
-				// points at adjacent brick indices (exitIdx and exitIdx+1
-				// clamped to box end), value sweeping top→bottom — fakes
-				// a vertical with a 1-brick-wide slant that's visually
-				// indistinguishable at typical zoom levels. If exitIdx is
-				// at the right edge, fall back to (exitIdx-1, exitIdx).
-				const vA = exitIdx <= p.startBrickIdx + 1 ? exitIdx : exitIdx - 1
-				const vB = exitIdx <= p.startBrickIdx + 1 ? exitIdx + 1 : exitIdx
-				vLine.setData([
-					{ time: vA as UTCTimestamp, value: vTop },
-					{ time: vB as UTCTimestamp, value: vBot },
-				])
-				// Horizontal tick: ±2 bricks around exitIdx at exitPrice,
-				// clamped to the box span.
-				const tickLo = Math.max(p.startBrickIdx, exitIdx - 2)
-				const tickHi = Math.min(p.endBrickIdx, exitIdx + 2)
-				if (tickHi > tickLo) {
-					hTick.setData([
-						{ time: tickLo as UTCTimestamp, value: tradeExit.price },
-						{ time: tickHi as UTCTimestamp, value: tradeExit.price },
-					])
-				}
-			} else {
-				// Position had an exit overlay previously, now doesn't —
-				// remove leftover series so the box reverts to planning view.
-				const stale = tradeExitRefs.current.get(p.id)
-				if (stale) {
-					for (const s of stale) {
-						try {
-							chart.removeSeries(s)
-						} catch {
-							// ignore
-						}
-					}
-					tradeExitRefs.current.delete(p.id)
-				}
-			}
 		}
-
-		// Drop exit overlays for positions that disappeared entirely.
-		for (const [id, lines] of tradeExitRefs.current) {
-			if (!incomingPositionIds.has(id)) {
-				for (const s of lines) {
-					try {
-						chart.removeSeries(s)
-					} catch {
-						// ignore
-					}
-				}
-				tradeExitRefs.current.delete(id)
-			}
-		}
+		// Realized-exit overlay lives in the existing `tradeOverlays`
+		// reconciler (dotted horizontal price-line at the exit price,
+		// colored by outcome). The position-box renderer does NOT draw the
+		// exit — the two systems compose: tradePositions paints the
+		// PLANNED box (entry + stop + target + fills), tradeOverlays
+		// paints the REALIZED exit price stub.
 	}, [drawings, series, tradePositions])
 
 	// Forward click events upward so the inspector can implement tool behavior.

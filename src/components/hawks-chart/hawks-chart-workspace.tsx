@@ -180,11 +180,6 @@ const buildTradePositionsFor5m = (
 	qty: number
 	valuePerPoint: number
 	color: string
-	exit: {
-		brickIdx: number
-		price: number
-		outcome: "win" | "loss" | "breakeven"
-	} | null
 }> => {
 	type TradePosition = {
 		id: string
@@ -197,11 +192,6 @@ const buildTradePositionsFor5m = (
 		qty: number
 		valuePerPoint: number
 		color: string
-		exit: {
-			brickIdx: number
-			price: number
-			outcome: "win" | "loss" | "breakeven"
-		} | null
 	}
 	const out: TradePosition[] = []
 	const lastIdx = series5mTimes.length - 1
@@ -262,49 +252,6 @@ const buildTradePositionsFor5m = (
 		const color =
 			direction === "long" ? HAWKS_PALETTE.trade.buy : HAWKS_PALETTE.trade.sell
 
-		// Realized-exit overlay: paint a vertical outcome-colored line at
-		// the exit brick + a horizontal tick at the exit price. Closed
-		// trades only — open trades (no exitTime / no exitPrice) skip it.
-		//
-		// 0.25R chart-side breakeven band: trades.outcome may say "loss"
-		// when the realized R was −0.1R because the DB-side rule uses the
-		// per-account `breakevenTicks` value (often 0 = strict). Visually,
-		// anything inside ±0.25R reads as a scratch — we override here so
-		// the exit dot matches what the user's eye sees. The trade box
-		// itself still uses the planned stop/target, so the override only
-		// affects the exit color, not the box geometry.
-		let exit: TradePosition["exit"] = null
-		if (
-			t.exitTime !== null &&
-			t.exitPrice !== null &&
-			Number.isFinite(t.exitPrice)
-		) {
-			const exitBrickIdxRaw = findBrickIndexForTime(
-				series5mTimes,
-				new Date(t.exitTime).getTime()
-			)
-			const exitBrickIdx = Math.max(
-				startBrickIdx,
-				Math.min(lastIdx, exitBrickIdxRaw)
-			)
-			const risk = Math.abs(entryPrice - stopPrice)
-			let outcome: "win" | "loss" | "breakeven" = t.outcome
-			if (risk > 0) {
-				const rRealized =
-					direction === "long"
-						? (t.exitPrice - entryPrice) / risk
-						: (entryPrice - t.exitPrice) / risk
-				if (Math.abs(rRealized) <= 0.25) {
-					outcome = "breakeven"
-				}
-			}
-			exit = {
-				brickIdx: exitBrickIdx,
-				price: t.exitPrice,
-				outcome,
-			}
-		}
-
 		out.push({
 			id: t.id,
 			direction,
@@ -316,7 +263,89 @@ const buildTradePositionsFor5m = (
 			qty: 1,
 			valuePerPoint: VALUE_PER_POINT_WIN,
 			color,
-			exit,
+		})
+	}
+	return out
+}
+
+// Build the dotted exit-price stub overlay (one short horizontal line per
+// closed trade at the realized exit price, colored by outcome). The
+// position-box renderer covers the PLANNED geometry (entry/stop/target +
+// fills); this overlay covers what actually HAPPENED — the exit price.
+// Open trades (no exitTime/exitPrice) are skipped cleanly. Applies the
+// chart-side 0.25R breakeven band so a -0.1R trade reads as scratch
+// (yellow) even when `trades.outcome` says "loss" (because the per-account
+// breakevenTicks rule is stricter than what the eye reads on the chart).
+const buildTradeOverlaysFor5m = (
+	tradeMarkers: ReadonlyArray<HawksChartTradeMarker>,
+	series5mTimes: ReadonlyArray<number>
+): Array<{
+	id: string
+	entryBrickIdx: number
+	exitBrickIdx: number
+	entryPrice: number
+	exitPrice: number
+	direction: "long" | "short"
+	outcome: "win" | "loss" | "neutral" | "breakeven"
+	hideEntryStub: boolean
+}> => {
+	const out: Array<{
+		id: string
+		entryBrickIdx: number
+		exitBrickIdx: number
+		entryPrice: number
+		exitPrice: number
+		direction: "long" | "short"
+		outcome: "win" | "loss" | "neutral" | "breakeven"
+		hideEntryStub: boolean
+	}> = []
+	if (series5mTimes.length === 0) {
+		return out
+	}
+	for (const t of tradeMarkers) {
+		if (
+			t.exitTime === null ||
+			t.exitPrice === null ||
+			!Number.isFinite(t.exitPrice)
+		) {
+			continue
+		}
+		const entryBrickIdx = findBrickIndexForTime(
+			series5mTimes,
+			new Date(t.entryTime).getTime()
+		)
+		const exitBrickIdx = findBrickIndexForTime(
+			series5mTimes,
+			new Date(t.exitTime).getTime()
+		)
+		// Resolve breakeven band against the trade's planned stop. When the
+		// row has no planned stop we fall back to t.outcome unchanged —
+		// nothing else to compare against.
+		let outcome: "win" | "loss" | "breakeven" = t.outcome
+		if (t.stopPrice !== null && Number.isFinite(t.stopPrice)) {
+			const risk = Math.abs(t.entryPrice - t.stopPrice)
+			if (risk > 0) {
+				const rRealized =
+					t.direction === "long"
+						? (t.exitPrice - t.entryPrice) / risk
+						: (t.entryPrice - t.exitPrice) / risk
+				if (Math.abs(rRealized) <= 0.25) {
+					outcome = "breakeven"
+				}
+			}
+		}
+		out.push({
+			id: t.id,
+			entryBrickIdx,
+			exitBrickIdx,
+			entryPrice: t.entryPrice,
+			exitPrice: t.exitPrice,
+			direction: t.direction,
+			outcome,
+			// The trade is already rendered as a position-box (solid entry
+			// line + risk/reward fills). Skip the dotted entry stub — only
+			// the dotted EXIT stub is wanted.
+			hideEntryStub: true,
 		})
 	}
 	return out
@@ -417,6 +446,14 @@ const HawksChartWorkspace = ({
 		() =>
 			toggles.tradeMarkers
 				? buildTradePositionsFor5m(tradeMarkers, series5m.times)
+				: [],
+		[toggles.tradeMarkers, tradeMarkers, series5m.times]
+	)
+
+	const tradeOverlays5m = useMemo(
+		() =>
+			toggles.tradeMarkers
+				? buildTradeOverlaysFor5m(tradeMarkers, series5m.times)
 				: [],
 		[toggles.tradeMarkers, tradeMarkers, series5m.times]
 	)
@@ -725,6 +762,7 @@ const HawksChartWorkspace = ({
 					drawings={projectedDrawings.pane5m}
 					onPaneClick={handlePaneClick}
 					tradePositions={tradePositions5m}
+					tradeOverlays={tradeOverlays5m}
 					emitsCrosshair
 					onCrosshairMove={handle5mCrosshair}
 				/>
