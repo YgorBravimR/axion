@@ -272,11 +272,22 @@ const createDuckDbCandleStore = (
 			const fromIso = params.from.toISOString()
 			const toIso = params.to.toISOString()
 
+			// CRITICAL: tie-break by candle_index so duplicate timestamps stay
+			// in the original platform-painted order. Profitchart stamps every
+			// brick painted during a single tick burst (session-open, post-
+			// pause, fast tape) with the same second-resolution timestamp —
+			// we see up to 80 bricks sharing one timestamp at session opens
+			// (probed 2026-06-30, _probe-hawks-monsters.ts: 74 clusters >5).
+			// Without the tie-break, DuckDB returns the cluster in arbitrary
+			// order, which paints a vertical staircase going the wrong way
+			// (the May 12 "downward staircase that should have been an upward
+			// gap" bug). `candle_index` is the canonical sequence the loader
+			// stamped — sort by it second.
 			const reader = await connection.runAndReadAll(
 				`SELECT ${columns} FROM read_parquet('${sqlEscape(filePath)}')
 				 WHERE timestamp >= TIMESTAMP '${fromIso}'
 				   AND timestamp <= TIMESTAMP '${toIso}'
-				 ORDER BY timestamp ASC`
+				 ORDER BY timestamp ASC, candle_index ASC`
 			)
 
 			const rows = reader.getRowObjects()

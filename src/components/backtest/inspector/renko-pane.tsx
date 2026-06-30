@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react"
 import {
+	BaselineSeries,
 	CandlestickSeries,
 	ColorType,
 	HistogramSeries,
@@ -22,14 +23,28 @@ import type {
 } from "lightweight-charts"
 import { getChartThemeColors } from "@/lib/chart/theme-colors"
 import type { BrickChartSeries } from "@/lib/renko/bricks-to-chart"
-import type { ProjectedDrawings } from "@/components/dev/hawks-drawings"
+import type { ProjectedDrawings } from "@/components/hawks-chart/drawings"
+import {
+	computePositionStats,
+	fiboLevelPrice,
+} from "@/components/hawks-chart/drawings"
+import { HAWKS_PALETTE } from "@/lib/chart/hawks-palette"
 import { useFormatting } from "@/hooks/use-formatting"
+
+// Indicator point can be either a real value or a "whitespace" marker that
+// breaks the line continuity at session boundaries (lightweight-charts treats
+// a point without `value` as whitespace and won't draw a segment across it).
+// The hawks-chart pipeline emits whitespace at every multi-day gap so the EMA
+// / VWAP lines don't draw a long diagonal across weekends and holidays.
+type IndicatorOverlayPoint =
+	| { readonly time: UTCTimestamp; readonly value: number }
+	| { readonly time: UTCTimestamp }
 
 interface IndicatorOverlay {
 	readonly key: string
 	readonly label: string
 	readonly color: string
-	readonly data: ReadonlyArray<{ time: UTCTimestamp; value: number }>
+	readonly data: ReadonlyArray<IndicatorOverlayPoint>
 	// When "points", the overlay renders as isolated dots — no connecting
 	// line between sparse data points (useful for pivot markers, event
 	// glyphs). Default = "line".
@@ -42,7 +57,10 @@ interface TradeOverlay {
 	readonly entryPrice: number
 	readonly exitPrice: number
 	readonly direction: "long" | "short"
-	readonly outcome: "win" | "loss" | "neutral"
+	// Backtest path uses "neutral" (zero-PnL), live-trades path uses
+	// "breakeven" (within ±BE-tick band). Both render with the breakeven
+	// color on the hawks-chart route; semantically identical.
+	readonly outcome: "win" | "loss" | "neutral" | "breakeven"
 }
 
 // Optional sub-pane histogram (e.g., MACD). When provided, RenkoPane creates a
@@ -70,6 +88,28 @@ interface HistogramOverlay {
 //   marker color is left as outcome-based regardless of mode.
 type MarkerColorMode = "trade" | "action"
 
+// Override candle + marker colors when the consumer wants to follow a different
+// palette than the global Axion theme tokens. The hawks-chart route uses this
+// to apply the Nelogica `PALETA_CORES.md` candle layer (steel-blue × light-gray)
+// instead of the green/red trade-execution colors that the rest of the app
+// uses for candles. Omit for default behavior.
+interface ChartPaletteOverride {
+	readonly candleUp: string
+	readonly candleDown: string
+	readonly markerWin: string
+	readonly markerLoss: string
+	readonly markerNeutral: string
+	// Entry-marker colors (by direction). When omitted, the entry marker
+	// falls back to the win/loss pair used everywhere else.
+	readonly entryLong?: string
+	readonly entryShort?: string
+	// Exit-marker colors (by outcome). When omitted, the exit marker
+	// falls back to win/loss/neutral.
+	readonly exitWin?: string
+	readonly exitLoss?: string
+	readonly exitBreakeven?: string
+}
+
 interface PaneClickEvent {
 	readonly brickIdx: number
 	readonly timeMs: number
@@ -88,8 +128,47 @@ interface RenkoPaneProps {
 	// Each marker uses the lightweight-charts `SeriesMarker` shape
 	// directly — caller controls position / shape / color / text.
 	readonly extraMarkers?: ReadonlyArray<SeriesMarker<UTCTimestamp>>
+	// Multi-trade overlay: paints a short dashed price line at each trade's
+	// entry price (anchored to entry brick) AND a separate short dashed line
+	// at the exit price (anchored to exit brick). Use this from the
+	// hawks-chart page where many trades render on a single 5m pane.
+	// Each overlay's entry line is colored by DIRECTION
+	// (paletteOverride.entryLong/entryShort) and the exit line is colored
+	// by OUTCOME (paletteOverride.exitWin/exitLoss/exitBreakeven). Falls
+	// back to the win/loss pair when the override isn't supplied.
+	readonly tradeOverlays?: ReadonlyArray<TradeOverlay & { readonly id: string }>
+	// Trade positions to render as full position-style boxes (entry line +
+	// stop line + target line + risk band + reward band). Visually identical
+	// to user-drawn positions but read-only — they don't appear in the
+	// drawings list. Use this when the route wants to paint historical
+	// trades using the same visual language as the planning tool.
+	readonly tradePositions?: ReadonlyArray<{
+		readonly id: string
+		readonly direction: "long" | "short"
+		readonly startBrickIdx: number
+		readonly endBrickIdx: number
+		readonly entryPrice: number
+		readonly stopPrice: number
+		readonly targetPrice: number
+		readonly qty: number
+		readonly valuePerPoint: number
+		readonly color: string
+		// Optional realized-exit overlay. When present, renders a vertical
+		// outcome-colored line at exitBrickIdx and a small horizontal stub
+		// at exitPrice. Omit (or set null) for open trades / planning-only
+		// boxes — the renderer skips the exit overlay cleanly.
+		readonly exit?: {
+			readonly brickIdx: number
+			readonly price: number
+			// Drives the color of both the vertical exit line and the
+			// horizontal exit-price tick. Caller resolves the breakeven
+			// band (e.g. |R| < 0.25) into "breakeven" before passing.
+			readonly outcome: "win" | "loss" | "breakeven"
+		} | null
+	}>
 	readonly histogram?: HistogramOverlay | null
 	readonly markerColorMode?: MarkerColorMode
+	readonly paletteOverride?: ChartPaletteOverride | null
 	readonly drawings?: ProjectedDrawings | null
 	readonly onPaneClick?: (_event: PaneClickEvent) => void
 	readonly externalCrosshair?: number | null
@@ -111,8 +190,11 @@ const RenkoPane = ({
 	indicators,
 	trade,
 	extraMarkers,
+	tradeOverlays,
+	tradePositions,
 	histogram,
 	markerColorMode = "trade",
+	paletteOverride,
 	drawings,
 	onPaneClick,
 	externalCrosshair,
@@ -135,6 +217,32 @@ const RenkoPane = ({
 	)
 	const hlineRefs = useRef<Map<string, IPriceLine>>(new Map())
 	const trendlineRefs = useRef<Map<string, ISeriesApi<"Line">>>(new Map())
+	// Vertical-line drawings are a "stem" LineSeries pinned to one brick idx,
+	// spanning the pane's price range. Reconciled separately so a price-range
+	// change (data update) refreshes them without dropping hlines/trendlines.
+	const vlineRefs = useRef<Map<string, ISeriesApi<"Line">>>(new Map())
+	// Each fibo drawing renders as N+1 line series (one per level). Keyed by
+	// "<drawingId>:<level>" so we can replace them when the level set changes.
+	const fiboRefs = useRef<Map<string, ISeriesApi<"Line">>>(new Map())
+	// Position drawings paint as a 5-tuple of series per drawing id:
+	// [entryLine, stopLine, targetLine, riskFill (Baseline), rewardFill (Baseline)].
+	// The two BaselineSeries paint the colored risk/reward zones (Profit ProRT
+	// look). We type them as the union of both series kinds since they share
+	// the same disposal path.
+	const positionRefs = useRef<
+		Map<string, Array<ISeriesApi<"Line"> | ISeriesApi<"Baseline">>>
+	>(new Map())
+	// Multi-trade overlay: one dashed entry-line + one dashed exit-line per
+	// trade. Keyed by trade id; each entry holds the 2-series tuple so the
+	// reconciler can replace them in place when trades change.
+	const tradeOverlayLinesRef = useRef<Map<string, ISeriesApi<"Line">[]>>(
+		new Map()
+	)
+	// Realized-exit overlays for trades rendered as position-boxes. One
+	// vertical exit-line + one horizontal exit-price stub per trade. Kept
+	// in a parallel map (instead of growing the positionRefs tuple) so the
+	// user-drawing position renderer stays unchanged.
+	const tradeExitRefs = useRef<Map<string, ISeriesApi<"Line">[]>>(new Map())
 	const seriesTimesRef = useRef<ReadonlyArray<number>>([])
 	const markersPluginRef = useRef<ISeriesMarkersPluginApi<UTCTimestamp> | null>(
 		null
@@ -152,6 +260,34 @@ const RenkoPane = ({
 		if (!containerRef.current || !theme) {
 			return
 		}
+		// Renko bricks use brick-INDEX as the time axis (0, 1, 2, …) —
+		// not a real timestamp. Default lightweight-charts formatting reads
+		// "14" as Unix epoch and prints "01 Jan '70 00:00:00.014". TWO places
+		// need overriding:
+		//   1. `timeScale.tickMarkFormatter` — the X-axis tick labels.
+		//   2. `localization.timeFormatter` — the crosshair-hover bubble
+		//      (the floating time tooltip when the cursor sits on a brick).
+		// Both translate the index back to the brick close timestamp via
+		// `seriesTimesRef` and format as BRT YYYY-MM-DD HH:MM. Without (2),
+		// the user sees `01 Jan '70` in the crosshair hover whenever they
+		// land on a brick that was painted before lightweight-charts'
+		// minimum-Unix-timestamp boundary — which for index-based axes is
+		// "always."
+		const brickIndexToLabel = (time: unknown): string => {
+			const idx = typeof time === "number" ? time : Number(time)
+			const epochMs = seriesTimesRef.current[idx]
+			if (typeof epochMs !== "number" || Number.isNaN(epochMs)) {
+				return ""
+			}
+			// BRT = UTC - 3h. Shift then format.
+			const d = new Date(epochMs - 3 * 60 * 60 * 1000)
+			const mm = String(d.getUTCMonth() + 1).padStart(2, "0")
+			const dd = String(d.getUTCDate()).padStart(2, "0")
+			const hh = String(d.getUTCHours()).padStart(2, "0")
+			const mi = String(d.getUTCMinutes()).padStart(2, "0")
+			return `${mm}-${dd} ${hh}:${mi}`
+		}
+
 		const chart = createChart(containerRef.current, {
 			autoSize: true,
 			layout: {
@@ -169,28 +305,22 @@ const RenkoPane = ({
 				visible: true,
 				timeVisible: false,
 				secondsVisible: false,
-				// Renko bricks use brick-INDEX as the time axis (0, 1, 2, …) —
-				// not a real timestamp. Default lightweight-charts formatting
-				// reads "0" as Unix epoch and prints "01 Jan '70". Translate
-				// the index back to the real brick close timestamp via
-				// `seriesTimesRef` and format as BRT YYYY-MM-DD HH:MM.
-				tickMarkFormatter: (time: unknown) => {
-					const idx = typeof time === "number" ? time : Number(time)
-					const epochMs = seriesTimesRef.current[idx]
-					if (typeof epochMs !== "number" || Number.isNaN(epochMs)) {
-						return ""
-					}
-					// BRT = UTC - 3h. Shift then format.
-					const d = new Date(epochMs - 3 * 60 * 60 * 1000)
-					const mm = String(d.getUTCMonth() + 1).padStart(2, "0")
-					const dd = String(d.getUTCDate()).padStart(2, "0")
-					const hh = String(d.getUTCHours()).padStart(2, "0")
-					const mi = String(d.getUTCMinutes()).padStart(2, "0")
-					return `${mm}-${dd} ${hh}:${mi}`
-				},
+				tickMarkFormatter: brickIndexToLabel,
+			},
+			// The crosshair hover bubble uses `localization.timeFormatter`,
+			// NOT `tickMarkFormatter` — separate code path inside
+			// lightweight-charts. Both must point at the same translator
+			// or the user sees `01 Jan '70` on hover.
+			localization: {
+				timeFormatter: brickIndexToLabel,
 			},
 			crosshair: { mode: CrosshairMode.Normal },
 		})
+		// Candle series defaults to the Axion product theme tokens. The
+		// hawks-chart route passes `paletteOverride` to swap in the Nelogica
+		// PALETA_CORES candle layer (steel-blue × light-gray) — applied in a
+		// dedicated effect below so the chart instance doesn't need to be
+		// recreated when the user toggles palettes.
 		const candleSeries = chart.addSeries(CandlestickSeries, {
 			upColor: theme.tradeBuy,
 			downColor: theme.tradeSell,
@@ -227,6 +357,26 @@ const RenkoPane = ({
 		}
 		seriesTimesRef.current = series.times
 	}, [series, focusBrickIdx])
+
+	// Apply candle palette override when present. Consumers (currently
+	// /hawks-chart) use this to switch off the Axion green×red trade tokens
+	// and onto the Nelogica PALETA_CORES candle layer (steel-blue × light-gray).
+	// Runs separately from chart creation so toggling later doesn't recreate
+	// the chart instance.
+	useEffect(() => {
+		const candleSeries = candleSeriesRef.current
+		if (!candleSeries || !paletteOverride) {
+			return
+		}
+		candleSeries.applyOptions({
+			upColor: paletteOverride.candleUp,
+			downColor: paletteOverride.candleDown,
+			borderUpColor: paletteOverride.candleUp,
+			borderDownColor: paletteOverride.candleDown,
+			wickUpColor: paletteOverride.candleUp,
+			wickDownColor: paletteOverride.candleDown,
+		})
+	}, [paletteOverride])
 
 	// Focus window — re-applies when the selected anchor changes,
 	// independently of the series data lifecycle.
@@ -277,7 +427,17 @@ const RenkoPane = ({
 				})
 				existing.set(ind.key, s)
 			}
-			s.setData(ind.data as Array<{ time: UTCTimestamp; value: number }>)
+			// `ind.data` may interleave real points with whitespace markers
+			// (`{time}` only) to break the line at session gaps. Lightweight-
+			// charts' LineSeries.setData accepts a (LineData | WhitespaceData)
+			// array natively — the cast is needed only because our local
+			// union doesn't structurally match LineData<UTCTimestamp>.
+			s.setData(
+				ind.data as ReadonlyArray<{
+					time: UTCTimestamp
+					value?: number
+				}> as Array<{ time: UTCTimestamp; value: number }>
+			)
 		}
 	}, [indicators])
 
@@ -327,8 +487,11 @@ const RenkoPane = ({
 			return
 		}
 
-		const winColor = theme.tradeBuy
-		const lossColor = theme.tradeSell
+		// Marker colors — honor the palette override when present so the
+		// hawks-chart route uses the Nelogica trade-execution layer
+		// (saturated blue × red) instead of the Axion green×red defaults.
+		const winColor = paletteOverride?.markerWin ?? theme.tradeBuy
+		const lossColor = paletteOverride?.markerLoss ?? theme.tradeSell
 
 		// Entry line color follows the entry-marker palette so they read as
 		// a pair. In "trade" mode that's tradeBuy/tradeSell by direction; in
@@ -432,7 +595,119 @@ const RenkoPane = ({
 		const merged = [...markers, ...(extraMarkers ?? [])]
 		merged.sort((m1, m2) => (m1.time as number) - (m2.time as number))
 		markersPluginRef.current?.setMarkers(merged)
-	}, [trade, extraMarkers, theme, markerColorMode, series, formatNumber])
+	}, [
+		trade,
+		extraMarkers,
+		theme,
+		markerColorMode,
+		paletteOverride,
+		series,
+		formatNumber,
+	])
+
+	// Multi-trade overlay reconciler. For every trade in `tradeOverlays`, paint
+	// a short dashed price-line at entry (colored by direction) and a separate
+	// short dashed price-line at exit (colored by outcome). Markers are NOT
+	// drawn here — the caller passes them through `extraMarkers` (single
+	// markers plugin owns the SeriesMarkers slot; sharing it from here would
+	// race with the single-trade effect).
+	useEffect(() => {
+		const chart = chartRef.current
+		if (!chart) {
+			return
+		}
+
+		// Drop every previously-rendered overlay line — simpler than diffing
+		// the trade-id set, and the per-trade work is just 2 short series so
+		// the rebuild cost is bounded.
+		for (const [, lines] of tradeOverlayLinesRef.current) {
+			for (const line of lines) {
+				try {
+					chart.removeSeries(line)
+				} catch {
+					// already gone
+				}
+			}
+		}
+		tradeOverlayLinesRef.current.clear()
+
+		if (!tradeOverlays || tradeOverlays.length === 0) {
+			return
+		}
+
+		const lastIdx = series.data.length - 1
+		if (lastIdx < 0) {
+			return
+		}
+
+		// Color fallbacks: when the route doesn't supply outcome-specific
+		// colors via paletteOverride, fall back to the same win/loss/neutral
+		// trio the single-trade overlay uses (markerWin/markerLoss/etc).
+		const winColor = paletteOverride?.exitWin ?? paletteOverride?.markerWin
+		const lossColor = paletteOverride?.exitLoss ?? paletteOverride?.markerLoss
+		const beColor =
+			paletteOverride?.exitBreakeven ?? paletteOverride?.markerNeutral
+		const entryLongColor =
+			paletteOverride?.entryLong ?? paletteOverride?.markerWin
+		const entryShortColor =
+			paletteOverride?.entryShort ?? paletteOverride?.markerLoss
+
+		// Short horizontal stub anchored to a brick index. RADIUS=2 keeps each
+		// stub tight enough to not visually overlap neighbouring trades.
+		const RADIUS = 2
+		const stub = (
+			anchorIdx: number,
+			price: number,
+			color: string
+		): ISeriesApi<"Line"> | null => {
+			const lo = Math.max(0, anchorIdx - RADIUS)
+			const hi = Math.min(lastIdx, anchorIdx + RADIUS)
+			if (hi <= lo) {
+				return null
+			}
+			const line = chart.addSeries(LineSeries, {
+				color,
+				lineWidth: 2,
+				lineStyle: 2, // dashed
+				priceLineVisible: false,
+				lastValueVisible: false,
+				crosshairMarkerVisible: false,
+			})
+			line.setData([
+				{ time: lo as UTCTimestamp, value: price },
+				{ time: hi as UTCTimestamp, value: price },
+			])
+			return line
+		}
+
+		for (const t of tradeOverlays) {
+			const lines: ISeriesApi<"Line">[] = []
+			const entryColor =
+				t.direction === "long"
+					? (entryLongColor ?? "#22c55e")
+					: (entryShortColor ?? "#ef4444")
+			// "neutral" (backtest semantics) and "breakeven" (live-trade
+			// semantics) both render with the breakeven color.
+			const exitColor =
+				t.outcome === "win"
+					? (winColor ?? "#86efac")
+					: t.outcome === "loss"
+						? (lossColor ?? "#fca5a5")
+						: (beColor ?? "#facc15")
+
+			const eLine = stub(t.entryBrickIdx, t.entryPrice, entryColor)
+			if (eLine) {
+				lines.push(eLine)
+			}
+			const xLine = stub(t.exitBrickIdx, t.exitPrice, exitColor)
+			if (xLine) {
+				lines.push(xLine)
+			}
+			if (lines.length > 0) {
+				tradeOverlayLinesRef.current.set(t.id, lines)
+			}
+		}
+	}, [tradeOverlays, paletteOverride, series])
 
 	// Optional histogram sub-pane (e.g., MACD). Mounted at paneIndex 1 so it
 	// shares the time axis with the price pane above. Per-point `color` on each
@@ -571,7 +846,439 @@ const RenkoPane = ({
 				{ time: t.endBrickIdx as UTCTimestamp, value: t.endPrice },
 			])
 		}
-	}, [drawings])
+
+		// ── Vertical lines (time markers) ───────────────────────────────
+		// A vline is one brick-anchored stem: render as a LineSeries with two
+		// points at the same brick index but different prices (top/bottom of
+		// the pane's data range). The price ends are widened slightly so the
+		// line reaches the visible edge of the price axis. Lightweight charts
+		// requires strictly-ascending times, so a "two points at the same
+		// brick" stem would crash — instead we splay over [idx-0.0001, idx]
+		// via flooring back to int idx. The trick: place one tiny point at
+		// idx and the other at idx (it works because LC tolerates duplicates
+		// when start === end? No — it doesn't). Workaround: extend the second
+		// point ONE brick to the right (idx+1) so the visual is a near-vertical
+		// streak occupying < 1 brick width.
+		const vlines = drawings?.vlines ?? []
+		const incomingVlineIds = new Set(vlines.map((v) => v.id))
+		for (const [id, s] of vlineRefs.current) {
+			if (!incomingVlineIds.has(id)) {
+				try {
+					chart.removeSeries(s)
+				} catch {
+					// already torn down
+				}
+				vlineRefs.current.delete(id)
+			}
+		}
+		// Compute a comfortable price range from the candle data so the
+		// vertical stem spans the full visible price axis. Falls back to
+		// ±5% around the last close if the series is somehow empty.
+		let priceMin = Number.POSITIVE_INFINITY
+		let priceMax = Number.NEGATIVE_INFINITY
+		for (const c of series.data) {
+			if (c.low < priceMin) {
+				priceMin = c.low
+			}
+			if (c.high > priceMax) {
+				priceMax = c.high
+			}
+		}
+		if (!Number.isFinite(priceMin) || !Number.isFinite(priceMax)) {
+			priceMin = 0
+			priceMax = 1
+		}
+		const lastBrickIdx = series.data.length - 1
+		for (const v of vlines) {
+			let s = vlineRefs.current.get(v.id)
+			if (!s) {
+				s = chart.addSeries(LineSeries, {
+					color: v.color,
+					lineWidth: 1,
+					lineStyle: 3, // dotted — readable but not noisy
+					priceLineVisible: false,
+					lastValueVisible: false,
+					crosshairMarkerVisible: false,
+				})
+				vlineRefs.current.set(v.id, s)
+			} else {
+				s.applyOptions({ color: v.color })
+			}
+			// Place the second endpoint one brick to the right so the segment
+			// is technically diagonal but visually reads as a vertical streak
+			// (one brick = ~3–6 pixels at typical zoom). When the vline sits
+			// at the last brick, place it one brick to the LEFT instead so we
+			// stay inside the time axis.
+			const endIdx =
+				v.brickIdx < lastBrickIdx ? v.brickIdx + 1 : Math.max(0, v.brickIdx - 1)
+			const [lo, hi] =
+				v.brickIdx < endIdx ? [v.brickIdx, endIdx] : [endIdx, v.brickIdx]
+			s.setData([
+				{ time: lo as UTCTimestamp, value: priceMin },
+				{ time: hi as UTCTimestamp, value: priceMax },
+			])
+		}
+
+		// ── Fibonacci retracement ───────────────────────────────────────
+		// One LineSeries per level, drawn as a horizontal segment between the
+		// fibo's startBrickIdx and endBrickIdx. The 0 and 1 levels coincide
+		// with the user-clicked anchor points by construction.
+		const fibos = drawings?.fibos ?? []
+		const incomingFiboKeys = new Set<string>()
+		for (const f of fibos) {
+			for (const level of f.levels) {
+				incomingFiboKeys.add(`${f.id}:${level}`)
+			}
+		}
+		for (const [key, s] of fiboRefs.current) {
+			if (!incomingFiboKeys.has(key)) {
+				try {
+					chart.removeSeries(s)
+				} catch {
+					// already torn down
+				}
+				fiboRefs.current.delete(key)
+			}
+		}
+		for (const f of fibos) {
+			for (const level of f.levels) {
+				const key = `${f.id}:${level}`
+				let s = fiboRefs.current.get(key)
+				if (!s) {
+					s = chart.addSeries(LineSeries, {
+						color: f.color,
+						lineWidth: 1,
+						// 0 and 1 are solid (anchor anchors); intermediate
+						// levels are dashed so the eye reads them as derived.
+						lineStyle: level === 0 || level === 1 ? 0 : 2,
+						priceLineVisible: false,
+						lastValueVisible: false,
+						crosshairMarkerVisible: false,
+						title: `${(level * 100).toFixed(1)}%`,
+					})
+					fiboRefs.current.set(key, s)
+				} else {
+					s.applyOptions({ color: f.color })
+				}
+				const levelPrice = fiboLevelPrice(f.startPrice, f.endPrice, level)
+				s.setData([
+					{ time: f.startBrickIdx as UTCTimestamp, value: levelPrice },
+					{ time: f.endBrickIdx as UTCTimestamp, value: levelPrice },
+				])
+			}
+		}
+
+		// ── Position drawings (entry / stop / target box) ───────────────
+		// Render as three horizontal LineSeries between startBrickIdx and
+		// endBrickIdx — one solid for entry, two dashed (stop above/below,
+		// target the opposite side). Stats label is appended via the line's
+		// `title` so the user sees R:R + R$ on the price axis label.
+		// Merge user-drawn positions and read-only trade positions into a
+		// single render pass — same visual treatment, same lifecycle. ID
+		// space stays disjoint because user drawings use crypto.randomUUID
+		// while trade rows use the DB trade id (UUID too, but a different
+		// generation site — collision probability is the same as any UUID
+		// pair, i.e. effectively zero).
+		const positions = [
+			...(drawings?.positions ?? []),
+			...(tradePositions ?? []),
+		]
+		const incomingPositionIds = new Set(positions.map((p) => p.id))
+		for (const [id, lines] of positionRefs.current) {
+			if (!incomingPositionIds.has(id)) {
+				for (const line of lines) {
+					try {
+						chart.removeSeries(line)
+					} catch {
+						// already torn down
+					}
+				}
+				positionRefs.current.delete(id)
+			}
+		}
+		for (const p of positions) {
+			const stats = computePositionStats(p)
+			const stopColor = HAWKS_PALETTE.drawing.positionStop
+			const targetColor = HAWKS_PALETTE.drawing.positionTarget
+			const entryColor = p.color
+			const lineProps = (opts: {
+				color: string
+				dashed: boolean
+				title: string
+			}) => ({
+				color: opts.color,
+				lineWidth: (opts.dashed ? 1 : 2) as 1 | 2,
+				lineStyle: opts.dashed ? 2 : 0,
+				priceLineVisible: false,
+				lastValueVisible: false,
+				crosshairMarkerVisible: false,
+				title: opts.title,
+			})
+			const formatR = stats.riskRewardRatio.toFixed(2)
+			const formatStop = stats.stopValue.toFixed(0)
+			const formatTarget = stats.targetValue.toFixed(0)
+			const existing = positionRefs.current.get(p.id)
+			// 5-tuple now: [entry, stop, target, riskFill, rewardFill]. The
+			// two BaselineSeries paint the colored zones (risk = entry→stop,
+			// reward = entry→target) — same look as Profit ProRT's position
+			// drawing.
+			let entryLine: ISeriesApi<"Line">
+			let stopLine: ISeriesApi<"Line">
+			let targetLine: ISeriesApi<"Line">
+			let riskFill: ISeriesApi<"Baseline">
+			let rewardFill: ISeriesApi<"Baseline">
+			// Transparent shells for the un-used half so each fill stays in
+			// its half-plane relative to the entry baseline.
+			const TRANSPARENT = "rgba(0,0,0,0)"
+			// Risk fill: data anchored at stopPrice, baseValue at entry. The
+			// fill paints the half-plane between stop and entry. For LONG
+			// (stop < entry) → bottom half. For SHORT (stop > entry) → top.
+			const riskFillProps = {
+				topLineColor: TRANSPARENT,
+				topFillColor1: HAWKS_PALETTE.drawing.positionStopFill,
+				topFillColor2: HAWKS_PALETTE.drawing.positionStopFill,
+				bottomLineColor: TRANSPARENT,
+				bottomFillColor1: HAWKS_PALETTE.drawing.positionStopFill,
+				bottomFillColor2: HAWKS_PALETTE.drawing.positionStopFill,
+				baseValue: { type: "price" as const, price: p.entryPrice },
+				priceLineVisible: false,
+				lastValueVisible: false,
+				crosshairMarkerVisible: false,
+			}
+			const rewardFillProps = {
+				topLineColor: TRANSPARENT,
+				topFillColor1: HAWKS_PALETTE.drawing.positionTargetFill,
+				topFillColor2: HAWKS_PALETTE.drawing.positionTargetFill,
+				bottomLineColor: TRANSPARENT,
+				bottomFillColor1: HAWKS_PALETTE.drawing.positionTargetFill,
+				bottomFillColor2: HAWKS_PALETTE.drawing.positionTargetFill,
+				baseValue: { type: "price" as const, price: p.entryPrice },
+				priceLineVisible: false,
+				lastValueVisible: false,
+				crosshairMarkerVisible: false,
+			}
+			if (existing && existing.length === 5) {
+				;[entryLine, stopLine, targetLine, riskFill, rewardFill] = existing as [
+					ISeriesApi<"Line">,
+					ISeriesApi<"Line">,
+					ISeriesApi<"Line">,
+					ISeriesApi<"Baseline">,
+					ISeriesApi<"Baseline">,
+				]
+				entryLine.applyOptions(
+					lineProps({ color: entryColor, dashed: false, title: "entry" })
+				)
+				stopLine.applyOptions(
+					lineProps({
+						color: stopColor,
+						dashed: true,
+						title: `stop · 1R · R$ ${formatStop}`,
+					})
+				)
+				targetLine.applyOptions(
+					lineProps({
+						color: targetColor,
+						dashed: true,
+						title: `target · ${formatR}R · R$ ${formatTarget}`,
+					})
+				)
+				riskFill.applyOptions(riskFillProps)
+				rewardFill.applyOptions(rewardFillProps)
+			} else {
+				if (existing) {
+					for (const line of existing) {
+						try {
+							chart.removeSeries(line)
+						} catch {
+							// ignore
+						}
+					}
+				}
+				// Mount fills FIRST so the lines paint on top of the band.
+				riskFill = chart.addSeries(BaselineSeries, riskFillProps)
+				rewardFill = chart.addSeries(BaselineSeries, rewardFillProps)
+				entryLine = chart.addSeries(
+					LineSeries,
+					lineProps({ color: entryColor, dashed: false, title: "entry" })
+				)
+				stopLine = chart.addSeries(
+					LineSeries,
+					lineProps({
+						color: stopColor,
+						dashed: true,
+						title: `stop · 1R · R$ ${formatStop}`,
+					})
+				)
+				targetLine = chart.addSeries(
+					LineSeries,
+					lineProps({
+						color: targetColor,
+						dashed: true,
+						title: `target · ${formatR}R · R$ ${formatTarget}`,
+					})
+				)
+				positionRefs.current.set(p.id, [
+					entryLine,
+					stopLine,
+					targetLine,
+					riskFill,
+					rewardFill,
+				])
+			}
+			entryLine.setData([
+				{ time: p.startBrickIdx as UTCTimestamp, value: p.entryPrice },
+				{ time: p.endBrickIdx as UTCTimestamp, value: p.entryPrice },
+			])
+			stopLine.setData([
+				{ time: p.startBrickIdx as UTCTimestamp, value: p.stopPrice },
+				{ time: p.endBrickIdx as UTCTimestamp, value: p.stopPrice },
+			])
+			targetLine.setData([
+				{ time: p.startBrickIdx as UTCTimestamp, value: p.targetPrice },
+				{ time: p.endBrickIdx as UTCTimestamp, value: p.targetPrice },
+			])
+			riskFill.setData([
+				{ time: p.startBrickIdx as UTCTimestamp, value: p.stopPrice },
+				{ time: p.endBrickIdx as UTCTimestamp, value: p.stopPrice },
+			])
+			rewardFill.setData([
+				{ time: p.startBrickIdx as UTCTimestamp, value: p.targetPrice },
+				{ time: p.endBrickIdx as UTCTimestamp, value: p.targetPrice },
+			])
+
+			// ── Realized-exit overlay (trades only) ─────────────────────────
+			// User-drawing positions don't have a realized exit; the type
+			// union narrows `exit` away. For trade positions, paint:
+			//   1. A vertical outcome-colored line at exitBrickIdx spanning
+			//      the price range between stop and target (so it sits
+			//      INSIDE the box, easy to see against the bands).
+			//   2. A short solid horizontal tick (±2 bricks) at exitPrice,
+			//      same color, so the user reads BOTH where (which brick)
+			//      and at what price the trade closed.
+			// Reconciler creates the two series on first encounter, then
+			// reuses them on subsequent renders.
+			const tradeExit = (
+				p as typeof p & {
+					exit?: {
+						readonly brickIdx: number
+						readonly price: number
+						readonly outcome: "win" | "loss" | "breakeven"
+					} | null
+				}
+			).exit
+			if (tradeExit) {
+				const outcomeColor =
+					tradeExit.outcome === "win"
+						? HAWKS_PALETTE.outcome.win
+						: tradeExit.outcome === "loss"
+							? HAWKS_PALETTE.outcome.loss
+							: HAWKS_PALETTE.outcome.breakeven
+				// Clamp exit-brick to the box's painted span so the vertical
+				// always lands inside the bands (never floats outside).
+				const exitIdx = Math.max(
+					p.startBrickIdx,
+					Math.min(p.endBrickIdx, tradeExit.brickIdx)
+				)
+				// Vertical extent: from stop to target (full box height).
+				const vTop = Math.max(p.targetPrice, p.stopPrice)
+				const vBot = Math.min(p.targetPrice, p.stopPrice)
+
+				const existingExit = tradeExitRefs.current.get(p.id)
+				let vLine: ISeriesApi<"Line">
+				let hTick: ISeriesApi<"Line">
+				const vLineOpts = {
+					color: outcomeColor,
+					lineWidth: 2 as const,
+					lineStyle: 0, // solid
+					priceLineVisible: false,
+					lastValueVisible: false,
+					crosshairMarkerVisible: false,
+				}
+				const hTickOpts = {
+					color: outcomeColor,
+					lineWidth: 3 as const,
+					lineStyle: 0, // solid
+					priceLineVisible: false,
+					lastValueVisible: false,
+					crosshairMarkerVisible: false,
+					title: "exit",
+				}
+				if (existingExit && existingExit.length === 2) {
+					;[vLine, hTick] = existingExit as [
+						ISeriesApi<"Line">,
+						ISeriesApi<"Line">,
+					]
+					vLine.applyOptions(vLineOpts)
+					hTick.applyOptions(hTickOpts)
+				} else {
+					if (existingExit) {
+						for (const s of existingExit) {
+							try {
+								chart.removeSeries(s)
+							} catch {
+								// ignore
+							}
+						}
+					}
+					vLine = chart.addSeries(LineSeries, vLineOpts)
+					hTick = chart.addSeries(LineSeries, hTickOpts)
+					tradeExitRefs.current.set(p.id, [vLine, hTick])
+				}
+				// Vertical: lightweight-charts requires strictly-ascending
+				// time, so render the vertical as a 2-point line at the
+				// same brick index? That would collide. Instead use TWO
+				// points at adjacent brick indices (exitIdx and exitIdx+1
+				// clamped to box end), value sweeping top→bottom — fakes
+				// a vertical with a 1-brick-wide slant that's visually
+				// indistinguishable at typical zoom levels. If exitIdx is
+				// at the right edge, fall back to (exitIdx-1, exitIdx).
+				const vA = exitIdx <= p.startBrickIdx + 1 ? exitIdx : exitIdx - 1
+				const vB = exitIdx <= p.startBrickIdx + 1 ? exitIdx + 1 : exitIdx
+				vLine.setData([
+					{ time: vA as UTCTimestamp, value: vTop },
+					{ time: vB as UTCTimestamp, value: vBot },
+				])
+				// Horizontal tick: ±2 bricks around exitIdx at exitPrice,
+				// clamped to the box span.
+				const tickLo = Math.max(p.startBrickIdx, exitIdx - 2)
+				const tickHi = Math.min(p.endBrickIdx, exitIdx + 2)
+				if (tickHi > tickLo) {
+					hTick.setData([
+						{ time: tickLo as UTCTimestamp, value: tradeExit.price },
+						{ time: tickHi as UTCTimestamp, value: tradeExit.price },
+					])
+				}
+			} else {
+				// Position had an exit overlay previously, now doesn't —
+				// remove leftover series so the box reverts to planning view.
+				const stale = tradeExitRefs.current.get(p.id)
+				if (stale) {
+					for (const s of stale) {
+						try {
+							chart.removeSeries(s)
+						} catch {
+							// ignore
+						}
+					}
+					tradeExitRefs.current.delete(p.id)
+				}
+			}
+		}
+
+		// Drop exit overlays for positions that disappeared entirely.
+		for (const [id, lines] of tradeExitRefs.current) {
+			if (!incomingPositionIds.has(id)) {
+				for (const s of lines) {
+					try {
+						chart.removeSeries(s)
+					} catch {
+						// ignore
+					}
+				}
+				tradeExitRefs.current.delete(id)
+			}
+		}
+	}, [drawings, series, tradePositions])
 
 	// Forward click events upward so the inspector can implement tool behavior.
 	// We use chart.subscribeClick; the handler receives MouseEventParams with a
@@ -672,6 +1379,7 @@ const RenkoPane = ({
 }
 
 export type {
+	ChartPaletteOverride,
 	HistogramOverlay,
 	IndicatorOverlay,
 	MarkerColorMode,

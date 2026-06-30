@@ -166,6 +166,41 @@ const findBrickIndexForTime = (
  * Renko bricks. Indicator values come from the candle JSONB populated by
  * the CSV ingest pipeline — no client-side TA math.
  */
+/**
+ * Detect "session breaks" in a brick-time array — adjacent bricks whose
+ * close-timestamps are more than `gapHours` apart. Returns a Set of brick
+ * indices where a break STARTS (the brick right after the gap). Used by
+ * `indicatorValuesByBrickIndex` to insert WhitespaceData at the gap so the
+ * line series doesn't draw a long diagonal across the gap.
+ *
+ * Default 6h covers any overnight gap (B3 close-to-open ≈ 15h) plus
+ * weekends and holidays — and is far above any in-session brick gap,
+ * which sits in the seconds-to-minutes range even on slow tape. Probe
+ * data (2026-06-30) found 17 EMA jumps >500pts across the year, all at
+ * overnight session boundaries — the 60h threshold previously used
+ * caught only the long-holiday subset and let the regular nightly gaps
+ * draw a 30-50-brick diagonal across the chart ("monster" lines).
+ */
+const findSessionGaps = (
+	bricksTimes: readonly number[],
+	gapHours = 6
+): Set<number> => {
+	const gaps = new Set<number>()
+	const gapMs = gapHours * 3600_000
+	for (let i = 1; i < bricksTimes.length; i++) {
+		if (bricksTimes[i]! - bricksTimes[i - 1]! > gapMs) {
+			gaps.add(i)
+		}
+	}
+	return gaps
+}
+
+// Indicator point series for a Lightweight-Charts LineSeries. Includes both
+// real values (`{time, value}`) and whitespace markers (`{time}` only) so the
+// line gets cut at session boundaries.
+type IndicatorPoint =
+	{ time: UTCTimestamp; value: number } | { time: UTCTimestamp }
+
 const indicatorValuesByBrickIndex = (
 	bricksTimes: readonly number[],
 	candles: readonly {
@@ -173,7 +208,7 @@ const indicatorValuesByBrickIndex = (
 		readonly indicators: Record<string, number>
 	}[],
 	key: string
-): Array<{ time: UTCTimestamp; value: number }> => {
+): Array<IndicatorPoint> => {
 	if (candles.length === 0 || bricksTimes.length === 0) {
 		return []
 	}
@@ -199,8 +234,20 @@ const indicatorValuesByBrickIndex = (
 		return result
 	}
 
-	const out: Array<{ time: UTCTimestamp; value: number }> = []
+	const sessionGaps = findSessionGaps(bricksTimes)
+
+	const out: Array<IndicatorPoint> = []
 	for (let i = 0; i < bricksTimes.length; i++) {
+		// At every session boundary, emit a Whitespace point INSTEAD of the
+		// real value at that brick. Lightweight-charts requires strictly
+		// ascending `time` — pushing a whitespace and a real point at the
+		// same index would assert "data must be asc ordered by time".
+		// Sacrificing one brick of indicator at the session boundary cuts
+		// the long diagonal across the holiday/weekend gap cleanly.
+		if (sessionGaps.has(i)) {
+			out.push({ time: i as UTCTimestamp })
+			continue
+		}
 		const candleMs = findFloor(bricksTimes[i]!)
 		if (candleMs === null) {
 			continue
@@ -214,11 +261,12 @@ const indicatorValuesByBrickIndex = (
 	return out
 }
 
-export type { BrickChartSeries, CandleRowLike, SyncMapEntry }
+export type { BrickChartSeries, CandleRowLike, IndicatorPoint, SyncMapEntry }
 export {
 	bricksToCandleSeries,
 	buildCrosshairSyncMap,
 	candlesToBrickSeriesNative,
 	findBrickIndexForTime,
+	findSessionGaps,
 	indicatorValuesByBrickIndex,
 }

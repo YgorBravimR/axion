@@ -183,6 +183,13 @@
 			"when": 1782136849671,
 			"tag": "0025_orange_black_cat",
 			"breakpoints": true
+		},
+		{
+			"idx": 26,
+			"version": "7",
+			"when": 1782671868761,
+			"tag": "0026_classy_hannibal_king",
+			"breakpoints": true
 		}
 	]
 }

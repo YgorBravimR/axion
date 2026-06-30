@@ -159,7 +159,54 @@
 		"indicatorLab": "Laboratório de Indicadores",
 		"newTrade": "Novo Trade",
 		"plans": "Planos",
-		"simulation": "Simulação"
+		"simulation": "Simulação",
+		"hawksChart": "Gráfico Hawks"
+	},
+	"hawksChart": {
+		"title": "Gráfico Hawks",
+		"subtitle": "Histórico completo do tríplice ecrã Renko com desenhos persistentes",
+		"bricksLoaded": "tijolos 5m carregados",
+		"noData": "Sem dados de candle disponíveis para este ativo ainda.",
+		"clickSecondAnchor": "Clique no segundo ponto âncora no gráfico…",
+		"drawingCount": "{count, plural, =0 {sem desenhos} =1 {# desenho} other {# desenhos}}",
+		"clearAll": "Limpar tudo",
+		"clearAllTitle": "Apagar todos os desenhos?",
+		"clearAllDescription": "Isto apaga permanentemente {count, plural, =1 {# desenho} other {# desenhos}} deste gráfico. Não dá para desfazer.",
+		"confirmClear": "Limpar tudo",
+		"cancel": "Cancelar",
+		"remove": "Remover",
+		"edit": "Editar",
+		"done": "Pronto",
+		"indicators": "Indicadores",
+		"tool": {
+			"cursor": "Cursor",
+			"hline": "Horizontal",
+			"trendline": "Linha de tendência",
+			"vline": "Vertical",
+			"fibo": "Fibonacci",
+			"positionLong": "Posição longa",
+			"positionShort": "Posição curta"
+		},
+		"indicator": {
+			"tradeMarkers": "Meus trades",
+			"ema15m": "EMA 15m",
+			"ema60m": "EMA 60m",
+			"vwapD": "VWAP D",
+			"vwapW": "VWAP S",
+			"vwapM": "VWAP M",
+			"ajuste": "Ajuste D-1",
+			"keltner": "Keltner",
+			"macd": "MACD",
+			"swingTape": "Fita de pivôs"
+		},
+		"pane": {
+			"5m": "Renko 5m",
+			"15m": "Renko 15m",
+			"60m": "Renko 60m"
+		},
+		"drawings": {
+			"title": "Desenhos"
+		}
 	},
 	"market": {
 		"title": "Monitor de Mercado",

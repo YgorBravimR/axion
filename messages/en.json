@@ -159,7 +159,54 @@
 		"indicatorLab": "Indicator Lab",
 		"newTrade": "New Trade",
 		"plans": "Plans",
-		"simulation": "Simulation"
+		"simulation": "Simulation",
+		"hawksChart": "Hawks Chart"
+	},
+	"hawksChart": {
+		"title": "Hawks Chart",
+		"subtitle": "Full triple-screen Renko history with persistent drawings",
+		"bricksLoaded": "5m bricks loaded",
+		"noData": "No candle data available for this asset yet.",
+		"clickSecondAnchor": "Click second anchor on the chart…",
+		"drawingCount": "{count, plural, =0 {no drawings} =1 {# drawing} other {# drawings}}",
+		"clearAll": "Clear all",
+		"clearAllTitle": "Clear every drawing?",
+		"clearAllDescription": "This permanently removes {count, plural, =1 {# drawing} other {# drawings}} from this chart. This cannot be undone.",
+		"confirmClear": "Clear all",
+		"cancel": "Cancel",
+		"remove": "Remove",
+		"edit": "Edit",
+		"done": "Done",
+		"indicators": "Indicators",
+		"tool": {
+			"cursor": "Cursor",
+			"hline": "Horizontal",
+			"trendline": "Trendline",
+			"vline": "Vertical",
+			"fibo": "Fibonacci",
+			"positionLong": "Long position",
+			"positionShort": "Short position"
+		},
+		"indicator": {
+			"tradeMarkers": "My trades",
+			"ema15m": "EMA 15m",
+			"ema60m": "EMA 60m",
+			"vwapD": "VWAP D",
+			"vwapW": "VWAP W",
+			"vwapM": "VWAP M",
+			"ajuste": "Ajuste D-1",
+			"keltner": "Keltner",
+			"macd": "MACD",
+			"swingTape": "Swing tape"
+		},
+		"pane": {
+			"5m": "5m Renko",
+			"15m": "15m Renko",
+			"60m": "60m Renko"
+		},
+		"drawings": {
+			"title": "Drawings"
+		}
 	},
 	"market": {
 		"title": "Market Monitor",

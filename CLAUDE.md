@@ -110,6 +110,7 @@ This file is a **router**. Read it fully every session. Only mandatory rules and
 | Design system (audience, brand, principles, canonical patterns)      | [`docs/DESIGN.md`](docs/DESIGN.md)                                 |
 | Theming tokens (colors, spacing, typography)                         | [`docs/theming.md`](docs/theming.md) + `src/app/globals.css`       |
 | Component architecture (RSC boundaries, layering)                    | [`docs/component-architecture.md`](docs/component-architecture.md) |
+| **Renko brick rendering — canonical recipe + invariants**            | **[`docs/renko-rendering.md`](docs/renko-rendering.md)**           |
 | Database schema reference                                            | [`docs/database-schema.md`](docs/database-schema.md)               |
 | Server actions + API conventions                                     | [`docs/api-actions.md`](docs/api-actions.md)                       |
 | Audit scans (a11y, perf, schema, tokens, etc.)                       | [`docs/scans/`](docs/scans/)                                       |

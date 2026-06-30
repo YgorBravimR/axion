@@ -2643,6 +2643,55 @@ export const hawksWeeklyOco = pgTable(
 )
 
 // ==========================================
+// HAWKS CHART — user-applied drawings
+// ==========================================
+//
+// One row per drawing the user has saved on /hawks-chart. Scoped (userId,
+// assetId) — drawings are global across timeframes (a trendline drawn on
+// WIN sticks to WIN regardless of which TF pane painted it; the chart
+// projects the wall-clock anchor onto each pane's brick-index axis).
+//
+// `kind` discriminates the JSON payload shape; the shapes themselves are
+// owned by `src/components/hawks-chart/drawings.ts` and validated server-side
+// before write. We don't enforce the shape at the SQL layer because the union
+// changes more frequently than the table — every new drawing primitive would
+// otherwise need a migration.
+export const hawksChartDrawings = pgTable(
+	"hawks_chart_drawings",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		userId: uuid("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		assetId: uuid("asset_id")
+			.notNull()
+			.references(() => assets.id, { onDelete: "cascade" }),
+		kind: varchar("kind", { length: 24 }).notNull(),
+		// JSON blob: the drawing's payload as defined in components/hawks-chart/drawings.ts.
+		// Type-narrowed by the server actions on read; never trusted blindly.
+		payload: jsonb("payload").notNull(),
+		// Optional user-attached label (e.g., "weekly resistance" on an hline).
+		label: text("label"),
+		// Stored as a CSS color string (`rgb(...)` or `#rrggbb`). Defaults are
+		// picked from HAWKS_PALETTE.drawing in the client; persisted so the user
+		// can recolor a single drawing without touching the global palette.
+		color: varchar("color", { length: 32 }).notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		index("hawks_chart_drawings_user_asset_idx").on(
+			table.userId,
+			table.assetId
+		),
+	]
+)
+
+// ==========================================
 // AI ASSISTANT — admin-managed runtime config
 // ==========================================
 //
@@ -3558,6 +3607,9 @@ export type NewHawksRenkoSize = typeof hawksRenkoSizes.$inferInsert
 
 export type HawksWeeklyOco = typeof hawksWeeklyOco.$inferSelect
 export type NewHawksWeeklyOco = typeof hawksWeeklyOco.$inferInsert
+
+export type HawksChartDrawing = typeof hawksChartDrawings.$inferSelect
+export type NewHawksChartDrawing = typeof hawksChartDrawings.$inferInsert
 
 // ==========================================
 // AI ASSISTANT — inferred types

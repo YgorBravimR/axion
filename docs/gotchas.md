@@ -40,6 +40,12 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 
 ## Drizzle ORM / Database Drivers
 
+### Never use `pnpm db:push` — it silently desyncs the `__drizzle_migrations` ledger
+
+- **What**: `drizzle-kit push` diffs the schema and applies DDL directly to the DB **without writing a row to `drizzle.__drizzle_migrations`**. Every subsequent `pnpm db:migrate` then tries to re-run the migration that authored those tables and crashes with `relation "X" already exists` (Postgres `42P07`). We hit this 2026-06-30 — `0024_quiet_slapstick.sql` had been push-applied (creating every `ai_assistant_*` table) but the ledger had no record. The next `db:migrate` (for the `hawks_chart_drawings` work) couldn't even reach the new migration because it died re-running the old one.
+- **What to do**: Always go through the proper flow — `pnpm db:generate` (creates a migration file from the schema diff) → `pnpm db:migrate` (applies via the ledger). The `db:push` npm script is now a guard that prints the recovery steps and exits 1. If you find yourself in the broken state (ledger drift), run `pnpm db:reconcile-ledger` then `pnpm db:migrate`. The reconciler probes each unledgered migration's headline `CREATE TABLE`; if the table already exists in the DB, it backfills the ledger row with the same SHA-256 of the SQL that Drizzle would have written, leaving the rest for `db:migrate`. Append-only migrations (rule from CLAUDE.md) is what makes this safe — never edit a landed migration file or the hash drifts.
+- **Source**: 2026-06-30 — `scripts/reconcile-drizzle-ledger.ts` + the new `db:push` guard. Background: Drizzle's migrator decides "applied?" by hash, not by tag (so renaming the file would also confuse it, but that's a separate landmine).
+
 ### Candle data lives in R2 Parquet, not Postgres — `price_candles` was dropped 2026-06-08
 
 - **What**: `price_candles` no longer exists in the Drizzle schema. Phase 5 of the migration in `docs/backlog.md` (2026-06-08) moved every candle row to R2 Parquet under `s3://bravo-journal/candles/<tfCode>/<assetSymbol>.parquet`. The on-Postgres registry survives as `price_data_versions` — that's the catalog the UI reads to know what datasets exist. `priceCandles`, `PriceCandle`, `NewPriceCandle`, and `createDrizzleCandleStore` are gone.
@@ -482,7 +488,31 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **What to do (immediate)**: Whenever you push a multi-point segment to a `LineSeries`, guard with `if (b > a)` and skip the series entirely if `a === b` — the entry/exit markers still pinpoint the trade. Same logic applies to candle/area data: dedupe or aggregate input so each `time` is unique.
 - **What to do (proper)**: Have the engine emit `entryBrickIndex` / `exitBrickIndex` directly on `BacktestTrade` so consumers don't reconstruct from timestamps. Tracked in `docs/backlog.md` → "Backtest / Inspector".
 - **Where it bit us**: `src/components/backtest/inspector/backtest-overview-chart.tsx` (per-trade overlay lines), `src/components/backtest/inspector/renko-pane.tsx` (per-trade entry-price segment). Defensive guard added 2026-05-26. Post-mortem: BUG-2026-05-26-2 in `docs/postMorten/frontend.md`.
-- **Date logged**: 2026-05-26.
+- **2026-06-30 repro — WhitespaceData at session gaps**: same assertion fired from `indicatorValuesByBrickIndex` in `src/lib/renko/bricks-to-chart.ts` after we added session-gap WhitespaceData markers. The naïve "push whitespace AND the real value at the same brick index" pattern produces two consecutive points at the same `time`. **Fix**: at a session-boundary brick, emit ONLY the whitespace point (`continue` past the real value lookup). You sacrifice one indicator point per holiday/weekend boundary — acceptable trade for breaking the long diagonal across the gap.
+- **2026-06-30 — `findSessionGaps` threshold must catch overnight gaps, not just weekends**: Initial implementation used 60h (catches Friday-close → Monday-open ≈ 64h) which missed every normal overnight gap (~15h B3 close-to-open). Probe `_probe-hawks-indicator-jumps.ts` found 17 EMA jumps >500 pts across one year, all at overnight session boundaries — those drew 30-50-brick diagonal "monsters" across the chart. **Fix**: drop threshold to 6h. Any in-session gap is seconds-to-minutes; 6h is comfortably above intraday yet far below the shortest overnight gap. Source: hawks-chart visual debug 2026-06-30.
+
+### `01 Jan '70` in the crosshair hover bubble — `localization.timeFormatter` and `tickMarkFormatter` are SEPARATE config slots
+
+- **What**: When charts use brick-INDEX as the time axis (`time: i as UTCTimestamp` where `i` is the array position), lightweight-charts' default formatter reads `14` as Unix epoch and prints `01 Jan '70 00:00:00.014`. Setting `timeScale.tickMarkFormatter` fixes the X-axis tick labels — but the floating crosshair-hover bubble that appears when the cursor lands on a brick uses a DIFFERENT formatter: `localization.timeFormatter`. Without overriding both, the X-axis reads correctly while the hover shows `01 Jan '70` everywhere.
+- **Fix**: Define the index-to-label translator once, point both formatters at it. See `src/components/backtest/inspector/renko-pane.tsx` (`brickIndexToLabel`) — `RenkoPane` now sets both. If you ever build a chart from scratch instead of composing `RenkoPane`, you MUST set both.
+- **Don't**: try to use real timestamps as the time axis to "avoid the formatter" — see `docs/renko-rendering.md` §1 for why brick-index is the right axis.
+- **Date logged**: 2026-06-30.
+
+### Hawks-chart breakeven band is chart-side (0.25R), not DB-side
+
+- **What**: The `trades.outcome` column comes from `determineOutcome` (src/lib/calculations.ts) which uses the per-account `breakevenTicks` config. Many accounts have `breakevenTicks=0`, so a 0.1R loss gets stored as `"loss"` even though it's clearly a scratch in playbook terms — the chart paints it red while the user reads it as "obviously breakeven".
+- **Fix on hawks-chart**: an `effectiveOutcomeFor(trade)` helper that forces `"breakeven"` whenever `|rMultiple| ≤ 0.25R`, regardless of stored outcome. Marker color + exit price stub both use the effective value. See `src/components/hawks-chart/hawks-chart-workspace.tsx` (`BREAKEVEN_R_BAND`, `effectiveOutcomeFor`). The DB outcome is preserved for accounting; this is purely visual.
+- **Don't**: change `determineOutcome` to apply the 0.25R band globally — accounting needs to honor the user's configured `breakevenTicks` exactly. The chart's job is methodology-review, where the band makes the eye work better; the DB's job is bookkeeping.
+- **Date logged**: 2026-06-30.
+
+### Candle-store reader must tie-break duplicate timestamps by `candle_index`, not just `ORDER BY timestamp`
+
+- **What**: The Profitchart CSV loader stamps every brick painted during a single session-open tick burst with the platform's first-tick timestamp. Result: 74 duplicate-timestamp clusters across the 5m WIN parquet, the biggest one with **80 bricks sharing the exact same second** (2026-05-12 12:00:51). With `ORDER BY timestamp ASC` only, DuckDB returns those 80 bricks in arbitrary order — observed scrambled return like `idx=93, 32, 91, 90, 89, 88, ...`. Renders as a vertical staircase going the wrong direction on the chart (the May 12 "downward staircase that should have been an upward gap" bug from screenshot debugging).
+- **Fix**: Always tie-break with `ORDER BY timestamp ASC, candle_index ASC` when reading from a candle parquet. `candle_index` resets per-day (range `[1..680]` across the file) but WITHIN a same-timestamp cluster it preserves the platform's canonical painting order. Same-day cluster ⇒ same timestamp ⇒ tie-break by index sorts the 80 bricks 14, 15, …, 93 instead of scrambled.
+- **Where it bit us**: `src/lib/candle-store/duckdb-impl.ts` (the single reader). Fixed inline 2026-06-30.
+- **Don't**: try to dedupe duplicate-timestamp clusters — they're legitimate Renko bricks the platform painted, just lacking sub-second resolution. Don't backfill synthetic timestamps either; the indices already preserve order.
+- **Date logged**: 2026-06-30.
+- **Date logged**: 2026-05-26 (original); 2026-06-30 (whitespace repro added).
 
 ---
 
@@ -586,6 +616,23 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Date logged**: 2026-05-14.
 
 ---
+
+## pnpm / Package Manager
+
+### pnpm 11 no longer reads the `pnpm` field in `package.json` — config moved to `pnpm-workspace.yaml`
+
+- **What**: We're on `pnpm@11.2.2` (pinned via `packageManager` in `package.json`). In pnpm 11 the entire `pnpm` block in `package.json` (`pnpm.overrides`, `pnpm.peerDependencyRules`, `pnpm.allowedDeprecatedVersions`, `pnpm.onlyBuiltDependencies`, etc.) is **ignored** — pnpm prints `[WARN] The "pnpm" field in package.json is no longer read by pnpm. The following keys were ignored: …` and silently does nothing. Adding e.g. `peerDependencyRules` there to silence a `pnpm peers check` warning looks like it worked (the edit applies, lint passes) but has zero effect.
+- **What to do**: Put all of it in `pnpm-workspace.yaml` instead — that's the new home. The keys lose the `pnpm.` prefix and become top-level YAML keys: `overrides:`, `peerDependencyRules:`, `onlyBuiltDependencies:`, `allowBuilds:`, `ignoredBuiltDependencies:`, `minimumReleaseAgeExclude:` (this repo already uses the last four). Example for allowing a peer that's ahead of upstream's declared range:
+  ```yaml
+  peerDependencyRules:
+    allowedVersions:
+      eslint-plugin-jsx-a11y>eslint: "10"
+      tsconfck>typescript: "6"
+  ```
+  Verify with `pnpm peers check` (exit 0 / "No peer dependency issues found"). Don't touch the `pnpm` field in `package.json` — it doesn't exist here and shouldn't be re-added.
+- **Why those two peers warn**: we run ahead of the ecosystem — ESLint 10 (jsx-a11y's range tops out at `^9`) and TypeScript 6 (tsconfck's range tops out at `^5`). Both work fine on the newer majors; `allowedVersions` just declares "known, intentional". `tsconfck` is a dev-only transitive (`vite-tsconfig-paths` → `tsconfck`), zero prod blast radius.
+- **Source**: 2026-06-30 session after a `next@16.2.9` bump surfaced the peer warnings. See https://pnpm.io/settings for the full key-by-key migration map.
+- **Date logged**: 2026-06-30.
 
 ## Worktrees / Local Postgres
 

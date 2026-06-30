@@ -29,3 +29,8 @@ onlyBuiltDependencies:
   - '@parcel/watcher'
   - '@swc/core'
   - esbuild
+
+peerDependencyRules:
+  allowedVersions:
+    eslint-plugin-jsx-a11y>eslint: '10'
+    tsconfck>typescript: '6'

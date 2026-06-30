@@ -305,6 +305,17 @@ Full spec at [`docs/plans/ai-assistant-phase-1.md`](plans/ai-assistant-phase-1.m
 
 ## Backtest / Inspector
 
+### Hawks-chart — chart-level drag for drawings (positions especially)
+
+- **Priority**: P3 — UX polish. Inline editor in the drawings list ships the same data path; drag is the "feels right" finish.
+- **Effort**: M (~3-4h — implement an `ISeriesPrimitive` plug-in that owns the position drawing, paints entry/stop/target + risk/reward bands as a single canvas overlay, handles mousedown/move/up to mutate the underlying drawing, and calls `saveDrawing` on release).
+- **Why deferred**: Lightweight Charts has no built-in draggable LineSeries. The supported path is `chart.addSeriesPrimitive(...)` with a custom IPrimitive ~250 LOC. v1 ships an inline editor at the drawings-list footer (`src/components/hawks-chart/position-editor.tsx`) that edits stop/target/qty directly — same data round-trip, far smaller surface.
+- **Scope notes**:
+  - Primitive should own all five visual elements of a position (entry line + stop line + target line + risk band + reward band) so the drag handles can attach to stop and target without fighting five separate LineSeries.
+  - On drag-end, snap to the nearest brick on the time axis and to the nearest price tick on the price axis; mutate the drawing through `updateDrawing(next)` so the persistence path is unchanged.
+  - Same primitive pattern unlocks trendline/fibo drag later — design the IPrimitive base class with that reuse in mind.
+- **Source**: 2026-06-30 — user requested drag on the hawks-chart positions; shipped inline editor as v1.
+
 ### Hawks engine — per-booster outcome audit (booster tier ordering is U-shaped)
 
 - **Priority**: P1 — directly affects the trustworthiness of every tier-based filter, optimization target, and UI label across the Hawks engine.

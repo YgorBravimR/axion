@@ -863,25 +863,19 @@ const DrawingsList = ({ drawings, onRemove }: DrawingsListProps) => (
 					className="p-s-200 gap-s-300 flex items-center justify-between font-mono"
 				>
 					<span className="text-tiny text-txt-200">
-						{d.type === "hline" ? (
-							<>
-								<span
-									className="mr-s-200 inline-block size-3 rounded-sm align-middle"
-									style={{ background: d.color }}
-								/>
-								H-line @ {d.price.toFixed(3)}
-							</>
-						) : (
-							<>
-								<span
-									className="mr-s-200 inline-block size-3 rounded-sm align-middle"
-									style={{ background: d.color }}
-								/>
-								Trendline {formatTimeBrt(d.startTimeMs).slice(11, 19)} →{" "}
-								{formatTimeBrt(d.endTimeMs).slice(11, 19)} ·{" "}
-								{d.startPrice.toFixed(3)} → {d.endPrice.toFixed(3)}
-							</>
-						)}
+						<span
+							className="mr-s-200 inline-block size-3 rounded-sm align-middle"
+							style={{ background: d.color }}
+						/>
+						{d.type === "hline"
+							? `H-line @ ${d.price.toFixed(3)}`
+							: d.type === "trendline"
+								? `Trendline ${formatTimeBrt(d.startTimeMs).slice(11, 19)} → ${formatTimeBrt(d.endTimeMs).slice(11, 19)} · ${d.startPrice.toFixed(3)} → ${d.endPrice.toFixed(3)}`
+								: d.type === "vline"
+									? `V-line @ ${formatTimeBrt(d.timeMs).slice(11, 19)}`
+									: d.type === "fibo"
+										? `Fibo ${d.startPrice.toFixed(3)} → ${d.endPrice.toFixed(3)}`
+										: `${d.direction} position @ ${d.entryPrice.toFixed(3)}`}
 					</span>
 					<Button
 						id={`remove-drawing-${d.id}`}

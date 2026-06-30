@@ -6,6 +6,7 @@ import {
 	FileBarChart,
 	CalendarDays,
 	CalendarRange,
+	CandlestickChart,
 	Settings,
 	Target,
 	Dices,
@@ -42,6 +43,7 @@ type NavLabelKey =
 	| "equityShield"
 	| "backtestOptimize"
 	| "indicatorLab"
+	| "hawksChart"
 	| "settings"
 
 type NavGroupKey = "plans" | "simulation" | "reportsGroup" | "journalGroup"
@@ -79,6 +81,11 @@ const buildNavStructure = (now: Date): NavEntry[] => {
 	return [
 		{ labelKey: "dashboard", href: "/", icon: LayoutDashboard },
 		{ labelKey: "commandCenter", href: "/command-center", icon: Target },
+		{
+			labelKey: "hawksChart",
+			href: "/hawks-chart",
+			icon: CandlestickChart,
+		},
 		{
 			kind: "group",
 			groupKey: "journalGroup",
