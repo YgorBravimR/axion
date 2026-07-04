@@ -157,6 +157,7 @@
 		"equityShield": "Equity Shield",
 		"backtestOptimize": "Otimizar",
 		"indicatorLab": "Laboratório de Indicadores",
+		"renkoSizes": "Tamanhos Renko",
 		"newTrade": "Novo Trade",
 		"plans": "Planos",
 		"simulation": "Simulação",
@@ -1170,6 +1171,8 @@
 		"trades": "Trades",
 		"newTrade": "Novo Trade",
 		"editTrade": "Editar Trade",
+		"prevTrade": "Trade anterior",
+		"nextTrade": "Próximo trade",
 		"deleteTrade": "Excluir Trade",
 		"deleteConfirm": "Excluir?",
 		"deleteSuccess": "Trade excluído com sucesso",
@@ -1357,7 +1360,25 @@
 			"toggleIndicatorGroup": "Alternar grupo de indicadores {name}",
 			"switchToDetailView": "Alternar para visão detalhada",
 			"switchToChartView": "Alternar para visão do gráfico",
-			"chartButton": "Gráfico"
+			"chartButton": "Gráfico",
+			"legendButton": "Legenda",
+			"legendDialogTitle": "Legenda do gráfico",
+			"legendCandles": "Bricks renko",
+			"legendBrickBullish": "Brick de alta",
+			"legendBrickBullishDesc": "Fechamento > máxima do brick anterior — novo brick de alta.",
+			"legendBrickBearish": "Brick de baixa",
+			"legendBrickBearishDesc": "Fechamento < mínima do brick anterior — novo brick de baixa.",
+			"legendEmaDesc": "Média móvel exponencial sobre o fechamento do brick.",
+			"legendVwapDayDesc": "VWAP do pregão atual. Reinicia às 09:00 BRT.",
+			"legendVwapWeekDesc": "VWAP da semana de pregão. Reinicia toda segunda-feira.",
+			"legendVwapMonthDesc": "VWAP do mês de pregão. Reinicia no primeiro pregão do mês.",
+			"legendAjusteDesc": "Ajuste diário de referência. Um valor por pregão em escada horizontal.",
+			"legendAjusteAdjDesc": "Ajuste corrigido (carry / vencimento). Um valor por pregão em escada horizontal.",
+			"legendTradeMarkers": "Marcadores do trade",
+			"legendEntryLong": "Entrada comprada",
+			"legendEntryLongDesc": "Seta para cima abaixo da barra — execução de compra.",
+			"legendEntryShort": "Entrada vendida",
+			"legendEntryShortDesc": "Seta para baixo acima da barra — execução de venda."
 		},
 		"panel": {
 			"stats": "Estatísticas",
@@ -6997,6 +7018,33 @@
 			"network": "Erro de rede. Tente novamente.",
 			"generic": "Algo deu errado.",
 			"budget": "Orçamento mensal do assistente atingido ({spent} de {cap}). Renova no próximo mês."
+		}
+	},
+	"renkoSizes": {
+		"title": "Tamanhos Renko",
+		"subtitle": "Números-R semanais dos bricks Hawks para {asset}",
+		"addThisWeek": "Adicionar semana {week}",
+		"editThisWeek": "Editar semana {week}",
+		"currentWeekMissing": "Semana {week} ({date}) ainda sem linha — adicione antes de operar.",
+		"empty": "Nenhum tamanho Renko carregado.",
+		"savedToast": "Tamanhos Renko salvos.",
+		"saveFailed": "Falha ao salvar.",
+		"requiredFieldsMissing": "Semana, 5m, 15m e 60m são obrigatórios.",
+		"col": {
+			"week": "Semana",
+			"date": "Data",
+			"1m": "1m",
+			"5m": "5m",
+			"15m": "15m",
+			"60m": "60m",
+			"1d": "1d"
+		},
+		"modal": {
+			"addTitle": "Adicionar tamanhos Renko da semana",
+			"editTitle": "Editar tamanhos Renko da semana",
+			"description": "Semana {week} — {date} (ancorada na segunda). 5m, 15m, 60m são obrigatórios; 1m e 1d são opcionais.",
+			"cancel": "Cancelar",
+			"save": "Salvar"
 		}
 	}
 }

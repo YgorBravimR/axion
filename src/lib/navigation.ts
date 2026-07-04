@@ -21,6 +21,7 @@ import {
 	Sparkle,
 	NotebookPen,
 	ClipboardCheck,
+	Ruler,
 	type LucideIcon,
 } from "lucide-react"
 
@@ -44,6 +45,7 @@ type NavLabelKey =
 	| "backtestOptimize"
 	| "indicatorLab"
 	| "hawksChart"
+	| "renkoSizes"
 	| "settings"
 
 type NavGroupKey = "plans" | "simulation" | "reportsGroup" | "journalGroup"
@@ -147,6 +149,11 @@ const buildNavStructure = (now: Date): NavEntry[] => {
 					labelKey: "indicatorLab",
 					href: "/indicator-lab",
 					icon: Activity,
+				},
+				{
+					labelKey: "renkoSizes",
+					href: "/dev/renko-sizes",
+					icon: Ruler,
 				},
 				{ labelKey: "equityShield", href: "/equity-shield", icon: Shield },
 			],

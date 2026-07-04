@@ -1,6 +1,6 @@
 {
-	"id": "041cca03-e0b3-478e-939c-7cc0d17d8704",
-	"prevId": "7290e28c-21a8-4a6e-8288-4214ef2a0311",
+	"id": "3f7c8832-9758-48d6-8c00-06efee7d2307",
+	"prevId": "041cca03-e0b3-478e-939c-7cc0d17d8704",
 	"version": "7",
 	"dialect": "postgresql",
 	"tables": {
@@ -2860,6 +2860,117 @@
 					"tableFrom": "daily_hawks_bias",
 					"tableTo": "trading_accounts",
 					"columnsFrom": ["account_id"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "no action"
+				}
+			},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"policies": {},
+			"checkConstraints": {},
+			"isRLSEnabled": false
+		},
+		"public.hawks_chart_drawings": {
+			"name": "hawks_chart_drawings",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "uuid",
+					"primaryKey": true,
+					"notNull": true,
+					"default": "gen_random_uuid()"
+				},
+				"user_id": {
+					"name": "user_id",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"asset_id": {
+					"name": "asset_id",
+					"type": "uuid",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"kind": {
+					"name": "kind",
+					"type": "varchar(24)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"payload": {
+					"name": "payload",
+					"type": "jsonb",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"label": {
+					"name": "label",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": false
+				},
+				"color": {
+					"name": "color",
+					"type": "varchar(32)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamp with time zone",
+					"primaryKey": false,
+					"notNull": true,
+					"default": "now()"
+				}
+			},
+			"indexes": {
+				"hawks_chart_drawings_user_asset_idx": {
+					"name": "hawks_chart_drawings_user_asset_idx",
+					"columns": [
+						{
+							"expression": "user_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						},
+						{
+							"expression": "asset_id",
+							"isExpression": false,
+							"asc": true,
+							"nulls": "last"
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {
+				"hawks_chart_drawings_user_id_users_id_fk": {
+					"name": "hawks_chart_drawings_user_id_users_id_fk",
+					"tableFrom": "hawks_chart_drawings",
+					"tableTo": "users",
+					"columnsFrom": ["user_id"],
+					"columnsTo": ["id"],
+					"onDelete": "cascade",
+					"onUpdate": "no action"
+				},
+				"hawks_chart_drawings_asset_id_assets_id_fk": {
+					"name": "hawks_chart_drawings_asset_id_assets_id_fk",
+					"tableFrom": "hawks_chart_drawings",
+					"tableTo": "assets",
+					"columnsFrom": ["asset_id"],
 					"columnsTo": ["id"],
 					"onDelete": "cascade",
 					"onUpdate": "no action"

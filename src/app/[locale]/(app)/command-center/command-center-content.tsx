@@ -29,8 +29,6 @@ import type {
 	DailyHawksBias,
 	DailyPlan,
 } from "@/db/schema"
-import { HawksMissingBiasAlert } from "@/components/hawks/hawks-missing-bias-alert"
-import { DailyBiasForm } from "@/components/hawks/daily-bias-form"
 import { Crosshair, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
@@ -65,7 +63,7 @@ const CommandCenterContent = ({
 	viewDate,
 	isToday,
 	initialLiveTradingStatus = null,
-	initialHawksBias = null,
+	initialHawksBias: _initialHawksBias = null,
 	hawksDailyOrdinal = 0,
 }: CommandCenterContentProps) => {
 	const isReadOnly = !isToday
@@ -167,15 +165,12 @@ const CommandCenterContent = ({
 				</div>
 			)}
 
-			{/* Hawks bias gate — shown only on today's view when bias not yet set */}
-			{isHawksActive && !initialHawksBias && isToday && (
-				<HawksMissingBiasAlert tradingDay={viewDate} initialBias={null} />
-			)}
-
-			{/* Hawks bias review panel — shown when bias is already set */}
-			{isHawksActive && initialHawksBias && (
-				<DailyBiasForm tradingDay={viewDate} initialBias={initialHawksBias} />
-			)}
+			{/* Hawks "Viés do dia" UI intentionally disabled everywhere. The
+			    creation/review widgets used to render here (HawksMissingBiasAlert
+			    + DailyBiasForm) and on the journal page; both were removed per
+			    Ygor on 2026-06-23 — bias confirmation moved out of the UI flow.
+			    Server-side checks (trade creation rejects when bias missing) are
+			    untouched. Re-enable here if the gate comes back. */}
 
 			{/* Hawks daily trade counter — compact badge visible when Hawks is active today.
 			    The cap mirrors the Circuit Breaker's resolved maxTrades (from the active

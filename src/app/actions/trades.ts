@@ -44,7 +44,18 @@ import {
 	type PaginationParams,
 } from "@/lib/validations/trade"
 import type { CsvTradeInput } from "@/lib/csv-parser"
-import { eq, and, gte, lte, inArray, desc, asc, count } from "drizzle-orm"
+import {
+	eq,
+	and,
+	gt,
+	gte,
+	lt,
+	lte,
+	inArray,
+	desc,
+	asc,
+	count,
+} from "drizzle-orm"
 import {
 	calculatePnL,
 	calculateAssetPnL,
@@ -260,18 +271,12 @@ export const createTrade = async (
 				),
 				columns: { bias: true },
 			})
-			if (!biasRow) {
-				return {
-					status: "error",
-					message: t("actions.hawksBiasMissing"),
-					errors: [
-						{
-							code: "HAWKS_BIAS_MISSING",
-							detail: "Confirm the daily Hawks bias before logging trades",
-						},
-					],
-				}
-			}
+			// The "Viés do dia" UI is hidden everywhere (2026-06-23), so the
+			// gate is now soft: missing bias falls back to "neutral" and the
+			// trade is allowed. The sidecar still records biasAtEntry so the
+			// historical analytic remains intact.
+			const resolvedBias = (biasRow?.bias ?? "neutral") as
+				"long" | "short" | "neutral"
 			const dayStart = getStartOfDay(tradeData.entryDate)
 			const dayEnd = getEndOfDay(tradeData.entryDate)
 			const [ordRow] = await db
@@ -289,7 +294,7 @@ export const createTrade = async (
 				tradeId: "", // populated inside tx after the trade insert
 				tradingDay,
 				scenarioId: tradeData.hawks.scenarioId ?? null,
-				biasAtEntry: biasRow.bias,
+				biasAtEntry: resolvedBias,
 				vwapRespected: tradeData.hawks.vwapRespected,
 				ajusteRespected: tradeData.hawks.ajusteRespected,
 				tripleScreenConfirmed: tradeData.hawks.tripleScreenConfirmed,
@@ -935,6 +940,66 @@ export const getTrade = async (
 				{ code: "FETCH_FAILED", detail: toSafeErrorMessage(error, "getTrade") },
 			],
 		}
+	}
+}
+
+/**
+ * Resolve the prev / next trade IDs ordered by entryDate so the trade
+ * detail page can wire up previous/next navigation. "Prev" is the trade
+ * that opened immediately BEFORE the current one (earlier entryDate);
+ * "next" is the one that opened AFTER. Archived trades excluded.
+ */
+export const getAdjacentTrades = async (
+	id: string
+): Promise<{
+	status: "success" | "error"
+	prevId: string | null
+	nextId: string | null
+}> => {
+	try {
+		const { accountId } = await requireAuth()
+		const current = await db.query.trades.findFirst({
+			where: and(
+				eq(trades.id, id),
+				eq(trades.accountId, accountId),
+				eq(trades.isArchived, false)
+			),
+			columns: { id: true, entryDate: true },
+		})
+		if (!current) {
+			return { status: "error", prevId: null, nextId: null }
+		}
+		const [prevRow] = await db
+			.select({ id: trades.id })
+			.from(trades)
+			.where(
+				and(
+					eq(trades.accountId, accountId),
+					eq(trades.isArchived, false),
+					lt(trades.entryDate, current.entryDate)
+				)
+			)
+			.orderBy(desc(trades.entryDate))
+			.limit(1)
+		const [nextRow] = await db
+			.select({ id: trades.id })
+			.from(trades)
+			.where(
+				and(
+					eq(trades.accountId, accountId),
+					eq(trades.isArchived, false),
+					gt(trades.entryDate, current.entryDate)
+				)
+			)
+			.orderBy(asc(trades.entryDate))
+			.limit(1)
+		return {
+			status: "success",
+			prevId: prevRow?.id ?? null,
+			nextId: nextRow?.id ?? null,
+		}
+	} catch {
+		return { status: "error", prevId: null, nextId: null }
 	}
 }
 

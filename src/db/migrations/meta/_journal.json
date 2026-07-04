@@ -187,8 +187,15 @@
 		{
 			"idx": 26,
 			"version": "7",
+			"when": 1782215695751,
+			"tag": "0026_hawks_renko_sizes_add_1m_1d",
+			"breakpoints": true
+		},
+		{
+			"idx": 27,
+			"version": "7",
 			"when": 1782671868761,
-			"tag": "0026_classy_hannibal_king",
+			"tag": "0027_classy_hannibal_king",
 			"breakpoints": true
 		}
 	]

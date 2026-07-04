@@ -12,9 +12,11 @@
 interface RenkoSizeRow {
 	effectiveDate: string // ISO "YYYY-MM-DD"
 	weekNumber: number
+	size1m: number | null
 	size5m: number
 	size15m: number
 	size60m: number
+	size1d: number | null
 	/**
 	 * Per-row asset symbol from the optional `ASSET` column in the CSV.
 	 * `null` falls back to the `assetSymbol` arg passed to
@@ -23,4 +25,15 @@ interface RenkoSizeRow {
 	assetSymbol?: string | null
 }
 
-export type { RenkoSizeRow }
+interface RenkoSizeRecord {
+	id: string
+	effectiveDate: string
+	weekNumber: number
+	size1m: number | null
+	size5m: number
+	size15m: number
+	size60m: number
+	size1d: number | null
+}
+
+export type { RenkoSizeRow, RenkoSizeRecord }

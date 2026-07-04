@@ -157,6 +157,7 @@
 		"equityShield": "Equity Shield",
 		"backtestOptimize": "Optimize",
 		"indicatorLab": "Indicator Lab",
+		"renkoSizes": "Renko Sizes",
 		"newTrade": "New Trade",
 		"plans": "Plans",
 		"simulation": "Simulation",
@@ -1170,6 +1171,8 @@
 		"trades": "Trades",
 		"newTrade": "New Trade",
 		"editTrade": "Edit Trade",
+		"prevTrade": "Previous trade",
+		"nextTrade": "Next trade",
 		"deleteTrade": "Delete Trade",
 		"deleteConfirm": "Delete?",
 		"deleteSuccess": "Trade deleted successfully",
@@ -1357,7 +1360,25 @@
 			"toggleIndicatorGroup": "Toggle {name} indicator group",
 			"switchToDetailView": "Switch to detail view",
 			"switchToChartView": "Switch to chart view",
-			"chartButton": "Chart"
+			"chartButton": "Chart",
+			"legendButton": "Legend",
+			"legendDialogTitle": "Chart legend",
+			"legendCandles": "Renko bricks",
+			"legendBrickBullish": "Bullish brick",
+			"legendBrickBullishDesc": "Close > prior brick's high — new up brick.",
+			"legendBrickBearish": "Bearish brick",
+			"legendBrickBearishDesc": "Close < prior brick's low — new down brick.",
+			"legendEmaDesc": "Exponential moving average overlay drawn on the brick close.",
+			"legendVwapDayDesc": "Volume-weighted average price for the current trading day. Resets at 09:00 BRT.",
+			"legendVwapWeekDesc": "VWAP accumulated across the trading week. Resets each Monday.",
+			"legendVwapMonthDesc": "VWAP accumulated across the trading month. Resets on the first session.",
+			"legendAjusteDesc": "Daily settlement reference. One value per day, drawn as a horizontal step.",
+			"legendAjusteAdjDesc": "Adjusted settlement (carry/expiry-aware). One value per day, drawn as a horizontal step.",
+			"legendTradeMarkers": "Trade markers",
+			"legendEntryLong": "Long entry",
+			"legendEntryLongDesc": "Up arrow below the bar — buy execution timestamp.",
+			"legendEntryShort": "Short entry",
+			"legendEntryShortDesc": "Down arrow above the bar — sell execution timestamp."
 		},
 		"panel": {
 			"stats": "Stats",
@@ -6997,6 +7018,33 @@
 			"network": "Network error. Try again.",
 			"generic": "Something went wrong.",
 			"budget": "Monthly assistant budget reached ({spent} of {cap}). Resets next month."
+		}
+	},
+	"renkoSizes": {
+		"title": "Renko Sizes",
+		"subtitle": "Weekly Hawks brick R-numbers for {asset}",
+		"addThisWeek": "Add week {week}",
+		"editThisWeek": "Edit week {week}",
+		"currentWeekMissing": "Week {week} ({date}) has no row yet — add it before trading.",
+		"empty": "No renko sizes loaded yet.",
+		"savedToast": "Renko sizes saved.",
+		"saveFailed": "Save failed.",
+		"requiredFieldsMissing": "Week, 5m, 15m and 60m are required.",
+		"col": {
+			"week": "Week",
+			"date": "Date",
+			"1m": "1m",
+			"5m": "5m",
+			"15m": "15m",
+			"60m": "60m",
+			"1d": "1d"
+		},
+		"modal": {
+			"addTitle": "Add week's renko sizes",
+			"editTitle": "Edit week's renko sizes",
+			"description": "Week {week} — {date} (Monday-anchored). 5m, 15m, 60m are required; 1m and 1d are optional.",
+			"cancel": "Cancel",
+			"save": "Save"
 		}
 	}
 }
