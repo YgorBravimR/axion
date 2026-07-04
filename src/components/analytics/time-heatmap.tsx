@@ -163,6 +163,15 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 
 	const isRMode = metric === "avgR"
 
+	/** Stable handlers for cells — wrapped in useCallback to prevent recreation on hover. */
+	const handleCellEnter = useCallback((cell: TimeHeatmapCell) => {
+		setHoveredCell(cell)
+	}, [])
+
+	const handleCellLeave = useCallback(() => {
+		setHoveredCell(null)
+	}, [])
+
 	const days = useMemo(
 		() => ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
 		[]
@@ -212,18 +221,6 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 				return cell.totalTrades
 		}
 	}
-	const magnitudeOf = (cell: CellLike): number => {
-		switch (metric) {
-			case "pnl":
-				return Math.abs(cell.totalPnl)
-			case "avgR":
-				return Math.abs(cell.avgR)
-			case "winRate":
-				return Math.abs(cell.winRate - 50)
-			case "trades":
-				return cell.totalTrades
-		}
-	}
 	const directionOf = (cell: CellLike): "buy" | "sell" => {
 		switch (metric) {
 			case "pnl":
@@ -250,27 +247,43 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 		}
 	}
 
-	/**
-	 * Score a cell/aggregate for best-worst ranking. Returns NaN when
-	 * the sample is too small to support a ranking claim. This is the
-	 * single chokepoint that prevents n=1 cells from winning.
-	 */
-	const rankScoreOf = (cell: CellLike): number => {
-		if (cell.totalTrades < SAMPLE_THRESHOLDS.MIN_FOR_RANKING) {
-			return Number.NaN
-		}
-		if (metric === "winRate") {
-			const decided = cell.wins + cell.losses
-			if (decided === 0) {
+	/** Memoized magnitude scorer used by both getCellStyle and ranking. Depends on metric. */
+	const magnitudeOf = useCallback(
+		(cell: CellLike): number => {
+			switch (metric) {
+				case "pnl":
+					return Math.abs(cell.totalPnl)
+				case "avgR":
+					return Math.abs(cell.avgR)
+				case "winRate":
+					return Math.abs(cell.winRate - 50)
+				case "trades":
+					return cell.totalTrades
+			}
+		},
+		[metric]
+	)
+
+	/** Memoized rank scorer. Depends on metric. */
+	const rankScoreOf = useCallback(
+		(cell: CellLike): number => {
+			if (cell.totalTrades < SAMPLE_THRESHOLDS.MIN_FOR_RANKING) {
 				return Number.NaN
 			}
-			// Center the Wilson LB on 50% so positive = above-chance window.
-			return (wilsonLowerBound(cell.wins, decided) - 0.5) * 100
-		}
-		// For avgR/pnl/trades, raw value is fine once n is large enough,
-		// because the threshold already guards against single-trade noise.
-		return valueOf(cell)
-	}
+			if (metric === "winRate") {
+				const decided = cell.wins + cell.losses
+				if (decided === 0) {
+					return Number.NaN
+				}
+				// Center the Wilson LB on 50% so positive = above-chance window.
+				return (wilsonLowerBound(cell.wins, decided) - 0.5) * 100
+			}
+			// For avgR/pnl/trades, raw value is fine once n is large enough,
+			// because the threshold already guards against single-trade noise.
+			return valueOf(cell)
+		},
+		[metric]
+	)
 
 	const getMetricValue = (cell: TimeHeatmapCell): number => valueOf(cell)
 
@@ -450,7 +463,8 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 				sortedDays.length > 0,
 		}
 	}, [
-		metric,
+		magnitudeOf,
+		rankScoreOf,
 		rankableSlots,
 		baseHourAggregates,
 		baseDayAggregates,
@@ -476,15 +490,6 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 	const hoveredConfidence = hoveredCell
 		? classifySample(hoveredCell.totalTrades)
 		: null
-
-	/** Stable handlers for cells — wrapped in useCallback to prevent recreation on hover. */
-	const handleCellEnter = useCallback((cell: TimeHeatmapCell) => {
-		setHoveredCell(cell)
-	}, [])
-
-	const handleCellLeave = useCallback(() => {
-		setHoveredCell(null)
-	}, [])
 
 	return (
 		<div
