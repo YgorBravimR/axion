@@ -37,7 +37,9 @@ const makeOperation = (
 		entryPrice: 75500,
 		exitPrice: 75600,
 		positionSize: 10,
-		pnl: 1000,
+		pnl: 10,
+		mfe: 1500,
+		mae: -750,
 		normalizedAsset: "WIN",
 		originalAssetCode: "WING26",
 		isFutures: true,
@@ -161,6 +163,8 @@ describe("operationsPass", () => {
 
 	it("skips mfe / mae when profitMetadata MEP/MEN are null", () => {
 		const operation = makeOperation({
+			mfe: null as unknown as number,
+			mae: null as unknown as number,
 			profitMetadata: {
 				marketPriceAtClose: null,
 				wasAveraged: false,

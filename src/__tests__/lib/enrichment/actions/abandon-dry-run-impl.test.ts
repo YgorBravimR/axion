@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-const mockRequireAuth = vi.fn()
+const mockRequireAuth = vi.hoisted(() => vi.fn())
 
 vi.mock("@/app/actions/auth", () => ({
 	requireAuth: mockRequireAuth,
@@ -14,7 +14,12 @@ vi.mock("@/lib/error-utils", () => ({
 	isFrameworkSignal: vi.fn((error) => error?.message?.includes("framework")),
 }))
 
-vi.mock("@/db/drizzle")
+vi.mock("@/db/drizzle", () => ({
+	db: {
+		select: vi.fn(),
+		update: vi.fn(),
+	},
+}))
 
 import { abandonDryRunImpl } from "@/lib/enrichment/actions/abandon-dry-run-impl"
 import { db } from "@/db/drizzle"
@@ -46,9 +51,12 @@ describe("abandonDryRunImpl", () => {
 		const mockFrom = vi.fn().mockReturnValue({ where: mockWhere })
 		mockDb.select = vi.fn().mockReturnValue({ from: mockFrom })
 
-		const mockSnapshotWhere = vi
+		const mockReturning = vi
 			.fn()
 			.mockResolvedValue([{ id: "snap-1" }, { id: "snap-2" }, { id: "snap-3" }])
+		const mockSnapshotWhere = vi
+			.fn()
+			.mockReturnValue({ returning: mockReturning })
 		const mockSnapshotSet = vi
 			.fn()
 			.mockReturnValue({ where: mockSnapshotWhere })
@@ -66,7 +74,10 @@ describe("abandonDryRunImpl", () => {
 		const mockFrom = vi.fn().mockReturnValue({ where: mockWhere })
 		mockDb.select = vi.fn().mockReturnValue({ from: mockFrom })
 
-		const mockSnapshotWhere = vi.fn().mockResolvedValue([{ id: "snap-1" }])
+		const mockReturning = vi.fn().mockResolvedValue([{ id: "snap-1" }])
+		const mockSnapshotWhere = vi
+			.fn()
+			.mockReturnValue({ returning: mockReturning })
 		const mockSnapshotSet = vi
 			.fn()
 			.mockReturnValue({ where: mockSnapshotWhere })
@@ -92,9 +103,12 @@ describe("abandonDryRunImpl", () => {
 		const mockFrom = vi.fn().mockReturnValue({ where: mockWhere })
 		mockDb.select = vi.fn().mockReturnValue({ from: mockFrom })
 
-		const mockSnapshotWhere = vi
+		const mockReturning = vi
 			.fn()
 			.mockResolvedValue([{ id: "snap-1" }, { id: "snap-2" }])
+		const mockSnapshotWhere = vi
+			.fn()
+			.mockReturnValue({ returning: mockReturning })
 		const mockSnapshotSet = vi
 			.fn()
 			.mockReturnValue({ where: mockSnapshotWhere })
@@ -111,7 +125,10 @@ describe("abandonDryRunImpl", () => {
 		const mockFrom = vi.fn().mockReturnValue({ where: mockWhere })
 		mockDb.select = vi.fn().mockReturnValue({ from: mockFrom })
 
-		const mockSnapshotWhere = vi.fn().mockResolvedValue([])
+		const mockReturning = vi.fn().mockResolvedValue([])
+		const mockSnapshotWhere = vi
+			.fn()
+			.mockReturnValue({ returning: mockReturning })
 		const mockSnapshotSet = vi
 			.fn()
 			.mockReturnValue({ where: mockSnapshotWhere })
@@ -130,7 +147,10 @@ describe("abandonDryRunImpl", () => {
 		const mockFrom = vi.fn().mockReturnValue({ where: mockWhere })
 		mockDb.select = vi.fn().mockReturnValue({ from: mockFrom })
 
-		const mockSnapshotWhere = vi.fn().mockResolvedValue([{ id: "snap-1" }])
+		const mockReturning = vi.fn().mockResolvedValue([{ id: "snap-1" }])
+		const mockSnapshotWhere = vi
+			.fn()
+			.mockReturnValue({ returning: mockReturning })
 		const mockSnapshotSet = vi.fn().mockImplementation((payload) => {
 			capturedPayload = payload
 			return { where: mockSnapshotWhere }
@@ -149,7 +169,10 @@ describe("abandonDryRunImpl", () => {
 		const mockFrom = vi.fn().mockReturnValue({ where: mockWhere })
 		mockDb.select = vi.fn().mockReturnValue({ from: mockFrom })
 
-		const mockSnapshotWhere = vi.fn().mockResolvedValue([{ id: "snap-1" }])
+		const mockReturning = vi.fn().mockResolvedValue([{ id: "snap-1" }])
+		const mockSnapshotWhere = vi
+			.fn()
+			.mockReturnValue({ returning: mockReturning })
 		const mockSnapshotSet = vi
 			.fn()
 			.mockReturnValue({ where: mockSnapshotWhere })
@@ -166,7 +189,10 @@ describe("abandonDryRunImpl", () => {
 		const mockFrom = vi.fn().mockReturnValue({ where: mockWhere })
 		mockDb.select = vi.fn().mockReturnValue({ from: mockFrom })
 
-		const mockSnapshotWhere = vi.fn().mockResolvedValue([])
+		const mockReturning = vi.fn().mockResolvedValue([])
+		const mockSnapshotWhere = vi
+			.fn()
+			.mockReturnValue({ returning: mockReturning })
 		const mockSnapshotSet = vi
 			.fn()
 			.mockReturnValue({ where: mockSnapshotWhere })

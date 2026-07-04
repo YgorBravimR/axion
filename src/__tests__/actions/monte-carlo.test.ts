@@ -173,6 +173,12 @@ const mockAccountId = "d1e2f3a4-b5c6-4d7e-8f9a-b0c1d2e3f4a5"
 describe("getDataSourceOptions", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
+		vi.mocked(requireAuth).mockResolvedValue({
+			userId: mockUserId,
+			accountId: mockAccountId,
+			showAllAccounts: false,
+			allAccountIds: [mockAccountId],
+		} as never)
 	})
 
 	it("should return strategy options with trade counts", async () => {
@@ -185,44 +191,35 @@ describe("getDataSourceOptions", () => {
 			name: "Strategy 2",
 		})
 
-		vi.mocked(requireAuth).mockResolvedValue({
-			userId: mockUserId,
-			accountId: mockAccountId,
-			showAllAccounts: false,
-			allAccountIds: [mockAccountId],
-		} as never)
-
 		vi.mocked(db.query.strategies).findMany.mockResolvedValueOnce([
 			strategy1,
 			strategy2,
 		] as never)
 
 		// Mock trade counts: 15 for s1, 5 for s2
-		const tradesChain = {
-			where: vi.fn().mockReturnValue({
-				then: vi
-					.fn()
-					.mockResolvedValueOnce(Array(15).fill(null))
-					.mockResolvedValueOnce(Array(5).fill(null)),
-			}),
+		// The first select chain will return per-strategy counts (2 results from groupBy)
+		const perStrategyChain = {
+			groupBy: vi.fn().mockResolvedValueOnce([
+				{ strategyId: strategy1.id, tradesCount: 15 },
+				{ strategyId: strategy2.id, tradesCount: 5 },
+			]),
 		}
 
-		// Mock the select chain for trades
-		vi.mocked(db.select).mockReturnValue({
-			from: vi.fn().mockReturnValue(tradesChain),
-		} as never)
-
-		// Also mock findMany call for "All Strategies" option
-		const allAccountTradesChain = {
-			where: vi.fn().mockReturnValue({
-				then: vi.fn().mockResolvedValueOnce(Array(20).fill(null)),
-			}),
+		// The second select chain will return all-account trade count
+		const allAccountChain = {
+			where: vi.fn().mockResolvedValueOnce([{ tradesCount: 20 }]),
 		}
 
-		// Replace the mock for the all-strategies query
-		vi.mocked(db.select).mockReturnValue({
-			from: vi.fn().mockReturnValue(allAccountTradesChain),
-		} as never)
+		// Mock db.select to return different chains for each call
+		vi.mocked(db.select)
+			.mockReturnValueOnce({
+				from: vi.fn().mockReturnValue({
+					where: vi.fn().mockReturnValue(perStrategyChain),
+				}),
+			} as never)
+			.mockReturnValueOnce({
+				from: vi.fn().mockReturnValue(allAccountChain),
+			} as never)
 
 		const result = (await getDataSourceOptions()) as ActionResponse<
 			DataSourceOption[]
@@ -289,19 +286,35 @@ describe("getDataSourceOptions", () => {
 			strategy,
 		] as never)
 
-		const tradesChain = {
-			where: vi.fn().mockReturnValue({
-				then: vi
-					.fn()
-					.mockResolvedValueOnce(Array(15).fill(null))
-					.mockResolvedValueOnce(Array(20).fill(null))
-					.mockResolvedValueOnce(Array(25).fill(null)),
-			}),
+		// First select: per-strategy counts
+		const perStrategyChain = {
+			groupBy: vi
+				.fn()
+				.mockResolvedValueOnce([{ strategyId: strategy.id, tradesCount: 15 }]),
 		}
 
-		vi.mocked(db.select).mockReturnValue({
-			from: vi.fn().mockReturnValue(tradesChain),
-		} as never)
+		// Second select: all-account trade count
+		const allAccountChain = {
+			where: vi.fn().mockResolvedValueOnce([{ tradesCount: 20 }]),
+		}
+
+		// Third select: universal (all accounts) trade count
+		const universalChain = {
+			where: vi.fn().mockResolvedValueOnce([{ tradesCount: 25 }]),
+		}
+
+		vi.mocked(db.select)
+			.mockReturnValueOnce({
+				from: vi.fn().mockReturnValue({
+					where: vi.fn().mockReturnValue(perStrategyChain),
+				}),
+			} as never)
+			.mockReturnValueOnce({
+				from: vi.fn().mockReturnValue(allAccountChain),
+			} as never)
+			.mockReturnValueOnce({
+				from: vi.fn().mockReturnValue(universalChain),
+			} as never)
 
 		const result = (await getDataSourceOptions()) as ActionResponse<
 			DataSourceOption[]
@@ -325,18 +338,27 @@ describe("getDataSourceOptions", () => {
 			strategy,
 		] as never)
 
-		const tradesChain = {
-			where: vi.fn().mockReturnValue({
-				then: vi
-					.fn()
-					.mockResolvedValueOnce(Array(15).fill(null))
-					.mockResolvedValueOnce(Array(20).fill(null)),
-			}),
+		// First select: per-strategy counts
+		const perStrategyChain = {
+			groupBy: vi
+				.fn()
+				.mockResolvedValueOnce([{ strategyId: strategy.id, tradesCount: 15 }]),
 		}
 
-		vi.mocked(db.select).mockReturnValue({
-			from: vi.fn().mockReturnValue(tradesChain),
-		} as never)
+		// Second select: all-account trade count (same as universal when single account)
+		const allAccountChain = {
+			where: vi.fn().mockResolvedValueOnce([{ tradesCount: 20 }]),
+		}
+
+		vi.mocked(db.select)
+			.mockReturnValueOnce({
+				from: vi.fn().mockReturnValue({
+					where: vi.fn().mockReturnValue(perStrategyChain),
+				}),
+			} as never)
+			.mockReturnValueOnce({
+				from: vi.fn().mockReturnValue(allAccountChain),
+			} as never)
 
 		const result = (await getDataSourceOptions()) as ActionResponse<
 			DataSourceOption[]

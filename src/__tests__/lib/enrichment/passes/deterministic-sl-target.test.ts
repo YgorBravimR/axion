@@ -96,9 +96,7 @@ describe("deterministicSlTargetPass", () => {
 	})
 
 	it("skips when trade.entryPrice is null", () => {
-		// Note: entryPrice is notNull in schema, but the pass may encounter NaN-like strings
-		// Create a fixture with empty string to simulate unparseable price
-		const trade = createTrade({ entryPrice: "0" })
+		const trade = createTrade({ entryPrice: null as unknown as string })
 		const ctx = createContext()
 
 		const result = deterministicSlTargetPass(trade, ctx)

@@ -19,6 +19,7 @@ import { z } from "zod"
 
 import { dbWs } from "@/db/drizzle-ws"
 import { assets, hawksRenkoSizes, priceCandles, timeframes } from "@/db/schema"
+import { rNumberToPoints } from "@/lib/enrichment/r-number"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import {
 	generateRenkoBricks,
@@ -221,9 +222,17 @@ export const regenerateRenkoBricks = async (
 		}))
 
 		// Step 3 — generate brick streams per TF.
-		const gen5m = generateRenkoBricks(bars, { sizeR: renkoSize.size5m })
-		const gen15m = generateRenkoBricks(bars, { sizeR: renkoSize.size15m })
-		const gen60m = generateRenkoBricks(bars, { sizeR: renkoSize.size60m })
+		// hawks_renko_sizes stores R-numbers, NOT points (CLAUDE.md rule #0):
+		// R<N> = (N − 1) ticks × 5 pts. generateRenkoBricks expects POINTS.
+		const gen5m = generateRenkoBricks(bars, {
+			sizeR: rNumberToPoints(renkoSize.size5m),
+		})
+		const gen15m = generateRenkoBricks(bars, {
+			sizeR: rNumberToPoints(renkoSize.size15m),
+		})
+		const gen60m = generateRenkoBricks(bars, {
+			sizeR: rNumberToPoints(renkoSize.size60m),
+		})
 
 		const warnings = [...gen5m.warnings, ...gen15m.warnings, ...gen60m.warnings]
 

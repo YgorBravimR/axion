@@ -223,7 +223,7 @@ describe("indicatorReadoutPass", () => {
 		expect(result.passStatus).toBe("succeeded")
 		const field = result.fields.setupRank as EnrichmentField
 		expect(field.value).toBe("AAA")
-		expect(field.derivation).toBe("Derived from favorableCount=6/7")
+		expect(field.derivation).toBe("favorableCount=6/7")
 	})
 
 	it("should assign setupRank = AA when favorableCount=5", () => {
@@ -268,7 +268,7 @@ describe("indicatorReadoutPass", () => {
 		expect(field.value).toBe("A")
 	})
 
-	it("should assign setupRank = B when favorableCount=3", () => {
+	it("should not set setupRank when favorableCount=3 (< 4 threshold)", () => {
 		const snapshot = createIndicatorSnapshot({ favorableCount: 3 })
 		vi.mocked(hawksIndicatorsModule.getHawksIndicatorsAt).mockReturnValue(
 			snapshot
@@ -285,11 +285,10 @@ describe("indicatorReadoutPass", () => {
 
 		const result = indicatorReadoutPass(trade, ctx)
 
-		const field = result.fields.setupRank as EnrichmentField
-		expect(field.value).toBe("B")
+		expect(result.fields.setupRank).toBeUndefined()
 	})
 
-	it("should assign setupRank = C when favorableCount=1", () => {
+	it("should not set setupRank when favorableCount=1 (< 4 threshold)", () => {
 		const snapshot = createIndicatorSnapshot({ favorableCount: 1 })
 		vi.mocked(hawksIndicatorsModule.getHawksIndicatorsAt).mockReturnValue(
 			snapshot
@@ -306,8 +305,7 @@ describe("indicatorReadoutPass", () => {
 
 		const result = indicatorReadoutPass(trade, ctx)
 
-		const field = result.fields.setupRank as EnrichmentField
-		expect(field.value).toBe("C")
+		expect(result.fields.setupRank).toBeUndefined()
 	})
 
 	it("should set confidence=high when favorableCount≥4", () => {

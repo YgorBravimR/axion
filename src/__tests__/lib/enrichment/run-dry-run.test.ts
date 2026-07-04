@@ -133,7 +133,7 @@ describe("runDryRun (integration)", () => {
 	})
 
 	it("each pass skips independently when its prerequisite is missing", () => {
-		const trade = makeTrade()
+		const trade = makeTrade({ exitDate: null })
 		const ctx: EnrichmentContext = {
 			candles: null,
 			profitOperation: null,

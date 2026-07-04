@@ -260,7 +260,7 @@ describe("migrateRun (v5 → v6)", () => {
 						startTime: 930,
 						endTime: 1730,
 						qualityGates: {
-							aggressionMode: "off",
+							aggressionMode: "reversed",
 							aggressionThreshold: 20000,
 						},
 					} as unknown as never,

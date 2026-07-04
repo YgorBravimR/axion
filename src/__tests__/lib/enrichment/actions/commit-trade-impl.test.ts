@@ -8,12 +8,14 @@ import type { Trade } from "@/db/schema"
 const {
 	mockFindFirstSnapshot,
 	mockFindFirstTrade,
+	mockFindFirstAsset,
 	mockDbUpdate,
 	mockDbTransaction,
 	mockRequireAuth,
 } = vi.hoisted(() => ({
 	mockFindFirstSnapshot: vi.fn(),
 	mockFindFirstTrade: vi.fn(),
+	mockFindFirstAsset: vi.fn(),
 	mockDbUpdate: vi.fn(),
 	mockDbTransaction: vi.fn(),
 	mockRequireAuth: vi.fn(),
@@ -28,6 +30,9 @@ vi.mock("@/db/drizzle", () => ({
 			trades: {
 				findFirst: mockFindFirstTrade,
 			},
+			assets: {
+				findFirst: mockFindFirstAsset,
+			},
 		},
 		update: mockDbUpdate,
 		transaction: mockDbTransaction,
@@ -40,6 +45,12 @@ vi.mock("@/app/actions/auth", () => ({
 
 vi.mock("@/lib/error-utils", () => ({
 	isFrameworkSignal: vi.fn((error) => error?.message?.includes("framework")),
+}))
+
+vi.mock("@/lib/enrichment/derive-trade-fields", () => ({
+	deriveTradeFieldsFromEnrichment: vi.fn(() => ({
+		patch: {},
+	})),
 }))
 
 import { commitTradeImpl } from "@/lib/enrichment/actions/commit-trade-impl"
@@ -97,6 +108,10 @@ describe("commitTradeImpl", () => {
 	beforeEach(() => {
 		vi.clearAllMocks()
 		mockRequireAuth.mockResolvedValue(mockAuthContext)
+		mockFindFirstAsset.mockResolvedValue({
+			symbol: "ES",
+			pointValue: 50,
+		})
 	})
 
 	it("commits accepted fields with no staleness", async () => {

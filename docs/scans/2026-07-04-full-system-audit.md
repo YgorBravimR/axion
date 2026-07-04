@@ -1,6 +1,10 @@
 # Full-System Audit — 2026-07-04
 
-> **Fix status (wave 1, same day):** C1, C2, H1, H2, H3, H8, and the JSON.parse/catch-swallow mediums are FIXED (uncommitted at time of writing). Deferred to wave 2: H4 (enrich-day skip-vs-pass), H5 (analytics SQL aggregation), H6 (candle viewport pagination), heatmap perf, DuckDB lifecycle, composite index (protected path — needs explicit approval), L1 (dead-code renko-pipeline). Also discovered during verification: **30 pre-existing unit-test failures on `main`** (enrichment passes, analytics, monte-carlo, optimize migration) — CI gates lint only, not tests.
+> **Fix status (wave 1, same day):** C1, C2, H1, H2, H3, H8, and the JSON.parse/catch-swallow mediums FIXED — commit `b1a5dd41`.
+>
+> **Fix status (wave 2, same day):** all 30+1 pre-existing test failures fixed (root causes: stale mocks after capital-events feature, MFE/MAE ownership moved from candle-math to operations pass, vitest mock-hoisting misuse, fixture typo in storage-migration); CI test gate added (`.github/workflows/test.yml`, `pnpm test:unit`); H4 fixed (enrich-day tracks candle-fetch failures, exit code 2 on degraded runs); heatmap perf fixed (split metric-independent/dependent memos + memoized cells); L1 defused (renko-pipeline now converts via `rNumberToPoints` even though still unwired). **Composite-index finding RETRACTED** — `idx_trades_account_archived_date` and partial `idx_trades_active_date (accountId, entryDate) WHERE is_archived = false` already exist in schema.ts; the data-layer agent missed them.
+>
+> Still open: H5 (analytics SQL-side aggregation — refactor, needs design), H6 (candle viewport pagination — design change), DuckDB connection lifecycle, `?? 0` null-coercion policy sweep in parsers beyond the fixed sites, drawings clock-skew conflict resolution.
 
 Seven parallel read-only auditors swept: trading math, server-action security, data layer, client state/races, backtest engine, performance, error handling. Orchestrator adversarially re-verified all critical claims before inclusion. Severity reflects verified impact, not agent-reported severity.
 

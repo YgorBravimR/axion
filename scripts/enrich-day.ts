@@ -368,6 +368,7 @@ const main = async () => {
 		fullyEnriched: 0,
 		partial: 0,
 		untouched: 0,
+		candleFetchFailures: [] as Array<{ tradeId: string; reason: string }>,
 	}
 
 	for (const trade of candidates) {
@@ -391,6 +392,7 @@ const main = async () => {
 		// Read Parquet directly (can't import candle-store: top-level await breaks CJS).
 		// Extend fetch window backward 1h for indicator-readout floor candle.
 		let candles = null
+		let candleFetchFailed = false
 		if (timeframe && asset) {
 			const indicatorLookbackMs = 60 * 60 * 1000
 			const fetchFrom = new Date(
@@ -404,9 +406,15 @@ const main = async () => {
 					to: trade.exitDate,
 				})
 			} catch (err) {
+				candleFetchFailed = true
+				const reason = (err as Error).message
 				console.warn(
-					`[enrich-day] candle fetch failed for ${trade.id.slice(0, 8)}: ${(err as Error).message}`
+					`[enrich-day] candle fetch failed for ${trade.id.slice(0, 8)}: ${reason}`
 				)
+				summary.candleFetchFailures.push({
+					tradeId: trade.id.slice(0, 8),
+					reason,
+				})
 			}
 		}
 
@@ -476,9 +484,10 @@ const main = async () => {
 			summary.partial++
 		}
 
+		const candleNote = candleFetchFailed ? " [CANDLE_FETCH_FAILED]" : ""
 		console.log(
 			`  ✓ ${trade.id.slice(0, 8)} ${trade.asset} ${trade.direction} ${trade.entryDate?.toISOString?.()}  ` +
-				`ops=${dry.passes.operations.passStatus} candle=${dry.passes.candleMath.passStatus} ind=${dry.passes.indicatorReadout.passStatus} sl=${dry.passes.deterministicSlTarget.passStatus}  ` +
+				`ops=${dry.passes.operations.passStatus} candle=${dry.passes.candleMath.passStatus} ind=${dry.passes.indicatorReadout.passStatus} sl=${dry.passes.deterministicSlTarget.passStatus}${candleNote}  ` +
 				`accepted=[${accepted.join(",")}]`
 		)
 	}
@@ -486,6 +495,18 @@ const main = async () => {
 	console.log()
 	console.log(`[enrich-day] DONE`)
 	console.log(JSON.stringify(summary, null, 2))
+
+	// Exit non-zero if any candle fetch failed (degraded run).
+	if (summary.candleFetchFailures.length > 0) {
+		console.log()
+		console.error(
+			`[enrich-day] DEGRADED: ${summary.candleFetchFailures.length} trade(s) had candle fetch failures:`
+		)
+		for (const failure of summary.candleFetchFailures) {
+			console.error(`  ${failure.tradeId}: ${failure.reason}`)
+		}
+		process.exit(2)
+	}
 }
 
 main()

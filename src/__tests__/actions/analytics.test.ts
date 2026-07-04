@@ -22,6 +22,9 @@ vi.mock("@/db/drizzle", () => {
 				settings: {
 					findFirst: vi.fn(),
 				},
+				accountCapitalEvents: {
+					findMany: vi.fn(),
+				},
 			},
 			select: vi.fn(() => emptySelectChain),
 		},
@@ -335,6 +338,12 @@ describe("Analytics Server Actions", () => {
 	})
 
 	describe("getEquityCurve", () => {
+		beforeEach(() => {
+			vi.mocked(db.query.accountCapitalEvents).findMany.mockResolvedValue(
+				[] as never
+			)
+		})
+
 		it("should return empty equity curve when no trades found", async () => {
 			vi.mocked(db.query.trades).findMany.mockResolvedValue([] as never)
 			vi.mocked(db.query.settings).findFirst.mockResolvedValue(null as never)

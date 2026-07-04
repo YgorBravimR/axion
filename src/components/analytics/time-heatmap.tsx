@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useState, useMemo } from "react"
+import { Fragment, useState, useMemo, useCallback, memo } from "react"
 import { useTranslations } from "next-intl"
 import type { TimeHeatmapCell } from "@/types"
 import { formatBrlCompactWithSign, formatR } from "@/lib/formatting"
@@ -36,6 +36,100 @@ interface TimeHeatmapProps {
 const TRADING_HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17]
 
 type HeatmapMetric = "pnl" | "avgR" | "winRate" | "trades"
+
+interface HeatmapCellProps {
+	cell: TimeHeatmapCell | undefined
+	hour: number
+	day: string
+	isHovered: boolean
+	cellStyle: string
+	onMouseEnter: () => void
+	onMouseLeave: () => void
+	t: ReturnType<typeof useTranslations>
+	tDayNames: ReturnType<typeof useTranslations>
+	confidence: "reliable" | "low" | "insufficient" | null
+}
+
+/** Memoized heatmap cell — only re-renders on hover state or data change. */
+const HeatmapCell = memo(
+	({
+		cell,
+		hour,
+		day,
+		isHovered,
+		cellStyle,
+		onMouseEnter,
+		onMouseLeave,
+		t,
+		tDayNames,
+		confidence,
+	}: HeatmapCellProps) => {
+		const hasData = cell && cell.totalTrades > 0
+		const cellClass = cn(
+			"relative flex h-11 items-center justify-center rounded-md transition-all",
+			cellStyle,
+			isHovered && "ring-acc-100 scale-105 ring-2"
+		)
+
+		if (hasData) {
+			return (
+				<button
+					key={`${day}-${hour}`}
+					type="button"
+					className={cn(
+						cellClass,
+						"hover:ring-acc-100 focus:ring-acc-100 cursor-pointer hover:ring-2 focus:ring-2 focus:outline-none"
+					)}
+					onMouseEnter={onMouseEnter}
+					onMouseLeave={onMouseLeave}
+					onFocus={onMouseEnter}
+					onBlur={onMouseLeave}
+					aria-label={t("time.heatmapCellAriaLabel", {
+						day: tDayNames(
+							cell.dayName as
+								| "Monday"
+								| "Tuesday"
+								| "Wednesday"
+								| "Thursday"
+								| "Friday"
+								| "Saturday"
+								| "Sunday"
+						),
+						hour: cell.hourLabel,
+						trades: cell.totalTrades,
+						winRate: cell.winRate.toFixed(0),
+					})}
+				>
+					<span
+						className={cn(
+							"text-micro font-semibold drop-shadow-sm",
+							confidence === "insufficient" ? "text-txt-300" : "text-txt-100"
+						)}
+					>
+						{cell.totalTrades}
+					</span>
+					{confidence === "low" && (
+						<span
+							className="bg-warning absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full"
+							aria-hidden="true"
+						/>
+					)}
+				</button>
+			)
+		}
+		return <div key={`${day}-${hour}`} className={cellClass} />
+	},
+	(prev: HeatmapCellProps, next: HeatmapCellProps) => {
+		return (
+			prev.cell === next.cell &&
+			prev.isHovered === next.isHovered &&
+			prev.cellStyle === next.cellStyle &&
+			prev.confidence === next.confidence
+		)
+	}
+)
+
+HeatmapCell.displayName = "HeatmapCell"
 
 /**
  * Heatmap of trading performance by day × hour.
@@ -178,124 +272,6 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 		return valueOf(cell)
 	}
 
-	const {
-		cellMap,
-		cellsWithTrades,
-		maxAbsValue,
-		bestSlot,
-		worstSlot,
-		bestHour,
-		worstHour,
-		bestDay,
-		worstDay,
-		rankingAvailable,
-	} = useMemo(() => {
-		const map = new Map<string, TimeHeatmapCell>()
-		for (const cell of data) {
-			map.set(`${cell.dayOfWeek}-${cell.hour}`, cell)
-		}
-
-		const withTrades = data.filter((c) => c.totalTrades > 0)
-		// Color intensity scales against the largest reliable cell only. If we
-		// included insufficient cells in the denominator, a single 1-trade
-		// outlier with a giant R could flatten every well-sampled cell down to
-		// the lightest opacity step while itself rendering gray.
-		const colorScaleCells = withTrades.filter(
-			(c) => classifySample(c.totalTrades) !== "insufficient"
-		)
-		const maxAbs = colorScaleCells.reduce(
-			(max, cell) => Math.max(max, magnitudeOf(cell)),
-			0
-		)
-
-		// Filter ranking candidates to cells with enough data; sort by Wilson
-		// lower bound (winRate) or raw value (others).
-		const rankableSlots = withTrades.filter(
-			(c) => c.totalTrades >= SAMPLE_THRESHOLDS.MIN_FOR_RANKING
-		)
-		const sortedRankable = rankableSlots.toSorted(
-			(a, b) => rankScoreOf(b) - rankScoreOf(a)
-		)
-
-		const hourAggregates = TRADING_HOURS.map((hour) => {
-			const cells = withTrades.filter((c) => c.hour === hour)
-			const totalTrades = cells.reduce((sum, c) => sum + c.totalTrades, 0)
-			const totalPnl = cells.reduce((sum, c) => sum + c.totalPnl, 0)
-			const totalWins = cells.reduce((sum, c) => sum + c.wins, 0)
-			const totalLosses = cells.reduce((sum, c) => sum + c.losses, 0)
-			const decided = totalWins + totalLosses
-			const winRate = decided > 0 ? (totalWins / decided) * 100 : 0
-			const weightedAvgR =
-				totalTrades > 0
-					? cells.reduce((sum, c) => sum + c.avgR * c.totalTrades, 0) /
-						totalTrades
-					: 0
-			return {
-				hour,
-				label: `${hour}h`,
-				totalTrades,
-				totalPnl,
-				winRate,
-				avgR: weightedAvgR,
-				wins: totalWins,
-				losses: totalLosses,
-			}
-		}).filter((h) => h.totalTrades >= SAMPLE_THRESHOLDS.MIN_FOR_RANKING)
-
-		const sortedHours = hourAggregates.toSorted(
-			(a, b) => rankScoreOf(b) - rankScoreOf(a)
-		)
-
-		const dayAggregates = days
-			.map((day, index) => {
-				const dayOfWeek = index + 1
-				const cells = withTrades.filter((c) => c.dayOfWeek === dayOfWeek)
-				const totalTrades = cells.reduce((sum, c) => sum + c.totalTrades, 0)
-				const totalPnl = cells.reduce((sum, c) => sum + c.totalPnl, 0)
-				const totalWins = cells.reduce((sum, c) => sum + c.wins, 0)
-				const totalLosses = cells.reduce((sum, c) => sum + c.losses, 0)
-				const decided = totalWins + totalLosses
-				const winRate = decided > 0 ? (totalWins / decided) * 100 : 0
-				const weightedAvgR =
-					totalTrades > 0
-						? cells.reduce((sum, c) => sum + c.avgR * c.totalTrades, 0) /
-							totalTrades
-						: 0
-				return {
-					day,
-					dayLabel: dayLabels[index],
-					totalTrades,
-					totalPnl,
-					winRate,
-					avgR: weightedAvgR,
-					wins: totalWins,
-					losses: totalLosses,
-				}
-			})
-			.filter((d) => d.totalTrades >= SAMPLE_THRESHOLDS.MIN_FOR_RANKING)
-
-		const sortedDays = dayAggregates.toSorted(
-			(a, b) => rankScoreOf(b) - rankScoreOf(a)
-		)
-
-		return {
-			cellMap: map,
-			cellsWithTrades: withTrades,
-			maxAbsValue: maxAbs,
-			bestSlot: sortedRankable[0],
-			worstSlot: sortedRankable[sortedRankable.length - 1],
-			bestHour: sortedHours[0],
-			worstHour: sortedHours[sortedHours.length - 1],
-			bestDay: sortedDays[0],
-			worstDay: sortedDays[sortedDays.length - 1],
-			rankingAvailable:
-				sortedRankable.length > 0 ||
-				sortedHours.length > 0 ||
-				sortedDays.length > 0,
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [data, metric, days, dayLabels])
-
 	const getMetricValue = (cell: TimeHeatmapCell): number => valueOf(cell)
 
 	/** Cell color depends on direction AND sample confidence. */
@@ -343,6 +319,144 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 		return `${(lo * 100).toFixed(0)}–${(hi * 100).toFixed(0)}%`
 	}
 
+	/** Metric-independent aggregates (indexed maps and base stats). Keyed on [data] only. */
+	const {
+		cellMap,
+		cellsWithTrades,
+		colorScaleCells,
+		rankableSlots,
+		hourAggregates: baseHourAggregates,
+		dayAggregates: baseDayAggregates,
+	} = useMemo(() => {
+		const map = new Map<string, TimeHeatmapCell>()
+		for (const cell of data) {
+			map.set(`${cell.dayOfWeek}-${cell.hour}`, cell)
+		}
+
+		const withTrades = data.filter((c) => c.totalTrades > 0)
+		const colorScale = withTrades.filter(
+			(c) => classifySample(c.totalTrades) !== "insufficient"
+		)
+		const rankable = withTrades.filter(
+			(c) => c.totalTrades >= SAMPLE_THRESHOLDS.MIN_FOR_RANKING
+		)
+
+		/** Pre-aggregate data by hour (metric-independent). */
+		const hAggs = TRADING_HOURS.map((hour) => {
+			const cells = withTrades.filter((c) => c.hour === hour)
+			const totalTrades = cells.reduce((sum, c) => sum + c.totalTrades, 0)
+			const totalPnl = cells.reduce((sum, c) => sum + c.totalPnl, 0)
+			const totalWins = cells.reduce((sum, c) => sum + c.wins, 0)
+			const totalLosses = cells.reduce((sum, c) => sum + c.losses, 0)
+			const decided = totalWins + totalLosses
+			const winRate = decided > 0 ? (totalWins / decided) * 100 : 0
+			const weightedAvgR =
+				totalTrades > 0
+					? cells.reduce((sum, c) => sum + c.avgR * c.totalTrades, 0) /
+						totalTrades
+					: 0
+			return {
+				hour,
+				label: `${hour}h`,
+				totalTrades,
+				totalPnl,
+				winRate,
+				avgR: weightedAvgR,
+				wins: totalWins,
+				losses: totalLosses,
+			}
+		})
+
+		/** Pre-aggregate data by day (metric-independent). */
+		const dAggs = days.map((day, index) => {
+			const dayOfWeek = index + 1
+			const cells = withTrades.filter((c) => c.dayOfWeek === dayOfWeek)
+			const totalTrades = cells.reduce((sum, c) => sum + c.totalTrades, 0)
+			const totalPnl = cells.reduce((sum, c) => sum + c.totalPnl, 0)
+			const totalWins = cells.reduce((sum, c) => sum + c.wins, 0)
+			const totalLosses = cells.reduce((sum, c) => sum + c.losses, 0)
+			const decided = totalWins + totalLosses
+			const winRate = decided > 0 ? (totalWins / decided) * 100 : 0
+			const weightedAvgR =
+				totalTrades > 0
+					? cells.reduce((sum, c) => sum + c.avgR * c.totalTrades, 0) /
+						totalTrades
+					: 0
+			return {
+				day,
+				dayLabel: dayLabels[index],
+				totalTrades,
+				totalPnl,
+				winRate,
+				avgR: weightedAvgR,
+				wins: totalWins,
+				losses: totalLosses,
+			}
+		})
+
+		return {
+			cellMap: map,
+			cellsWithTrades: withTrades,
+			colorScaleCells: colorScale,
+			rankableSlots: rankable,
+			hourAggregates: hAggs,
+			dayAggregates: dAggs,
+		}
+	}, [data, days, dayLabels])
+
+	/** Metric-dependent ranking and color scale. Keyed on [metric, cellsWithTrades]. */
+	const {
+		maxAbsValue,
+		bestSlot,
+		worstSlot,
+		bestHour,
+		worstHour,
+		bestDay,
+		worstDay,
+		rankingAvailable,
+	} = useMemo(() => {
+		// Color intensity scales against the largest reliable cell only.
+		const maxAbs = colorScaleCells.reduce(
+			(max, cell) => Math.max(max, magnitudeOf(cell)),
+			0
+		)
+
+		// Filter and sort ranking candidates by metric.
+		const sortedRankable = rankableSlots.toSorted(
+			(a, b) => rankScoreOf(b) - rankScoreOf(a)
+		)
+
+		// Filter and sort hour aggregates by metric.
+		const sortedHours = baseHourAggregates
+			.filter((h) => h.totalTrades >= SAMPLE_THRESHOLDS.MIN_FOR_RANKING)
+			.toSorted((a, b) => rankScoreOf(b) - rankScoreOf(a))
+
+		// Filter and sort day aggregates by metric.
+		const sortedDays = baseDayAggregates
+			.filter((d) => d.totalTrades >= SAMPLE_THRESHOLDS.MIN_FOR_RANKING)
+			.toSorted((a, b) => rankScoreOf(b) - rankScoreOf(a))
+
+		return {
+			maxAbsValue: maxAbs,
+			bestSlot: sortedRankable[0],
+			worstSlot: sortedRankable[sortedRankable.length - 1],
+			bestHour: sortedHours[0],
+			worstHour: sortedHours[sortedHours.length - 1],
+			bestDay: sortedDays[0],
+			worstDay: sortedDays[sortedDays.length - 1],
+			rankingAvailable:
+				sortedRankable.length > 0 ||
+				sortedHours.length > 0 ||
+				sortedDays.length > 0,
+		}
+	}, [
+		metric,
+		rankableSlots,
+		baseHourAggregates,
+		baseDayAggregates,
+		colorScaleCells,
+	])
+
 	if (data.length === 0) {
 		return (
 			<div
@@ -362,6 +476,15 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 	const hoveredConfidence = hoveredCell
 		? classifySample(hoveredCell.totalTrades)
 		: null
+
+	/** Stable handlers for cells — wrapped in useCallback to prevent recreation on hover. */
+	const handleCellEnter = useCallback((cell: TimeHeatmapCell) => {
+		setHoveredCell(cell)
+	}, [])
+
+	const handleCellLeave = useCallback(() => {
+		setHoveredCell(null)
+	}, [])
 
 	return (
 		<div
@@ -431,67 +554,25 @@ const TimeHeatmap = ({ data, expectancyMode }: TimeHeatmapProps) => {
 								</div>
 								{TRADING_HOURS.map((hour) => {
 									const cell = cellMap.get(`${dayOfWeek}-${hour}`)
-									const hasData = cell && cell.totalTrades > 0
 									const isHovered = hoveredCell === cell
 									const confidence = cell
 										? classifySample(cell.totalTrades)
 										: null
-									const cellClass = cn(
-										"relative flex h-11 items-center justify-center rounded-md transition-all",
-										getCellStyle(cell),
-										isHovered && "ring-acc-100 scale-105 ring-2"
+									return (
+										<HeatmapCell
+											key={`${day}-${hour}`}
+											cell={cell}
+											hour={hour}
+											day={day}
+											isHovered={isHovered}
+											cellStyle={getCellStyle(cell)}
+											onMouseEnter={() => handleCellEnter(cell!)}
+											onMouseLeave={handleCellLeave}
+											t={t}
+											tDayNames={tDayNames}
+											confidence={confidence}
+										/>
 									)
-									if (hasData) {
-										return (
-											<button
-												key={`${day}-${hour}`}
-												type="button"
-												className={cn(
-													cellClass,
-													"hover:ring-acc-100 focus:ring-acc-100 cursor-pointer hover:ring-2 focus:ring-2 focus:outline-none"
-												)}
-												onMouseEnter={() => setHoveredCell(cell)}
-												onMouseLeave={() => setHoveredCell(null)}
-												onFocus={() => setHoveredCell(cell)}
-												onBlur={() => setHoveredCell(null)}
-												aria-label={t("time.heatmapCellAriaLabel", {
-													day: tDayNames(
-														cell.dayName as
-															| "Monday"
-															| "Tuesday"
-															| "Wednesday"
-															| "Thursday"
-															| "Friday"
-															| "Saturday"
-															| "Sunday"
-													),
-													hour: cell.hourLabel,
-													trades: cell.totalTrades,
-													winRate: cell.winRate.toFixed(0),
-												})}
-											>
-												<span
-													className={cn(
-														"text-micro font-semibold drop-shadow-sm",
-														confidence === "insufficient"
-															? "text-txt-300"
-															: "text-txt-100"
-													)}
-												>
-													{cell.totalTrades}
-												</span>
-												{/* Low-confidence dot — small visual cue that this
-												   cell's color is desaturated due to low n. */}
-												{confidence === "low" && (
-													<span
-														className="bg-warning absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full"
-														aria-hidden="true"
-													/>
-												)}
-											</button>
-										)
-									}
-									return <div key={`${day}-${hour}`} className={cellClass} />
 								})}
 							</Fragment>
 						)
