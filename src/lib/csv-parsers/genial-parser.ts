@@ -179,13 +179,19 @@ const mapHeadersToColumns = (
 	return headerMap as Record<keyof GenialCsvRow, number>
 }
 
+interface ParseGenialResult {
+	executions: RawExecution[]
+	skippedRowCount: number
+	skippedRowNumbers: number[]
+}
+
 /**
  * Parse Genial broker CSV statement
  */
 export const parseGenialCSV = (
 	csvContent: string,
 	options: ParseGenialCSVOptions = {}
-): RawExecution[] => {
+): ParseGenialResult => {
 	const delimiter = options.delimiter || detectDelimiter(csvContent)
 	const lines = csvContent
 		.split("\n")
@@ -226,6 +232,7 @@ export const parseGenialCSV = (
 	}
 
 	const executions: RawExecution[] = []
+	const skippedRowNumbers: number[] = []
 
 	// Parse data rows
 	for (let i = 1; i < lines.length; i++) {
@@ -260,6 +267,9 @@ export const parseGenialCSV = (
 
 			// Skip if essential data missing
 			if (!date || !time || !asset || quantity <= 0 || price <= 0) {
+				if (skippedRowNumbers.length < 10) {
+					skippedRowNumbers.push(i)
+				}
 				continue
 			}
 
@@ -276,7 +286,10 @@ export const parseGenialCSV = (
 				rawTime: row.horario,
 			})
 		} catch {
-			// Skip malformed rows
+			// Skip malformed rows but track the row number
+			if (skippedRowNumbers.length < 10) {
+				skippedRowNumbers.push(i)
+			}
 			continue
 		}
 	}
@@ -285,7 +298,11 @@ export const parseGenialCSV = (
 		throw new Error("imports.errors.noValidExecutions")
 	}
 
-	return executions
+	return {
+		executions,
+		skippedRowCount: skippedRowNumbers.length,
+		skippedRowNumbers,
+	}
 }
 
 /**

@@ -341,24 +341,45 @@ export const getTodayCompletions = async (
 		const completionMap = new Map(completions.map((c) => [c.checklistId, c]))
 
 		// Map completions to checklists using O(1) lookup
-		const checklistsWithCompletions: ChecklistWithCompletion[] = checklists.map(
-			(checklist) => {
+		const checklistsWithCompletions: ChecklistWithCompletion[] = checklists
+			.map((checklist) => {
 				const completion = completionMap.get(checklist.id) || null
 
-				const completedItemIds: string[] = completion
-					? ((
-							JSON.parse(completion.completedItems) as unknown[] | undefined
-						)?.filter((x): x is string => typeof x === "string") ?? [])
-					: []
+				let completedItemIds: string[] = []
+				if (completion) {
+					try {
+						completedItemIds =
+							(
+								JSON.parse(completion.completedItems) as unknown[] | undefined
+							)?.filter((x): x is string => typeof x === "string") ?? []
+					} catch (e) {
+						console.error(
+							`[getTodayCompletions] Failed to parse completedItems for completion ${completion.id}:`,
+							e instanceof Error ? e.message : String(e)
+						)
+					}
+				}
+
+				let parsedItems: ChecklistItem[]
+				try {
+					parsedItems = JSON.parse(checklist.items) as ChecklistItem[]
+				} catch (e) {
+					console.error(
+						`[getTodayCompletions] Failed to parse items for checklist ${checklist.id}:`,
+						e instanceof Error ? e.message : String(e)
+					)
+					// Skip this checklist due to corruption
+					return null
+				}
 
 				return {
 					...checklist,
-					parsedItems: JSON.parse(checklist.items) as ChecklistItem[],
+					parsedItems,
 					completion,
 					completedItemIds,
 				}
-			}
-		)
+			})
+			.filter((item): item is ChecklistWithCompletion => item !== null)
 
 		return {
 			status: "success",
@@ -416,10 +437,21 @@ export const toggleChecklistItem = async (
 		if (existing) {
 			// Update existing completion
 
-			const currentItems: string[] =
-				(JSON.parse(existing.completedItems) as unknown[] | undefined)?.filter(
-					(x): x is string => typeof x === "string"
-				) ?? []
+			let currentItems: string[] = []
+			try {
+				currentItems =
+					(
+						JSON.parse(existing.completedItems) as unknown[] | undefined
+					)?.filter((x): x is string => typeof x === "string") ?? []
+			} catch (e) {
+				console.error(
+					`[toggleChecklistItem] Failed to parse completedItems for completion ${existing.id}:`,
+					e instanceof Error ? e.message : String(e)
+				)
+				// Reset to empty on corruption
+				currentItems = []
+			}
+
 			let newItems: string[]
 
 			if (validated.completed) {
@@ -437,9 +469,19 @@ export const toggleChecklistItem = async (
 				where: eq(dailyChecklists.id, validated.checklistId),
 			})
 
-			const allItems: ChecklistItem[] = checklist
-				? ((JSON.parse(checklist.items) as ChecklistItem[] | undefined) ?? [])
-				: []
+			let allItems: ChecklistItem[] = []
+			if (checklist) {
+				try {
+					allItems =
+						(JSON.parse(checklist.items) as ChecklistItem[] | undefined) ?? []
+				} catch (e) {
+					console.error(
+						`[toggleChecklistItem] Failed to parse items for checklist ${checklist.id}:`,
+						e instanceof Error ? e.message : String(e)
+					)
+					allItems = []
+				}
+			}
 			const allCompleted = allItems.every((item) => newItems.includes(item.id))
 
 			const [completion] = await db

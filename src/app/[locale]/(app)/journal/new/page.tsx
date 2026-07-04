@@ -36,8 +36,8 @@ const NewTradePage = async ({ searchParams }: NewTradePageProps) => {
 	] = await Promise.all([
 		getStrategies(),
 		getTags(),
-		getActiveAssets().catch(() => []),
-		getActiveTimeframes().catch(() => []),
+		getActiveAssets(),
+		getActiveTimeframes(),
 		getCurrentAccount(),
 		getActiveAccountModeForUser(),
 		getHawksDailyOrdinal(viewDateStr),

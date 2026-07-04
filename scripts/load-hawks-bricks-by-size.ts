@@ -35,7 +35,10 @@ import { resolve } from "node:path"
 import { neon } from "@neondatabase/serverless"
 import postgres from "postgres"
 import { isNeonUrl } from "@/db/url"
-import { importHawksRenkoSizes } from "@/app/actions/hawks-renko"
+import {
+	parseRenkoSizeCsv,
+	importRenkoSizesCore,
+} from "@/lib/renko/import-renko-sizes"
 import { writeCandleParquet } from "@/lib/candle-store/parquet-writer"
 
 const ADMIN_EMAIL = "admin@bravo.com"
@@ -241,7 +244,8 @@ const run = async () => {
 	// Refresh weekly brick sizes FIRST so the per-week cross-TF projection
 	// step below can rely on it.
 	const renkoCsv = readFileSync(RENKO_SIZES_PATH, "utf8")
-	const renkoResult = await importHawksRenkoSizes(renkoCsv)
+	const rows = parseRenkoSizeCsv(renkoCsv)
+	const renkoResult = await importRenkoSizesCore(rows)
 	if (!renkoResult.success) {
 		throw new Error(`renko-sizes import failed: ${renkoResult.error}`)
 	}

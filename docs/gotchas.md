@@ -122,6 +122,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: `docs/postMorten/2026-06-12-hawks-engine-v0.8-archive.md` Section "What we shipped" point 4. Reproduced on `scripts/audit-parallel.ts` migration during the Phase-5 cutover.
 - **Date logged**: 2026-06-12.
 
+### Bare `JSON.parse()` on DB-sourced `jsonb` columns can crash the whole server action
+
+- **What**: Several actions do `JSON.parse(row.jsonbColumn)` bare (e.g., `risk-profiles.ts:35`, `live-trading-status.ts:69`, `command-center.ts:350`). If a single row's JSON is corrupt (malformed, truncated, encoding issue), the `JSON.parse` throws and the entire action fails with no graceful fallback. For LIST operations that map over N rows, one corrupt row crashes the query and all good rows are lost. For SINGLE-row operations, the user sees an opaque error.
+- **What to do**: Always wrap DB JSON parsing in try-catch. For list operations, log server-side and skip the corrupt row (the list returns the good rows). For single-row operations, catch and return the established error-result shape (e.g., `{ status: "error", errors: [{ code: "DATA_CORRUPTED", detail: "..." }] }`). Use a stable logging prefix like `[action-name]` so corruption events are greppable. See `src/app/actions/risk-profiles.ts` (lines 27–41) and `src/app/actions/live-trading-status.ts` (lines 69–87) for the fixed pattern.
+- **Source**: 2026-07-04 session — fixed in 6 locations across `risk-profiles.ts`, `live-trading-status.ts`, `command-center.ts`. Preventive fix; no known production corruption event yet. Add ESLint rule `no-unsafe-json-parse-on-db` to promote this to a hard rule.
+- **Date logged**: 2026-07-04.
+
 ---
 
 ## NextAuth / JWT Sessions

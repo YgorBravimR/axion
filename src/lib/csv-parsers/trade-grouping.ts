@@ -30,31 +30,53 @@ const calculateWeightedAveragePrice = (executions: RawExecution[]): number => {
 }
 
 /**
- * Convert execution timestamp to Date object
+ * Convert execution timestamp to Date object.
+ * Validates the parsed date to ensure it's not Invalid Date (from NaN).
+ * Returns null if parsing fails; caller must handle null (skip the execution).
  */
-const parseExecutionTime = (execution: RawExecution): Date => {
+const parseExecutionTime = (execution: RawExecution): Date | null => {
 	// Format: "DD/MM/YYYY" and "HH:MM:SS"
 	const dateParts = execution.date.split("/")
 	const timeParts = execution.time.split(":")
 
+	// Require exactly 3 date parts and at least 2 time parts (HH:MM minimum)
 	if (dateParts.length !== 3 || timeParts.length < 2) {
-		return new Date()
+		return null
 	}
 
 	const [day, month, year] = dateParts.map(Number)
 	const [hour, minute, second] = timeParts.map(Number)
 
+	// Validate parsed numbers are finite
+	if (
+		!Number.isFinite(day) ||
+		!Number.isFinite(month) ||
+		!Number.isFinite(year) ||
+		!Number.isFinite(hour) ||
+		!Number.isFinite(minute)
+	) {
+		return null
+	}
+
 	// Create date in BRT timezone (UTC-3)
-	const dateString = `${year ?? 0}-${String(month ?? 0).padStart(2, "0")}-${String(day ?? 0).padStart(2, "0")}T${String(hour ?? 0).padStart(2, "0")}:${String(minute ?? 0).padStart(2, "0")}:${String(second || 0).padStart(2, "0")}-03:00`
-	return new Date(dateString)
+	const dateString = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:${String(second || 0).padStart(2, "0")}-03:00`
+	const date = new Date(dateString)
+
+	// Validate the resulting date is not Invalid Date
+	if (Number.isNaN(date.getTime())) {
+		return null
+	}
+
+	return date
 }
 
 /**
- * Create a grouped executions object (one side of a trade)
+ * Create a grouped executions object (one side of a trade).
+ * Returns null if any execution has a null timestamp (unparseable date).
  */
 const createGroupedExecutions = (
 	executions: RawExecution[]
-): GroupedExecutions => {
+): GroupedExecutions | null => {
 	const totalQuantity = executions.reduce(
 		(sum, ex) => sum + (ex.quantity ?? 0),
 		0
@@ -62,10 +84,19 @@ const createGroupedExecutions = (
 	const totalCommission = executions.reduce((sum, ex) => sum + ex.commission, 0)
 
 	const times = executions.map(parseExecutionTime)
+
+	// If any execution has an unparseable date, reject the entire group
+	if (times.some((t) => t === null)) {
+		return null
+	}
+
+	const validTimes = times as Date[] // TypeScript guard after null check
 	const firstExecutionTime = new Date(
-		Math.min(...times.map((t) => t.getTime()))
+		Math.min(...validTimes.map((t) => t.getTime()))
 	)
-	const lastExecutionTime = new Date(Math.max(...times.map((t) => t.getTime())))
+	const lastExecutionTime = new Date(
+		Math.max(...validTimes.map((t) => t.getTime()))
+	)
 
 	return {
 		executions,
@@ -77,6 +108,11 @@ const createGroupedExecutions = (
 	}
 }
 
+interface GroupTradesResult {
+	trades: GroupedTrade[]
+	skippedExecutionCount: number
+}
+
 /**
  * Group executions by (asset, date) and split into trades
  * Algorithm:
@@ -84,12 +120,13 @@ const createGroupedExecutions = (
  * 2. For each group, sort by time
  * 3. Identify entry side: first consecutive same-direction orders
  * 4. Identify exit side: remaining orders (opposite direction)
+ * Returns count of executions skipped due to unparseable dates.
  */
 export const groupExecutionsIntoTrades = (
 	executions: RawExecution[]
-): GroupedTrade[] => {
+): GroupTradesResult => {
 	if (executions.length === 0) {
-		return []
+		return { trades: [], skippedExecutionCount: 0 }
 	}
 
 	// Group by (asset, date)
@@ -104,34 +141,61 @@ export const groupExecutionsIntoTrades = (
 	}
 
 	const trades: GroupedTrade[] = []
+	let skippedExecutionCount = 0
 
 	// Process each asset-date group
 	for (const [, groupExecutions] of assetDateGroups) {
-		// Sort by time
+		// Sort by time — executions with unparseable times stay unmoved (their parseExecutionTime returns null)
 		const sorted = groupExecutions.sort((a, b) => {
-			const timeA = parseExecutionTime(a).getTime()
-			const timeB = parseExecutionTime(b).getTime()
-			return timeA - timeB
+			const timeA = parseExecutionTime(a)
+			const timeB = parseExecutionTime(b)
+
+			// Push unparseable executions to the end
+			if (timeA === null && timeB === null) {
+				return 0
+			}
+			if (timeA === null) {
+				return 1
+			}
+			if (timeB === null) {
+				return -1
+			}
+
+			return timeA.getTime() - timeB.getTime()
 		})
 
-		// Determine entry and exit sides
+		// Separate parseable from unparseable
+		const parseableIndex = sorted.findIndex(
+			(ex) => parseExecutionTime(ex) === null
+		)
+		const parseableExecutions =
+			parseableIndex === -1 ? sorted : sorted.slice(0, parseableIndex)
+		const unparseableExecutions =
+			parseableIndex === -1 ? [] : sorted.slice(parseableIndex)
+
+		skippedExecutionCount += unparseableExecutions.length
+
+		// Determine entry and exit sides (from parseable only)
 		const entryExecutions: RawExecution[] = []
 		const exitExecutions: RawExecution[] = []
 
 		// First execution determines direction
-		if (sorted.length > 0) {
-			const firstSide = sorted[0]!.side
+		if (parseableExecutions.length > 0) {
+			const firstSide = parseableExecutions[0]!.side
 
 			// Collect consecutive executions with same side as entry
 			let i = 0
-			while (i < sorted.length && sorted[i]!.side === firstSide) {
-				entryExecutions.push(sorted[i]!)
+			while (
+				i < parseableExecutions.length &&
+				parseableExecutions[i]!.side === firstSide
+			) {
+				entryExecutions.push(parseableExecutions[i]!)
 				i++
 			}
 
 			// Rest are exits (if any)
-			while (i < sorted.length) {
-				exitExecutions.push(sorted[i]!)
+			while (i < parseableExecutions.length) {
+				exitExecutions.push(parseableExecutions[i]!)
 				i++
 			}
 		}
@@ -141,10 +205,25 @@ export const groupExecutionsIntoTrades = (
 			continue
 		}
 
+		// Skip if there are any unparseable executions in this trade group
+		// (they got sorted to the end but represent missing date data)
+		if (unparseableExecutions.length > 0) {
+			continue
+		}
+
 		// Build trade
 		const entryGroup = createGroupedExecutions(entryExecutions)
 		const exitGroup =
 			exitExecutions.length > 0 ? createGroupedExecutions(exitExecutions) : null
+
+		// Skip trade if entry or exit group has unparseable dates
+		if (
+			entryGroup === null ||
+			(exitExecutions.length > 0 && exitGroup === null)
+		) {
+			skippedExecutionCount += entryExecutions.length + exitExecutions.length
+			continue
+		}
 
 		// Determine direction based on first execution
 		const direction: "long" | "short" =
@@ -209,7 +288,7 @@ export const groupExecutionsIntoTrades = (
 		})
 	}
 
-	return trades
+	return { trades, skippedExecutionCount }
 }
 
 /**
@@ -219,7 +298,9 @@ export const createImportPreview = (
 	trades: GroupedTrade[],
 	brokerName: string,
 	executionCount: number,
-	importId: string
+	importId: string,
+	skippedExecutionCount: number = 0,
+	skippedRowNumbers: number[] = []
 ): ImportPreview => {
 	const successfulTrades = trades.filter((t) => t.warnings.length === 0).length
 	const warningTrades = trades.filter((t) => t.warnings.length > 0).length
@@ -234,6 +315,16 @@ export const createImportPreview = (
 		)
 	}
 
+	if (skippedExecutionCount > 0) {
+		const rowInfo =
+			skippedRowNumbers.length > 0
+				? ` (rows: ${skippedRowNumbers.slice(0, 10).join(", ")}${skippedRowNumbers.length > 10 ? "..." : ""})`
+				: ""
+		globalWarnings.push(
+			`${skippedExecutionCount} executions skipped due to malformed dates${rowInfo}`
+		)
+	}
+
 	return {
 		importId,
 		brokerName,
@@ -245,6 +336,9 @@ export const createImportPreview = (
 		totalNetPnl,
 		successfulTrades,
 		warningTrades,
+		skippedRowCount: skippedExecutionCount,
+		skippedRowNumbers:
+			skippedRowNumbers.length > 0 ? skippedRowNumbers.slice(0, 10) : undefined,
 	}
 }
 

@@ -72,6 +72,8 @@ export interface ImportPreview {
 	totalNetPnl: number
 	successfulTrades: number
 	warningTrades: number
+	skippedRowCount: number // Rows that failed parsing
+	skippedRowNumbers?: number[] // First N row numbers (up to 10) that were skipped
 }
 
 /**
@@ -81,6 +83,7 @@ export interface ImportResult {
 	success: boolean
 	importId: string
 	importedTradesCount: number
+	skippedRowCount?: number
 	duplicates?: number
 	failedCount?: number
 	errors?: Array<{

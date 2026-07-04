@@ -63,11 +63,15 @@ interface DrawingsCacheApi {
 	readonly flushNow: () => Promise<void>
 }
 
-const storageKey = (assetSymbol: string): string =>
-	`hawks-chart:drawings:${assetSymbol}`
+const storageKey = (assetSymbol: string, userId?: string): string => {
+	const key = `hawks-chart:drawings:${assetSymbol}`
+	return userId ? `${key}:${userId}` : key
+}
 
-const tombstoneKey = (assetSymbol: string): string =>
-	`hawks-chart:drawings:${assetSymbol}:tombstones`
+const tombstoneKey = (assetSymbol: string, userId?: string): string => {
+	const key = `hawks-chart:drawings:${assetSymbol}:tombstones`
+	return userId ? `${key}:${userId}` : key
+}
 
 interface PersistedShape {
 	readonly drawings: Drawing[]
@@ -80,12 +84,12 @@ interface TombstonesShape {
 	readonly version: 1
 }
 
-const readLocal = (assetSymbol: string): Drawing[] => {
+const readLocal = (assetSymbol: string, userId?: string): Drawing[] => {
 	if (typeof window === "undefined") {
 		return []
 	}
 	try {
-		const raw = window.localStorage.getItem(storageKey(assetSymbol))
+		const raw = window.localStorage.getItem(storageKey(assetSymbol, userId))
 		if (!raw) {
 			return []
 		}
@@ -103,7 +107,8 @@ const readLocal = (assetSymbol: string): Drawing[] => {
 
 const writeLocal = (
 	assetSymbol: string,
-	drawings: ReadonlyArray<Drawing>
+	drawings: ReadonlyArray<Drawing>,
+	userId?: string
 ): void => {
 	if (typeof window === "undefined") {
 		return
@@ -113,19 +118,25 @@ const writeLocal = (
 			drawings: [...drawings],
 			version: 1,
 		}
-		window.localStorage.setItem(storageKey(assetSymbol), JSON.stringify(shape))
+		window.localStorage.setItem(
+			storageKey(assetSymbol, userId),
+			JSON.stringify(shape)
+		)
 	} catch {
 		// Quota exceeded or private mode — swallow; in-memory state still
 		// works, the user will just lose persistence on reload.
 	}
 }
 
-const readTombstones = (assetSymbol: string): Map<string, number> => {
+const readTombstones = (
+	assetSymbol: string,
+	userId?: string
+): Map<string, number> => {
 	if (typeof window === "undefined") {
 		return new Map()
 	}
 	try {
-		const raw = window.localStorage.getItem(tombstoneKey(assetSymbol))
+		const raw = window.localStorage.getItem(tombstoneKey(assetSymbol, userId))
 		if (!raw) {
 			return new Map()
 		}
@@ -151,7 +162,8 @@ const readTombstones = (assetSymbol: string): Map<string, number> => {
 
 const writeTombstones = (
 	assetSymbol: string,
-	tombstones: Map<string, number>
+	tombstones: Map<string, number>,
+	userId?: string
 ): void => {
 	if (typeof window === "undefined") {
 		return
@@ -162,7 +174,7 @@ const writeTombstones = (
 			version: 1,
 		}
 		window.localStorage.setItem(
-			tombstoneKey(assetSymbol),
+			tombstoneKey(assetSymbol, userId),
 			JSON.stringify(shape)
 		)
 	} catch {
@@ -200,18 +212,19 @@ const mergeServerAndLocal = (
 
 const useDrawingsCache = (
 	assetSymbol: string,
-	initialDrawings: ReadonlyArray<Drawing>
+	initialDrawings: ReadonlyArray<Drawing>,
+	userId?: string
 ): DrawingsCacheApi => {
 	// One-time merge on mount. We initialise lazily so the localStorage
 	// reads happen exactly once per mount, never during a render that
 	// could re-run.
 	const [state, setState] = useState<DrawingsCacheState>(() => {
-		const local = readLocal(assetSymbol)
-		const tombstones = readTombstones(assetSymbol)
+		const local = readLocal(assetSymbol, userId)
+		const tombstones = readTombstones(assetSymbol, userId)
 		const merged = mergeServerAndLocal(initialDrawings, local, tombstones)
 		// Seed localStorage so the next mount starts from the merged set
 		// rather than the pre-merge local-only view.
-		writeLocal(assetSymbol, merged)
+		writeLocal(assetSymbol, merged, userId)
 		return {
 			drawings: merged,
 			lastSyncError: null,
@@ -236,7 +249,9 @@ const useDrawingsCache = (
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
-	const tombstonesRef = useRef<Map<string, number>>(readTombstones(assetSymbol))
+	const tombstonesRef = useRef<Map<string, number>>(
+		readTombstones(assetSymbol, userId)
+	)
 	const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const isFlushingRef = useRef<boolean>(false)
 	// Holds the LATEST drawings array — used inside scheduleFlush's async
@@ -287,17 +302,21 @@ const useDrawingsCache = (
 			}
 			// Server confirmed — update the last-synced snapshot using its
 			// post-sync view (covers the case where another tab on another
-			// machine touched the same row).
+			// machine touched the same row). Filter out any id that was
+			// deleted locally DURING this flush (stored in tombstones) so
+			// the merge can't resurrect a drawing the user already deleted.
 			const next = new Map<string, number>()
 			for (const d of result.drawings) {
-				next.set(d.id, d.lastModifiedMs)
+				if (!tombstones.has(d.id)) {
+					next.set(d.id, d.lastModifiedMs)
+				}
 			}
 			lastSyncedRef.current = next
 			// Tombstones we just successfully sent: clear them.
 			for (const id of deletedIds) {
 				tombstones.delete(id)
 			}
-			writeTombstones(assetSymbol, tombstones)
+			writeTombstones(assetSymbol, tombstones, userId)
 			setState((prev) => ({
 				...prev,
 				lastSyncError: null,
@@ -311,7 +330,7 @@ const useDrawingsCache = (
 		} finally {
 			isFlushingRef.current = false
 		}
-	}, [assetSymbol])
+	}, [assetSymbol, userId])
 
 	const scheduleFlush = useCallback(() => {
 		if (flushTimerRef.current) {
@@ -331,12 +350,12 @@ const useDrawingsCache = (
 			setState((prev) => {
 				const next = updater(prev.drawings)
 				drawingsRef.current = next
-				writeLocal(assetSymbol, next)
+				writeLocal(assetSymbol, next, userId)
 				return { ...prev, drawings: next }
 			})
 			scheduleFlush()
 		},
-		[assetSymbol, scheduleFlush]
+		[assetSymbol, scheduleFlush, userId]
 	)
 
 	const add = useCallback(
@@ -360,10 +379,10 @@ const useDrawingsCache = (
 			// Tombstone for the next flush so the server learns about the
 			// deletion even if the drawing was never synced upstream.
 			tombstonesRef.current.set(id, Date.now())
-			writeTombstones(assetSymbol, tombstonesRef.current)
+			writeTombstones(assetSymbol, tombstonesRef.current, userId)
 			applyChange((prev) => prev.filter((d) => d.id !== id))
 		},
-		[applyChange, assetSymbol]
+		[applyChange, assetSymbol, userId]
 	)
 
 	const clearAll = useCallback(() => {
@@ -375,9 +394,9 @@ const useDrawingsCache = (
 		for (const d of drawingsRef.current) {
 			tombstonesRef.current.set(d.id, now)
 		}
-		writeTombstones(assetSymbol, tombstonesRef.current)
+		writeTombstones(assetSymbol, tombstonesRef.current, userId)
 		applyChange(() => [])
-	}, [applyChange, assetSymbol])
+	}, [applyChange, assetSymbol, userId])
 
 	// Multi-tab live sync. The `storage` event fires in OTHER tabs when
 	// localStorage changes here (never in the writing tab itself, so no
@@ -387,10 +406,10 @@ const useDrawingsCache = (
 			return
 		}
 		const handler = (event: StorageEvent) => {
-			if (event.key !== storageKey(assetSymbol)) {
+			if (event.key !== storageKey(assetSymbol, userId)) {
 				return
 			}
-			const next = readLocal(assetSymbol)
+			const next = readLocal(assetSymbol, userId)
 			drawingsRef.current = next
 			setState((prev) => ({ ...prev, drawings: next }))
 		}
@@ -398,7 +417,7 @@ const useDrawingsCache = (
 		return () => {
 			window.removeEventListener("storage", handler)
 		}
-	}, [assetSymbol])
+	}, [assetSymbol, userId])
 
 	// Force-flush on tab hide / unload so the last 5 seconds of edits
 	// don't fall on the floor when the user closes the tab.
@@ -409,14 +428,16 @@ const useDrawingsCache = (
 		const handleHide = () => {
 			void flushNow()
 		}
-		window.addEventListener("beforeunload", handleHide)
-		document.addEventListener("visibilitychange", () => {
+		const handleVisibilityChange = () => {
 			if (document.visibilityState === "hidden") {
 				void flushNow()
 			}
-		})
+		}
+		window.addEventListener("beforeunload", handleHide)
+		document.addEventListener("visibilitychange", handleVisibilityChange)
 		return () => {
 			window.removeEventListener("beforeunload", handleHide)
+			document.removeEventListener("visibilitychange", handleVisibilityChange)
 		}
 	}, [flushNow])
 

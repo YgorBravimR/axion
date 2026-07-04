@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef } from "react"
+import { memo, useEffect, useMemo, useRef } from "react"
 import {
 	BaselineSeries,
 	CandlestickSeries,
@@ -175,7 +175,7 @@ interface RenkoPaneProps {
 	readonly className?: string
 }
 
-const RenkoPane = ({
+const RenkoPaneImpl = ({
 	label,
 	subLabel,
 	series,
@@ -1250,4 +1250,4 @@ export type {
 	RenkoPaneProps,
 	TradeOverlay,
 }
-export { RenkoPane }
+export const RenkoPane = memo(RenkoPaneImpl)

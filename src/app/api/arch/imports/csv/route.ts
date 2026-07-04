@@ -124,14 +124,16 @@ const POST = async (request: NextRequest) => {
 			])
 		}
 
-		const executions = parseStatementCSV({ brokerName, csvContent })
-		const groupedTrades = groupExecutionsIntoTrades(executions)
+		const parseResult = parseStatementCSV({ brokerName, csvContent })
+		const groupResult = groupExecutionsIntoTrades(parseResult.executions)
 		const importId = generateImportId()
 		const preview = createImportPreview(
-			groupedTrades,
+			groupResult.trades,
 			brokerName,
-			executions.length,
-			importId
+			parseResult.executions.length,
+			importId,
+			parseResult.skippedRowCount + groupResult.skippedExecutionCount,
+			parseResult.skippedRowNumbers
 		)
 
 		ARCH_PREVIEW_CACHE.set(importId, {

@@ -66,7 +66,20 @@ export const getLiveTradingStatus = async (
 			}
 		}
 
-		const tree = JSON.parse(profileRow.decisionTree) as DecisionTreeConfig
+		let tree: DecisionTreeConfig
+		try {
+			tree = JSON.parse(profileRow.decisionTree) as DecisionTreeConfig
+		} catch (e) {
+			console.error(
+				`[live-trading-status] Failed to parse decisionTree for profile ${behavior.riskProfileId}:`,
+				e instanceof Error ? e.message : String(e)
+			)
+			return {
+				status: "success",
+				message: t("actionErrors.riskProfileNotFound"),
+				data: { hasProfile: false, fallbackRiskCents: day.oneRCents },
+			}
+		}
 		const decisionTree = adaptDecisionTree(tree, day.oneRCents)
 
 		const oneRCents = day.oneRCents

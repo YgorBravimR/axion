@@ -19,8 +19,8 @@ const EditTradePage = async ({ params }: EditTradePageProps) => {
 			getTrade(id),
 			getStrategies(),
 			getTags(),
-			getActiveAssets().catch(() => []),
-			getActiveTimeframes().catch(() => []),
+			getActiveAssets(),
+			getActiveTimeframes(),
 		])
 
 	if (tradeResult.status === "error" || !tradeResult.data) {

@@ -38,6 +38,7 @@ interface HawksChartWorkspaceProps {
 	readonly assetSymbol: string
 	readonly initialWindow: HawksChartFullWindowResult
 	readonly initialDrawings: ReadonlyArray<Drawing>
+	readonly userId?: string
 }
 
 // WIN tick value in BRL per point. Used by the "position" drawing tool to
@@ -351,6 +352,7 @@ const HawksChartWorkspace = ({
 	assetSymbol,
 	initialWindow,
 	initialDrawings,
+	userId,
 }: HawksChartWorkspaceProps) => {
 	const t = useTranslations("hawksChart")
 	const [windowResult] = useState(initialWindow)
@@ -359,7 +361,7 @@ const HawksChartWorkspace = ({
 	// the old "per-mutation server-action call" pattern that was hammering
 	// the network with one request per stroke. See use-drawings-cache.ts
 	// for the merge/diff/conflict-resolution mechanics.
-	const drawingsCache = useDrawingsCache(assetSymbol, initialDrawings)
+	const drawingsCache = useDrawingsCache(assetSymbol, initialDrawings, userId)
 	const drawings = drawingsCache.drawings
 	const [activeTool, setActiveTool] = useState<DrawingTool>("cursor")
 	const [pendingAnchor, setPendingAnchor] = useState<{
@@ -473,6 +475,36 @@ const HawksChartWorkspace = ({
 			pane60m: projectDrawingsForPane(drawings, series60m.times),
 		}),
 		[drawings, series5m.times, series15m.times, series60m.times]
+	)
+
+	// Memoize histogram object so it doesn't trigger pane rerenders
+	const histogram5m = useMemo(
+		() =>
+			toggles.macd
+				? {
+						label: "MACD 5m",
+						data: indicatorValuesByBrickIndex(
+							series5m.times,
+							candles5m,
+							"macd1_histo"
+						)
+							// drop whitespace markers — the histogram series
+							// expects every point to carry a numeric value, and
+							// breaking continuity matters less for a bar plot.
+							.filter(
+								(p): p is { time: UTCTimestamp; value: number } => "value" in p
+							)
+							.map((p) => ({
+								time: p.time,
+								value: p.value,
+								color:
+									p.value >= 0
+										? HAWKS_PALETTE.macd.histPos
+										: HAWKS_PALETTE.macd.histNeg,
+							})),
+					}
+				: null,
+		[toggles.macd, series5m.times, candles5m]
 	)
 
 	// Reset the pending anchor every time the user changes tools — otherwise a
@@ -714,33 +746,7 @@ const HawksChartWorkspace = ({
 					series={series5m}
 					indicators={indicators5m}
 					paletteOverride={HAWKS_PALETTE_OVERRIDE}
-					histogram={
-						toggles.macd
-							? {
-									label: "MACD 5m",
-									data: indicatorValuesByBrickIndex(
-										series5m.times,
-										candles5m,
-										"macd1_histo"
-									)
-										// drop whitespace markers — the histogram series
-										// expects every point to carry a numeric value, and
-										// breaking continuity matters less for a bar plot.
-										.filter(
-											(p): p is { time: UTCTimestamp; value: number } =>
-												"value" in p
-										)
-										.map((p) => ({
-											time: p.time,
-											value: p.value,
-											color:
-												p.value >= 0
-													? HAWKS_PALETTE.macd.histPos
-													: HAWKS_PALETTE.macd.histNeg,
-										})),
-								}
-							: null
-					}
+					histogram={histogram5m}
 					markerColorMode="action"
 					drawings={projectedDrawings.pane5m}
 					onPaneClick={handlePaneClick}

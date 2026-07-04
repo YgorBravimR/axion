@@ -73,7 +73,7 @@ const CommandCenterPage = async ({
 		getAccountAssetSettings(),
 		getCircuitBreakerStatus(dateArg),
 		getDailySummary(dateArg),
-		getActiveAssets().catch(() => []),
+		getActiveAssets(),
 		getStrategies(),
 		getLiveTradingStatus(dateArg),
 		getDailyHawksBias(viewDateStr),
@@ -94,7 +94,7 @@ const CommandCenterPage = async ({
 			: null
 	const initialSummary =
 		summaryResult.status === "success" ? (summaryResult.data ?? null) : null
-	const availableAssets = assetsResult || []
+	const availableAssets = assetsResult
 	const initialStrategies =
 		strategiesResult.status === "success" && strategiesResult.data
 			? strategiesResult.data

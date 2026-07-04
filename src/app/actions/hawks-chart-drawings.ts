@@ -170,39 +170,18 @@ export const saveDrawing = async (input: {
 
 		const drawing = parsed.data.drawing
 
-		// Upsert by id. New drawings come in with a client-generated id (crypto.
-		// randomUUID); we honor it so optimistic UI doesn't have to re-sync.
-		const existing = (
-			await db
-				.select({ id: hawksChartDrawings.id })
-				.from(hawksChartDrawings)
-				.where(
-					and(
-						eq(hawksChartDrawings.id, drawing.id),
-						eq(hawksChartDrawings.userId, auth.userId)
-					)
-				)
-				.limit(1)
-		)[0]
-
-		// Honor the client's lastModifiedMs as `updated_at` so the
+		// Atomic upsert. Honor the client's lastModifiedMs as `updated_at` so the
 		// conflict resolver on next mount can compare apples to apples.
-		// Falling back to `new Date()` would silently bump the row's
-		// updatedAt past the client's stamp and break newer-wins.
+		// Falling back to `new Date()` would silently bump the row's updatedAt past
+		// the client's stamp and break newer-wins.
+		//
+		// CRITICAL SECURITY: targetWhere ensures we only update rows owned by this user.
+		// A malicious client reusing another user's drawing id will fail to update it
+		// because the ownership constraint will block the update.
 		const updatedAt = new Date(drawing.lastModifiedMs)
-		if (existing) {
-			await db
-				.update(hawksChartDrawings)
-				.set({
-					kind: drawing.type,
-					payload: drawing,
-					label: drawing.label ?? null,
-					color: drawing.color,
-					updatedAt,
-				})
-				.where(eq(hawksChartDrawings.id, drawing.id))
-		} else {
-			await db.insert(hawksChartDrawings).values({
+		await db
+			.insert(hawksChartDrawings)
+			.values({
 				id: drawing.id,
 				userId: auth.userId,
 				assetId,
@@ -212,7 +191,17 @@ export const saveDrawing = async (input: {
 				color: drawing.color,
 				updatedAt,
 			})
-		}
+			.onConflictDoUpdate({
+				target: hawksChartDrawings.id,
+				targetWhere: eq(hawksChartDrawings.userId, auth.userId),
+				set: {
+					kind: drawing.type,
+					payload: drawing,
+					label: drawing.label ?? null,
+					color: drawing.color,
+					updatedAt,
+				},
+			})
 
 		return { status: "success", drawing }
 	} catch (err) {
@@ -288,13 +277,18 @@ export const syncDrawings = async (input: {
 			}
 		}
 
-		// Apply deletes first — if the same id is in both lists (shouldn't
-		// happen but be defensive), the upsert wins, which matches "the
-		// client thinks it exists, so let it exist". Parallel-safe since
-		// each delete touches a distinct row by id.
-		await Promise.all(
-			parsed.data.deletedIds.map((id) =>
-				db
+		// Execute all mutations in a transaction. On failure, DB and client
+		// remain in sync — no partial state. Apply deletes first, then upserts.
+		// If the same id is in both lists (shouldn't happen), the upsert wins,
+		// matching "the client thinks it exists, so let it exist".
+		// eslint-disable-next-line no-await-in-loop
+		await db.transaction(async (tx) => {
+			// Delete the specified ids. Each delete is scoped by both id and userId
+			// so cross-user deletes are impossible.
+			// eslint-disable-next-line no-await-in-loop
+			for (const id of parsed.data.deletedIds) {
+				// eslint-disable-next-line no-await-in-loop
+				await tx
 					.delete(hawksChartDrawings)
 					.where(
 						and(
@@ -302,43 +296,18 @@ export const syncDrawings = async (input: {
 							eq(hawksChartDrawings.userId, auth.userId)
 						)
 					)
-			)
-		)
+			}
 
-		// Upserts: per-row existence-check-then-write. Parallel-safe across
-		// distinct ids — typical batch is < 50 rows and Postgres handles
-		// the concurrent writes fine. If we ever see contention on the
-		// same id within a single batch (shouldn't — the client dedupes
-		// by id before flushing) we'd switch to a single `INSERT ... ON
-		// CONFLICT DO UPDATE` statement.
-		await Promise.all(
-			parsed.data.upserts.map(async (drawing) => {
+			// Upsert each drawing atomically. targetWhere ensures we only update
+			// rows owned by this user — a malicious client reusing another user's
+			// drawing id will fail to update it.
+			// eslint-disable-next-line no-await-in-loop
+			for (const drawing of parsed.data.upserts) {
 				const updatedAt = new Date(drawing.lastModifiedMs)
-				const existing = (
-					await db
-						.select({ id: hawksChartDrawings.id })
-						.from(hawksChartDrawings)
-						.where(
-							and(
-								eq(hawksChartDrawings.id, drawing.id),
-								eq(hawksChartDrawings.userId, auth.userId)
-							)
-						)
-						.limit(1)
-				)[0]
-				if (existing) {
-					await db
-						.update(hawksChartDrawings)
-						.set({
-							kind: drawing.type,
-							payload: drawing,
-							label: drawing.label ?? null,
-							color: drawing.color,
-							updatedAt,
-						})
-						.where(eq(hawksChartDrawings.id, drawing.id))
-				} else {
-					await db.insert(hawksChartDrawings).values({
+				// eslint-disable-next-line no-await-in-loop
+				await tx
+					.insert(hawksChartDrawings)
+					.values({
 						id: drawing.id,
 						userId: auth.userId,
 						assetId,
@@ -348,9 +317,19 @@ export const syncDrawings = async (input: {
 						color: drawing.color,
 						updatedAt,
 					})
-				}
-			})
-		)
+					.onConflictDoUpdate({
+						target: hawksChartDrawings.id,
+						targetWhere: eq(hawksChartDrawings.userId, auth.userId),
+						set: {
+							kind: drawing.type,
+							payload: drawing,
+							label: drawing.label ?? null,
+							color: drawing.color,
+							updatedAt,
+						},
+					})
+			}
+		})
 
 		// Return the server's post-sync view so the client can reconcile
 		// (e.g. detect a drawing that another tab deleted between flushes).

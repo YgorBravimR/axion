@@ -16,7 +16,7 @@ const DEFAULT_ASSET = "WIN"
 const HawksChartPage = async ({ params }: HawksChartPageProps) => {
 	const { locale } = await params
 	setRequestLocale(locale)
-	await requireAuth()
+	const auth = await requireAuth()
 
 	const [windowResult, drawingsResult] = await Promise.all([
 		getHawksFullWindow(DEFAULT_ASSET),
@@ -32,6 +32,7 @@ const HawksChartPage = async ({ params }: HawksChartPageProps) => {
 					initialDrawings={
 						drawingsResult.status === "success" ? drawingsResult.drawings : []
 					}
+					userId={auth.userId}
 				/>
 			</div>
 		</div>

@@ -23,19 +23,30 @@ import { getTranslations } from "next-intl/server"
 
 /**
  * Parses a DB row's JSON decision tree string into a typed DecisionTreeConfig.
+ * Returns null if the JSON is corrupt, so list operations can skip bad rows.
  */
 const parseProfileRow = (
 	row: typeof riskManagementProfiles.$inferSelect
-): RiskManagementProfile => ({
-	id: row.id,
-	name: row.name,
-	description: row.description,
-	createdByUserId: row.createdByUserId,
-	isActive: row.isActive,
-	decisionTree: JSON.parse(row.decisionTree) as DecisionTreeConfig,
-	createdAt: row.createdAt,
-	updatedAt: row.updatedAt,
-})
+): RiskManagementProfile | null => {
+	try {
+		return {
+			id: row.id,
+			name: row.name,
+			description: row.description,
+			createdByUserId: row.createdByUserId,
+			isActive: row.isActive,
+			decisionTree: JSON.parse(row.decisionTree) as DecisionTreeConfig,
+			createdAt: row.createdAt,
+			updatedAt: row.updatedAt,
+		}
+	} catch (e) {
+		console.error(
+			`[risk-profiles] Failed to parse decisionTree for profile ${row.id}:`,
+			e instanceof Error ? e.message : String(e)
+		)
+		return null
+	}
+}
 
 // ==========================================
 // RISK PROFILE ACTIONS
@@ -43,6 +54,7 @@ const parseProfileRow = (
 
 /**
  * Returns all active risk profiles. Any authenticated user can read profiles.
+ * Corrupt profiles are skipped with server-side logging.
  */
 export const listActiveRiskProfiles = async (): Promise<
 	ActionResponse<RiskManagementProfile[]>
@@ -56,10 +68,14 @@ export const listActiveRiskProfiles = async (): Promise<
 			orderBy: (profiles, { asc }) => [asc(profiles.name)],
 		})
 
+		const parsed = rows
+			.map(parseProfileRow)
+			.filter((p): p is RiskManagementProfile => p !== null)
+
 		return {
 			status: "success",
 			message: t("actions.retrieved"),
-			data: rows.map(parseProfileRow),
+			data: parsed,
 		}
 	} catch (error) {
 		return {
@@ -77,6 +93,7 @@ export const listActiveRiskProfiles = async (): Promise<
 
 /**
  * Get a single risk profile by ID.
+ * Returns "data corrupted" error if the profile's JSON is malformed.
  */
 export const getRiskProfile = async (
 	id: string
@@ -97,10 +114,24 @@ export const getRiskProfile = async (
 			}
 		}
 
+		const parsed = parseProfileRow(row)
+		if (!parsed) {
+			return {
+				status: "error",
+				message: t("errors.notFound"),
+				errors: [
+					{
+						code: "DATA_CORRUPTED",
+						detail: "Risk profile data corrupted",
+					},
+				],
+			}
+		}
+
 		return {
 			status: "success",
 			message: t("actions.retrievedOne"),
-			data: parseProfileRow(row),
+			data: parsed,
 		}
 	} catch (error) {
 		return {
@@ -145,10 +176,15 @@ export const createRiskProfile = async (
 
 		invalidateSettingsData()
 
+		const parsed = parseProfileRow(row)
+		if (!parsed) {
+			throw new Error("Failed to parse newly created risk profile")
+		}
+
 		return {
 			status: "success",
 			message: t("actions.created"),
-			data: parseProfileRow(row),
+			data: parsed,
 		}
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -221,10 +257,15 @@ export const updateRiskProfile = async (
 
 		invalidateSettingsData()
 
+		const parsed = parseProfileRow(row)
+		if (!parsed) {
+			throw new Error("Failed to parse updated risk profile")
+		}
+
 		return {
 			status: "success",
 			message: t("actions.updated"),
-			data: parseProfileRow(row),
+			data: parsed,
 		}
 	} catch (error) {
 		if (error instanceof z.ZodError) {

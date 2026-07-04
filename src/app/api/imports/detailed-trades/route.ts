@@ -95,21 +95,23 @@ export const POST = async (req: NextRequest) => {
 		}
 
 		// Parse CSV into executions
-		const executions = parseStatementCSV({
+		const parseResult = parseStatementCSV({
 			brokerName,
 			csvContent,
 		})
 
 		// Group executions into trades
-		const trades = groupExecutionsIntoTrades(executions)
+		const groupResult = groupExecutionsIntoTrades(parseResult.executions)
 
 		// Create import preview
 		const importId = generateImportId()
 		const preview = createImportPreview(
-			trades,
+			groupResult.trades,
 			brokerName,
-			executions.length,
-			importId
+			parseResult.executions.length,
+			importId,
+			parseResult.skippedRowCount + groupResult.skippedExecutionCount,
+			parseResult.skippedRowNumbers
 		)
 
 		// Cache preview for confirmation step (1 hour TTL)

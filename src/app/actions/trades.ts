@@ -381,19 +381,23 @@ export const createTrade = async (
 					: null,
 		}
 
-		const [inserted] = await db
-			.insert(trades)
-			.values(insertValues as typeof trades.$inferInsert)
-			.returning()
-		if (!inserted) {
-			throw new Error("Trade insert returned no row")
-		}
+		// Helper to apply exponential backoff (25ms, 75ms, 150ms)
+		const exponentialBackoff = (retryCount: number) =>
+			new Promise((resolve) => setTimeout(resolve, 25 * (3 ** retryCount - 1)))
 
-		try {
+		const inserted = await db.transaction(async (tx) => {
+			const [insertedTrade] = await tx
+				.insert(trades)
+				.values(insertValues as typeof trades.$inferInsert)
+				.returning()
+			if (!insertedTrade) {
+				throw new Error("Trade insert returned no row")
+			}
+
 			if (tagIds?.length) {
-				await db.insert(tradeTags).values(
+				await tx.insert(tradeTags).values(
 					tagIds.map((tagId) => ({
-						tradeId: inserted.id,
+						tradeId: insertedTrade.id,
 						tagId,
 					}))
 				)
@@ -407,9 +411,9 @@ export const createTrade = async (
 				while (!sidecarInserted && retryCount < maxRetries) {
 					try {
 						// eslint-disable-next-line no-await-in-loop
-						await db
+						await tx
 							.insert(tradeHawksMetadata)
-							.values({ ...hawksSidecar, tradeId: inserted.id })
+							.values({ ...hawksSidecar, tradeId: insertedTrade.id })
 						sidecarInserted = true
 					} catch (err) {
 						const insertErr =
@@ -419,19 +423,20 @@ export const createTrade = async (
 						if (pgErr.code === "23505") {
 							retryCount++
 							if (retryCount >= maxRetries) {
-								// Max retries exhausted; clean up and surface error
-								// eslint-disable-next-line no-await-in-loop
-								await db.delete(trades).where(eq(trades.id, inserted.id))
+								// Max retries exhausted; transaction will roll back
 								throw new Error(
 									`Hawks ordinal race condition: failed after ${maxRetries} retries. ${pgErr.detail || ""}`,
 									{ cause: err }
 								)
 							}
-							// Recompute ordinal with fresh count and retry
+							// Exponential backoff before retry
+							// eslint-disable-next-line no-await-in-loop
+							await exponentialBackoff(retryCount)
+							// Recompute ordinal with fresh count within transaction
 							const dayStart = getStartOfDay(tradeData.entryDate)
 							const dayEnd = getEndOfDay(tradeData.entryDate)
 							// eslint-disable-next-line no-await-in-loop
-							const [newOrdRow] = await db
+							const [newOrdRow] = await tx
 								.select({ n: count() })
 								.from(trades)
 								.where(
@@ -443,9 +448,7 @@ export const createTrade = async (
 								)
 							hawksSidecar.dailyTradeOrdinal = (newOrdRow?.n ?? 0) + 1
 						} else {
-							// Not a unique constraint violation; clean up and re-throw
-							// eslint-disable-next-line no-await-in-loop
-							await db.delete(trades).where(eq(trades.id, inserted.id))
+							// Not a unique constraint violation; transaction will roll back
 							throw insertErr
 						}
 					}
@@ -453,18 +456,17 @@ export const createTrade = async (
 			}
 
 			if (tradeData.conditionsMet?.length) {
-				await db.insert(tradeConditions).values(
+				await tx.insert(tradeConditions).values(
 					tradeData.conditionsMet.map((item) => ({
-						tradeId: inserted.id,
+						tradeId: insertedTrade.id,
 						conditionId: item.conditionId,
 						met: item.met,
 					}))
 				)
 			}
-		} catch (sidecarErr) {
-			await db.delete(trades).where(eq(trades.id, inserted.id))
-			throw sidecarErr
-		}
+
+			return insertedTrade
+		})
 
 		const trade = inserted
 
@@ -754,11 +756,35 @@ export const updateTrade = async (
 			updateData.plannedRiskAmount = toNumericString(toCents(plannedRiskAmount))
 		}
 
-		const [trade] = await db
-			.update(trades)
-			.set(updateData)
-			.where(and(eq(trades.id, id), eq(trades.accountId, accountId)))
-			.returning()
+		const trade = await db.transaction(async (tx) => {
+			const [updatedTrade] = await tx
+				.update(trades)
+				.set(updateData)
+				.where(and(eq(trades.id, id), eq(trades.accountId, accountId)))
+				.returning()
+
+			if (!updatedTrade) {
+				throw new Error("Trade not found or does not belong to this account")
+			}
+
+			// Update tag associations if provided
+			if (tagIds !== undefined) {
+				// Remove existing tags
+				await tx.delete(tradeTags).where(eq(tradeTags.tradeId, id))
+
+				// Insert new tags
+				if (tagIds.length) {
+					await tx.insert(tradeTags).values(
+						tagIds.map((tagId) => ({
+							tradeId: id,
+							tagId,
+						}))
+					)
+				}
+			}
+
+			return updatedTrade
+		})
 
 		if (!trade) {
 			return {
@@ -770,22 +796,6 @@ export const updateTrade = async (
 						detail: "Trade does not exist or does not belong to this account",
 					},
 				],
-			}
-		}
-
-		// Update tag associations if provided
-		if (tagIds !== undefined) {
-			// Remove existing tags
-			await db.delete(tradeTags).where(eq(tradeTags.tradeId, id))
-
-			// Insert new tags
-			if (tagIds.length) {
-				await db.insert(tradeTags).values(
-					tagIds.map((tagId) => ({
-						tradeId: id,
-						tagId,
-					}))
-				)
 			}
 		}
 

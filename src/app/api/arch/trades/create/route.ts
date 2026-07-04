@@ -39,9 +39,10 @@ const POST = async (request: NextRequest) => {
 		}
 		return archSuccess("Trade created successfully", result.trade)
 	} catch (error) {
+		console.error("[arch/trades/create] Unexpected error:", error)
 		return archError(
 			"Failed to create trade",
-			[{ code: "CREATE_FAILED", detail: String(error) }],
+			[{ code: "CREATE_FAILED", detail: "Internal error" }],
 			500
 		)
 	}

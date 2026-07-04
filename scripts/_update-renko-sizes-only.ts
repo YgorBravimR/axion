@@ -12,13 +12,17 @@
 import "dotenv/config"
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
-import { importHawksRenkoSizes } from "@/app/actions/hawks-renko"
+import {
+	parseRenkoSizeCsv,
+	importRenkoSizesCore,
+} from "@/lib/renko/import-renko-sizes"
 
 const CSV_PATH = resolve(process.cwd(), "data/hawks/renko-sizes.csv")
 
 const main = async () => {
 	const csvText = readFileSync(CSV_PATH, "utf-8")
-	const result = await importHawksRenkoSizes(csvText, "WIN")
+	const rows = parseRenkoSizeCsv(csvText)
+	const result = await importRenkoSizesCore(rows, "WIN")
 	if (!result.success) {
 		console.error(`FAIL: ${result.error}`)
 		process.exit(1)

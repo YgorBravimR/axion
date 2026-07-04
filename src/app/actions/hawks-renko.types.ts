@@ -36,4 +36,14 @@ interface RenkoSizeRecord {
 	size1d: number | null
 }
 
-export type { RenkoSizeRow, RenkoSizeRecord }
+interface UpsertRenkoSizeInput {
+	effectiveDate: string // ISO YYYY-MM-DD (Monday of the ISO week)
+	weekNumber: number
+	size1m: number | null
+	size5m: number
+	size15m: number
+	size60m: number
+	size1d: number | null
+}
+
+export type { RenkoSizeRow, RenkoSizeRecord, UpsertRenkoSizeInput }

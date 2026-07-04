@@ -116,11 +116,50 @@ export const POST = async (req: NextRequest) => {
 			}
 		)
 
-		// Insert trades
+		// Insert trades and capture actual inserted rows
 		let insertedCount = 0
+		let insertionError: Error | null = null
+
 		if (tradesToInsert.length > 0) {
-			await db.insert(tradesTable).values(tradesToInsert)
-			insertedCount = tradesToInsert.length
+			try {
+				// Drizzle insert returns the inserted rows with their assigned IDs
+				// We use .returning() to get the result for verification
+				const insertResult = await db
+					.insert(tradesTable)
+					.values(tradesToInsert)
+					.returning()
+
+				// Verify the actual insert result matches what was attempted
+				insertedCount = insertResult.length
+				if (insertedCount !== tradesToInsert.length) {
+					insertionError = new Error(
+						`Insert mismatch: attempted ${tradesToInsert.length}, got ${insertedCount}`
+					)
+				}
+			} catch (err) {
+				insertionError = err instanceof Error ? err : new Error(String(err))
+			}
+		}
+
+		// Clear cache
+		previewCache.delete(importId)
+
+		// If insertion failed, return error
+		if (insertionError) {
+			console.error(
+				"[POST /api/imports/detailed-trades/confirm] Insert failed",
+				insertionError
+			)
+			return NextResponse.json(
+				{
+					error: "imports.errors.confirmFailed",
+					message: `Database insert failed: ${insertionError.message}`,
+					importedTradesCount: insertedCount,
+					attemptedTradesCount: tradesToInsert.length,
+					skippedRowCount: preview.skippedRowCount,
+				},
+				{ status: 500 }
+			)
 		}
 
 		// TODO: Log import to importLogs table once it exists in schema
@@ -130,18 +169,16 @@ export const POST = async (req: NextRequest) => {
 		//   accountId,
 		//   source: `${preview.brokerName}_DETAILED_CSV`,
 		//   importedCount: insertedCount,
-		//   failedCount: 0,
+		//   skippedRowCount: preview.skippedRowCount,
 		//   status: "success",
 		//   details: {...}
 		// })
-
-		// Clear cache
-		previewCache.delete(importId)
 
 		return NextResponse.json({
 			success: true,
 			importId,
 			importedTradesCount: insertedCount,
+			skippedRowCount: preview.skippedRowCount,
 			message: "imports.success.imported",
 		})
 	} catch (error) {

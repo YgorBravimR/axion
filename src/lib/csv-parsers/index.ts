@@ -8,6 +8,24 @@ import { parseXPCSV, validateXPCSV } from "./xp-parser"
 import { parseGenialCSV, validateGenialCSV } from "./genial-parser"
 import type { RawExecution } from "./types"
 
+/**
+ * Internal helper to normalize parser results
+ */
+interface InternalParserResult {
+	executions: RawExecution[]
+	skippedRowCount?: number
+	skippedRowNumbers?: number[]
+}
+
+const normalizeParserResult = (
+	result: RawExecution[] | InternalParserResult
+): InternalParserResult => {
+	if (Array.isArray(result)) {
+		return { executions: result, skippedRowCount: 0, skippedRowNumbers: [] }
+	}
+	return result
+}
+
 export type BrokerName = "CLEAR" | "XP" | "GENIAL"
 
 export interface ParseStatementOptions {
@@ -16,24 +34,41 @@ export interface ParseStatementOptions {
 	delimiter?: string
 }
 
+export interface ParseStatementResult {
+	executions: RawExecution[]
+	skippedRowCount: number
+	skippedRowNumbers: number[] // First N row numbers (up to 10) that were skipped
+}
+
 /**
- * Parse broker statement CSV and return raw executions
+ * Parse broker statement CSV and return raw executions with skip counts
  * Delegates to broker-specific parser
  */
 export const parseStatementCSV = (
 	options: ParseStatementOptions
-): RawExecution[] => {
+): ParseStatementResult => {
 	const { brokerName, csvContent, delimiter } = options
 
+	let result: RawExecution[] | InternalParserResult
 	switch (brokerName) {
 		case "CLEAR":
-			return parseClearCSV(csvContent, { delimiter })
+			result = parseClearCSV(csvContent, { delimiter })
+			break
 		case "XP":
-			return parseXPCSV(csvContent, { delimiter })
+			result = parseXPCSV(csvContent, { delimiter })
+			break
 		case "GENIAL":
-			return parseGenialCSV(csvContent, { delimiter })
+			result = parseGenialCSV(csvContent, { delimiter })
+			break
 		default:
 			throw new Error(`Unknown broker: ${JSON.stringify(brokerName)}`)
+	}
+
+	const normalized = normalizeParserResult(result)
+	return {
+		executions: normalized.executions,
+		skippedRowCount: normalized.skippedRowCount ?? 0,
+		skippedRowNumbers: normalized.skippedRowNumbers ?? [],
 	}
 }
 
