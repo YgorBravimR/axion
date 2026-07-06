@@ -5,6 +5,7 @@ import { eq, and, gte, lte, desc } from "drizzle-orm"
 import { fromCents, toCents } from "@/lib/money"
 import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
 import { checkHawksCascade } from "@/lib/hawks/cascade"
+import { getHawksDailyGovernorStatus } from "@/lib/hawks/daily-governor-status"
 import { archAuth } from "../../_lib/auth"
 import { archSuccess, archError } from "../../_lib/helpers"
 
@@ -216,14 +217,25 @@ const GET = async (request: NextRequest) => {
 		const cascadeResult = await checkHawksCascade(accountId, today)
 		const hawksCascadeTriggered = cascadeResult?.triggered === true
 
+		// Hawks never-red governor (null for non-Hawks accounts). When active it
+		// owns the post-target stop: hitting the daily target does NOT stop the
+		// day (D3) — only the governor's neverRedFloor / postTargetStop does.
+		const governor = await getHawksDailyGovernorStatus(accountId, today)
+		const governorActive = governor !== null
+		const governorStop = governor?.shouldStop === true
+		// For Hawks accounts, suppress the plain profit-target stop — the governor
+		// decides when a profitable day ends.
+		const targetStops = governorActive ? false : profitTargetHit
+
 		const shouldStopTrading =
-			profitTargetHit ||
+			targetStops ||
 			lossLimitHit ||
 			maxTradesHit ||
 			maxConsecutiveLossesHit ||
 			isMonthlyLimitHit ||
 			isSecondOpBlocked ||
-			hawksCascadeTriggered
+			hawksCascadeTriggered ||
+			governorStop
 
 		const alerts: string[] = []
 		if (profitTargetHit) {
@@ -246,6 +258,9 @@ const GET = async (request: NextRequest) => {
 		}
 		if (hawksCascadeTriggered) {
 			alerts.push("hawksCascade")
+		}
+		if (governorStop && governor?.stopReason) {
+			alerts.push(governor.stopReason)
 		}
 
 		return archSuccess("Circuit breaker status retrieved", {
@@ -277,6 +292,7 @@ const GET = async (request: NextRequest) => {
 			isMonthlyLimitHit,
 			isSecondOpBlocked,
 			hawksCascade: cascadeResult,
+			hawksGovernor: governor,
 		})
 	} catch (error) {
 		const message = error instanceof Error ? error.message : "Unknown error"

@@ -7,6 +7,10 @@ import { requireAuth } from "@/app/actions/auth"
 import { getServerEffectiveNow } from "@/lib/effective-date"
 import { resolveLiveStatus } from "@/lib/live-trading-status"
 import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
+import {
+	getHawksDailyGovernorStatus,
+	applyGovernorToStatus,
+} from "@/lib/hawks/daily-governor-status"
 import { adaptDecisionTree } from "@/lib/risk-profiles/cents-shape"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import { getTranslations } from "next-intl/server"
@@ -117,6 +121,11 @@ export const getLiveTradingStatus = async (
 			dailyProfitTargetCents: dailyTargetCents > 0 ? dailyTargetCents : null,
 			maxTrades: derivedMaxTrades,
 		})
+
+		// Hawks never-red governor: for Hawks accounts the governor owns the
+		// post-target and never-red stops (D3). No-op for non-Hawks accounts.
+		const governor = await getHawksDailyGovernorStatus(accountId, today)
+		applyGovernorToStatus(status, governor)
 
 		const tradeSummaries: TradeSummary[] = todaysTrades.map((trade, index) => ({
 			tradeStepNumber: status.tradeStepNumbers[index] ?? index + 1,

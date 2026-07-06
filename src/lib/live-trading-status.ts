@@ -325,6 +325,8 @@ const resolveLiveStatus = ({
 		consecutiveLosses,
 		shouldStopTrading,
 		stopReason,
+		// Pure resolver has no DB access; the action composes the Hawks governor.
+		hawksGovernor: null,
 		shouldIncreaseSize,
 		shouldDecreaseSize,
 		sizeDirectionReason,
