@@ -63,7 +63,6 @@ async function getHawksDailyGovernorStatus(
 			.select({
 				rOutcome: trades.rOutcome,
 				outcome: trades.outcome,
-				entryDate: trades.entryDate,
 			})
 			.from(tradeHawksMetadata)
 			.innerJoin(trades, eq(trades.id, tradeHawksMetadata.tradeId))
