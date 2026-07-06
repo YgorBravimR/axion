@@ -305,6 +305,14 @@ Full spec at [`docs/plans/ai-assistant-phase-1.md`](plans/ai-assistant-phase-1.m
 
 ## Backtest / Inspector
 
+### Hawks daily-governor — validate the risk rule via Equity Shield floor sweep
+
+- **Priority**: P2 — validation lever before trusting the live governor long-term.
+- **Effort**: M (2-3 days — generalize the governor floor + add a governor mode to Equity Shield + floor-sweep deliverable).
+- **Plan**: full spec at [`docs/plans/hawks-governor-backtest-validation.md`](plans/hawks-governor-backtest-validation.md). Reframed 2026-07-06: the governor is a **risk-management system with a tunable floor** (never-red = floorR 0), NOT a backtest-engine change. Home is an **Equity Shield mode** (mode selector: dd-floor | governor), reusing its real-trade ingestion + curve/MDD math. Deliverable is a **floor sweep** (−1R … +2R) over real logged Hawks trades showing expectancy cost vs. drawdown/red-days saved per floor. Post-hoc truncation is EXACT here (Hawks generation is path-independent — proven). Applying the governor inside the trade-generating `runBacktest` engine is explicitly out of scope (later, larger).
+- **Done when**: governor floor is a parameter (floorR=0 reproduces shipped behavior, 21 tests green); Equity Shield governor mode + floor-sweep table + baseline-vs-governed curve; lint + tests green.
+- **Source**: 2026-07-06 — Hawks daily-stop rule; live shipped (commit 93657e8a), validation reframed to Equity Shield at Ygor's direction.
+
 ### Hawks-chart — chart-level drag for drawings (positions especially)
 
 - **Priority**: P3 — UX polish. Inline editor in the drawings list ships the same data path; drag is the "feels right" finish.

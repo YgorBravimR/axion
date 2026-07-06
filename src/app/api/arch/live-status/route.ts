@@ -3,6 +3,10 @@ import { db } from "@/db/drizzle"
 import { trades, riskManagementProfiles } from "@/db/schema"
 import { eq, and, gte, lte } from "drizzle-orm"
 import { resolveLiveStatus } from "@/lib/live-trading-status"
+import {
+	getHawksDailyGovernorStatus,
+	applyGovernorToStatus,
+} from "@/lib/hawks/daily-governor-status"
 import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
 import { adaptDecisionTree } from "@/lib/risk-profiles/cents-shape"
 import { archAuth } from "../_lib/auth"
@@ -100,6 +104,10 @@ const GET = async (request: NextRequest) => {
 			dailyProfitTargetCents: dailyTargetCents > 0 ? dailyTargetCents : null,
 			maxTrades: derivedMaxTrades,
 		})
+
+		// Hawks never-red governor (D3) — same composition as the server action.
+		const governor = await getHawksDailyGovernorStatus(accountId, today)
+		applyGovernorToStatus(status, governor)
 
 		const tradeSummaries: TradeSummary[] = todaysTrades.map((trade, index) => ({
 			tradeStepNumber: status.tradeStepNumbers[index] ?? index + 1,

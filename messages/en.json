@@ -4531,6 +4531,28 @@
 			"drawdownLimitHint": "Worst-case drawdown ({pct}%) applied to your balance",
 			"age": "{minutes} min ago",
 			"ageNow": "just now"
+		},
+		"governor": {
+			"title": "Never-Red Governor",
+			"modeToggle": "Analysis mode",
+			"modeDdFloor": "DD-Floor Shield",
+			"modeGovernor": "Never-Red Governor",
+			"description": "A day-level risk rule with a tunable floor. Sweep candidate floors over your real Hawks trades to see what each would have cost and saved.",
+			"run": "Run Sweep",
+			"table": {
+				"floor": "Floor",
+				"baseline": "Baseline (no rule)",
+				"neverRed": "Never-red",
+				"lockProfit": "Lock profit",
+				"totalR": "Total R",
+				"expectancy": "Expectancy",
+				"maxDD": "Max DD (R)",
+				"redDays": "Red days",
+				"daysCapped": "Days capped",
+				"tradesKept": "Trades kept",
+				"avgPerDay": "Avg/day"
+			},
+			"hint": "Higher floors protect more profit and cut drawdown, but drop more trades and lower total R. Pick the floor whose expectancy cost you accept for the drawdown it removes."
 		}
 	},
 	"candleQuery": {

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest"
-import { rNumberToPoints } from "@/lib/enrichment/brick-size-resolver"
+// Import from the pure source (r-number.ts), not the barrel — the barrel
+// (brick-size-resolver.ts) also imports @/db/drizzle, which throws
+// "DATABASE_URL missing" at module load on CI (no .env). This test only
+// exercises pure R→points math, so it must not drag in the DB client.
+import { rNumberToPoints } from "@/lib/enrichment/r-number"
 
 describe("rNumberToPoints", () => {
 	it("R20 = 95 points (per CLAUDE.md rule 0)", () => {

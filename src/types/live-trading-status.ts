@@ -5,6 +5,14 @@
 
 type DayPhase = "base" | "loss_recovery" | "gain_mode" | "normal"
 
+/** Hawks never-red governor state surfaced to the live-status panels. */
+interface HawksGovernorSnapshot {
+	phase: "phase0" | "phaseA" | "phaseB"
+	totalR: number
+	cushion: number
+	armed: boolean
+}
+
 interface LiveTradingStatus {
 	dayPhase: DayPhase
 	dayTradeNumber: number
@@ -17,7 +25,14 @@ interface LiveTradingStatus {
 	dailyPnlCents: number
 	consecutiveLosses: number
 	shouldStopTrading: boolean
+	/**
+	 * Existing reasons plus Hawks never-red governor reasons:
+	 * - "neverRedFloor": Phase A cushion exhausted, day closed at >=0R.
+	 * - "postTargetStop": Phase B, a losing trade after the daily target ended the day.
+	 */
 	stopReason: string | null
+	/** Hawks governor snapshot (null for non-Hawks accounts). */
+	hawksGovernor: HawksGovernorSnapshot | null
 	shouldIncreaseSize: boolean
 	shouldDecreaseSize: boolean
 	sizeDirectionReason: string | null
@@ -46,7 +61,11 @@ interface TradeSummary {
 
 type LiveTradingStatusResult =
 	| { hasProfile: false; fallbackRiskCents: number | null }
-	| { hasProfile: true; status: LiveTradingStatus; tradeSummaries: TradeSummary[] }
+	| {
+			hasProfile: true
+			status: LiveTradingStatus
+			tradeSummaries: TradeSummary[]
+	  }
 
 /** Minimal trade input for the live status resolver */
 interface TradeOutcomeInput {
@@ -56,6 +75,7 @@ interface TradeOutcomeInput {
 
 export type {
 	DayPhase,
+	HawksGovernorSnapshot,
 	LiveTradingStatus,
 	LiveTradingStatusResult,
 	TradeSummary,

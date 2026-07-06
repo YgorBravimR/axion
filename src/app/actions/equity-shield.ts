@@ -2,11 +2,17 @@
 
 import { getTranslations } from "next-intl/server"
 import { db } from "@/db/drizzle"
-import { trades } from "@/db/schema"
+import { trades, tradeHawksMetadata } from "@/db/schema"
 import { eq, and, asc, gte, lte, isNotNull } from "drizzle-orm"
 import { requireAuth } from "@/app/actions/auth"
 import { BRT_OFFSET } from "@/lib/dates"
 import { runEquityShield } from "@/lib/equity-shield"
+import { resolveDay } from "@/lib/fractal-plan/resolver"
+import {
+	runGovernorSweep,
+	type SweepTrade,
+	type SweepResult,
+} from "@/lib/hawks/governor-sweep"
 import { dateRangeSchema } from "@/lib/validations/risk-simulation"
 import { toSafeErrorMessage } from "@/lib/error-utils"
 import type { ActionResponse } from "@/types"
@@ -84,6 +90,104 @@ export const runEquityShieldFromDb = async (
 				{
 					code: "SHIELD_FAILED",
 					detail: toSafeErrorMessage(error, "runEquityShieldFromDb"),
+				},
+			],
+		}
+	}
+}
+
+/**
+ * Run the Hawks daily-governor FLOOR SWEEP over real logged trades.
+ *
+ * This is the "governor" mode of Equity Shield — a distinct risk analysis from
+ * the DD-floor methods. It loads each closed Hawks trade's realized R and
+ * trading day, then sweeps candidate floors to show what each would have done to
+ * total R / expectancy / drawdown / red-days. The trader picks the floor the
+ * data rewards. See docs/plans/hawks-governor-backtest-validation.md.
+ *
+ * The daily target comes from the fractal cascade (resolveDay) so the sweep
+ * uses the same Phase B boundary the live governor uses.
+ */
+export const runGovernorSweepFromDb = async (
+	dateFrom: string,
+	dateTo: string,
+	floors?: number[]
+): Promise<ActionResponse<SweepResult>> => {
+	const t = await getTranslations("equityShield.errors")
+	try {
+		const { accountId } = await requireAuth()
+		const validated = dateRangeSchema.parse({ dateFrom, dateTo })
+
+		const startDate = new Date(`${validated.dateFrom}T00:00:00${BRT_OFFSET}`)
+		const endDate = new Date(`${validated.dateTo}T23:59:59.999${BRT_OFFSET}`)
+
+		// Daily target from the cascade (same source as the live governor).
+		const day = await resolveDay(accountId, startDate)
+		const dailyTargetR = day ? Number(day.dailyTargetR.value) : 0
+		if (!Number.isFinite(dailyTargetR) || dailyTargetR <= 0) {
+			return {
+				status: "error",
+				message: t("runFailed"),
+				errors: [
+					{ code: "NO_TARGET", detail: "No positive daily target resolved" },
+				],
+			}
+		}
+
+		// Load closed trades with realized R + Hawks trading day.
+		const rows = await db
+			.select({
+				rOutcome: trades.rOutcome,
+				outcome: trades.outcome,
+				tradingDay: tradeHawksMetadata.tradingDay,
+			})
+			.from(tradeHawksMetadata)
+			.innerJoin(trades, eq(trades.id, tradeHawksMetadata.tradeId))
+			.where(
+				and(
+					eq(trades.accountId, accountId),
+					eq(trades.isArchived, false),
+					isNotNull(trades.exitDate),
+					isNotNull(trades.rOutcome),
+					gte(trades.entryDate, startDate),
+					lte(trades.entryDate, endDate)
+				)
+			)
+			.orderBy(asc(trades.entryDate))
+
+		if (rows.length === 0) {
+			return {
+				status: "error",
+				message: t("noTradesInRange"),
+				errors: [{ code: "NO_TRADES", detail: "No closed Hawks trades found" }],
+			}
+		}
+
+		const sweepTrades: SweepTrade[] = rows.map((row) => ({
+			rOutcome: Number(row.rOutcome ?? 0),
+			outcome: row.outcome as SweepTrade["outcome"],
+			tradingDay: row.tradingDay,
+		}))
+
+		const result = runGovernorSweep({
+			trades: sweepTrades,
+			dailyTargetR,
+			floors,
+		})
+
+		return {
+			status: "success",
+			message: "Governor sweep complete",
+			data: result,
+		}
+	} catch (error) {
+		return {
+			status: "error",
+			message: t("runFailed"),
+			errors: [
+				{
+					code: "SWEEP_FAILED",
+					detail: toSafeErrorMessage(error, "runGovernorSweepFromDb"),
 				},
 			],
 		}

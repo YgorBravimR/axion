@@ -40,6 +40,8 @@ interface EquityShieldParamsProps {
 	isLoadingPreview: boolean
 	onRun: () => void
 	isLoading: boolean
+	/** Hide the DD-shield computation params (used by governor mode). Default true. */
+	showComputationParams?: boolean
 }
 
 // ==========================================
@@ -77,6 +79,7 @@ const EquityShieldParamsForm = ({
 	isLoadingPreview,
 	onRun,
 	isLoading,
+	showComputationParams = true,
 }: EquityShieldParamsProps) => {
 	const t = useTranslations("equityShield.params")
 
@@ -235,8 +238,11 @@ const EquityShieldParamsForm = ({
 				<p className="text-tiny text-txt-300">{t("sampleSizeTip")}</p>
 			</div>
 
-			{/* Computation Parameters Grid */}
-			<div className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+			{/* Computation Parameters Grid — hidden in governor mode */}
+			<div
+				hidden={!showComputationParams}
+				className="gap-s-300 sm:gap-m-400 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+			>
 				{/* Account Balance */}
 				<div className="space-y-s-200">
 					<Label
