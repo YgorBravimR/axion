@@ -21,8 +21,17 @@ import { loadEnvFile } from "process"
 // in explicit Intl-based helpers, not env TZ.
 process.env.TZ = "UTC"
 
-// Load .env file for tests that need DB access
-loadEnvFile(".env")
+// Load .env for local runs that exercise DB-backed helpers. CI has no .env
+// (env comes from GitHub secrets) and unit tests are hermetic — mock DB +
+// next-intl — so a missing file is a no-op, not a hard failure. Without this
+// guard loadEnvFile throws ENOENT and takes down every suite on CI.
+try {
+	loadEnvFile(".env")
+} catch (error) {
+	if ((error as NodeJS.ErrnoException)?.code !== "ENOENT") {
+		throw error
+	}
+}
 
 // next-intl/server cannot run in Vitest's Node environment — it requires the
 // Next.js RSC runtime. Mock it globally so any test that imports a server action
