@@ -13,8 +13,16 @@
  *      │ cascade net  │     │ cushion=floor(totalR)│     │ ends the day     │
  *      └──────────────┘     └──────────────────────┘     └──────────────────┘
  *
+ * The protected floor is a PARAMETER (floorR, default 0). This makes the
+ * governor a general day-level risk system, not just a never-red rule:
+ *   floorR = 0  → never-red (the live default)
+ *   floorR = +1 → lock-in-profit          floorR = -1 → give-back-to-1R
+ * Cushion and arming are measured relative to the floor. See
+ * docs/plans/hawks-governor-backtest-validation.md.
+ *
  * Key rules (see docs/plans/hawks-never-red-governor.md):
- * - Arming LATCHES: once totalR reaches 1R at any point in the replay, the 0R
+ * - Arming LATCHES: once totalR reaches floorR + 1R at any point in the replay,
+ *   the floor
  *   floor holds for the rest of the day even if a later partial loss drops
  *   cumulative R below 1R. Without latching, a partial loss silently reopens
  *   full-loss-cap risk below break-even (the P0 the adversarial review caught).
@@ -41,6 +49,15 @@ interface GovernorParams {
 	trades: GovernorTrade[]
 	/** Daily win target in R (fractal dailyTargetR). Phase B begins at/above this. */
 	dailyTargetR: number
+	/**
+	 * Protected floor in R. The day cannot close below this once armed. This is
+	 * the dial that turns the governor into different risk rules:
+	 *   floorR = 0  → never-red (the live default)
+	 *   floorR = +1 → lock-in-profit (never give back below +1R)
+	 *   floorR = -1 → give-back-allowed-to-1R
+	 * Cushion is measured ABOVE this floor. Defaults to 0 (never-red).
+	 */
+	floorR?: number
 }
 
 interface GovernorResult {
@@ -64,7 +81,11 @@ const ARM_THRESHOLD_R = 1
 const resolveHawksDailyGovernor = ({
 	trades,
 	dailyTargetR,
+	floorR = 0,
 }: GovernorParams): GovernorResult => {
+	// Arm once the account has at least one full riskable unit ABOVE the floor.
+	// At floorR = 0 this is totalR >= 1 (the never-red default).
+	const armThresholdR = floorR + ARM_THRESHOLD_R
 	let totalR = 0
 	let everArmed = false
 	// Phase B latches: once the target is crossed, the account is in "one stop
@@ -82,7 +103,7 @@ const resolveHawksDailyGovernor = ({
 
 		totalR += trade.rOutcome
 
-		if (totalR >= ARM_THRESHOLD_R) {
+		if (totalR >= armThresholdR) {
 			everArmed = true
 		}
 		if (totalR >= dailyTargetR) {
@@ -104,9 +125,11 @@ const resolveHawksDailyGovernor = ({
 			? "phaseA"
 			: "phase0"
 
-	// Cushion only meaningful in Phase A. floor(totalR) clamped at 0 so a day
-	// sitting at a fractional remainder (+0.5R) reads cushion 0 → stop.
-	const cushion = phase === "phaseA" ? Math.max(0, Math.floor(totalR)) : 0
+	// Cushion only meaningful in Phase A. Riskable 1R units ABOVE the floor:
+	// floor(totalR - floorR), clamped at 0. A day sitting at a fractional
+	// remainder above the floor (e.g. floorR+0.5) reads cushion 0 → stop.
+	const cushion =
+		phase === "phaseA" ? Math.max(0, Math.floor(totalR - floorR)) : 0
 
 	let shouldStop = false
 	let stopReason: GovernorStopReason = null
@@ -117,9 +140,10 @@ const resolveHawksDailyGovernor = ({
 			stopReason = "postTargetStop"
 		}
 	} else if (phase === "phaseA") {
-		// Never-red floor: no riskable units left → close the day at its (>=0)
-		// remainder. Armed guarantees totalR reached 1R at some point, so the
-		// day can only close at break-even or better.
+		// Floor protection: no riskable units left above the floor → close the
+		// day at its (>= floorR) remainder. Armed guarantees totalR reached
+		// floorR + 1R at some point, so the day can only close at the floor or
+		// better. At floorR = 0 this is the never-red guarantee.
 		if (cushion < 1) {
 			shouldStop = true
 			stopReason = "neverRedFloor"

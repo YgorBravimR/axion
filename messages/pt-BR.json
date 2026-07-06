@@ -4531,6 +4531,28 @@
 			"drawdownLimitHint": "Drawdown pior caso ({pct}%) aplicado ao seu saldo",
 			"age": "há {minutes} min",
 			"ageNow": "agora mesmo"
+		},
+		"governor": {
+			"title": "Governador Never-Red",
+			"modeToggle": "Modo de análise",
+			"modeDdFloor": "Escudo DD-Floor",
+			"modeGovernor": "Governador Never-Red",
+			"description": "Uma regra de risco diária com piso ajustável. Varra pisos candidatos sobre seus trades Hawks reais para ver o que cada um custaria e economizaria.",
+			"run": "Rodar Varredura",
+			"table": {
+				"floor": "Piso",
+				"baseline": "Base (sem regra)",
+				"neverRed": "Never-red",
+				"lockProfit": "Trava lucro",
+				"totalR": "R Total",
+				"expectancy": "Expectância",
+				"maxDD": "DD Máx (R)",
+				"redDays": "Dias vermelhos",
+				"daysCapped": "Dias cortados",
+				"tradesKept": "Trades mantidos",
+				"avgPerDay": "Média/dia"
+			},
+			"hint": "Pisos maiores protegem mais lucro e cortam drawdown, mas descartam mais trades e reduzem o R total. Escolha o piso cujo custo de expectância você aceita pelo drawdown que ele remove."
 		}
 	},
 	"candleQuery": {

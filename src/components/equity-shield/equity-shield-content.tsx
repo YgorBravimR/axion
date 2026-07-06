@@ -11,16 +11,21 @@ import { formatDateKey } from "@/lib/dates"
 import {
 	runEquityShieldFromDb,
 	getEquityShieldPreview,
+	runGovernorSweepFromDb,
 } from "@/app/actions/equity-shield"
 import { useMCCalibration } from "@/components/providers/mc-calibration-provider"
 import { EquityShieldParamsForm } from "./equity-shield-params"
 import { EquityShieldStats } from "./equity-shield-stats"
 import { EquityShieldChart } from "./equity-shield-chart"
+import { GovernorSweepTable } from "./governor-sweep-table"
 import { MCCalibrationBanner } from "./mc-calibration-banner"
 import type {
 	EquityShieldParams,
 	EquityShieldResult,
 } from "@/types/equity-shield"
+import type { SweepResult } from "@/lib/hawks/governor-sweep"
+
+type ShieldMode = "dd-floor" | "governor"
 
 interface EquityShieldPreview {
 	totalTrades: number
@@ -51,6 +56,8 @@ const EquityShieldContent = ({ tradeYears }: EquityShieldContentProps) => {
 	const [params, setParams] = useState<EquityShieldParams>(DEFAULT_PARAMS)
 
 	const [result, setResult] = useState<EquityShieldResult | null>(null)
+	const [sweep, setSweep] = useState<SweepResult | null>(null)
+	const [mode, setMode] = useState<ShieldMode>("dd-floor")
 	const [error, setError] = useState<string | null>(null)
 	const [isLoading, setIsLoading] = useState(false)
 
@@ -100,6 +107,7 @@ const EquityShieldContent = ({ tradeYears }: EquityShieldContentProps) => {
 			setDateFrom(from)
 			setDateTo(to)
 			setResult(null)
+			setSweep(null)
 			setPreview(null)
 			setError(null)
 
@@ -119,14 +127,24 @@ const EquityShieldContent = ({ tradeYears }: EquityShieldContentProps) => {
 		showLoading({ message: tOverlay("analyzing") })
 
 		try {
-			const response = await runEquityShieldFromDb(params, dateFrom, dateTo)
-
-			if (response.status === "success" && response.data) {
-				setResult(response.data)
-				setMethod1LiveOnly(false)
-				setMethod2LiveOnly(false)
+			if (mode === "governor") {
+				const response = await runGovernorSweepFromDb(dateFrom, dateTo)
+				if (response.status === "success" && response.data) {
+					setSweep(response.data)
+					setResult(null)
+				} else {
+					setError(response.message)
+				}
 			} else {
-				setError(response.message)
+				const response = await runEquityShieldFromDb(params, dateFrom, dateTo)
+				if (response.status === "success" && response.data) {
+					setResult(response.data)
+					setSweep(null)
+					setMethod1LiveOnly(false)
+					setMethod2LiveOnly(false)
+				} else {
+					setError(response.message)
+				}
 			}
 		} catch {
 			setError(t("errors.unexpected"))
@@ -134,7 +152,7 @@ const EquityShieldContent = ({ tradeYears }: EquityShieldContentProps) => {
 			setIsLoading(false)
 			hideLoading()
 		}
-	}, [params, dateFrom, dateTo, showLoading, hideLoading, tOverlay, t])
+	}, [mode, params, dateFrom, dateTo, showLoading, hideLoading, tOverlay, t])
 
 	const initialBalance = fromCents(params.initialBalanceCents)
 	const drawdownLimit = fromCents(params.drawdownLimitCents)
@@ -151,6 +169,41 @@ const EquityShieldContent = ({ tradeYears }: EquityShieldContentProps) => {
 				</div>
 				<p className="text-small text-txt-300 mt-s-200">{t("subtitle")}</p>
 			</div>
+
+			{/* Analysis mode toggle: DD-floor shield vs never-red governor */}
+			<div
+				role="radiogroup"
+				aria-label={t("governor.modeToggle")}
+				className="gap-s-200 border-bg-300 bg-bg-200 p-s-100 inline-flex rounded-lg border"
+			>
+				{(["dd-floor", "governor"] as const).map((m) => (
+					<button
+						key={m}
+						type="button"
+						role="radio"
+						aria-checked={mode === m}
+						onClick={() => {
+							setMode(m)
+							setResult(null)
+							setSweep(null)
+							setError(null)
+						}}
+						className={`px-s-300 py-s-100 text-small rounded-md transition-colors ${
+							mode === m
+								? "bg-acc-100 text-bg-100 font-medium"
+								: "text-txt-200 hover:text-txt-100"
+						}`}
+					>
+						{m === "dd-floor"
+							? t("governor.modeDdFloor")
+							: t("governor.modeGovernor")}
+					</button>
+				))}
+			</div>
+
+			{mode === "governor" && (
+				<p className="text-small text-txt-300">{t("governor.description")}</p>
+			)}
 
 			{/* Monte Carlo Calibration Banner */}
 			{mcSnapshot && (
@@ -174,6 +227,7 @@ const EquityShieldContent = ({ tradeYears }: EquityShieldContentProps) => {
 				isLoadingPreview={isLoadingPreview}
 				onRun={handleRun}
 				isLoading={isLoading}
+				showComputationParams={mode === "dd-floor"}
 			/>
 
 			{/* Error */}
@@ -184,6 +238,16 @@ const EquityShieldContent = ({ tradeYears }: EquityShieldContentProps) => {
 					className="border-fb-error/30 bg-fb-error/10 text-fb-error p-s-300 rounded-lg border"
 				>
 					<p className="text-small">{error}</p>
+				</div>
+			)}
+
+			{/* Governor sweep results */}
+			{sweep && (
+				<div className="border-bg-300 mt-m-400 pt-m-400 space-y-m-400 border-t">
+					<h2 className="text-h3 text-txt-100 font-semibold">
+						{t("governor.title")}
+					</h2>
+					<GovernorSweepTable result={sweep} />
 				</div>
 			)}
 

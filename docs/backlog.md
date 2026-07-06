@@ -305,13 +305,13 @@ Full spec at [`docs/plans/ai-assistant-phase-1.md`](plans/ai-assistant-phase-1.m
 
 ## Backtest / Inspector
 
-### Hawks daily-governor — apply never-red / phase engine to backtest
+### Hawks daily-governor — validate the risk rule via Equity Shield floor sweep
 
-- **Priority**: P2 — validation lever. Once the live day-stop governor ships (live-trading-status only, per 2026-07-06 spec), we want to replay it over history to measure its effect on realized R distribution before trusting it live long-term.
-- **Effort**: M (1-2 days — port the phase/cushion state machine into the backtest engine's per-day loop so `DayBreakdown` respects Phase 0 loss cap → Phase A never-red cushion → Phase B one-stop-hard, and re-tabulate day outcomes).
-- **What + Why**: The new Hawks daily-stop rule (spec at `/tmp/hawks-daily-stop-spec.md` → move to `docs/plans/` when this is picked up) is being built for **live trading status only** first. Backtest still uses the old fixed daily-loss/target/maxTrades stops (`src/lib/live-trading-status.ts` inputs + `src/lib/backtest/engine.ts` day loop). Deferred work: teach the backtest engine the same three-phase governor so historical replay reflects the rule the trader actually follows live. Governing variable is cumulative realized R per day; winners ≥1R arm a break-even floor with cushion = floor(cumulative R); target flips to one-stop-hard.
-- **Done when**: backtest per-day outcomes reflect the three-phase rule; a toggle lets us compare old-stop vs new-governor R distributions on the same history; lint + tests green.
-- **Source**: 2026-07-06 — Hawks daily-stop rule change; live scoped first, backtest deferred at Ygor's direction.
+- **Priority**: P2 — validation lever before trusting the live governor long-term.
+- **Effort**: M (2-3 days — generalize the governor floor + add a governor mode to Equity Shield + floor-sweep deliverable).
+- **Plan**: full spec at [`docs/plans/hawks-governor-backtest-validation.md`](plans/hawks-governor-backtest-validation.md). Reframed 2026-07-06: the governor is a **risk-management system with a tunable floor** (never-red = floorR 0), NOT a backtest-engine change. Home is an **Equity Shield mode** (mode selector: dd-floor | governor), reusing its real-trade ingestion + curve/MDD math. Deliverable is a **floor sweep** (−1R … +2R) over real logged Hawks trades showing expectancy cost vs. drawdown/red-days saved per floor. Post-hoc truncation is EXACT here (Hawks generation is path-independent — proven). Applying the governor inside the trade-generating `runBacktest` engine is explicitly out of scope (later, larger).
+- **Done when**: governor floor is a parameter (floorR=0 reproduces shipped behavior, 21 tests green); Equity Shield governor mode + floor-sweep table + baseline-vs-governed curve; lint + tests green.
+- **Source**: 2026-07-06 — Hawks daily-stop rule; live shipped (commit 93657e8a), validation reframed to Equity Shield at Ygor's direction.
 
 ### Hawks-chart — chart-level drag for drawings (positions especially)
 

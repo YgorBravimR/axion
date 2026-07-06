@@ -12,8 +12,8 @@ const be = (): GovernorTrade => ({ rOutcome: 0, outcome: "breakeven" })
 
 const TARGET = 5
 
-const run = (trades: GovernorTrade[], dailyTargetR = TARGET) =>
-	resolveHawksDailyGovernor({ trades, dailyTargetR })
+const run = (trades: GovernorTrade[], dailyTargetR = TARGET, floorR = 0) =>
+	resolveHawksDailyGovernor({ trades, dailyTargetR, floorR })
 
 describe("resolveHawksDailyGovernor", () => {
 	describe("Phase 0 — not armed", () => {
@@ -181,6 +181,62 @@ describe("resolveHawksDailyGovernor", () => {
 			const r = run([win(5), loss(-0.4)])
 			expect(r.phase).toBe("phaseB")
 			expect(r.totalR).toBeCloseTo(4.6, 5)
+			expect(r.shouldStop).toBe(true)
+			expect(r.stopReason).toBe("postTargetStop")
+		})
+	})
+
+	describe("Tunable floor (risk-system generalization)", () => {
+		it("floorR=+1 (lock profit): arms at +2R, floor holds at +1R", () => {
+			// Arm threshold is floorR + 1 = 2R. +1R alone does NOT arm at floorR=1.
+			expect(run([win(1)], TARGET, 1).armed).toBe(false)
+			// +2R arms with cushion floor(2-1)=1.
+			const armed = run([win(2)], TARGET, 1)
+			expect(armed.armed).toBe(true)
+			expect(armed.phase).toBe("phaseA")
+			expect(armed.cushion).toBe(1)
+			// Give back to +1R → cushion 0 → stop at the +1R floor (not 0R).
+			const r = run([win(2), loss(-1)], TARGET, 1)
+			expect(r.totalR).toBe(1)
+			expect(r.cushion).toBe(0)
+			expect(r.shouldStop).toBe(true)
+			expect(r.stopReason).toBe("neverRedFloor")
+		})
+
+		it("floorR=+1: a +1R day never arms, so the governor does not stop it", () => {
+			const r = run([win(1), loss(-1)], TARGET, 1)
+			// Never armed (needed +2R). Governor is silent — loss cap governs.
+			expect(r.armed).toBe(false)
+			expect(r.phase).toBe("phase0")
+			expect(r.shouldStop).toBe(false)
+		})
+
+		it("floorR=-1 (give-back-to-1R): arms at 0R, protects -1R", () => {
+			// Arm threshold floorR+1 = 0R. First non-negative total arms.
+			const armed = run([win(1)], TARGET, -1)
+			expect(armed.armed).toBe(true)
+			expect(armed.phase).toBe("phaseA")
+			expect(armed.cushion).toBe(2) // floor(1 - (-1)) = 2
+			// Can give back below 0 down toward -1R before stopping.
+			const giveBack = run([win(1), loss(-1)], TARGET, -1)
+			expect(giveBack.totalR).toBe(0)
+			expect(giveBack.cushion).toBe(1) // floor(0 - (-1)) = 1 → still trading
+			expect(giveBack.shouldStop).toBe(false)
+			const r = run([win(1), loss(-1), loss(-1)], TARGET, -1)
+			expect(r.totalR).toBe(-1)
+			expect(r.cushion).toBe(0)
+			expect(r.shouldStop).toBe(true)
+		})
+
+		it("floorR=0 default matches an explicit floorR=0 (back-compat)", () => {
+			const implicit = run([win(1.5), loss(-1)])
+			const explicit = run([win(1.5), loss(-1)], TARGET, 0)
+			expect(explicit).toEqual(implicit)
+		})
+
+		it("Phase B is floor-independent: any loss after target still ends it", () => {
+			const r = run([win(5), loss(-0.4)], TARGET, 2)
+			expect(r.phase).toBe("phaseB")
 			expect(r.shouldStop).toBe(true)
 			expect(r.stopReason).toBe("postTargetStop")
 		})
