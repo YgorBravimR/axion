@@ -95,7 +95,7 @@ const computeLadderRunway = (
 			}
 			const downgradeFloor = Math.max(
 				0,
-				tierRule.minCapitalCents - thresholdR * oneR
+				tierRule.minCapitalCents - Math.round(thresholdR * oneR)
 			)
 			const lossToDowngrade = Math.max(0, cap - downgradeFloor)
 			const chunk = lossToDowngrade / oneR

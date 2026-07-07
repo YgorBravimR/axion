@@ -41,6 +41,18 @@ const monthAbbrPt = (month: number): string => MONTH_ABBR_PT[month] ?? ""
 const DEFAULT_TRADING_DAYS_PER_MONTH = 22
 
 /**
+ * Compute the month offset from a target (year, month) to today.
+ * Used to determine whether data is current, past, or future.
+ * Positive offset = past month, 0 = current month, negative = future month.
+ */
+const computeMonthOffset = (year: number, month: number): number => {
+	const now = new Date()
+	const nowY = now.getUTCFullYear()
+	const nowM = now.getUTCMonth() + 1
+	return (nowY - year) * 12 + (nowM - month)
+}
+
+/**
  * Converts an ISO week number within a plan year to its starting calendar month (1–12).
  * Uses the UTC-safe canonical anchor (Jan 4 is always in ISO week 1) and clamps to
  * the plan year so that weeks whose Monday falls in December of the prior year return 1.
@@ -62,5 +74,6 @@ export {
 	monthLabelPt,
 	monthAbbrPt,
 	DEFAULT_TRADING_DAYS_PER_MONTH,
+	computeMonthOffset,
 	isoWeekToStartMonth,
 }

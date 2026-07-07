@@ -135,19 +135,27 @@ const resolveDay = async (
 	const playbookLayers = [
 		{
 			level: "day" as const,
-			value: dayRow?.overrideActivePlaybookIds as string[] | null | undefined,
+			value: Array.isArray(dayRow?.overrideActivePlaybookIds)
+				? (dayRow.overrideActivePlaybookIds as string[])
+				: null,
 		},
 		{
 			level: "week" as const,
-			value: weekRow?.overrideActivePlaybookIds as string[] | null | undefined,
+			value: Array.isArray(weekRow?.overrideActivePlaybookIds)
+				? (weekRow.overrideActivePlaybookIds as string[])
+				: null,
 		},
 		{
 			level: "month" as const,
-			value: monthRow?.overrideActivePlaybookIds as string[] | null | undefined,
+			value: Array.isArray(monthRow?.overrideActivePlaybookIds)
+				? (monthRow.overrideActivePlaybookIds as string[])
+				: null,
 		},
 		{
 			level: "quarter" as const,
-			value: quarterRow?.activePlaybookIds as string[] | null | undefined,
+			value: Array.isArray(quarterRow?.activePlaybookIds)
+				? (quarterRow.activePlaybookIds as string[])
+				: null,
 		},
 	]
 	const hasPlaybooks = playbookLayers.some(
@@ -208,7 +216,10 @@ const cascadeNullable = <T extends string | number | null>(
 } => {
 	for (const layer of layers) {
 		if (layer.value !== null && layer.value !== undefined) {
-			return { value: Number(layer.value), provenance: layer.level }
+			const num = Number(layer.value)
+			if (Number.isFinite(num)) {
+				return { value: num, provenance: layer.level }
+			}
 		}
 	}
 	return { value: null, provenance: "none" }
@@ -314,10 +325,15 @@ const resolveYear = async (
 
 	const tag = (
 		v: string | null | undefined
-	): { value: number | null; provenance: "year" | "none" } =>
-		v == null
-			? { value: null, provenance: "none" }
-			: { value: Number(v), provenance: "year" }
+	): { value: number | null; provenance: "year" | "none" } => {
+		if (v == null) {
+			return { value: null, provenance: "none" }
+		}
+		const num = Number(v)
+		return Number.isFinite(num)
+			? { value: num, provenance: "year" }
+			: { value: null, provenance: "none" }
+	}
 
 	const dl = tag(yearRow?.defaultDailyLossR)
 	const dw = tag(yearRow?.defaultDailyWinR)
@@ -406,8 +422,13 @@ const pickStrategy = <T>(
 	return { value: null, level: "fallback" }
 }
 
-const numOrNull = (v: string | number | null | undefined): number | null =>
-	v === null || v === undefined ? null : Number(v)
+const numOrNull = (v: string | number | null | undefined): number | null => {
+	if (v === null || v === undefined) {
+		return null
+	}
+	const num = Number(v)
+	return Number.isFinite(num) ? num : null
+}
 
 const resolveBehavior = async ({
 	accountId,

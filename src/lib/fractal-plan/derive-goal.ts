@@ -1,6 +1,8 @@
 // Shared monthly-goal derivation. Same fallback chain at month + quarter level so
 // numbers reconcile across pages.
 
+import { parseFiniteOrNull } from "./parse-number"
+
 type PlanGoalSource = "manual" | "weeks" | "default" | "none"
 
 interface DeriveMonthGoalInput {
@@ -22,8 +24,8 @@ const sumWeekTargetRs = (raws: readonly (string | null)[]): number =>
 		if (raw === null) {
 			return acc
 		}
-		const n = parseFloat(raw)
-		return acc + (Number.isFinite(n) ? n : 0)
+		const n = parseFiniteOrNull(raw)
+		return acc + (n ?? 0)
 	}, 0)
 
 const deriveMonthGoal = (
@@ -53,10 +55,9 @@ const deriveMonthGoal = (
 		return { planGoalCents: fromWeeksCents, planGoalSource: "weeks" }
 	}
 
-	const cascadeR =
-		cascadeDailyTargetR !== null ? parseFloat(cascadeDailyTargetR) : NaN
+	const cascadeR = parseFiniteOrNull(cascadeDailyTargetR)
 	const fromCascadeCents =
-		Number.isFinite(cascadeR) &&
+		cascadeR !== null &&
 		cascadeR > 0 &&
 		snapshotOneRCents > 0 &&
 		totalTradingDays > 0

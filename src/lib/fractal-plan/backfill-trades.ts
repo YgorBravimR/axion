@@ -7,6 +7,7 @@ import { db } from "@/db/drizzle"
 import { trades } from "@/db/schema"
 import { and, eq, isNull, isNotNull, asc, or } from "drizzle-orm"
 import { captureROnEntry, computeROutcome } from "./r-snapshot"
+import { parseFiniteOrNull } from "./parse-number"
 
 interface BackfillInput {
 	accountId: string
@@ -76,10 +77,10 @@ const backfillTradesForAccount = async (
 			wrote++
 		} else if (row.rOutcome === null && row.pnl !== null) {
 			// Case 2: rOutcome is missing but both oneRSnapshotCents and pnl exist — compute rOutcome
-			const pnlCents = Number(row.pnl)
+			const pnlCents = parseFiniteOrNull(row.pnl)
 			const oneRCents = row.oneRSnapshotCents
 			if (
-				Number.isFinite(pnlCents) &&
+				pnlCents !== null &&
 				oneRCents &&
 				typeof oneRCents === "number" &&
 				oneRCents > 0

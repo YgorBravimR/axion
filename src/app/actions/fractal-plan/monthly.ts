@@ -23,6 +23,7 @@ const upsertSchema = z.object({
 	overrideDailyTargetR: z.number().positive().optional(),
 	overrideActivePlaybookIds: z.array(z.string().uuid()).optional(),
 	overrideRiskProfileId: z.union([z.string().uuid(), z.null()]).optional(),
+	// 0 = no explicit goal set; goal derivation falls back to weeks or cascade targets
 	monthlyGoalCents: z.number().int().nonnegative().optional(),
 	intentNotes: z.string().max(5000).optional(),
 	postMortemNotes: z.string().max(5000).optional(),

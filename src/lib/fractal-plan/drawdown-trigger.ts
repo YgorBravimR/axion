@@ -2,6 +2,7 @@ import { db } from "@/db/drizzle"
 import { monthlyPlan, yearlyPlans, tierChangeLog } from "@/db/schema"
 import { eq, and } from "drizzle-orm"
 import { evaluateDrawdownTrigger } from "./tier-eval"
+import { parseFiniteNumber } from "./parse-number"
 
 interface CheckInput {
 	readonly accountId: string
@@ -46,19 +47,18 @@ const checkDrawdownTrigger = async (
 		maxCapitalCents: number
 		oneRCents: number
 	}>
-	let thresholdR = parseFloat(
-		String(
-			(
-				yearRow as typeof yearRow & {
-					drawdownTriggerThresholdR?: string | null
-				}
-			).drawdownTriggerThresholdR ?? "2.00"
-		)
+	const MIN_THRESHOLD_R = 0.5
+	const MAX_THRESHOLD_R = 5
+	let thresholdR = parseFiniteNumber(
+		(
+			yearRow as typeof yearRow & {
+				drawdownTriggerThresholdR?: string | null
+			}
+		).drawdownTriggerThresholdR ?? "2.00",
+		2.0
 	)
 
 	// Bounds check: clamp threshold to safe range [0.5R, 5R]
-	const MIN_THRESHOLD_R = 0.5
-	const MAX_THRESHOLD_R = 5
 	if (thresholdR < MIN_THRESHOLD_R || thresholdR > MAX_THRESHOLD_R) {
 		const originalThreshold = thresholdR
 		thresholdR = Math.max(
