@@ -139,18 +139,21 @@ const MonthWeekTable = ({
 									)}
 									<span className="text-tiny text-txt-300 font-mono tabular-nums">
 										{t("target")}{" "}
-										<span className="text-txt-200">{targetR.toFixed(2)}R</span>
+										<span className="text-txt-300 italic">
+											{targetR.toFixed(1)}R
+										</span>
 									</span>
-									<span className="text-tiny text-txt-300 font-mono tabular-nums">
+									<span className="text-tiny font-mono font-medium tabular-nums">
 										{t("realized")}{" "}
 										<span
 											className={cn(
+												"font-semibold",
 												actualR > 0 && "text-trade-buy",
 												actualR < 0 && "text-trade-sell",
-												actualR === 0 && "text-txt-200"
+												actualR === 0 && "text-txt-100"
 											)}
 										>
-											{actualR.toFixed(2)}R
+											{actualR.toFixed(1)}R
 										</span>
 									</span>
 								</div>
@@ -201,8 +204,8 @@ const MonthWeekTable = ({
 					const ariaLabel = t("weekAriaLabel", {
 						n: idx + 1,
 						range: dateRange ? `(${dateRange})` : "",
-						targetR: targetR.toFixed(2),
-						actualR: actualR.toFixed(2),
+						targetR: targetR.toFixed(1),
+						actualR: actualR.toFixed(1),
 					})
 
 					return (

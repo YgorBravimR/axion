@@ -5,6 +5,10 @@ import { Pencil } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { useFormatting } from "@/hooks/use-formatting"
+import {
+	ProvenanceBadge,
+	type CascadeLevel,
+} from "@/components/fractal-plan/provenance-badge"
 import { YearlyPlanSlideover } from "./yearly-plan-slideover"
 import { WhatIfCalculator, type AssetOption } from "./what-if-calculator"
 import {
@@ -48,6 +52,11 @@ interface SetupSummaryCardProps {
 	drawdownTriggerThresholdR?: number
 	/** Active snapshot tier index, used to highlight where the trader currently sits. */
 	activeTierIndex?: number | null
+	/** Cascaded defaults provenance — source level for each cap */
+	defaultDailyLossRSource?: CascadeLevel | "none"
+	defaultDailyWinRSource?: CascadeLevel | "none"
+	defaultMonthlyLossRSource?: CascadeLevel | "none"
+	defaultMonthlyWinRSource?: CascadeLevel | "none"
 }
 
 const formatR = (r: number | null): string =>
@@ -73,6 +82,10 @@ const SetupSummaryCard = ({
 	availableAssets,
 	drawdownTriggerThresholdR = 2,
 	activeTierIndex = null,
+	defaultDailyLossRSource = "none",
+	defaultDailyWinRSource = "none",
+	defaultMonthlyLossRSource = "none",
+	defaultMonthlyWinRSource = "none",
 }: SetupSummaryCardProps) => {
 	const t = useTranslations("plan.setup")
 	const { formatCurrency } = useFormatting()
@@ -137,7 +150,7 @@ const SetupSummaryCard = ({
 						<dt className="text-txt-300 text-tiny">
 							{t("fields.monthlyWithdrawal")}
 						</dt>
-						<dd className="text-h3 text-proj mt-1 font-mono tabular-nums">
+						<dd className="text-h3 text-proj mt-1 font-mono italic tabular-nums">
 							{(withdrawalPct * 100).toFixed(0)}%
 						</dd>
 					</div>
@@ -151,9 +164,18 @@ const SetupSummaryCard = ({
 					</div>
 					<div>
 						<dt className="text-txt-300 text-tiny">{t("fields.dailyCaps")}</dt>
-						<dd className="text-small text-txt-200 mt-1 font-mono tabular-nums">
-							{formatR(defaultDailyLossR)} / {formatR(defaultDailyWinR)}
-						</dd>
+						<div className="gap-s-100 mt-1 flex items-center">
+							<dd className="text-small text-txt-200 font-mono tabular-nums">
+								{formatR(defaultDailyLossR)} / {formatR(defaultDailyWinR)}
+							</dd>
+							{(defaultDailyLossRSource !== "none" ||
+								defaultDailyWinRSource !== "none") && (
+								<ProvenanceBadge
+									level={defaultDailyWinRSource}
+									showNonOverride
+								/>
+							)}
+						</div>
 					</div>
 				</dl>
 
@@ -232,17 +254,25 @@ const SetupSummaryCard = ({
 					)}
 				</div>
 
-				<div className="mt-m-400 text-txt-300 text-tiny">
-					{t("monthlyCaps", {
-						lossR: formatR(defaultMonthlyLossR),
-						winR: formatR(defaultMonthlyWinR),
-					})}
+				<div className="gap-s-100 mt-m-400 text-tiny flex items-center">
+					<span className="text-txt-300">
+						{t("monthlyCaps", {
+							lossR: formatR(defaultMonthlyLossR),
+							winR: formatR(defaultMonthlyWinR),
+						})}
+					</span>
+					{(defaultMonthlyLossRSource !== "none" ||
+						defaultMonthlyWinRSource !== "none") && (
+						<ProvenanceBadge level={defaultMonthlyWinRSource} showNonOverride />
+					)}
 				</div>
 
 				<details className="group mt-m-500 border-bg-300 bg-bg-100 rounded-sm border">
 					<summary className="gap-s-300 px-m-400 py-s-300 text-small text-txt-200 hover:text-txt-100 flex cursor-pointer list-none items-center justify-between">
 						<span>
-							<span className="text-txt-100 font-medium">What-if · sizing</span>
+							<span className="text-txt-100 font-medium">
+								{t("whatIfTitle")}
+							</span>
 							<span className="ml-s-200 text-txt-300 text-tiny">
 								{t("whatIfSummary")}
 							</span>

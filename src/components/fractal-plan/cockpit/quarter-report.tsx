@@ -15,12 +15,20 @@ import {
 	type PlanGoalSource,
 } from "@/lib/fractal-plan/derive-goal"
 import { getHistoricalAssertivity } from "@/lib/fractal-plan/historical-assertivity"
-import { computeProjectedOneRCents } from "@/lib/fractal-plan/compound-projection"
+import {
+	computeRealizedPnlByMonth,
+	computeNetPnlChain,
+	resolveMonthStartCapital,
+} from "@/lib/fractal-plan/real-carry-forward"
 import {
 	resolveTier,
 	type LadderRuleR,
 } from "@/lib/fractal-plan/capital-ladder"
-import { DEFAULT_TRADING_DAYS_PER_MONTH } from "@/lib/fractal-plan/month-labels"
+import {
+	DEFAULT_TRADING_DAYS_PER_MONTH,
+	computeMonthOffset,
+} from "@/lib/fractal-plan/month-labels"
+import { parseFiniteNumber } from "@/lib/fractal-plan/parse-number"
 import {
 	getMonthlyResultsWithProp,
 	getMonthlyProjection,
@@ -43,13 +51,6 @@ interface QuarterReportProps {
 	year: number
 	quarter: number
 	locale: string
-}
-
-const computeMonthOffset = (year: number, month: number): number => {
-	const now = new Date()
-	const nowY = now.getUTCFullYear()
-	const nowM = now.getUTCMonth() + 1
-	return (nowY - year) * 12 + (nowM - month)
 }
 
 const monthState = (
@@ -130,6 +131,7 @@ const QuarterReport = async ({
 			accountStartYear: tradingAccounts.accountStartYear,
 			accountStartMonth: tradingAccounts.accountStartMonth,
 			startingBalanceCents: tradingAccounts.startingBalanceCents,
+			withdrawalTargetPercent: tradingAccounts.withdrawalTargetPercent,
 		})
 		.from(tradingAccounts)
 		.where(eq(tradingAccounts.id, accountId))
@@ -143,14 +145,18 @@ const QuarterReport = async ({
 	const showTaxEstimates = account?.showTaxEstimates ?? true
 
 	const computeNetAfterTaxCents = (netPnl: number): number => {
+		if (!Number.isFinite(netPnl)) {
+			return 0
+		}
 		const grossCents = Math.round(netPnl * 100)
-		const traderCents =
-			isPropAccount && grossCents > 0
-				? Math.round((grossCents * profitSharePercent) / 100)
-				: grossCents
-		return showTaxEstimates && traderCents > 0
-			? Math.round(traderCents * (1 - irTaxRate))
-			: traderCents
+		const pnlChain = computeNetPnlChain({
+			grossCents,
+			profitSharePercent: isPropAccount ? profitSharePercent : 100,
+			irTaxRate,
+			applyTax: showTaxEstimates,
+			withdrawalPct: 0, // Quarter display does not apply withdrawal
+		})
+		return pnlChain.netAfterTaxCents
 	}
 
 	const [monthRowsRaw, assertivityData] = await Promise.all([
@@ -161,16 +167,13 @@ const QuarterReport = async ({
 	])
 	const monthRowByMonth = new Map(monthRowsRaw.map((m) => [m.month, m]))
 
-	const configuredAssertivityPct = yearRow.defaultAssertivityPercent
-		? Math.round(parseFloat(yearRow.defaultAssertivityPercent))
-		: 50
+	const configuredAssertivityPct = Math.round(
+		parseFiniteNumber(yearRow.defaultAssertivityPercent, 50)
+	)
 	const assertivityPct = assertivityData.hasEnoughData
 		? assertivityData.assertivityPct
 		: configuredAssertivityPct
 
-	const defaultDailyWinR = yearRow.defaultDailyWinR
-		? parseFloat(yearRow.defaultDailyWinR)
-		: 0
 	const ladderRules = yearRow.ladderRules as unknown as LadderRuleR[]
 	const planStartMonth =
 		account?.accountStartYear === year && account?.accountStartMonth != null
@@ -184,22 +187,35 @@ const QuarterReport = async ({
 		account?.startingBalanceCents != null && account.accountStartYear === year
 			? account.startingBalanceCents
 			: yearRow.initialCapitalCents
-	const COMPOUND_DAYS = 22
-	const assertivity01 = Math.min(100, Math.max(1, assertivityPct)) / 100
-	const compoundCapitalAtMonth = (targetMonth: number): number => {
-		if (defaultDailyWinR <= 0 || ladderRules.length === 0) {
-			return effectiveInitialCapitalCents
-		}
-		let cap = effectiveInitialCapitalCents
-		for (let m = planStartMonth; m < targetMonth; m++) {
-			const { oneRCents } = resolveTier(cap, ladderRules)
-			const grossGoal = Math.round(
-				defaultDailyWinR * COMPOUND_DAYS * assertivity01 * oneRCents
-			)
-			const taxCents = grossGoal > 0 ? Math.round(grossGoal * irTaxRate) : 0
-			cap += grossGoal - taxCents
-		}
-		return cap
+	// Month-start capital = REAL carry-forward (initial + actual realized net P&L
+	// of prior months), mirroring month-report.tsx and the annual cockpit grid so
+	// every view agrees. Prior code compounded the *planned* goal, inflating
+	// capital whenever real results missed target.
+	const withdrawalPct =
+		account?.withdrawalTargetPercent != null
+			? Number(account.withdrawalTargetPercent) / 100
+			: 0
+	const realPnlByMonth =
+		ladderRules.length > 0
+			? await computeRealizedPnlByMonth({
+					accountId,
+					year,
+					profitSharePercent,
+					irTaxRate,
+					withdrawalPct,
+					applyTax: showTaxEstimates,
+				})
+			: []
+	const capitalAtMonth = (targetMonth: number): number => {
+		const result = resolveMonthStartCapital({
+			ladderRules,
+			initialCapitalCents: effectiveInitialCapitalCents,
+			realPnlByMonth,
+			planStartMonth,
+			month: targetMonth,
+			snapshotOneRCents: 0, // Not used in this context
+		})
+		return result.capitalCents
 	}
 
 	const perMonth = await Promise.all(
@@ -234,18 +250,11 @@ const QuarterReport = async ({
 			const totalTradingDays =
 				projectionData?.totalTradingDays ?? DEFAULT_TRADING_DAYS_PER_MONTH
 
+			const effectiveCapitalCents = capitalAtMonth(m)
 			const compoundOneRCents =
-				defaultDailyWinR > 0
-					? computeProjectedOneRCents(m, {
-							initialCapitalCents: effectiveInitialCapitalCents,
-							ladderRules,
-							dailyTargetR: defaultDailyWinR,
-							assertivityPct,
-							planStartMonth,
-							irTaxRate,
-						})
+				ladderRules.length > 0
+					? resolveTier(effectiveCapitalCents, ladderRules).oneRCents
 					: (row?.snapshotOneRCents ?? 0)
-			const effectiveCapitalCents = compoundCapitalAtMonth(m)
 			const effectiveTierIndex =
 				ladderRules.length > 0
 					? resolveTier(effectiveCapitalCents, ladderRules).tierIndex
@@ -306,11 +315,7 @@ const QuarterReport = async ({
 	)
 	const aggregatedGoalCents = goalSums.cents > 0 ? goalSums.cents : null
 	const aggregatedGoalSource:
-		| "manual"
-		| "weeks"
-		| "default"
-		| "mixed"
-		| "none" = (() => {
+		"manual" | "weeks" | "default" | "mixed" | "none" = (() => {
 		if (aggregatedGoalCents === null) {
 			return "none"
 		}

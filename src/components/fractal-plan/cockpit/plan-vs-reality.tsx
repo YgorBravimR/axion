@@ -156,7 +156,7 @@ const PlanVsReality = ({
 					) : (
 						<p
 							className={cn(
-								"mt-s-100 text-h2 font-mono tabular-nums",
+								"mt-s-100 text-h2 font-mono italic tabular-nums",
 								projectionTone
 							)}
 						>
@@ -179,7 +179,7 @@ const PlanVsReality = ({
 					</div>
 					{planSet ? (
 						<>
-							<p className="mt-s-100 text-h2 text-proj font-mono tabular-nums">
+							<p className="mt-s-100 text-h2 text-proj font-mono italic tabular-nums">
 								{Math.round(hitPctOfGoal)}%
 							</p>
 							<div className="mt-s-200 bg-bg-100 h-1.5 w-full overflow-hidden rounded-full">

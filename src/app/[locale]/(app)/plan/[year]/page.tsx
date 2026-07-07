@@ -503,6 +503,18 @@ const PlanYearPage = async ({ params }: PageProps) => {
 					currentOneRCents={currentOneRCents}
 					availableAssets={availableAssets}
 					activeTierIndex={currentTierIndex}
+					defaultDailyLossRSource={
+						resolved?.defaultDailyLossR_provenance ?? "none"
+					}
+					defaultDailyWinRSource={
+						resolved?.defaultDailyWinR_provenance ?? "none"
+					}
+					defaultMonthlyLossRSource={
+						resolved?.defaultMonthlyLossR_provenance ?? "none"
+					}
+					defaultMonthlyWinRSource={
+						resolved?.defaultMonthlyWinR_provenance ?? "none"
+					}
 				/>
 				<PlanSection
 					title={t("yearPage.notCreatedTitle", { year })}
@@ -536,6 +548,16 @@ const PlanYearPage = async ({ params }: PageProps) => {
 				defaultInitialCapitalCents={defaultInitialCapitalCents}
 				currentOneRCents={currentOneRCents}
 				availableAssets={availableAssets}
+				defaultDailyLossRSource={
+					resolved?.defaultDailyLossR_provenance ?? "none"
+				}
+				defaultDailyWinRSource={resolved?.defaultDailyWinR_provenance ?? "none"}
+				defaultMonthlyLossRSource={
+					resolved?.defaultMonthlyLossR_provenance ?? "none"
+				}
+				defaultMonthlyWinRSource={
+					resolved?.defaultMonthlyWinR_provenance ?? "none"
+				}
 			/>
 
 			<PlanYearGuide />

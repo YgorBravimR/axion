@@ -4,6 +4,11 @@ import Link from "next/link"
 import { useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
 import { useFormatting } from "@/hooks/use-formatting"
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { MonthCapitalPopover } from "./month-capital-popover"
 import type { ProjectMonthResult } from "@/lib/fractal-plan/projection"
 
@@ -386,7 +391,20 @@ const MonthCard = ({
 					</div>
 					{hasRemainder && (
 						<div className="mt-s-100 border-bg-300/50 pt-s-200 text-tiny text-proj col-span-3 flex items-center justify-between border-t font-mono italic tabular-nums">
-							<dt className="text-txt-300 not-italic">{t("projRemainder")}</dt>
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<dt className="text-txt-300 border-bg-300/50 cursor-help border-b border-dashed not-italic">
+										{t("projRemainder")}
+									</dt>
+								</TooltipTrigger>
+								<TooltipContent
+									id="tooltip-proj-remainder"
+									side="top"
+									className="text-tiny max-w-xs"
+								>
+									{t("projRemainderTooltip")}
+								</TooltipContent>
+							</Tooltip>
 							<dd>
 								{(remainder?.addedRsum ?? 0) >= 0 ? "+" : ""}
 								{(remainder?.addedRsum ?? 0).toFixed(1)}R
@@ -398,7 +416,7 @@ const MonthCard = ({
 					{withdrawalCents != null && (
 						<div className="border-bg-300/50 pt-s-200 col-span-3 flex items-center justify-between border-t">
 							<dt className="text-txt-300">{t("projectedWithdrawal")}</dt>
-							<dd className="text-proj font-mono tabular-nums">
+							<dd className="text-proj font-mono italic tabular-nums">
 								{formatBRLCompact(withdrawalCents)}
 							</dd>
 						</div>

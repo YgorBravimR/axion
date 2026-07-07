@@ -6309,7 +6309,12 @@
 				"exempt": "Isento",
 				"overdue": "Vencido"
 			},
-			"noDarfLines": "Nenhuma linha de DARF para {year}. Clique em \"Recalcular ano\" após registrar trades."
+			"noDarfLines": "Nenhuma linha de DARF para {year}. Clique em \"Recalcular ano\" após registrar trades.",
+			"markPaidSuccess": "DARF marcado como pago",
+			"ledgerRecomputedToast": "Ledger recalculado · {count, plural, one {1 mês} other {# meses}}",
+			"taxHeading": "Impostos {year}",
+			"daysPerMonthNote": "DARF mensal — base 20% sobre lucro líquido",
+			"recomputeButton": "Recalcular ano"
 		},
 		"messages": {
 			"ledgerRowRetrieved": "Linha de ledger recuperada.",
@@ -6364,6 +6369,7 @@
 				"floorBadge": "Piso"
 			},
 			"monthlyCaps": "Caps mensais: loss {lossR} · win {winR}",
+			"whatIfTitle": "Simulação · sizing",
 			"whatIfSummary": "traduz 1R em nº de contratos a partir do stop em ticks (consulta opcional)",
 			"noAnnualPlan": "Plano anual ainda não criado",
 			"noAnnualPlanBody": "Crie o plano anual primeiro em"
@@ -6419,6 +6425,7 @@
 			"liqReal": "Líq real",
 			"liqProj": "Líq proj",
 			"projRemainder": "+ proj restante",
+			"projRemainderTooltip": "Porção não alocada da meta do mês não coberta por semanas definidas. Projetada com base no R diário médio atual.",
 			"projectedWithdrawal": "Retirada projetada",
 			"noWeeksGenerated": "Sem semanas geradas para este mês ainda. As semanas são auto-geradas ao criar o plano anual.",
 			"weeksHeading": "Semanas",
@@ -6803,7 +6810,11 @@
 			"mustBePositive": "Capital deve ser número positivo.",
 			"updatedWithForward": "Capital atualizado · {count} meses adiante recalibrados",
 			"updated": "Capital atualizado",
-			"updateFailed": "Falha ao atualizar capital"
+			"updateFailed": "Falha ao atualizar capital",
+			"realCarryForward": "Computado a partir de trades realizadas",
+			"realCarryForwardTooltip": "Capital de roll-over é computado a partir de P&L realizado, líquido de profit-share, IR e saques.",
+			"snapshotFallback": "Snapshot do plano",
+			"snapshotFallbackTooltip": "Capital inicial do snapshot do plano (sem regras de ladder configuradas ou dados de P&L anterior disponíveis)"
 		},
 		"rCapOverride": {
 			"mustBePositive": "{fieldLabel} deve ser um número positivo.",

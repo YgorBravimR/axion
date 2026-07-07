@@ -2,6 +2,7 @@ import { getTranslations, getLocale } from "next-intl/server"
 import { formatCurrency } from "@/lib/formatting"
 import type { Locale } from "@/i18n/config"
 import { RCapOverridePopover } from "@/components/fractal-plan/r-cap-override-popover"
+import { CapitalProvenanceBadge } from "@/components/fractal-plan/capital-provenance-badge"
 import type { CascadeLevel } from "@/lib/fractal-plan/cascade-merge"
 
 interface ResolvedField {
@@ -14,6 +15,7 @@ interface CapsStripProps {
 	tierIndex: number
 	oneRCents: number
 	capitalCents: number
+	capitalIsRealCarryForward: boolean
 	dailyLossR: ResolvedField
 	dailyTargetR: ResolvedField
 	weeklyLossR: ResolvedField
@@ -25,6 +27,7 @@ const CapsStrip = async ({
 	tierIndex,
 	oneRCents,
 	capitalCents,
+	capitalIsRealCarryForward,
 	dailyLossR,
 	dailyTargetR,
 	weeklyLossR,
@@ -48,9 +51,14 @@ const CapsStrip = async ({
 			<div className="p-m-400 gap-x-m-500 gap-y-s-300 flex flex-wrap items-end">
 				{/* Hero: month-start capital — the anchor of everything else */}
 				<div className="gap-s-100 flex flex-col">
-					<span className="text-tiny text-txt-300 tracking-wide uppercase">
-						{t("monthStartCapital")}
-					</span>
+					<div className="gap-s-200 flex items-center">
+						<span className="text-tiny text-txt-300 tracking-wide uppercase">
+							{t("monthStartCapital")}
+						</span>
+						<CapitalProvenanceBadge
+							isRealCarryForward={capitalIsRealCarryForward}
+						/>
+					</div>
 					<span className="text-h2 text-txt-100 font-mono leading-none tabular-nums">
 						{formatBRL(capitalCents)}
 					</span>

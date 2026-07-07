@@ -26,15 +26,24 @@ const WeekRow = ({
 	const { formatCurrency } = useFormatting()
 	const formatBRL = (cents: number): string => formatCurrency(cents / 100)
 
-	const display = isPast && actualR !== null ? actualR : targetR
+	// Actual rendering: when we have actual data and past, display actual with primary weight;
+	// else display target with secondary weight
+	const hasActual = isPast && actualR !== null
+	const displayValue = hasActual ? actualR : targetR
+
+	// Color tone follows the displayed value (actual or target)
 	const tone =
-		display === null
+		displayValue === null
 			? "text-txt-300"
-			: display > 0
-				? "text-profit"
-				: display < 0
-					? "text-loss"
+			: displayValue > 0
+				? "text-trade-buy"
+				: displayValue < 0
+					? "text-trade-sell"
 					: "text-txt-200"
+
+	// Visual weight: actual is primary (font-semibold), target is secondary (muted)
+	const weight = hasActual ? "font-semibold" : "text-txt-300"
+	const finalClass = cn("tabular-nums", tone, weight)
 
 	return (
 		<div
@@ -47,7 +56,7 @@ const WeekRow = ({
 			<span className="text-txt-300 tabular-nums">
 				S{String(weekIndex).padStart(2, "0")}
 			</span>
-			<span className={cn("tabular-nums", tone)}>{formatR(display)}</span>
+			<span className={finalClass}>{formatR(displayValue)}</span>
 			<span className="text-txt-200 tabular-nums">
 				{formatBRL(endBalanceCents)}
 			</span>

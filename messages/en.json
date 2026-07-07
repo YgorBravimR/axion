@@ -6309,7 +6309,12 @@
 				"exempt": "Exempt",
 				"overdue": "Overdue"
 			},
-			"noDarfLines": "No DARF rows for {year}. Click \"Recompute year\" after recording trades."
+			"noDarfLines": "No DARF rows for {year}. Click \"Recompute year\" after recording trades.",
+			"markPaidSuccess": "DARF marked as paid",
+			"ledgerRecomputedToast": "Ledger recomputed · {count, plural, one {1 month} other {# months}}",
+			"taxHeading": "Taxes {year}",
+			"daysPerMonthNote": "Monthly DARF — 20% base on net profit",
+			"recomputeButton": "Recompute year"
 		},
 		"messages": {
 			"ledgerRowRetrieved": "Ledger row retrieved.",
@@ -6364,6 +6369,7 @@
 				"floorBadge": "Floor"
 			},
 			"monthlyCaps": "Monthly caps: loss {lossR} · win {winR}",
+			"whatIfTitle": "What-if · sizing",
 			"whatIfSummary": "translates 1R into number of contracts from stop in ticks (optional query)",
 			"noAnnualPlan": "Annual plan not created yet",
 			"noAnnualPlanBody": "Create the annual plan first at"
@@ -6419,6 +6425,7 @@
 			"liqReal": "Liq real",
 			"liqProj": "Liq proj",
 			"projRemainder": "+ proj remaining",
+			"projRemainderTooltip": "Unallocated portion of the month goal not covered by defined weeks. Projected based on current average daily R.",
 			"projectedWithdrawal": "Projected withdrawal",
 			"noWeeksGenerated": "No weeks generated for this month yet. Weeks are auto-generated when the annual plan is created.",
 			"weeksHeading": "Weeks",
@@ -6803,7 +6810,11 @@
 			"mustBePositive": "Capital must be a positive number.",
 			"updatedWithForward": "Capital updated · {count} forward months recalibrated",
 			"updated": "Capital updated",
-			"updateFailed": "Failed to update capital"
+			"updateFailed": "Failed to update capital",
+			"realCarryForward": "Computed from realized trades",
+			"realCarryForwardTooltip": "Carry-forward capital is computed from actual realized P&L, net of profit-share, IR tax, and withdrawals.",
+			"snapshotFallback": "Plan snapshot",
+			"snapshotFallbackTooltip": "Initial capital snapshot from plan setup (no ladder rules configured or prior realized data available)"
 		},
 		"rCapOverride": {
 			"mustBePositive": "{fieldLabel} must be a positive number.",

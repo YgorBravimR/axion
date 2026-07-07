@@ -41,7 +41,7 @@ const CONVENTIONS: readonly Convention[] = [
 	},
 ] as const
 
-const formatR = (n: number): string => `${n.toFixed(n % 1 === 0 ? 0 : 1)}R`
+const formatR = (n: number): string => `${n.toFixed(1)}R`
 
 const ExitConventionTab = () => {
 	const t = useTranslations("plan.exits")

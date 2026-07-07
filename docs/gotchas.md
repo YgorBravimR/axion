@@ -803,6 +803,31 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Risk**: The error manifests as a Playwright timeout or missing DOM element, not as a DB error. If you see "expected element not found" in a test that used to pass, check if seed data is creating the full cascade.
 - **Date logged**: 2026-05-22.
 
+---
+
+## UI Clarity & Provenance
+
+### Capital carry-forward computation needs visual indicator (real vs. fallback)
+
+- **What**: The month-start capital displayed in caps-strip can come from two sources: (a) **real carry-forward** = computed from actual realized P&L net of profit-share, IR tax, withdrawals (ladder rules present), or (b) **snapshot fallback** = initial capital snapshot from plan setup (no ladder rules configured). The UI showed both identically, so traders couldn't tell whether a capital figure was real execution history or a stale planning baseline. This is critical for trust — capital is the anchor of everything else (tier, 1R, risk caps).
+- **What to do**: Add a small provenance badge to the month-start capital value in caps-strip: green "Computed from realized trades" for real carry-forward, muted "Plan snapshot" for fallback. Component: `src/components/fractal-plan/capital-provenance-badge.tsx`. Badge appears only in header of caps-strip next to the "Month-start capital" label and includes a tooltip explaining the source. Same pattern is now extended to ProvenanceBadge for cascaded R-cap values (level + tooltip).
+- **Implications**: Tooltips require `@/components/ui/tooltip` (already in the project). Uses trade-buy color for real P&L, txt-300 for fallback. Passes `capitalIsRealCarryForward: boolean` from month-report to CapsStrip component based on whether ladder rules exist (line 245 condition).
+- **Date logged**: 2026-07-07.
+
+### Planned vs. actual R values need visual hierarchy (was equal weight, now actual > target)
+
+- **What**: In weekly tables and month-week-table displays, target R and realized R were rendered side-by-side with identical visual weight (same font, same color tone per sign). Traders had to scan and mentally process two values to understand performance. The actual value is what matters for decision-making; target is context.
+- **What to do**: Apply visual hierarchy: realized R gets primary weight (`font-semibold`, full color tone), target R gets secondary treatment (`italic`, muted text). In month-week-table.tsx: target shows as `text-txt-300 italic`, realized shows as `font-semibold` with color. In week-row.tsx: actual data gets `font-semibold` when available, target gets `text-txt-300` when displayed as fallback.
+- **Files changed**: `src/components/fractal-plan/cockpit/month-week-table.tsx`, `src/components/fractal-plan/cockpit/week-row.tsx`.
+- **Date logged**: 2026-07-07.
+
+### Remainder row label needs tooltip explaining what it represents
+
+- **What**: The "proj remaining" / "+ proj restante" row in month-card.tsx shows unallocated R and projected capital but had no explanation. Traders unfamiliar with weekly planning might not understand that this row represents the gap between weekly goals and the full month goal.
+- **What to do**: Add a cursor-help style border-bottom to the label and wire a Tooltip explaining: "Unallocated portion of the month goal not covered by defined weeks. Projected based on current average daily R." Translation keys added to both `en.json` and `pt-BR.json` as `projRemainderTooltip`.
+- **Files changed**: `src/components/fractal-plan/cockpit/month-card.tsx`.
+- **Date logged**: 2026-07-07.
+
 ### Fractal cascade seed UPDATE must re-seed snapshot fields — otherwise resolveDay() returns oneRCents=0
 
 - **What**: `ensureBravoFractalCascade()` has two paths: INSERT (new row) and UPDATE (existing row). The original UPDATE only set `override_risk_profile_id` and `updated_at`. When an existing `monthly_plan` row had `snapshot_one_r_cents = NULL`, `resolveDay()` returned `monthRow?.snapshotOneRCents ?? 0` → 0. This made all "Next Risk" displays show `$0.00` in live-trading-status tests.
@@ -1154,3 +1179,27 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Why it's easy to miss**: Catalog files are hand-edited or exported from a logging system. They live in `data/hawks/user-entries/`. If a file is accidentally saved with syntax errors or a script exports with a new schema that breaks the cast, the engine silently crashes.
 - **What to do**: Wrap JSON.parse in try-catch and validate each entry: `brickIndex` must be a number ≥ 1, `direction` must be "short" or "long". Missing or invalid fields are filtered out, and an empty catalog is safe (the chart renders with no trade markers). Fixed in commit that adds stricter parsing.
 - **Date logged**: 2026-06-13.
+
+---
+
+## Unit tests must never transitively import `@/db/drizzle` at module load
+
+- **What**: `src/db/drizzle.ts` throws `new Error("DATABASE_URL missing")` at _module-init_ time (top-level, not inside a function) when `process.env.DATABASE_URL` is unset. Any Vitest suite that imports it — directly OR transitively through a barrel — crashes during collection, before a single test runs. In CI there is no `.env` (env comes from GitHub secrets and unit tests are hermetic), so `DATABASE_URL` is unset and the whole suite reports as a "Failed Suite" with 0 tests.
+- **How it bit us (twice)**: (1) `src/__tests__/setup.ts` called `loadEnvFile(".env")` which itself threw ENOENT on CI — fixed by swallowing ENOENT (commit eba1dfe3). (2) `brick-size-resolver.test.ts` imported the pure `rNumberToPoints` via the barrel `@/lib/enrichment/brick-size-resolver`, which also imports `@/db/drizzle` for an unrelated DB function → `DATABASE_URL missing` on CI, taking down the suite (commit 2065d25b). Both are invisible locally because `.env` supplies `DATABASE_URL`.
+- **Why it's easy to miss**: Passes 100% locally. The test file itself looks pure (only exercises math); the DB coupling is one hop away in a barrel. CI is the only place `DATABASE_URL` is unset.
+- **What to do**:
+  - Import pure helpers from their DB-free source module, never through a barrel that also re-exports DB-touching functions. Here: import `rNumberToPoints` from `@/lib/enrichment/r-number`, not `@/lib/enrichment/brick-size-resolver`.
+  - If a suite genuinely needs a DB-coupled module, `vi.mock("@/db/drizzle", ...)` (see `start-dry-run-impl.test.ts`) so the throwing module never loads.
+  - To reproduce CI locally: `mv .env .env.bak && env -u DATABASE_URL pnpm test:unit` (restore `.env` after).
+- **Date logged**: 2026-07-06.
+
+---
+
+## Fractal-plan cockpit: "CAPITAL INÍCIO DO MÊS" must be REAL carry-forward, not planned compounding
+
+- **What**: The month/quarter cockpit cards (`month-report.tsx`, `quarter-report.tsx`) used to compute `effectiveCapitalCents` by looping over prior months and adding the _planned_ goal each month (`defaultDailyWinR × 22 × assertivity × oneR − tax`). That's a theoretical "if you hit target every month" projection — it ignores actual results. Symptom Ygor caught (2026-07-06): June 2026 realized only R$ 915,12 but July's "CAPITAL INÍCIO DO MÊS" showed **R$ 9.928** (= R$ 5.000 + June's *planned* ~R$ 4.928) instead of the real ~R$ 5.915. Because tier + 1R re-derive from this capital, the inflated number also skewed the tier, 1R, and the whole PLANO-VS-REALIDADE meta downstream.
+- **Why it existed**: A comment in the old code explicitly justified it as "keep CapsStrip aligned with the _planning_ math" and to avoid the stale `monthlyPlan.snapshotCapitalCents`. But the card is labeled _capital_ (real money), so the projection reading was wrong for the label.
+- **What to do**: Use `computeRealizedPnlByMonth` + `capitalAtMonthStart` from `@/lib/fractal-plan/real-carry-forward`. `capital = initialCapital + Σ realized-net-P&L of prior months`, where realized net = `gross → prop-share (if prop & gross>0) → IR tax (if showTaxEstimates) → withdrawal`. This mirrors the **year page** (`plan/[year]/page.tsx` `realByMonth`) and the annual cockpit grid, so all three views now agree. Tier and 1R re-derive from the real capital via `resolveTier`.
+- **Two subtleties**: (1) The year page's `realByMonth` historically did NOT apply prop profit-share; the cockpit's current-month display DID. The shared helper applies prop-share (the correct behavior for prop accounts) — personal accounts pass `profitSharePercent: 100` (no-op). (2) There's a _third_, heavier capital model in `getAnnualRollup` (`patrimonioFinal`) with filing-grade DARF tax + real `accountCapitalEvents` deposits/withdrawals. We deliberately did NOT use it here — it would make the cockpit disagree with the annual grid beside it. If you ever need deposits/withdrawals reflected in cockpit capital, that's the source to reconcile against.
+- **Don't**: Don't reintroduce planned-goal compounding for anything labeled "capital". `computeProjectedOneRCents` (`compound-projection.ts`) was deleted 2026-07-07 (no callers remained after this fix); if a _forward_ projection is ever needed again, build it on planned data explicitly labeled as projected — never feed it into a real balance.
+- **Date logged**: 2026-07-06. Fix: `src/lib/fractal-plan/real-carry-forward.ts` + `real-carry-forward.test.ts` (5 tests, incl. the exact screenshot scenario).

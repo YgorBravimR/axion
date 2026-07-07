@@ -11,12 +11,20 @@ import {
 import { resolveDay, resolveBehavior } from "@/lib/fractal-plan/resolver"
 import { deriveMonthGoal } from "@/lib/fractal-plan/derive-goal"
 import { getHistoricalAssertivity } from "@/lib/fractal-plan/historical-assertivity"
-import { computeProjectedOneRCents } from "@/lib/fractal-plan/compound-projection"
+import {
+	computeRealizedPnlByMonth,
+	computeNetPnlChain,
+	resolveMonthStartCapital,
+} from "@/lib/fractal-plan/real-carry-forward"
 import {
 	resolveTier,
 	type LadderRuleR,
 } from "@/lib/fractal-plan/capital-ladder"
-import { DEFAULT_TRADING_DAYS_PER_MONTH } from "@/lib/fractal-plan/month-labels"
+import {
+	DEFAULT_TRADING_DAYS_PER_MONTH,
+	computeMonthOffset,
+} from "@/lib/fractal-plan/month-labels"
+import { parseFiniteNumber } from "@/lib/fractal-plan/parse-number"
 import { listActiveRiskProfiles } from "@/app/actions/risk-profiles"
 import {
 	getMonthlyResultsWithProp,
@@ -42,13 +50,6 @@ interface MonthReportProps {
 	quarter: number
 	month: number
 	locale: string
-}
-
-const computeMonthOffset = (year: number, month: number): number => {
-	const now = new Date()
-	const nowY = now.getUTCFullYear()
-	const nowM = now.getUTCMonth() + 1
-	return (nowY - year) * 12 + (nowM - month)
 }
 
 const MonthReport = async ({
@@ -144,6 +145,7 @@ const MonthReport = async ({
 				accountStartYear: tradingAccounts.accountStartYear,
 				accountStartMonth: tradingAccounts.accountStartMonth,
 				startingBalanceCents: tradingAccounts.startingBalanceCents,
+				withdrawalTargetPercent: tradingAccounts.withdrawalTargetPercent,
 			})
 			.from(tradingAccounts)
 			.where(eq(tradingAccounts.id, accountId))
@@ -178,14 +180,14 @@ const MonthReport = async ({
 	const grossPnlCents = monthlyData
 		? Math.round(monthlyData.report.netPnl * 100)
 		: 0
-	const traderShareCents =
-		isPropAccount && grossPnlCents > 0
-			? Math.round((grossPnlCents * profitSharePercent) / 100)
-			: grossPnlCents
-	const netAfterTaxCents =
-		showTaxEstimates && traderShareCents > 0
-			? Math.round(traderShareCents * (1 - irTaxRate))
-			: traderShareCents
+	const pnlChain = computeNetPnlChain({
+		grossCents: grossPnlCents,
+		profitSharePercent: isPropAccount ? profitSharePercent : 100,
+		irTaxRate,
+		applyTax: showTaxEstimates,
+		withdrawalPct: 0, // Month display does not apply withdrawal
+	})
+	const netAfterTaxCents = pnlChain.netAfterTaxCents
 
 	const totalTradingDays =
 		projectionData?.totalTradingDays ?? DEFAULT_TRADING_DAYS_PER_MONTH
@@ -200,16 +202,13 @@ const MonthReport = async ({
 		? Math.round(projectionData.projectedNetProfit * 100)
 		: null
 
-	const configuredAssertivityPct = yearRow.defaultAssertivityPercent
-		? Math.round(parseFloat(yearRow.defaultAssertivityPercent))
-		: 50
+	const configuredAssertivityPct = Math.round(
+		parseFiniteNumber(yearRow.defaultAssertivityPercent, 50)
+	)
 	const assertivityPct = assertivityData.hasEnoughData
 		? assertivityData.assertivityPct
 		: configuredAssertivityPct
 
-	const defaultDailyWinR = yearRow.defaultDailyWinR
-		? parseFloat(yearRow.defaultDailyWinR)
-		: 0
 	const planStartMonth =
 		account?.accountStartYear === year && account?.accountStartMonth != null
 			? account.accountStartMonth
@@ -222,39 +221,35 @@ const MonthReport = async ({
 			? account.startingBalanceCents
 			: yearRow.initialCapitalCents
 	const ladderRules = yearRow.ladderRules as unknown as LadderRuleR[]
-	const compoundOneRCents =
-		defaultDailyWinR > 0
-			? computeProjectedOneRCents(month, {
-					initialCapitalCents: effectiveInitialCapitalCents,
-					ladderRules,
-					dailyTargetR: defaultDailyWinR,
-					assertivityPct,
-					planStartMonth,
+	// Month-start capital = REAL carry-forward: initial capital + actual realized
+	// net P&L of every prior month (prop-share → tax → withdrawal), mirroring the
+	// annual cockpit grid so all views agree. Prior code compounded the *planned*
+	// goal each month, which inflated capital whenever real results missed target.
+	const withdrawalPct =
+		account?.withdrawalTargetPercent != null
+			? Number(account.withdrawalTargetPercent) / 100
+			: 0
+	const realPnlByMonth =
+		ladderRules.length > 0
+			? await computeRealizedPnlByMonth({
+					accountId,
+					year,
+					profitSharePercent,
 					irTaxRate,
+					withdrawalPct,
+					applyTax: showTaxEstimates,
 				})
-			: monthRow.snapshotOneRCents
-	// Compute month-start capital from the SAME baseline (`effectiveInitialCapitalCents`)
-	// by mirroring `computeProjectedOneRCents`'s compounding loop. This keeps
-	// CapsStrip aligned with the planning math — and avoids reading the stale
-	// `monthlyPlan.snapshotCapitalCents`, which was frozen at plan-seed time
-	// from a now-superseded `yearlyPlans.initialCapitalCents`.
-	const COMPOUND_DAYS = 22
-	const effectiveCapitalCents = (() => {
-		if (defaultDailyWinR <= 0 || ladderRules.length === 0) {
-			return effectiveInitialCapitalCents
-		}
-		const assertivity = Math.min(100, Math.max(1, assertivityPct)) / 100
-		let cap = effectiveInitialCapitalCents
-		for (let m = planStartMonth; m < month; m++) {
-			const { oneRCents } = resolveTier(cap, ladderRules)
-			const grossGoal = Math.round(
-				defaultDailyWinR * COMPOUND_DAYS * assertivity * oneRCents
-			)
-			const taxCents = grossGoal > 0 ? Math.round(grossGoal * irTaxRate) : 0
-			cap += grossGoal - taxCents
-		}
-		return cap
-	})()
+			: []
+	const monthCapital = resolveMonthStartCapital({
+		ladderRules,
+		initialCapitalCents: effectiveInitialCapitalCents,
+		realPnlByMonth,
+		planStartMonth,
+		month,
+		snapshotOneRCents: monthRow.snapshotOneRCents,
+	})
+	const effectiveCapitalCents = monthCapital.capitalCents
+	const compoundOneRCents = monthCapital.oneRCents
 	const effectiveTierIndex =
 		ladderRules.length > 0
 			? resolveTier(effectiveCapitalCents, ladderRules).tierIndex
@@ -314,6 +309,7 @@ const MonthReport = async ({
 					tierIndex={effectiveTierIndex}
 					oneRCents={compoundOneRCents}
 					capitalCents={effectiveCapitalCents}
+					capitalIsRealCarryForward={monthCapital.isRealCarryForward}
 					dailyLossR={resolved.dailyLossR}
 					dailyTargetR={resolved.dailyTargetR}
 					weeklyLossR={resolved.weeklyLossR}
