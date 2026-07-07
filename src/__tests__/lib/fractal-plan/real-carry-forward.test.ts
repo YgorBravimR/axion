@@ -1,5 +1,10 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, vi } from "vitest"
 import type { LadderRuleR } from "@/lib/fractal-plan/capital-ladder"
+
+// real-carry-forward.ts imports @/db/drizzle (for computeRealizedPnlByMonth), which
+// throws at module load when DATABASE_URL is unset — i.e. on CI. See docs/gotchas.md
+// "Unit tests must never transitively import @/db/drizzle at module load".
+vi.mock("@/db/drizzle", () => ({ db: {} }))
 import {
 	capitalAtMonthStart,
 	computeNetPnlChain,

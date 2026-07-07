@@ -777,3 +777,17 @@ Also fixed `scaleDecisionTree` in `risk-params-form.tsx` — missing `gainSequen
 > **[FIX-2026-04-21]** `Severity: Medium` — **Affected:** `src/__tests__/setup.ts`, `src/__tests__/lib/email-verification.test.ts`, `src/__tests__/lib/auth-actions.test.ts`, `src/__tests__/lib/auth-config.test.ts`
 > **Report:** 44 unit test failures (20+15+9) — `getTranslations is not supported in Client Components` from `next-intl/server` in Vitest node env. Compounded by stale mocks after `auth.ts` refactor.
 > **Fix:** (1) Global `vi.mock("next-intl/server", ...)` in `src/__tests__/setup.ts` with `TRANSLATION_MAP` aligned to `messages/en.json`. (2) `email-verification.test.ts`: `maxAttempts === 3` → `maxAttempts === 2`. (3) `auth-actions.test.ts`: `loginUser` no longer gates on `emailVerified`; `registerUser` uses direct `db.insert()` (not transaction); `needsVerification` always `false`.
+
+## [BUG-2026-07-07] real-carry-forward.test.ts broke CI Unit Tests on main — transitive @/db/drizzle import (3rd occurrence of known class)
+
+**Severity:** Medium (CI red on auto-deploying main; no runtime impact) | **Affected:** `src/__tests__/lib/fractal-plan/real-carry-forward.test.ts`
+
+**Cause:** The test imports pure math (`capitalAtMonthStart`, `computeNetPnlChain`, `resolveMonthStartCapital`) from `@/lib/fractal-plan/real-carry-forward`, which also imports `@/db/drizzle` for `computeRealizedPnlByMonth`'s trades query. `src/db/drizzle.ts` throws `DATABASE_URL missing` at module-init when the env var is unset — true on CI (hermetic unit tests, no `.env`), false locally. The suite failed during collection with 0 tests run. Deploy had already succeeded (deploy workflow doesn't gate on unit tests), so main was live with red CI.
+
+**Why it recurred:** This is the exact class documented in `docs/gotchas.md` "Unit tests must never transitively import `@/db/drizzle` at module load" (logged 2026-07-06, previously bit via setup.ts loadEnvFile and via the brick-size-resolver barrel). Third occurrence, same root: passes 100% locally because `.env` exists, and the DB coupling is invisible from the test file — it's one hop away in the imported module. The test was agent-written the same day the gotcha was logged; the gotcha wasn't in the agent's context.
+
+**Fix:** `vi.mock("@/db/drizzle", () => ({ db: {} }))` at the top of the test (precedent: `start-dry-run-impl.test.ts`). Verified with the gotcha's own recipe: `env -u DATABASE_URL pnpm exec vitest run src/__tests__/lib/fractal-plan/real-carry-forward.test.ts` → 19/19.
+
+**Prevention:** (a) Any agent prompt that asks for tests against a module with DB imports must include the vi.mock recipe — added to the gotcha entry. (b) Structural option for next time this file grows: split pure math into a DB-free sibling module so tests never touch the drizzle import. (c) Real detector candidate: a vitest globalSetup that unsets DATABASE_URL locally (making local runs behave like CI) — filed in the gotcha as the durable fix; three occurrences means recipe-level prevention isn't working.
+
+**Note:** The Journey E2E failure in the same push is UNRELATED and pre-existing — failing on main since at least `352836ba` (6+ commits before): journey chain setup can't load `src/db/drizzle.ts` as an ES module (`SyntaxError: await is only valid in async functions` after a module-type warning). Separate infra fix needed.
