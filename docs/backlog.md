@@ -836,3 +836,23 @@ Full spec at [`docs/plans/ai-assistant-phase-1.md`](plans/ai-assistant-phase-1.m
 - **Source**: `docs/scans/2026-06-09-responsive-layout-drift.md` § Open follow-ups; `docs/scans/2026-06-09-performance.md` § RSC cluster.
 
 ## Tax & Compliance
+
+## CI / Deploy Infrastructure (filed 2026-07-07)
+
+### Journey E2E red on main for 6+ commits — drizzle.ts ESM loading in journey chain
+
+- **Priority**: P2 (main CI is permanently red → real failures get ignored).
+- **Effort**: S–M.
+- **What**: The journey-chain setup (rate-limit cleanup step) loads `src/db/drizzle.ts` directly with node and dies: module-type warning ("set \"type\": \"module\"… or use .mjs") followed by `SyntaxError: await is only valid in async functions`. Failing on every main run since at least `352836ba` — predates the 2026-07-07 fractal-plan work.
+- **Done when**: journey chain setup loads the DB helper via tsx/proper ESM entry (or a compiled script) and Journey E2E goes green on main.
+- **Date filed**: 2026-07-07.
+- **Source**: `gh run view` logs, noted in `docs/postMorten/backend.md` [BUG-2026-07-07].
+
+### Vercel deploy hits free-tier upload rate limit (api-upload-free)
+
+- **Priority**: P3 (deploy for `1dfec938` failed but was docs+test-only; retries succeed after quota reset).
+- **Effort**: S.
+- **What**: "Too many requests - try again in 24 hours (more than 5000, code: api-upload-free)". Vercel's own suggestion: pass `--archive=tgz` to the deploy step in `.github/workflows/deploy.yml` to upload one archive instead of thousands of files — also makes deploys faster.
+- **Done when**: deploy workflow uses `--archive=tgz` (or project moves off the free upload path) and a main push deploys without quota errors.
+- **Date filed**: 2026-07-07.
+- **Source**: Personal Vercel Deploy run for `1dfec938`, 2026-07-07.
