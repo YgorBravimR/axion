@@ -69,7 +69,7 @@ const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 				paidAmountCents,
 			})
 			if (result.status === "success") {
-				showToast("success", "DARF marcado como pago")
+				showToast("success", t("markPaidSuccess"))
 				router.refresh()
 			} else {
 				showToast("error", result.message)
@@ -84,8 +84,8 @@ const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 				fromMonth: 1,
 			})
 			if (result.status === "success") {
-				const n = result.data?.recomputedMonths ?? 0
-				showToast("success", `Ledger recalculado · ${n} mês(es)`)
+				const count = result.data?.recomputedMonths ?? 0
+				showToast("success", t("ledgerRecomputedToast", { count }))
 				router.refresh()
 			} else {
 				showToast("error", result.message)
@@ -97,10 +97,8 @@ const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 		<div className="space-y-m-400">
 			<header className="gap-s-300 flex items-center justify-between">
 				<div>
-					<h2 className="text-h3 text-txt-100">Impostos {year}</h2>
-					<p className="text-small text-txt-300">
-						DARF mensal — base 20% sobre lucro líquido
-					</p>
+					<h2 className="text-h3 text-txt-100">{t("taxHeading", { year })}</h2>
+					<p className="text-small text-txt-300">{t("daysPerMonthNote")}</p>
 				</div>
 				<Button
 					id={`tax-recompute-${year}`}
@@ -112,7 +110,7 @@ const TaxTab = ({ accountId, accountType, year, rows }: TaxTabProps) => {
 					<RefreshCw
 						className={isRecomputing ? "size-3.5 animate-spin" : "size-3.5"}
 					/>
-					Recalcular ano
+					{t("recomputeButton")}
 				</Button>
 			</header>
 
