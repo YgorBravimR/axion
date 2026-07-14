@@ -8,7 +8,7 @@ import type { DateRange } from "react-day-picker"
 import type { JournalPeriod } from "@/types"
 import { Button } from "@/components/ui/button"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
-import { APP_TIMEZONE } from "@/lib/dates"
+import { APP_TIMEZONE, BRT_OFFSET } from "@/lib/dates"
 
 interface PeriodFilterProps {
 	value: JournalPeriod
@@ -65,10 +65,23 @@ export const PeriodFilter = ({
 
 	const handleCustomApply = () => {
 		if (tempRange && tempRange.from && tempRange.to) {
-			const fromDate = new Date(tempRange.from)
-			fromDate.setHours(0, 0, 0, 0)
-			const toDate = new Date(tempRange.to)
-			toDate.setHours(23, 59, 59, 999)
+			// The picker returns a Date at the browser's LOCAL midnight for the
+			// day the user clicked. Read its local calendar Y-M-D and build the
+			// BRT day boundaries from those literal components — mirroring
+			// getStartOfDay/getEndOfDay in @/lib/dates. Using setHours() here
+			// stamped a UTC/local-ambiguous instant that shifted the range back
+			// a day (June 18 → June 17 trades) once the rest of the pipeline
+			// re-bucketed it in BRT.
+			const toKey = (d: Date): string =>
+				`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+					d.getDate()
+				).padStart(2, "0")}`
+			const fromDate = new Date(
+				`${toKey(tempRange.from)}T00:00:00${BRT_OFFSET}`
+			)
+			const toDate = new Date(
+				`${toKey(tempRange.to)}T23:59:59.999${BRT_OFFSET}`
+			)
 			onChange("custom", { from: fromDate, to: toDate })
 			setShowCustomPicker(false)
 		}
