@@ -94,7 +94,11 @@ def fetch_all_trades() -> list:
 def query_candles_5(date_from: str, date_to: str) -> list:
     """Return rows = [[timestamp, open, high, low, close], ...] from 5-Renko WIN parquet."""
     cmd = [
-        "python3",
+        # Use the SAME interpreter running this script (sys.executable), not a
+        # bare "python3" PATH lookup — otherwise the subprocess resolves to the
+        # system python which lacks duckdb, and candle-query falsely reports
+        # duckdb_missing → every trade skipped. sys.executable inherits the venv.
+        sys.executable,
         CANDLE_QUERY,
         "WIN",
         "5",

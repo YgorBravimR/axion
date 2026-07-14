@@ -687,9 +687,17 @@ const HawksChartWorkspace = ({
 	const sizesLabel = `5m=${formatRSize(sizes.size5m)}  ·  15m=${formatRSize(sizes.size15m)}  ·  60m=${formatRSize(sizes.size60m)}`
 
 	if (windowResult.status === "error") {
+		// Log raw error to console for debugging; never render internally.
+		console.error("[hawksChart] Candle load failed:", windowResult.message)
 		return (
-			<div className="bg-bg-200 border-bg-300 p-l-700 flex h-[480px] items-center justify-center rounded-lg border">
-				<p className="text-small text-destructive">{windowResult.message}</p>
+			<div className="space-y-m-400">
+				<header className="space-y-s-100">
+					<h1 className="text-h1 text-txt-100 font-semibold">{t("title")}</h1>
+					<p className="text-small text-txt-300">{t("subtitle")}</p>
+				</header>
+				<div className="bg-bg-200 border-bg-300 p-l-700 flex h-[480px] items-center justify-center rounded-lg border">
+					<p className="text-small text-destructive">{t("loadError")}</p>
+				</div>
 			</div>
 		)
 	}
