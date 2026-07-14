@@ -496,6 +496,13 @@ When unsure whether something qualifies, log it. A one-liner here costs ~30 seco
 - **Source**: `scripts/load-hawks-candles.ts` (the `${r.indicators as never}` parameter).
 - **Date logged**: 2026-05-20.
 
+### candle-store reads local disk in prod unless `CANDLE_STORE_DUCKDB_BASE_PATH=s3://…` is set on the deploy
+
+- **What**: The candle-store factory (`src/lib/candle-store/index.ts:26`) reads `CANDLE_STORE_DUCKDB_BASE_PATH`; when unset it defaults to the relative path `data/parquet/candles`. On Vercel that resolves against `process.cwd()` = `/var/task`, so every candle read fails with `candle-store(duckdb): Parquet not found at /var/task/data/parquet/candles/<code>/<symbol>.parquet`. It works locally only because the files exist on disk — but `data/` is in `.vercelignore` and `data/parquet/` is gitignored, so nothing ships to the serverless bundle. The Hawks chart page (and any candle consumer) shows a red error string in the deploy while being green locally. We hit this 2026-07-14 on the Gráfico Hawks page.
+- **What to do**: On the Vercel deploy (Production + Preview) set `CANDLE_STORE_DUCKDB_BASE_PATH=s3://bravo-journal/candles` (bucket = `S3_BUCKET`, prefix must be `candles` because the store appends `/<code>/<symbol>.parquet`). The `s3://` branch also needs `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION` on the deploy, and `DUCKDB_EXTENSION_DIR=/tmp/duckdb-extensions` (HOME isn't writable on serverless). R2 already holds the parquet mirror (`scripts/export-candles-to-parquet.ts` uploads on export) — verify with a HeadObject on `candles/hawk_5m_win/WIN.parquet`. Do NOT try to ship `data/parquet/` in the bundle; it's intentionally excluded and R2 is the prod source.
+- **Source**: `src/lib/candle-store/index.ts`, `src/lib/candle-store/duckdb-impl.ts` (the `!isRemote && !existsSync` throw at :258), `.vercelignore`, `.gitignore:63`; session 2026-07-14.
+- **Date logged**: 2026-07-14.
+
 ---
 
 ## Lightweight Charts
