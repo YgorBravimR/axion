@@ -261,11 +261,85 @@ const indicatorValuesByBrickIndex = (
 	return out
 }
 
+/**
+ * ISO-week-year key for an epoch, evaluated in São Paulo (BRT) local time.
+ * Returns a `${isoYear}-${isoWeek}` string — stable across the host machine's
+ * timezone because the Y-M-D is pulled via Intl in `America/Sao_Paulo` first,
+ * then the ISO-week math runs on those pure numbers.
+ *
+ * ISO 8601: week 1 is the week containing the first Thursday of the year;
+ * weeks start on Monday. A late-December date can belong to week 1 of the
+ * NEXT year, and an early-January date to the last week of the PREVIOUS year —
+ * the returned key encodes the ISO-week-year, not the calendar year, so
+ * week-boundary detection stays correct across the Dec/Jan seam.
+ */
+const brtIsoWeekKey = (epochMs: number): string => {
+	const parts = new Intl.DateTimeFormat("en-CA", {
+		timeZone: "America/Sao_Paulo",
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+	}).formatToParts(new Date(epochMs))
+	const get = (type: string): number =>
+		Number(parts.find((p) => p.type === type)?.value)
+	const y = get("year")
+	const m = get("month")
+	const d = get("day")
+	// Pure ISO-week calc on the BRT calendar date (UTC math on a synthetic
+	// date carrying the BRT Y-M-D — no further timezone influence).
+	const date = new Date(Date.UTC(y, m - 1, d))
+	const dayNum = date.getUTCDay() || 7 // Mon=1..Sun=7
+	date.setUTCDate(date.getUTCDate() + 4 - dayNum) // shift to the week's Thursday
+	const isoYear = date.getUTCFullYear()
+	const yearStart = new Date(Date.UTC(isoYear, 0, 1))
+	const isoWeek = Math.ceil(
+		((date.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7
+	)
+	return `${isoYear}-${isoWeek}`
+}
+
+export interface BoundaryMarker {
+	readonly brickIdx: number
+	readonly kind: "day" | "week"
+}
+
+/**
+ * Classify session-gap boundaries into day vs week markers. Reuses
+ * `findSessionGaps` (the >6h overnight-gap detector) to find each trading-day
+ * boundary, then upgrades a boundary to `week` when the brick after the gap
+ * falls in a different BRT ISO-week than the brick before it. Emits one marker
+ * per boundary index (week supersedes day — never both at the same index).
+ */
+const computeBoundaryMarkers = (
+	bricksTimes: readonly number[]
+): ReadonlyArray<BoundaryMarker> => {
+	const gaps = findSessionGaps(bricksTimes)
+	const out: BoundaryMarker[] = []
+	for (const idx of gaps) {
+		const before = bricksTimes[idx - 1]
+		const after = bricksTimes[idx]
+		if (
+			before === undefined ||
+			after === undefined ||
+			!Number.isFinite(before) ||
+			!Number.isFinite(after)
+		) {
+			continue
+		}
+		const kind = brtIsoWeekKey(after) !== brtIsoWeekKey(before) ? "week" : "day"
+		out.push({ brickIdx: idx, kind })
+	}
+	out.sort((a, b) => a.brickIdx - b.brickIdx)
+	return out
+}
+
 export type { BrickChartSeries, CandleRowLike, IndicatorPoint, SyncMapEntry }
 export {
+	brtIsoWeekKey,
 	bricksToCandleSeries,
 	buildCrosshairSyncMap,
 	candlesToBrickSeriesNative,
+	computeBoundaryMarkers,
 	findBrickIndexForTime,
 	findSessionGaps,
 	indicatorValuesByBrickIndex,

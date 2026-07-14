@@ -1,7 +1,7 @@
 # Hawks Chart — Day & Week Boundary Markers
 
 **Date:** 2026-07-14
-**Status:** Design — approved for planning
+**Status:** Shipped — implemented + unit-tested (2026-07-14)
 **Scope:** `src/lib/renko/bricks-to-chart.ts`, `src/components/hawks-chart/*`, `src/components/backtest/inspector/renko-pane.tsx`, i18n
 
 ## Problem

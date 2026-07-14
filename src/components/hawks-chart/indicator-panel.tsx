@@ -14,6 +14,7 @@ interface IndicatorToggles {
 	readonly macd: boolean
 	readonly swingTape: boolean
 	readonly tradeMarkers: boolean
+	readonly sessionBoundaries: boolean
 }
 
 interface IndicatorPanelProps {
@@ -32,6 +33,7 @@ const TOGGLE_KEYS: ReadonlyArray<keyof IndicatorToggles> = [
 	"keltner",
 	"macd",
 	"swingTape",
+	"sessionBoundaries",
 ]
 
 const HawksChartIndicatorPanel = ({
@@ -73,6 +75,7 @@ const DEFAULT_INDICATOR_TOGGLES: IndicatorToggles = {
 	keltner: false,
 	macd: true,
 	swingTape: false,
+	sessionBoundaries: true,
 }
 
 export { HawksChartIndicatorPanel, DEFAULT_INDICATOR_TOGGLES }

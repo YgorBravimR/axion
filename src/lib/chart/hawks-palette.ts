@@ -160,6 +160,15 @@ const MACD = {
 	signal: GREEN_CORAL.center,
 } as const
 
+// ─── Session boundary markers (day / week vertical lines) ────────────────
+// Background context lines, drawn under indicators + trades. Day = a faint,
+// low-emphasis gray dotted line; week = a stronger cool accent so it clearly
+// out-reads the day lines (thin-dotted-gray vs bold-solid-cyan).
+const BOUNDARY = {
+	day: "rgba(150,160,170,0.35)", // faint gray — trading-day open
+	week: GREEN_CORAL.center, // ciano — week open (bold)
+} as const
+
 const SWING = {
 	// Dow theory pivot tape — continuation = trending, break = roll-over.
 	continuation: GREEN_CORAL.up,
@@ -196,6 +205,7 @@ const HAWKS_PALETTE = {
 	aggression: AGGRESSION,
 	keltner: KELTNER,
 	macd: MACD,
+	boundary: BOUNDARY,
 	swing: SWING,
 	drawing: DRAWING,
 	groups: {

@@ -199,7 +199,8 @@
 			"ajuste": "Ajuste D-1",
 			"keltner": "Keltner",
 			"macd": "MACD",
-			"swingTape": "Fita de pivôs"
+			"swingTape": "Fita de pivôs",
+			"sessionBoundaries": "Linhas dia/semana"
 		},
 		"pane": {
 			"5m": "Renko 5m",

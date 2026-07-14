@@ -13,6 +13,7 @@ import type {
 import {
 	buildCrosshairSyncMap,
 	candlesToBrickSeriesNative,
+	computeBoundaryMarkers,
 	findBrickIndexForTime,
 	indicatorValuesByBrickIndex,
 } from "@/lib/renko/bricks-to-chart"
@@ -528,6 +529,24 @@ const HawksChartWorkspace = ({
 		[drawings, series5m.times, series15m.times, series60m.times]
 	)
 
+	// Day/week boundary markers per pane. Empty when the toggle is off so the
+	// pane's reconciler removes every boundary line.
+	const boundaries5m = useMemo(
+		() =>
+			toggles.sessionBoundaries ? computeBoundaryMarkers(series5m.times) : [],
+		[toggles.sessionBoundaries, series5m.times]
+	)
+	const boundaries15m = useMemo(
+		() =>
+			toggles.sessionBoundaries ? computeBoundaryMarkers(series15m.times) : [],
+		[toggles.sessionBoundaries, series15m.times]
+	)
+	const boundaries60m = useMemo(
+		() =>
+			toggles.sessionBoundaries ? computeBoundaryMarkers(series60m.times) : [],
+		[toggles.sessionBoundaries, series60m.times]
+	)
+
 	// Memoize histogram object so it doesn't trigger pane rerenders
 	const histogram5m = useMemo(
 		() =>
@@ -813,6 +832,7 @@ const HawksChartWorkspace = ({
 						onPaneClick={handlePaneClick}
 						tradePositions={visiblePositions5m}
 						tradeOverlays={visibleOverlays5m}
+						boundaryMarkers={boundaries5m}
 						emitsCrosshair
 						onCrosshairMove={handle5mCrosshair}
 					/>
@@ -833,6 +853,7 @@ const HawksChartWorkspace = ({
 						paletteOverride={HAWKS_PALETTE_OVERRIDE}
 						markerColorMode="action"
 						drawings={projectedDrawings.pane15m}
+						boundaryMarkers={boundaries15m}
 						onPaneClick={handlePaneClick}
 						externalCrosshair={synced.idx15m}
 					/>
@@ -844,6 +865,7 @@ const HawksChartWorkspace = ({
 						paletteOverride={HAWKS_PALETTE_OVERRIDE}
 						markerColorMode="action"
 						drawings={projectedDrawings.pane60m}
+						boundaryMarkers={boundaries60m}
 						onPaneClick={handlePaneClick}
 						externalCrosshair={synced.idx60m}
 					/>

@@ -172,6 +172,13 @@ interface RenkoPaneProps {
 	// zoom around the currently-selected trade across a long timeline.
 	readonly focusBrickIdx?: number | null
 	readonly focusBrickRadius?: number
+	// Day/week session-boundary vertical lines. Each marker pins to one brick
+	// index; `kind` selects the style (day = faint dotted, week = bold accent).
+	// Background context — drawn under indicators + trades, non-interactive.
+	readonly boundaryMarkers?: ReadonlyArray<{
+		readonly brickIdx: number
+		readonly kind: "day" | "week"
+	}>
 	readonly className?: string
 }
 
@@ -194,6 +201,7 @@ const RenkoPaneImpl = ({
 	emitsCrosshair = false,
 	focusBrickIdx = null,
 	focusBrickRadius = 30,
+	boundaryMarkers,
 	className,
 }: RenkoPaneProps) => {
 	const containerRef = useRef<HTMLDivElement>(null)
@@ -213,6 +221,10 @@ const RenkoPaneImpl = ({
 	// spanning the pane's price range. Reconciled separately so a price-range
 	// change (data update) refreshes them without dropping hlines/trendlines.
 	const vlineRefs = useRef<Map<string, ISeriesApi<"Line">>>(new Map())
+	// Session-boundary lines (day/week). Keyed by "<kind>:<brickIdx>" so the
+	// reconciler can add/remove them independently of user drawings, and clear
+	// them all when the toggle turns off (empty prop → remove every series).
+	const boundaryRefs = useRef<Map<string, ISeriesApi<"Line">>>(new Map())
 	// Each fibo drawing renders as N+1 line series (one per level). Keyed by
 	// "<drawingId>:<level>" so we can replace them when the level set changes.
 	const fiboRefs = useRef<Map<string, ISeriesApi<"Line">>>(new Map())
@@ -762,6 +774,81 @@ const RenkoPaneImpl = ({
 			panes[1].setStretchFactor(1)
 		}
 	}, [histogram])
+
+	// Session-boundary vertical lines (day / week). Each marker is a near-
+	// vertical LineSeries streak (one brick wide) spanning the pane's price
+	// range — same technique as the user-vline renderer. Reconciled by
+	// "<kind>:<brickIdx>" key so toggling off (empty/undefined prop) removes
+	// every boundary series cleanly.
+	useEffect(() => {
+		const chart = chartRef.current
+		if (!chart) {
+			return
+		}
+		const markers = boundaryMarkers ?? []
+		const wantKeys = new Set(markers.map((m) => `${m.kind}:${m.brickIdx}`))
+		for (const [key, s] of boundaryRefs.current) {
+			if (!wantKeys.has(key)) {
+				try {
+					chart.removeSeries(s)
+				} catch {
+					// already removed
+				}
+				boundaryRefs.current.delete(key)
+			}
+		}
+		if (markers.length === 0) {
+			return
+		}
+		let priceMin = Number.POSITIVE_INFINITY
+		let priceMax = Number.NEGATIVE_INFINITY
+		for (const c of series.data) {
+			if (c.low < priceMin) {
+				priceMin = c.low
+			}
+			if (c.high > priceMax) {
+				priceMax = c.high
+			}
+		}
+		if (!Number.isFinite(priceMin) || !Number.isFinite(priceMax)) {
+			return
+		}
+		const lastBrickIdx = series.data.length - 1
+		for (const m of markers) {
+			if (m.brickIdx < 0 || m.brickIdx > lastBrickIdx) {
+				continue
+			}
+			const key = `${m.kind}:${m.brickIdx}`
+			const isWeek = m.kind === "week"
+			const color = isWeek
+				? HAWKS_PALETTE.boundary.week
+				: HAWKS_PALETTE.boundary.day
+			let s = boundaryRefs.current.get(key)
+			if (!s) {
+				s = chart.addSeries(LineSeries, {
+					color,
+					lineWidth: isWeek ? 2 : 1,
+					lineStyle: isWeek ? 0 : 3, // week = solid, day = dotted
+					priceLineVisible: false,
+					lastValueVisible: false,
+					crosshairMarkerVisible: false,
+				})
+				boundaryRefs.current.set(key, s)
+			} else {
+				s.applyOptions({ color })
+			}
+			// Draw one brick wide so it reads as a vertical streak; clamp to the
+			// left when the boundary sits on the last brick.
+			const endIdx =
+				m.brickIdx < lastBrickIdx ? m.brickIdx + 1 : Math.max(0, m.brickIdx - 1)
+			const [lo, hi] =
+				m.brickIdx < endIdx ? [m.brickIdx, endIdx] : [endIdx, m.brickIdx]
+			s.setData([
+				{ time: lo as UTCTimestamp, value: priceMin },
+				{ time: hi as UTCTimestamp, value: priceMax },
+			])
+		}
+	}, [boundaryMarkers, series])
 
 	// User drawings — hlines as priceLines, trendlines as 2-point LineSeries.
 	// Reconciled by id: we add new ones, update changed ones, remove dropped.
