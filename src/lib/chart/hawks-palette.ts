@@ -151,9 +151,22 @@ const KELTNER = {
 } as const
 
 const MACD = {
-	histPos: GREEN_CORAL.up,
-	histNeg: GREEN_CORAL.down,
+	// Histogram follows the buy/sell (blue/red) trade semantics, not the
+	// green/coral directional family: a positive (bullish) bar reads as
+	// buy-blue, a negative (bearish) bar as sell-red — matching the
+	// Profitchart reference the user trades from.
+	histPos: TRADE.buy, // azul puro — bullish momentum
+	histNeg: TRADE.sell, // vermelho puro — bearish momentum
 	signal: GREEN_CORAL.center,
+} as const
+
+// ─── Session boundary markers (day / week vertical lines) ────────────────
+// Background context lines, drawn under indicators + trades. Day = a faint,
+// low-emphasis gray dotted line; week = a stronger cool accent so it clearly
+// out-reads the day lines (thin-dotted-gray vs bold-solid-cyan).
+const BOUNDARY = {
+	day: "rgba(150,160,170,0.30)", // faint gray, thin — trading-day open
+	week: "rgba(180,190,200,0.65)", // brighter gray, bold — week open
 } as const
 
 const SWING = {
@@ -192,6 +205,7 @@ const HAWKS_PALETTE = {
 	aggression: AGGRESSION,
 	keltner: KELTNER,
 	macd: MACD,
+	boundary: BOUNDARY,
 	swing: SWING,
 	drawing: DRAWING,
 	groups: {

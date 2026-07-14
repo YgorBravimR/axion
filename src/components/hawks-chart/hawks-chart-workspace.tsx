@@ -13,12 +13,14 @@ import type {
 import {
 	buildCrosshairSyncMap,
 	candlesToBrickSeriesNative,
+	computeBoundaryMarkers,
 	findBrickIndexForTime,
 	indicatorValuesByBrickIndex,
 } from "@/lib/renko/bricks-to-chart"
 import type { BrickChartSeries } from "@/lib/renko/bricks-to-chart"
 import { HAWKS_PALETTE } from "@/lib/chart/hawks-palette"
 import { formatRSize } from "@/lib/enrichment/format-rsize"
+import { resolveActiveTradeId, resolveBrickSize } from "./trade-hover"
 import { useDrawingsCache } from "./use-drawings-cache"
 import type {
 	HawksChartFullWindowResult,
@@ -315,22 +317,12 @@ const buildTradeOverlaysFor5m = (
 			series5mTimes,
 			new Date(t.exitTime).getTime()
 		)
-		// Resolve breakeven band against the trade's planned stop. When the
-		// row has no planned stop we fall back to t.outcome unchanged —
-		// nothing else to compare against.
-		let outcome: "win" | "loss" | "breakeven" = t.outcome
-		if (t.stopPrice !== null && Number.isFinite(t.stopPrice)) {
-			const risk = Math.abs(t.entryPrice - t.stopPrice)
-			if (risk > 0) {
-				const rRealized =
-					t.direction === "long"
-						? (t.exitPrice - t.entryPrice) / risk
-						: (t.entryPrice - t.exitPrice) / risk
-				if (Math.abs(rRealized) <= 0.25) {
-					outcome = "breakeven"
-				}
-			}
-		}
+		// Use the stored outcome verbatim. It was set by `determineOutcome`
+		// (src/lib/calculations.ts) at save-time, which honors the account's
+		// `breakevenTicks` (+ per-trade override) rule. The chart previously
+		// re-derived a separate hardcoded ±0.25R band here, which could color
+		// a trade differently from how the journal classified it — dropped so
+		// chart and journal always agree.
 		out.push({
 			id: t.id,
 			entryBrickIdx,
@@ -338,7 +330,7 @@ const buildTradeOverlaysFor5m = (
 			entryPrice: t.entryPrice,
 			exitPrice: t.exitPrice,
 			direction: t.direction,
-			outcome,
+			outcome: t.outcome,
 			// The trade is already rendered as a position-box (solid entry
 			// line + risk/reward fills). Skip the dotted entry stub — only
 			// the dotted EXIT stub is wanted.
@@ -468,6 +460,45 @@ const HawksChartWorkspace = ({
 		[toggles.tradeMarkers, tradeMarkers, series5m.times]
 	)
 
+	// Hover-focus: only the trade whose 5m brick span contains the hovered
+	// brick is drawn; everything else stays hidden so the chart is clean at
+	// rest. Spans come from the full position set (before filtering).
+	const activeTradeId = useMemo(
+		() =>
+			resolveActiveTradeId(
+				tradePositions5m.map((p) => ({
+					id: p.id,
+					startBrickIdx: p.startBrickIdx,
+					endBrickIdx: p.endBrickIdx,
+				})),
+				hoveredIdx5m
+			),
+		[tradePositions5m, hoveredIdx5m]
+	)
+	// Trade overlays (exit markers / dashed lines) stay hover-scoped — only the
+	// hovered trade's overlay draws — while the position boxes below render for
+	// every trade always.
+	const visibleOverlays5m = useMemo(
+		() => tradeOverlays5m.filter((o) => o.id === activeTradeId),
+		[tradeOverlays5m, activeTradeId]
+	)
+
+	// Per-week brick size for each pane's size label — read from the hovered
+	// brick's `brick` indicator (fallback: last brick, then the latest-week
+	// size). 15m/60m follow the synced crosshair index.
+	const size5mR = useMemo(
+		() => resolveBrickSize(candles5m, hoveredIdx5m, sizes.size5m),
+		[candles5m, hoveredIdx5m, sizes.size5m]
+	)
+	const size15mR = useMemo(
+		() => resolveBrickSize(candles15m, synced.idx15m, sizes.size15m),
+		[candles15m, synced.idx15m, sizes.size15m]
+	)
+	const size60mR = useMemo(
+		() => resolveBrickSize(candles60m, synced.idx60m, sizes.size60m),
+		[candles60m, synced.idx60m, sizes.size60m]
+	)
+
 	const projectedDrawings = useMemo(
 		() => ({
 			pane5m: projectDrawingsForPane(drawings, series5m.times),
@@ -475,6 +506,24 @@ const HawksChartWorkspace = ({
 			pane60m: projectDrawingsForPane(drawings, series60m.times),
 		}),
 		[drawings, series5m.times, series15m.times, series60m.times]
+	)
+
+	// Day/week boundary markers per pane. Empty when the toggle is off so the
+	// pane's reconciler removes every boundary line.
+	const boundaries5m = useMemo(
+		() =>
+			toggles.sessionBoundaries ? computeBoundaryMarkers(series5m.times) : [],
+		[toggles.sessionBoundaries, series5m.times]
+	)
+	const boundaries15m = useMemo(
+		() =>
+			toggles.sessionBoundaries ? computeBoundaryMarkers(series15m.times) : [],
+		[toggles.sessionBoundaries, series15m.times]
+	)
+	const boundaries60m = useMemo(
+		() =>
+			toggles.sessionBoundaries ? computeBoundaryMarkers(series60m.times) : [],
+		[toggles.sessionBoundaries, series60m.times]
 	)
 
 	// Memoize histogram object so it doesn't trigger pane rerenders
@@ -748,41 +797,48 @@ const HawksChartWorkspace = ({
 			<HawksChartIndicatorPanel toggles={toggles} onToggle={handleToggle} />
 
 			<div className="gap-s-300 grid h-[calc(100vh-340px)] min-h-[480px] grid-cols-1 md:grid-cols-[3fr_2fr]">
-				<RenkoPane
-					label={t("pane.5m")}
-					subLabel={`size ${formatRSize(sizes.size5m)}`}
-					series={series5m}
-					indicators={indicators5m}
-					paletteOverride={HAWKS_PALETTE_OVERRIDE}
-					histogram={histogram5m}
-					markerColorMode="action"
-					drawings={projectedDrawings.pane5m}
-					onPaneClick={handlePaneClick}
-					tradePositions={tradePositions5m}
-					tradeOverlays={tradeOverlays5m}
-					emitsCrosshair
-					onCrosshairMove={handle5mCrosshair}
-				/>
+				<div className="relative h-full min-h-0">
+					<RenkoPane
+						className="h-full"
+						label={t("pane.5m")}
+						subLabel={`size ${formatRSize(size5mR)}`}
+						series={series5m}
+						indicators={indicators5m}
+						paletteOverride={HAWKS_PALETTE_OVERRIDE}
+						histogram={histogram5m}
+						markerColorMode="action"
+						drawings={projectedDrawings.pane5m}
+						onPaneClick={handlePaneClick}
+						tradePositions={tradePositions5m}
+						focusedPositionId={activeTradeId}
+						tradeOverlays={visibleOverlays5m}
+						boundaryMarkers={boundaries5m}
+						emitsCrosshair
+						onCrosshairMove={handle5mCrosshair}
+					/>
+				</div>
 				<div className="gap-s-300 grid grid-rows-2">
 					<RenkoPane
 						label={t("pane.15m")}
-						subLabel={`size ${formatRSize(sizes.size15m)}`}
+						subLabel={`size ${formatRSize(size15mR)}`}
 						series={series15m}
 						indicators={indicators15m}
 						paletteOverride={HAWKS_PALETTE_OVERRIDE}
 						markerColorMode="action"
 						drawings={projectedDrawings.pane15m}
+						boundaryMarkers={boundaries15m}
 						onPaneClick={handlePaneClick}
 						externalCrosshair={synced.idx15m}
 					/>
 					<RenkoPane
 						label={t("pane.60m")}
-						subLabel={`size ${formatRSize(sizes.size60m)}`}
+						subLabel={`size ${formatRSize(size60mR)}`}
 						series={series60m}
 						indicators={indicators60m}
 						paletteOverride={HAWKS_PALETTE_OVERRIDE}
 						markerColorMode="action"
 						drawings={projectedDrawings.pane60m}
+						boundaryMarkers={boundaries60m}
 						onPaneClick={handlePaneClick}
 						externalCrosshair={synced.idx60m}
 					/>

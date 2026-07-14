@@ -29,6 +29,10 @@ import {
 	fiboLevelPrice,
 } from "@/components/hawks-chart/drawings"
 import { HAWKS_PALETTE } from "@/lib/chart/hawks-palette"
+import {
+	VerticalLinesPrimitive,
+	type BoundaryMarker,
+} from "@/lib/chart/vertical-lines-primitive"
 import { useFormatting } from "@/hooks/use-formatting"
 
 // Indicator point can be either a real value or a "whitespace" marker that
@@ -158,6 +162,11 @@ interface RenkoPaneProps {
 		readonly valuePerPoint: number
 		readonly color: string
 	}>
+	// Only the position whose id matches renders its right-edge price-axis
+	// labels (entry / stop / target). All position boxes + R:R fills always
+	// paint; the labels are the hover-only detail so the chart stays legible
+	// with every trade drawn. `null` = no labels on any box.
+	readonly focusedPositionId?: string | null
 	readonly histogram?: HistogramOverlay | null
 	readonly markerColorMode?: MarkerColorMode
 	readonly paletteOverride?: ChartPaletteOverride | null
@@ -172,6 +181,13 @@ interface RenkoPaneProps {
 	// zoom around the currently-selected trade across a long timeline.
 	readonly focusBrickIdx?: number | null
 	readonly focusBrickRadius?: number
+	// Day/week session-boundary vertical lines. Each marker pins to one brick
+	// index; `kind` selects the style (day = faint dotted, week = bold accent).
+	// Background context — drawn under indicators + trades, non-interactive.
+	readonly boundaryMarkers?: ReadonlyArray<{
+		readonly brickIdx: number
+		readonly kind: "day" | "week"
+	}>
 	readonly className?: string
 }
 
@@ -184,6 +200,7 @@ const RenkoPaneImpl = ({
 	extraMarkers,
 	tradeOverlays,
 	tradePositions,
+	focusedPositionId = null,
 	histogram,
 	markerColorMode = "trade",
 	paletteOverride,
@@ -194,6 +211,7 @@ const RenkoPaneImpl = ({
 	emitsCrosshair = false,
 	focusBrickIdx = null,
 	focusBrickRadius = 30,
+	boundaryMarkers,
 	className,
 }: RenkoPaneProps) => {
 	const containerRef = useRef<HTMLDivElement>(null)
@@ -213,6 +231,10 @@ const RenkoPaneImpl = ({
 	// spanning the pane's price range. Reconciled separately so a price-range
 	// change (data update) refreshes them without dropping hlines/trendlines.
 	const vlineRefs = useRef<Map<string, ISeriesApi<"Line">>>(new Map())
+	// Vertical-lines primitive for day/week session boundary markers, plus a
+	// mirror of the current markers so a rebuilt chart can re-seed it.
+	const boundaryPrimitiveRef = useRef<VerticalLinesPrimitive | null>(null)
+	const boundaryMarkersRef = useRef<ReadonlyArray<BoundaryMarker>>([])
 	// Each fibo drawing renders as N+1 line series (one per level). Keyed by
 	// "<drawingId>:<level>" so we can replace them when the level set changes.
 	const fiboRefs = useRef<Map<string, ISeriesApi<"Line">>>(new Map())
@@ -320,6 +342,15 @@ const RenkoPaneImpl = ({
 		candleSeriesRef.current = candleSeries
 		const indicatorSeriesMap = indicatorSeriesRef.current
 
+		// Attach the day/week boundary primitive to the candle series. Tied to
+		// this effect's lifecycle so it re-attaches whenever the chart is rebuilt
+		// (e.g. theme change) — an outer once-only effect would leave a stale
+		// primitive on a destroyed series and the lines would vanish.
+		const boundaryPrimitive = new VerticalLinesPrimitive()
+		boundaryPrimitive.setMarkers(boundaryMarkersRef.current)
+		candleSeries.attachPrimitive(boundaryPrimitive)
+		boundaryPrimitiveRef.current = boundaryPrimitive
+
 		return () => {
 			chart.remove()
 			chartRef.current = null
@@ -328,6 +359,7 @@ const RenkoPaneImpl = ({
 			entryLineRef.current = null
 			exitLineRef.current = null
 			markersPluginRef.current = null
+			boundaryPrimitiveRef.current = null
 		}
 	}, [theme])
 
@@ -763,6 +795,15 @@ const RenkoPaneImpl = ({
 		}
 	}, [histogram])
 
+	// Session-boundary vertical lines (day / week), drawn behind candles as a
+	// series primitive. Mirror the latest markers into a ref so a chart rebuild
+	// (theme change) can re-seed the freshly-attached primitive.
+	useEffect(() => {
+		const markers = boundaryMarkers ?? []
+		boundaryMarkersRef.current = markers
+		boundaryPrimitiveRef.current?.setMarkers(markers)
+	}, [boundaryMarkers])
+
 	// User drawings — hlines as priceLines, trendlines as 2-point LineSeries.
 	// Reconciled by id: we add new ones, update changed ones, remove dropped.
 	useEffect(() => {
@@ -972,6 +1013,13 @@ const RenkoPaneImpl = ({
 			...(drawings?.positions ?? []),
 			...(tradePositions ?? []),
 		]
+		// User-drawn positions always show their price-axis labels; read-only
+		// trade positions show them only while focused (hovered), so drawing
+		// every trade box doesn't spam the price scale with pills.
+		const labeledPositionIds = new Set<string>([
+			...(drawings?.positions ?? []).map((p) => p.id),
+			...(focusedPositionId ? [focusedPositionId] : []),
+		])
 		const incomingPositionIds = new Set(positions.map((p) => p.id))
 		for (const [id, lines] of positionRefs.current) {
 			if (!incomingPositionIds.has(id)) {
@@ -990,6 +1038,7 @@ const RenkoPaneImpl = ({
 			const stopColor = HAWKS_PALETTE.drawing.positionStop
 			const targetColor = HAWKS_PALETTE.drawing.positionTarget
 			const entryColor = p.color
+			const showLabels = labeledPositionIds.has(p.id)
 			const lineProps = (opts: {
 				color: string
 				dashed: boolean
@@ -1006,6 +1055,11 @@ const RenkoPaneImpl = ({
 			const formatR = stats.riskRewardRatio.toFixed(2)
 			const formatStop = stats.stopValue.toFixed(0)
 			const formatTarget = stats.targetValue.toFixed(0)
+			const entryTitle = showLabels ? "entry" : ""
+			const stopTitle = showLabels ? `stop · 1R · R$ ${formatStop}` : ""
+			const targetTitle = showLabels
+				? `target · ${formatR}R · R$ ${formatTarget}`
+				: ""
 			const existing = positionRefs.current.get(p.id)
 			// 5-tuple now: [entry, stop, target, riskFill, rewardFill]. The
 			// two BaselineSeries paint the colored zones (risk = entry→stop,
@@ -1055,21 +1109,13 @@ const RenkoPaneImpl = ({
 					ISeriesApi<"Baseline">,
 				]
 				entryLine.applyOptions(
-					lineProps({ color: entryColor, dashed: false, title: "entry" })
+					lineProps({ color: entryColor, dashed: false, title: entryTitle })
 				)
 				stopLine.applyOptions(
-					lineProps({
-						color: stopColor,
-						dashed: true,
-						title: `stop · 1R · R$ ${formatStop}`,
-					})
+					lineProps({ color: stopColor, dashed: true, title: stopTitle })
 				)
 				targetLine.applyOptions(
-					lineProps({
-						color: targetColor,
-						dashed: true,
-						title: `target · ${formatR}R · R$ ${formatTarget}`,
-					})
+					lineProps({ color: targetColor, dashed: true, title: targetTitle })
 				)
 				riskFill.applyOptions(riskFillProps)
 				rewardFill.applyOptions(rewardFillProps)
@@ -1088,23 +1134,15 @@ const RenkoPaneImpl = ({
 				rewardFill = chart.addSeries(BaselineSeries, rewardFillProps)
 				entryLine = chart.addSeries(
 					LineSeries,
-					lineProps({ color: entryColor, dashed: false, title: "entry" })
+					lineProps({ color: entryColor, dashed: false, title: entryTitle })
 				)
 				stopLine = chart.addSeries(
 					LineSeries,
-					lineProps({
-						color: stopColor,
-						dashed: true,
-						title: `stop · 1R · R$ ${formatStop}`,
-					})
+					lineProps({ color: stopColor, dashed: true, title: stopTitle })
 				)
 				targetLine = chart.addSeries(
 					LineSeries,
-					lineProps({
-						color: targetColor,
-						dashed: true,
-						title: `target · ${formatR}R · R$ ${formatTarget}`,
-					})
+					lineProps({ color: targetColor, dashed: true, title: targetTitle })
 				)
 				positionRefs.current.set(p.id, [
 					entryLine,
@@ -1141,7 +1179,7 @@ const RenkoPaneImpl = ({
 		// exit — the two systems compose: tradePositions paints the
 		// PLANNED box (entry + stop + target + fills), tradeOverlays
 		// paints the REALIZED exit price stub.
-	}, [drawings, series, tradePositions])
+	}, [drawings, series, tradePositions, focusedPositionId])
 
 	// Forward click events upward so the inspector can implement tool behavior.
 	// We use chart.subscribeClick; the handler receives MouseEventParams with a

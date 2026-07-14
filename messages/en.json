@@ -199,7 +199,8 @@
 			"ajuste": "Ajuste D-1",
 			"keltner": "Keltner",
 			"macd": "MACD",
-			"swingTape": "Swing tape"
+			"swingTape": "Swing tape",
+			"sessionBoundaries": "Day/week lines"
 		},
 		"pane": {
 			"5m": "5m Renko",
