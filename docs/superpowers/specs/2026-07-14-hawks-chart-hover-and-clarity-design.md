@@ -1,7 +1,7 @@
 # Hawks Chart — Hover-Focus, Trade Labels, BE Alignment, Per-Week Size
 
 **Date:** 2026-07-14
-**Status:** Design — approved for planning
+**Status:** Shipped — all four items implemented + unit-tested (2026-07-14)
 **Scope:** `src/components/hawks-chart/*`, `src/components/backtest/inspector/renko-pane.tsx`, `src/lib/chart/hawks-palette.ts` (already shipped separately)
 
 ## Problem
