@@ -151,8 +151,12 @@ const KELTNER = {
 } as const
 
 const MACD = {
-	histPos: GREEN_CORAL.up,
-	histNeg: GREEN_CORAL.down,
+	// Histogram follows the buy/sell (blue/red) trade semantics, not the
+	// green/coral directional family: a positive (bullish) bar reads as
+	// buy-blue, a negative (bearish) bar as sell-red — matching the
+	// Profitchart reference the user trades from.
+	histPos: TRADE.buy, // azul puro — bullish momentum
+	histNeg: TRADE.sell, // vermelho puro — bearish momentum
 	signal: GREEN_CORAL.center,
 } as const
 
