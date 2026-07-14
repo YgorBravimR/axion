@@ -799,8 +799,9 @@ const HawksChartWorkspace = ({
 			<HawksChartIndicatorPanel toggles={toggles} onToggle={handleToggle} />
 
 			<div className="gap-s-300 grid h-[calc(100vh-340px)] min-h-[480px] grid-cols-1 md:grid-cols-[3fr_2fr]">
-				<div className="relative">
+				<div className="relative h-full min-h-0">
 					<RenkoPane
+						className="h-full"
 						label={t("pane.5m")}
 						subLabel={`size ${formatRSize(size5mR)}`}
 						series={series5m}
