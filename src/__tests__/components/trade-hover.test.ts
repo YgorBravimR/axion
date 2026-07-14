@@ -150,8 +150,15 @@ describe("buildTradeLabel", () => {
 		overrides: Partial<HawksChartTradeMarker> = {}
 	): HawksChartTradeMarker => ({
 		id: "17143956abcdef12",
+		entryTime: "2026-06-18T10:00:00.000Z",
+		exitTime: "2026-06-18T10:30:00.000Z",
 		direction: "long",
+		entryPrice: 171500,
+		exitPrice: 171600,
 		rMultiple: 2.05,
+		outcome: "win",
+		stopPrice: 171400,
+		targetPrice: 171800,
 		...overrides,
 	})
 
