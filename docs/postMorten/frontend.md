@@ -2,6 +2,12 @@
 
 ---
 
+> **[FIX-2026-07-14]** `Severity: Low` — **Affected:** `src/components/hawks-chart/hawks-chart-workspace.tsx:689-702`, `messages/en.json:171`, `messages/pt-BR.json:171`
+> **Report:** "Raw server error string leaked to Hawks chart page (technical file path + script name). Page is pt-BR, so user saw untranslated English error."
+> **Fix:** Replaced `{windowResult.message}` render with translated error key `t("loadError")`. Added console.error for debugging. Mirrored empty-state structure (header + message box). New key: en "Could not load chart data. Please try again.", pt-BR "Não foi possível carregar os dados do gráfico. Tente novamente."
+
+---
+
 ## [BUG-2026-06-10] Hardcoded Portuguese month labels bypass i18n locale switching
 
 **Date:** 2026-06-10
