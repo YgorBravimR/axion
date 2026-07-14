@@ -20,11 +20,7 @@ import {
 import type { BrickChartSeries } from "@/lib/renko/bricks-to-chart"
 import { HAWKS_PALETTE } from "@/lib/chart/hawks-palette"
 import { formatRSize } from "@/lib/enrichment/format-rsize"
-import {
-	buildTradeLabel,
-	resolveActiveTradeId,
-	resolveBrickSize,
-} from "./trade-hover"
+import { resolveActiveTradeId, resolveBrickSize } from "./trade-hover"
 import { useDrawingsCache } from "./use-drawings-cache"
 import type {
 	HawksChartFullWindowResult,
@@ -479,30 +475,13 @@ const HawksChartWorkspace = ({
 			),
 		[tradePositions5m, hoveredIdx5m]
 	)
-	const visiblePositions5m = useMemo(
-		() => tradePositions5m.filter((p) => p.id === activeTradeId),
-		[tradePositions5m, activeTradeId]
-	)
+	// Trade overlays (exit markers / dashed lines) stay hover-scoped — only the
+	// hovered trade's overlay draws — while the position boxes below render for
+	// every trade always.
 	const visibleOverlays5m = useMemo(
 		() => tradeOverlays5m.filter((o) => o.id === activeTradeId),
 		[tradeOverlays5m, activeTradeId]
 	)
-
-	// Stable 1-based label per trade id, chronological by entry. Used for the
-	// hover badge (`#3 · short · -1.05R · 17143956`).
-	const tradeLabelById = useMemo(() => {
-		const sorted = [...tradeMarkers].sort(
-			(a, b) =>
-				new Date(a.entryTime).getTime() - new Date(b.entryTime).getTime()
-		)
-		const map = new Map<string, string>()
-		for (let i = 0; i < sorted.length; i++) {
-			map.set(sorted[i]!.id, buildTradeLabel(sorted[i]!, i + 1))
-		}
-		return map
-	}, [tradeMarkers])
-	const activeTradeLabel =
-		activeTradeId !== null ? (tradeLabelById.get(activeTradeId) ?? null) : null
 
 	// Per-week brick size for each pane's size label — read from the hovered
 	// brick's `brick` indicator (fallback: last brick, then the latest-week
@@ -830,19 +809,13 @@ const HawksChartWorkspace = ({
 						markerColorMode="action"
 						drawings={projectedDrawings.pane5m}
 						onPaneClick={handlePaneClick}
-						tradePositions={visiblePositions5m}
+						tradePositions={tradePositions5m}
+						focusedPositionId={activeTradeId}
 						tradeOverlays={visibleOverlays5m}
 						boundaryMarkers={boundaries5m}
 						emitsCrosshair
 						onCrosshairMove={handle5mCrosshair}
 					/>
-					{activeTradeLabel && (
-						<div className="pointer-events-none absolute top-[52px] left-3 z-10">
-							<span className="bg-bg-100/90 text-tiny text-txt-100 border-bg-300 rounded-md border px-2 py-1 font-mono shadow-sm">
-								{activeTradeLabel}
-							</span>
-						</div>
-					)}
 				</div>
 				<div className="gap-s-300 grid grid-rows-2">
 					<RenkoPane

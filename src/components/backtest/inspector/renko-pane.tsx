@@ -162,6 +162,11 @@ interface RenkoPaneProps {
 		readonly valuePerPoint: number
 		readonly color: string
 	}>
+	// Only the position whose id matches renders its right-edge price-axis
+	// labels (entry / stop / target). All position boxes + R:R fills always
+	// paint; the labels are the hover-only detail so the chart stays legible
+	// with every trade drawn. `null` = no labels on any box.
+	readonly focusedPositionId?: string | null
 	readonly histogram?: HistogramOverlay | null
 	readonly markerColorMode?: MarkerColorMode
 	readonly paletteOverride?: ChartPaletteOverride | null
@@ -195,6 +200,7 @@ const RenkoPaneImpl = ({
 	extraMarkers,
 	tradeOverlays,
 	tradePositions,
+	focusedPositionId = null,
 	histogram,
 	markerColorMode = "trade",
 	paletteOverride,
@@ -1007,6 +1013,13 @@ const RenkoPaneImpl = ({
 			...(drawings?.positions ?? []),
 			...(tradePositions ?? []),
 		]
+		// User-drawn positions always show their price-axis labels; read-only
+		// trade positions show them only while focused (hovered), so drawing
+		// every trade box doesn't spam the price scale with pills.
+		const labeledPositionIds = new Set<string>([
+			...(drawings?.positions ?? []).map((p) => p.id),
+			...(focusedPositionId ? [focusedPositionId] : []),
+		])
 		const incomingPositionIds = new Set(positions.map((p) => p.id))
 		for (const [id, lines] of positionRefs.current) {
 			if (!incomingPositionIds.has(id)) {
@@ -1025,6 +1038,7 @@ const RenkoPaneImpl = ({
 			const stopColor = HAWKS_PALETTE.drawing.positionStop
 			const targetColor = HAWKS_PALETTE.drawing.positionTarget
 			const entryColor = p.color
+			const showLabels = labeledPositionIds.has(p.id)
 			const lineProps = (opts: {
 				color: string
 				dashed: boolean
@@ -1041,6 +1055,11 @@ const RenkoPaneImpl = ({
 			const formatR = stats.riskRewardRatio.toFixed(2)
 			const formatStop = stats.stopValue.toFixed(0)
 			const formatTarget = stats.targetValue.toFixed(0)
+			const entryTitle = showLabels ? "entry" : ""
+			const stopTitle = showLabels ? `stop · 1R · R$ ${formatStop}` : ""
+			const targetTitle = showLabels
+				? `target · ${formatR}R · R$ ${formatTarget}`
+				: ""
 			const existing = positionRefs.current.get(p.id)
 			// 5-tuple now: [entry, stop, target, riskFill, rewardFill]. The
 			// two BaselineSeries paint the colored zones (risk = entry→stop,
@@ -1090,21 +1109,13 @@ const RenkoPaneImpl = ({
 					ISeriesApi<"Baseline">,
 				]
 				entryLine.applyOptions(
-					lineProps({ color: entryColor, dashed: false, title: "entry" })
+					lineProps({ color: entryColor, dashed: false, title: entryTitle })
 				)
 				stopLine.applyOptions(
-					lineProps({
-						color: stopColor,
-						dashed: true,
-						title: `stop · 1R · R$ ${formatStop}`,
-					})
+					lineProps({ color: stopColor, dashed: true, title: stopTitle })
 				)
 				targetLine.applyOptions(
-					lineProps({
-						color: targetColor,
-						dashed: true,
-						title: `target · ${formatR}R · R$ ${formatTarget}`,
-					})
+					lineProps({ color: targetColor, dashed: true, title: targetTitle })
 				)
 				riskFill.applyOptions(riskFillProps)
 				rewardFill.applyOptions(rewardFillProps)
@@ -1123,23 +1134,15 @@ const RenkoPaneImpl = ({
 				rewardFill = chart.addSeries(BaselineSeries, rewardFillProps)
 				entryLine = chart.addSeries(
 					LineSeries,
-					lineProps({ color: entryColor, dashed: false, title: "entry" })
+					lineProps({ color: entryColor, dashed: false, title: entryTitle })
 				)
 				stopLine = chart.addSeries(
 					LineSeries,
-					lineProps({
-						color: stopColor,
-						dashed: true,
-						title: `stop · 1R · R$ ${formatStop}`,
-					})
+					lineProps({ color: stopColor, dashed: true, title: stopTitle })
 				)
 				targetLine = chart.addSeries(
 					LineSeries,
-					lineProps({
-						color: targetColor,
-						dashed: true,
-						title: `target · ${formatR}R · R$ ${formatTarget}`,
-					})
+					lineProps({ color: targetColor, dashed: true, title: targetTitle })
 				)
 				positionRefs.current.set(p.id, [
 					entryLine,
@@ -1176,7 +1179,7 @@ const RenkoPaneImpl = ({
 		// exit — the two systems compose: tradePositions paints the
 		// PLANNED box (entry + stop + target + fills), tradeOverlays
 		// paints the REALIZED exit price stub.
-	}, [drawings, series, tradePositions])
+	}, [drawings, series, tradePositions, focusedPositionId])
 
 	// Forward click events upward so the inspector can implement tool behavior.
 	// We use chart.subscribeClick; the handler receives MouseEventParams with a
