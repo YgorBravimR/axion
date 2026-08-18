@@ -75,6 +75,7 @@ data/parquet/
 tmp/
 results-snapshot.md
 *.png
+!.github/assets/*.png
 
 # Local DB snapshots used as enrichment-rollback recovery points (not committed)
 docs/journal-snapshots/
