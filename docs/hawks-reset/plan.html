@@ -1,0 +1,500 @@
+<title>Axion Hawks Reseed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root {
+  --ground:      #f7f8f7;
+  --surface:     #ffffff;
+  --ink:         #14181a;
+  --ink-soft:    #4a5459;
+  --ink-faint:   #7b868b;
+  --rule:        #dde2e1;
+  --rule-strong: #c3cbc9;
+  --box:         #2f7d63;
+  --box-soft:    #e4efea;
+  --amber:       #9a6415;
+  --amber-soft:  #f7eddc;
+  --brick:       #a33b32;
+  --brick-soft:  #f8e6e3;
+  --slate:       #566065;
+  --slate-soft:  #e8ebec;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:      #101314;
+    --surface:     #171b1c;
+    --ink:         #e8edec;
+    --ink-soft:    #a3aeaf;
+    --ink-faint:   #737e80;
+    --rule:        #2a3032;
+    --rule-strong: #3d4548;
+    --box:         #62b494;
+    --box-soft:    #172b24;
+    --amber:       #d29a4a;
+    --amber-soft:  #2d2415;
+    --brick:       #d97b70;
+    --brick-soft:  #2e1a18;
+    --slate:       #9aa5a8;
+    --slate-soft:  #212728;
+  }
+}
+:root[data-theme="dark"] {
+  --ground:      #101314;
+  --surface:     #171b1c;
+  --ink:         #e8edec;
+  --ink-soft:    #a3aeaf;
+  --ink-faint:   #737e80;
+  --rule:        #2a3032;
+  --rule-strong: #3d4548;
+  --box:         #62b494;
+  --box-soft:    #172b24;
+  --amber:       #d29a4a;
+  --amber-soft:  #2d2415;
+  --brick:       #d97b70;
+  --brick-soft:  #2e1a18;
+  --slate:       #9aa5a8;
+  --slate-soft:  #212728;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+  font-size: 16.5px;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0 1.5rem 6rem;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 61rem; margin: 0 auto; }
+
+/* ---- masthead ---- */
+.mast { padding: 3.5rem 0 1.75rem; border-bottom: 2px solid var(--ink); }
+.eyebrow {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.7rem; font-weight: 500; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--ink-faint); margin: 0 0 0.9rem;
+}
+h1 {
+  font-family: Archivo, ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700; font-size: clamp(2rem, 5vw, 2.9rem); line-height: 1.04;
+  letter-spacing: -0.022em; margin: 0 0 0.85rem; text-wrap: balance;
+}
+.objective { font-size: 1.1rem; color: var(--ink-soft); max-width: 60ch; margin: 0; }
+.stamp {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.75rem; color: var(--ink-faint); margin: 1.1rem 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- tally: quantised cells, Renko register ---- */
+.tally {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 1px; background: var(--rule); border: 1px solid var(--rule);
+  margin: 2.25rem 0 3rem;
+}
+.cell { background: var(--surface); padding: 1rem 1.1rem 0.95rem; }
+.cell .n {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 1.85rem; font-weight: 600; line-height: 1;
+  font-variant-numeric: tabular-nums; display: block; margin-bottom: 0.45rem;
+}
+.cell .l {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.cell.is-brick .n { color: var(--brick); }
+.cell.is-amber .n { color: var(--amber); }
+.cell.is-box   .n { color: var(--box); }
+.cell.is-slate .n { color: var(--slate); }
+
+/* ---- sections ---- */
+section { margin: 0 0 3.25rem; }
+h2 {
+  font-family: Archivo, ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600; font-size: 1.28rem; letter-spacing: -0.012em;
+  margin: 0 0 0.35rem; padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--rule-strong);
+  display: flex; align-items: baseline; gap: 0.7rem;
+}
+h2 .idx {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.78rem; font-weight: 500; color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.lede { color: var(--ink-soft); margin: 0.9rem 0 1.5rem; max-width: 66ch; }
+
+/* ---- items ---- */
+.item { padding: 1.15rem 0; border-bottom: 1px solid var(--rule); }
+.item:last-child { border-bottom: 0; }
+.item h3 {
+  font-family: Archivo, ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem; font-weight: 600; margin: 0 0 0.4rem;
+  display: flex; align-items: baseline; gap: 0.65rem; flex-wrap: wrap;
+}
+.chip {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.62rem; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 0.2rem 0.45rem; white-space: nowrap;
+  border: 1px solid currentColor; flex: none;
+}
+.chip.blocked  { color: var(--brick); background: var(--brick-soft); }
+.chip.decision { color: var(--amber); background: var(--amber-soft); }
+.chip.ready    { color: var(--box);   background: var(--box-soft); }
+.chip.verified { color: var(--box);   background: var(--box-soft); }
+.chip.fact     { color: var(--slate); background: var(--slate-soft); }
+
+.item p { margin: 0 0 0.5rem; color: var(--ink-soft); max-width: 72ch; }
+.item p:last-child { margin-bottom: 0; }
+.ev {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.78rem; color: var(--ink-faint); line-height: 1.55;
+}
+.ev::before { content: "evidence  "; letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.66rem; }
+code {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.86em; background: var(--slate-soft); padding: 0.08em 0.3em;
+  color: var(--ink);
+}
+.ev code { background: none; padding: 0; font-size: 1em; }
+strong { font-weight: 600; color: var(--ink); }
+
+/* ---- tables ---- */
+.scroll { overflow-x: auto; margin: 1.1rem 0 0; border: 1px solid var(--rule); }
+table { border-collapse: collapse; width: 100%; font-size: 0.87rem; background: var(--surface); }
+th, td { text-align: left; padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink-faint); font-weight: 500; border-bottom: 1px solid var(--rule-strong);
+}
+tr:last-child td { border-bottom: 0; }
+td.num {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums; text-align: right;
+}
+td.bad  { color: var(--brick); font-weight: 600; }
+td.good { color: var(--box); }
+
+/* ---- spec lists inside an item: a set, not a sequence, so no numbers ---- */
+.item ul { list-style: none; padding: 0; margin: 0.85rem 0 0; display: grid; gap: 0.45rem; }
+.item li {
+  position: relative; padding-left: 1.1rem;
+  color: var(--ink-soft); font-size: 0.95rem; line-height: 1.55;
+}
+.item li::before {
+  content: ""; position: absolute; left: 0; top: 0.62em;
+  width: 5px; height: 5px; background: var(--box);
+}
+.item li strong { color: var(--ink); font-weight: 600; }
+
+/* ---- phase list: real sequence, so numbered ---- */
+ol.phases { list-style: none; counter-reset: p -1; padding: 0; margin: 1.2rem 0 0; }
+ol.phases > li {
+  counter-increment: p; display: grid; grid-template-columns: 2.6rem 1fr;
+  gap: 1rem; padding: 1.05rem 0; border-bottom: 1px solid var(--rule);
+}
+ol.phases > li:last-child { border-bottom: 0; }
+ol.phases > li::before {
+  content: counter(p);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 1.15rem; font-weight: 600; color: var(--box);
+  font-variant-numeric: tabular-nums; line-height: 1.35;
+}
+ol.phases h3 { margin: 0 0 0.3rem; }
+
+footer {
+  margin-top: 4rem; padding-top: 1.5rem; border-top: 2px solid var(--ink);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.74rem; color: var(--ink-faint); line-height: 1.7;
+}
+a { color: var(--box); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <p class="eyebrow">Axion · Plan artifact</p>
+  <h1>Axion Hawks Reseed</h1>
+  <p class="objective">Wipe the Axion database to zero and rebuild every seed on the merged Hawks doctrine. All 1,221 existing trades are test or seed data and are cleared for deletion.</p>
+  <p class="stamp">Verified 2026-09-01 · all 12 decisions answered · one approval outstanding (Phase&nbsp;3) · repo <code>bravo/axion</code> + <code>vault</code></p>
+</header>
+
+<div class="tally">
+  <div class="cell is-box"><span class="n">7/7</span><span class="l">Defects resolved</span></div>
+  <div class="cell is-box"><span class="n">5/5</span><span class="l">Decisions answered</span></div>
+  <div class="cell is-amber"><span class="n">1</span><span class="l">Approval needed</span></div>
+  <div class="cell is-slate"><span class="n">21/47</span><span class="l">Codes active</span></div>
+  <div class="cell is-box"><span class="n">268</span><span class="l">Renko rows</span></div>
+</div>
+
+<section>
+  <h2><span class="idx">A</span> Constraints</h2>
+  <p class="lede">Structural facts that change how the work can be done. None of these are bugs; all of them constrain the sequence.</p>
+
+  <div class="item">
+    <h3><span class="chip fact">fact</span> Production schema is ahead of git</h3>
+    <p>Migration <code>0028</code> (the <code>be_outcome</code> enum) is applied in production, but its <code>.sql</code>, its snapshot, and the <code>schema.ts</code> change are all uncommitted. A reset from a clean checkout would rebuild a different schema. This is why Phase&nbsp;0 exists.</p>
+    <p class="ev">ledger newest timestamp <code>1784286029059</code> matches <code>_journal.json</code> entry 28; <code>git status</code> lists <code>0028_many_black_panther.sql</code> as untracked</p>
+  </div>
+
+  <div class="item">
+    <h3><span class="chip fact">fact</span> The migrations ledger survives a public-schema truncate</h3>
+    <p>The Drizzle ledger lives in its own <code>drizzle</code> schema, not <code>public</code>. Truncating all 67 public tables cannot break <code>db:migrate</code>. Note that <code>db:push</code> is hard-blocked in this repo after the 2026-06-30 ledger incident.</p>
+    <p class="ev"><code>drizzle.__drizzle_migrations</code>, 28 rows; <code>pg_tables</code> shows 1 drizzle-schema table, 67 in public</p>
+  </div>
+
+  <div class="item">
+    <h3><span class="chip fact">fact</span> <code>seed/cleanup.ts</code> is not a reset</h3>
+    <p>It deletes from 22 tables. 44 tables hold data. Running <code>pnpm db:seed</code> on its own would leave roughly <strong>14,700 rows</strong> behind, dominated by <code>asset_pivots</code>, and would look like it worked. The reset needs its own truncate.</p>
+    <p class="ev">exact <code>count(*)</code> across all 67 tables: 18,000 total rows; cleanup covers <code>trades</code>, <code>trade_*</code>, <code>strategies</code>, accounts, users, and 13 more, but not <code>asset_pivots</code> (13,790), <code>monthly_tax_ledger</code>, the four <code>*_plan</code> tables, or both <code>account_*_aggregate</code> tables</p>
+  </div>
+
+  <div class="item">
+    <h3><span class="chip fact">fact</span> <code>tags</code> has no dimension column</h3>
+    <p>The only classification axis is <code>type</code>, an enum of <code>setup</code> / <code>mistake</code> / <code>general</code>, plus a free-form <code>color</code>. A multi-dimensional tag model has to encode the dimension in the name (<code>exec:virada-de-box</code>, <code>nivel:media-1</code>) or the schema needs a new column. See decision&nbsp;B1.</p>
+    <p class="ev"><code>src/db/schema.ts</code>, <code>tags</code> table: <code>name</code> varchar(50), <code>type</code> enum, unique on <code>(userId, name)</code></p>
+  </div>
+
+  <div class="item">
+    <h3><span class="chip fact">fact</span> <code>risk_management_profiles</code> holds no numbers</h3>
+    <p>Every numeric column was dropped in Phase 4b. The table now carries a single untyped <code>decisionTree</code> text blob, and the real caps moved to the fractal cascade in <strong>R-multiples</strong> (<code>yearlyPlans.defaultDailyLossR</code> and friends). Overlay §18.9 is denominated in reais against a shrinking loss buffer, so it does not map onto R caps without a decision. See B4.</p>
+    <p class="ev">schema comment: &ldquo;Phase 4b: top-level cents columns dropped &mdash; caps now live on the fractal cascade&rdquo;</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="idx">B</span> Decisions</h2>
+  <p class="lede">All five answered by Ygor on 2026-09-01. Recorded here with the consequence each one carries, and merged into <code>playbook.md</code> §18.</p>
+
+  <div class="item">
+    <h3><span class="chip ready">B1</span> Tag dimensions ride on a name prefix</h3>
+    <p>No migration. Four axes encoded by convention in <code>tags.name</code>: <code>exec:</code> for execution mode, <code>nivel:</code> for the level entered, <code>tf:</code> for the level&rsquo;s timeframe, <code>risco:</code> for the derived matrix cell. The longest generated name is well inside <code>varchar(50)</code>, and prefix queries need no schema support.</p>
+    <p class="ev">Cost accepted: the prefix is a convention, so nothing in the database enforces it. A typo creates a silent fifth axis. Seeder owns the vocabulary.</p>
+  </div>
+
+  <div class="item">
+    <h3><span class="chip ready">B2</span> <code>figura</code>, <code>dobra</code> and <code>SDVB</code> seed as inactive</h3>
+    <p>Seeded with <code>isActive=false</code> rather than omitted, so doctrine stays complete and historical references resolve. The overlay is the filter, not the record.</p>
+    <p class="ev">26 of 47 codes inactive after §18.10 landed. Active set is 21.</p>
+  </div>
+
+  <div class="item">
+    <h3><span class="chip ready">B3</span> Stop is the 5min always, and risk 8&ndash;10 is accepted</h3>
+    <p>No exception for 60min-level entries. The matrix cost is taken as written: a 60min-level entry paying a 5min stop is risk <strong>8</strong> on a virada and <strong>10</strong> on a teste, which are its worst cells, on the setup §5A calls premium. The decision does not resolve that conflict, it picks a side of it.</p>
+    <p><strong>What makes it defensible:</strong> with the stop timeframe fixed, entry risk becomes a function of the level alone and collapses to six values &mdash; 1, 2, 4, 5, 8, 10. That is a single clean analysis axis. The <code>risco:</code> tag turns the argument into a measurement: whether risk 8 and 10 entries actually pay is answerable from the journal after a block of trades, instead of debatable from doctrine.</p>
+    <p class="ev">Merged into <code>playbook.md</code> §18.1 with the matrix table inline.</p>
+  </div>
+
+  <div class="item">
+    <h3><span class="chip verified">B4</span> R against a re-anchored buffer &mdash; and the rule itself was wrong</h3>
+    <p>Two things came out of implementing this, and the second one matters more.</p>
+    <p><strong>Axion has two R fields with different denominators.</strong> <code>realizedRMultiple</code> divides P&amp;L by the position&rsquo;s own planned risk, and <code>positionSize</code> cancels top and bottom, so a full stop reads <strong>&minus;1R</strong> on 1 contract or on 10. It is blind to sizing by construction. <code>rOutcome</code> divides P&amp;L by <code>oneRCents</code>, a fixed money amount from the capital-ladder tier that never sees the contract count. The circuit breaker uses the second one. Summing the first one to check a daily limit is the 2&times; error this check existed to find.</p>
+    <p><strong>Calibration decided:</strong> <code>oneRCents</code> = the stop of <em>one</em> contract = 2 boxes &times; R of the 5min &times; R$1,00. At this week&rsquo;s 22R that is <code>4400</code>. Chosen over the two-contract stop because <code>oneRCents</code> is contract-independent by design; anchored on one contract, <code>rOutcome</code> always reads &ldquo;how many contract-stops did I lose&rdquo; and survives every change of hand and of R. Derived <code>defaultDailyLossR</code> = <strong>6</strong>, from floor((4000 &divide; 15) &divide; 44) = floor(6,06). Cross-check: 3 losses &times; 2 contracts &times; R$44 = R$264 against an allowance of R$266,67.</p>
+    <p><strong>The §18.9 rule as published yesterday was broken.</strong> It said allowance = remaining buffer &divide; 15, which reapplies the divisor every day to a buffer that already shrank, demanding 15 fresh days of runway daily. Simulated across all five R levels it does the opposite of what I claimed: it halts <em>earlier</em> than a fixed hand and leaves R$1.228 to R$2.980 unspent. At 34R it quits on day 5 holding 74% of the buffer.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Construction</th><th>14R</th><th>17R</th><th>22R</th><th>26R</th><th>34R</th><th>Left unspent</th></tr></thead>
+      <tbody>
+        <tr><td>Fixed 2 contracts</td><td>24d</td><td>20d</td><td>16d</td><td>13d</td><td>10d</td><td>R$0</td></tr>
+        <tr><td>buffer &divide; 15 <em>(published, wrong)</em></td><td>23d</td><td>20d</td><td>15d</td><td>11d</td><td>5d</td><td>R$1.228&ndash;2.980</td></tr>
+        <tr><td>Countdown</td><td>15d</td><td>15d</td><td>15d</td><td>15d</td><td>15d</td><td>R$22&ndash;124</td></tr>
+        <tr><td><strong>Countdown, hand never grows</strong></td><td><strong>16d</strong></td><td><strong>20d</strong></td><td><strong>15d</strong></td><td><strong>25d</strong></td><td><strong>19d</strong></td><td>R$22&ndash;124</td></tr>
+      </tbody>
+    </table></div>
+    <p>Corrected rule: days remaining counts down from 15, allowance = remaining buffer &divide; days remaining, and the hand never increases inside a cycle. The trailing clause is what separates the last two rows &mdash; without it, days-remaining reaches 1 and the allowance becomes the whole buffer in one session.</p>
+    <p><strong>The trigger is the week&rsquo;s R, not yesterday&rsquo;s loss.</strong> Also corrected: I wrote that one full-stop day drops him to 1 contract. It does not. Losing exactly the allowance holds the ratio constant and the hand stays at 2 indefinitely, which is the point of amortizing. What halves the hand is R rising: 3 contracts at 14R, 2 at 17R and 22R, 1 at 26R and above. His 2-contract decision is right this week and falls out on its own past 25R.</p>
+    <p class="ev">Merged as <code>playbook.md</code> §18.11, with §18.9 rewritten and the error recorded in place. Ladder must be indexed on the remaining buffer, not on capital, because the T2 R$4k is a loss limit.</p>
+  </div>
+
+  <div class="item">
+    <h3><span class="chip ready">B5</span> The 208-trade backtest set is not re-imported</h3>
+    <p>It ran against the synthetic Renko table (C1), so its R multiples are computed off fabricated box sizes. Regenerable later from <code>scripts/import-hawks-catalog-as-trades.ts</code> against the real 134-week series if wanted.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="idx">C</span> Seed defects</h2>
+  <p class="lede">Found while mapping the existing seeders against the merged doctrine. Every one would have been carried straight into the new database. All seven now have a resolution, answered 2026-09-01.</p>
+
+  <div class="item">
+    <h3><span class="chip ready">C1</span> <code>hawks_renko_sizes</code> seed is synthetic</h3>
+    <p>Two real anchors at the tail, and the preceding weeks interpolated backwards as a smooth curve. Week-over-week the seed moves &plusmn;4R (mean 1.5); reality moves &minus;12 to +23R (mean 6.8). Through the March 2026 volatility spike the seed understates the 60min box by about a third. Anything that consumed this table used stops up to 41R too small.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Week</th><th>Seeded 5 / 15 / 60</th><th>Measured 5 / 15 / 60</th><th>60min error</th></tr></thead>
+        <tbody>
+          <tr><td class="num">2026-01-19</td><td class="num">19 / 36 / 78</td><td class="num">15 / 26 / 58</td><td class="num bad">+20</td></tr>
+          <tr><td class="num">2026-02-09</td><td class="num">20 / 37 / 80</td><td class="num">29 / 53 / 101</td><td class="num bad">&minus;21</td></tr>
+          <tr><td class="num">2026-03-09</td><td class="num">19 / 36 / 78</td><td class="num">33 / 59 / 118</td><td class="num bad">&minus;40</td></tr>
+          <tr><td class="num">2026-03-23</td><td class="num">21 / 38 / 82</td><td class="num">34 / 60 / 123</td><td class="num bad">&minus;41</td></tr>
+          <tr><td class="num">2026-05-11</td><td class="num">21 / 39 / 84</td><td class="num">21 / 39 / 84</td><td class="num good">0</td></tr>
+          <tr><td class="num">2026-05-25</td><td class="num">21 / 39 / 84</td><td class="num">21 / 39 / 84</td><td class="num good">0</td></tr>
+        </tbody>
+      </table>
+        <p class="ev"><strong>Resolution:</strong> table is rebuilt from the 134-week measured series (section F). The interpolated seed is deleted outright, not patched.</p>
+  </div>
+    <p class="ev">22 seeded WIN rows in <code>scripts/seed/hawks-renko-oco.ts</code> compared against the 134-week measured series now stored in <code>knowledge-base.md</code> §R; mean absolute 60min error 18R, max 41R</p>
+  </div>
+
+  <div class="item">
+    <h3><span class="chip ready">C2</span> <code>conditions.ts</code> defines Cl&aacute;udia as the MACD cloud</h3>
+    <p>The condition reads &ldquo;MACD cloud structure forming Cl&aacute;udia&rdquo;. Cl&aacute;udia is the transcription of &ldquo;clouds&rdquo; and means the Hawks Cloud, the Keltner exhaustion bands plotted over price. The wrong definition is baked into the seed and would propagate into every strategy that links this condition.</p>
+    <p class="ev">corrected in doctrine 2026-09-01, commit <code>cd8097c</code>; three independent proofs, including that price is described as being &ldquo;acima das Cl&aacute;udias&rdquo;, which is impossible for a subpanel indicator</p>
+      <p class="ev"><strong>Resolution:</strong> fix the definition. New text describes the Hawks Cloud as Keltner exhaustion bands plotted <em>over price</em>, and the condition category moves off any MACD grouping.</p>
+  </div>
+
+  <div class="item">
+    <h3><span class="chip ready">C3</span> <code>hawks_scenarios</code> uses non-Hawks moving averages</h3>
+    <p>HWK_S07, S08 and S09 are &ldquo;Pullback EMA9 / EMA21 / EMA50&rdquo;. None of those are Hawks periods: the 5min carries its own 17/34, the 15min and above carry 27/55, and the 1min carries 21/42. EMA9 is specifically the scalper mean that overlay §18.6 excludes.</p>
+    <p class="ev"><code>playbook.md</code> §1 L53 and <code>knowledge-base.md</code> §2.2/§2.4 against <code>src/lib/hawks/seed-data.ts</code></p>
+      <p class="ev"><strong>Resolution:</strong> rebuild <code>hawks_scenarios</code> from Hawks sources only. Permitted periods are 17/34 (5min own), 27/55 (15min and above, and the pair projected onto the 5min as the red lines), 21/42 (1min). EMA9/21/50 never appear. HWK_S07, S08 and S09 are dropped rather than renumbered.</p>
+  </div>
+
+  <div class="item">
+    <h3><span class="chip ready">C4</span> HWK_S15 calls 76.4% a retracement</h3>
+    <p>76.4% is the expansion target, the zona de satisfa&ccedil;&atilde;o where the 2-box trail arms. Retracement levels are 38.2, 50 and 61.8. The scenario conflates the two Fibonacci uses, which are opposite ends of the trade.</p>
+    <p class="ev"><code>knowledge-base.md</code> §5.1 (retra&ccedil;&atilde;o) versus §5.2 (expans&atilde;o); <code>playbook.md</code> §7 M&eacute;todo 3</p>
+      <p class="ev"><strong>Resolution:</strong> 76.4% is recorded as expansion-only, which the doctrine already had right, so nothing changes there. The live change is the overlay: Ygor enters retracements at <strong>61.8% only</strong>, so <code>RF38</code>, <code>RF50</code>, <code>VBRF38</code> and <code>VBRF50</code> go inactive and the Fibonacci family drops from 7 active codes to 2. Merged as <code>playbook.md</code> §18.10. Note his answer was typed &ldquo;74.6%&rdquo;; the level is 76.4%, digit transposition, no new level exists.</p>
+  </div>
+
+  <div class="item">
+    <h3><span class="chip ready">C5</span> <code>hawks_weekly_oco</code> hardcodes the WDO stop</h3>
+    <p>All 22 weeks carry <code>stop=8, target=24, be=8</code> for the dollar, while the measured WDO 5min R runs from 3 to 9. The WIN rows do derive from <code>size5m</code>, so only the dollar side is fixed.</p>
+    <p class="ev"><code>scripts/seed/hawks-renko-oco.ts</code>; measured WDO 5min range 3R&ndash;9R, median 5R across 134 weeks</p>
+      <p class="ev"><strong>Resolution:</strong> derive both assets dynamically from the Renko series instead of hardcoding either. WDO stop comes from its own <code>size5m</code> the same way WIN already does.</p>
+  </div>
+
+  <div class="item">
+    <h3><span class="chip ready">C6</span> <code>seed-analytical-tags.ts</code> inserts 16, not 24</h3>
+    <p>The file header describes 24 tags across five groups. The array holds 16: the &ldquo;Tipo de Entrada&rdquo; and &ldquo;Horario&rdquo; groups were never written. It is also hardcoded to a single user id.</p>
+    <p class="ev">11 <code>ZONA_*</code> + 2 <code>TRAIL_*</code> + 3 <code>EFF_*</code> = 16 rows against a header claiming 24</p>
+      <p class="ev"><strong>Resolution:</strong> the 16 existing tags are stale and get dropped, not extended to 24. A new taxonomy is seeded on the B1 prefix axes (<code>exec:</code>, <code>nivel:</code>, <code>tf:</code>, <code>risco:</code>) and the hardcoded user id is replaced by the seeded admin.</p>
+  </div>
+
+  <div class="item">
+    <h3><span class="chip ready">C7</span> The backtest account ran on the synthetic table</h3>
+    <p><code>Hawks Backtest 2026</code> holds 208 trades, all inserted within six minutes on 2026-06-07, after the synthetic Renko seed existed. Its stop sizing therefore inherits the C1 error. The results are suspect regardless of whether the database is reset.</p>
+    <p class="ev">208 trades across 6 distinct <code>created_at</code> minutes on 2026-06-07; not present in any seed script, so imported via <code>import-hawks-catalog-as-trades.ts</code></p>
+      <p class="ev"><strong>Resolution:</strong> the account is not recreated. Seed one admin user and one default account, nothing else. No backtest account, no second live account.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="idx">D</span> Strategy aggregation</h2>
+  <p class="lede">The 47 codes in <code>ESTRATEGIAS.pdf</code> are not 47 strategies. The playbook states the prefixes are orthogonal, so the codes are a level-by-execution grid flattened into strings. All 47 map to <strong>7 families</strong>, and the overlay leaves <strong>21 codes active</strong> against 26 inactive.</p>
+
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Family</th><th>Codes today</th><th>Active after §18</th><th>Removed by</th></tr></thead>
+      <tbody>
+        <tr><td>fibonacci</td><td class="num">10</td><td class="num bad">2</td><td>dobra (§18.5), then 38.2 and 50 dropped by §18.10</td></tr>
+        <tr><td>figura</td><td class="num">10</td><td class="num bad">0</td><td>no figures (§18.3)</td></tr>
+        <tr><td>price-action</td><td class="num">8</td><td class="num">7</td><td>dobra</td></tr>
+        <tr><td>media</td><td class="num">7</td><td class="num">5</td><td>dobra</td></tr>
+        <tr><td>ajuste</td><td class="num">3</td><td class="num">2</td><td>dobra</td></tr>
+        <tr><td>vwap</td><td class="num">3</td><td class="num">2</td><td>dobra</td></tr>
+        <tr><td>leilao</td><td class="num">2</td><td class="num">2</td><td>&mdash;</td></tr>
+        <tr><td>virada-de-box</td><td class="num">1</td><td class="num">1</td><td>&mdash;</td></tr>
+        <tr><td><code>SDVB</code></td><td class="num">1</td><td class="num bad">0</td><td>martingale, becomes a mistake tag</td></tr>
+        <tr><td><code>1REGIOES</code> / <code>5REGIOES</code></td><td class="num">2</td><td class="num bad">0</td><td>chart config, never was a strategy</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="item" style="margin-top:1.6rem">
+    <h3><span class="chip ready">model</span> Seven families, four tag axes</h3>
+    <p><code>strategies</code> holds the seven real families. Everything else becomes a tag dimension: <strong>execution</strong> (teste, virada-de-box, rompimento, leilao), <strong>level</strong> (14 values), <strong>level timeframe</strong> (5 / 15 / 60min), and <strong>risk cell</strong>, which should be derived at entry from level timeframe plus stop timeframe plus execution rather than stored, so the app can flag an 8 or a 10 as it is entered.</p>
+    <p>The analytical payoff is the argument. With 47 strategies, &ldquo;is my teste worse than my virada de box?&rdquo; is unanswerable because each code carries two or three trades. With seven families plus an execution tag, that question runs across the whole sample.</p>
+    <p><strong>Locked by B1 and B3.</strong> Axes are name prefixes, no migration: <code>exec:</code>, <code>nivel:</code>, <code>tf:</code>, <code>risco:</code>. Because B3 fixes the stop at 5min for every strategy, <code>risco:</code> is fully determined by the level timeframe and the execution, so it collapses to six values &mdash; <code>risco:1</code>, <code>risco:2</code>, <code>risco:4</code>, <code>risco:5</code>, <code>risco:8</code>, <code>risco:10</code>. Derived at entry, not stored, so the app can flag an 8 or a 10 while it is being typed.</p>
+    <p><strong>The cut costs less than it looks.</strong> Pedro calibrates the moving averages against Fibonacci deliberately, and the vault records the consequence: a pullback to the 60min mean lands on roughly the 61.8% retracement. So the <code>media</code> family already trades that region under another name. Dropping 38.2 and 50 removes the shallow levels, not the good one; most of the 7-to-2 collapse in <code>fibonacci</code> is deduplication.</p>
+  </div>
+
+  <div class="item">
+    <h3><span class="chip fact">trap</span> The codes cannot be parsed, only mapped</h3>
+    <p>Two reasons. <code>T</code> is overloaded: in <code>TPA</code> and <code>TLTA</code> it means teste, but in <code>TA</code>, <code>TD</code> and <code>TS</code> it means tri&acirc;ngulo. And prefixes stack, so <code>DTPA</code> is dobra plus teste plus price-action, three levels deep. The seed must carry an explicit mapping table.</p>
+    <p class="ev">naive prefix-stripping failed on 6 of 47 codes: <code>AJUSTE</code>, <code>DERIVA</code>, <code>TA</code>, <code>TD</code>, <code>TS</code>, <code>DTPA</code></p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="idx">E</span> Sequence</h2>
+  <p class="lede">Each phase blocks the next, so the order carries information. Phases 1, 2 and 4 are non-destructive and ready. Phase 3 is the only one that needs an explicit yes, and nothing after it runs until it has one.</p>
+
+  <ol class="phases">
+    <li>
+      <div>
+        <h3><span class="chip ready">ready</span> Settle the schema</h3>
+        <p>Commit <code>0028</code> with its snapshot, <code>_journal.json</code> and the <code>schema.ts</code> change, plus the other modified files. No database writes. Constraint A1 is why this is first.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3><span class="chip ready">ready</span> Snapshot</h3>
+        <p><code>pg_dump</code> to a gzipped file outside the repo. About 18,000 rows, so seconds. Read-only, and it gives back the real fills to reference when the live account is re-seeded.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3><span class="chip blocked">needs go</span> Truncate</h3>
+        <p>One statement across all 67 public tables with <code>RESTART IDENTITY CASCADE</code>, so foreign-key cycles resolve themselves. Then <code>pnpm db:migrate</code> to confirm the ledger is intact. Dry run is built and the statement is printed; this is the step that needs an explicit yes.</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3><span class="chip ready">ready</span> Rewrite the seeders</h3>
+        <p>Unblocked: every B and C decision is answered. Reference seeders stay (assets, timeframes, settings, fee rates). Demo personas go. Concrete target:</p>
+        <ul>
+          <li><strong>Identity:</strong> one admin user, one default account, <code>mode=hawks</code>. Nothing else. No backtest account, no second live account.</li>
+          <li><strong>Strategies:</strong> 47 codes from the explicit mapping table, 21 <code>isActive=true</code> and 26 <code>false</code>, grouped into 7 families.</li>
+          <li><strong>Tags:</strong> the 16 stale rows are not carried over. New taxonomy on the four prefix axes, owned by the seeded admin.</li>
+          <li><strong>Renko:</strong> 268 measured rows replace the 22 synthetic ones.</li>
+          <li><strong>OCO:</strong> derived per asset per week from <code>size5m</code>, both WIN and WDO, no hardcoded dollar row.</li>
+          <li><strong>Risk:</strong> <code>oneRCents=4400</code> and <code>defaultDailyLossR=6</code> for the current week, ladder indexed on remaining buffer. Weekly and monthly caps left unset pending Ygor&rsquo;s call.</li>
+          <li><strong>Scenarios:</strong> rebuilt from Hawks periods only; HWK_S07/S08/S09 dropped, HWK_S15 corrected.</li>
+        </ul>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3><span class="chip decision">blocked on E3</span> Verify</h3>
+        <p>Row counts per table against the intended seed, every enum value checked against the schema, and the derived OCO numbers recomputed from the Renko series rather than trusted.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="idx">F</span> What the new Renko seed looks like</h2>
+  <p class="lede">The one part of Phase 3 that is already fully determined, because the data exists and has been cross-validated.</p>
+
+  <div class="item">
+    <h3><span class="chip verified">verified</span> 268 rows, both assets, five timeframes</h3>
+    <p>134 measured weeks covering 2024-01-01 to 2026-08-31, two assets, one row per asset per week. The table grain is one row per <code>(assetId, effectiveDate)</code> with a column per timeframe, so the series fits without reshaping. <code>size5m</code>, <code>size15m</code> and <code>size60m</code> are NOT NULL and all are present; <code>size1m</code> and <code>size1d</code> are nullable and also present.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Latest week 2026-08-31</th><th>1m</th><th>5m</th><th>15m</th><th>60m</th><th>1d</th><th>Derived OCO stop</th><th>Break-even</th><th>Target</th></tr></thead>
+        <tbody>
+          <tr><td>WIN</td><td class="num">9</td><td class="num">22</td><td class="num">40</td><td class="num">82</td><td class="num">311</td><td class="num">44 ticks</td><td class="num">44</td><td class="num">132</td></tr>
+          <tr><td>WDO</td><td class="num">2</td><td class="num">3</td><td class="num">6</td><td class="num">11</td><td class="num">44</td><td class="num">6 ticks</td><td class="num">6</td><td class="num">18</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="ev">series cross-validated against the 43 weeks the vault already held from Pedro&rsquo;s live calls: 34 index values match exactly. Max value anywhere is 436 and max derived target is 204, both inside <code>smallint</code>. OCO derives as stop = 2 &times; R, break-even = 2 &times; R, target = 3 &times; stop, per <code>playbook.md</code> §7 M&eacute;todo 3 and payoff 3</p>
+  </div>
+</section>
+
+<footer>
+  <p>Axion Hawks Reseed · plan artifact · verified 2026-09-01<br>
+  Source: <code>bravo/axion/docs/hawks-reset/plan.html</code> · doctrine: <code>vault/wiki/hawks/</code><br>
+  The artifact owns state. Work items belong in Linear. Neither restates the other.</p>
+</footer>
+
+</div>
