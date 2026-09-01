@@ -32,7 +32,7 @@ interface FamilySpec {
 const FAMILIES: readonly FamilySpec[] = [
 	{
 		family: "media",
-		code: "HAWKS_MEDIA",
+		code: "REAM",
 		name: "Retorno às médias",
 		description:
 			"Entrada na região das médias móveis do gráfico de referência. Códigos: RM1, RM2, VBRM, VBRM1, VBRM2.",
@@ -40,7 +40,7 @@ const FAMILIES: readonly FamilySpec[] = [
 	},
 	{
 		family: "price-action",
-		code: "HAWKS_PRICE_ACTION",
+		code: "PRAC",
 		name: "Price action",
 		description:
 			"Suporte, resistência, LTA e LTB. Códigos: PA, TPA, VBPA, TLTA, VBLTA, TLTB, VBLTB.",
@@ -48,7 +48,7 @@ const FAMILIES: readonly FamilySpec[] = [
 	},
 	{
 		family: "fibonacci",
-		code: "HAWKS_FIBONACCI",
+		code: "FIBO",
 		name: "Retração de Fibonacci",
 		description:
 			"Retração de 61,8% apenas (overlay §18.10). Códigos ativos: RF61, VBRF61.",
@@ -63,14 +63,14 @@ const FAMILIES: readonly FamilySpec[] = [
 	},
 	{
 		family: "ajuste",
-		code: "HAWKS_AJUSTE",
+		code: "AJST",
 		name: "Ajuste",
 		description: "Entrada no preço de ajuste. Códigos: AJUSTE, VBAJUSTE.",
 		active: true,
 	},
 	{
 		family: "virada-de-box",
-		code: "HAWKS_VIRADA_BOX",
+		code: "VBOX",
 		name: "Virada de box",
 		description:
 			"Continuação de movimento na virada de box, sem nível de referência. Código: VB.",
@@ -78,7 +78,7 @@ const FAMILIES: readonly FamilySpec[] = [
 	},
 	{
 		family: "leilao",
-		code: "HAWKS_LEILAO",
+		code: "LELO",
 		name: "Leilões",
 		description:
 			"Leilão de abertura e pré-leilão de fechamento. Códigos: LEILAOA, LEILAOF.",
