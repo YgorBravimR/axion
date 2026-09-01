@@ -225,7 +225,7 @@ a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offse
   <p class="eyebrow">Axion · Plan artifact</p>
   <h1>Axion Hawks Reseed</h1>
   <p class="objective">Wipe the Axion database to zero and rebuild every seed on the merged Hawks doctrine. All 1,221 existing trades are test or seed data and are cleared for deletion.</p>
-  <p class="stamp">Verified 2026-09-01 · all 12 decisions answered · one approval outstanding (Phase&nbsp;3) · repo <code>bravo/axion</code> + <code>vault</code></p>
+  <p class="stamp">Verified 2026-09-01 · all 12 decisions answered · sizing revised to 1 contract · one approval outstanding (Phase&nbsp;3) · repo <code>bravo/axion</code> + <code>vault</code></p>
 </header>
 
 <div class="tally">
@@ -298,8 +298,24 @@ a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offse
     <h3><span class="chip verified">B4</span> R against a re-anchored buffer &mdash; and the rule itself was wrong</h3>
     <p>Two things came out of implementing this, and the second one matters more.</p>
     <p><strong>Axion has two R fields with different denominators.</strong> <code>realizedRMultiple</code> divides P&amp;L by the position&rsquo;s own planned risk, and <code>positionSize</code> cancels top and bottom, so a full stop reads <strong>&minus;1R</strong> on 1 contract or on 10. It is blind to sizing by construction. <code>rOutcome</code> divides P&amp;L by <code>oneRCents</code>, a fixed money amount from the capital-ladder tier that never sees the contract count. The circuit breaker uses the second one. Summing the first one to check a daily limit is the 2&times; error this check existed to find.</p>
-    <p><strong>Calibration decided:</strong> <code>oneRCents</code> = the stop of <em>one</em> contract = 2 boxes &times; R of the 5min &times; R$1,00. At this week&rsquo;s 22R that is <code>4400</code>. Chosen over the two-contract stop because <code>oneRCents</code> is contract-independent by design; anchored on one contract, <code>rOutcome</code> always reads &ldquo;how many contract-stops did I lose&rdquo; and survives every change of hand and of R. Derived <code>defaultDailyLossR</code> = <strong>6</strong>, from floor((4000 &divide; 15) &divide; 44) = floor(6,06). Cross-check: 3 losses &times; 2 contracts &times; R$44 = R$264 against an allowance of R$266,67.</p>
-    <p><strong>The §18.9 rule as published yesterday was broken.</strong> It said allowance = remaining buffer &divide; 15, which reapplies the divisor every day to a buffer that already shrank, demanding 15 fresh days of runway daily. Simulated across all five R levels it does the opposite of what I claimed: it halts <em>earlier</em> than a fixed hand and leaves R$1.228 to R$2.980 unspent. At 34R it quits on day 5 holding 74% of the buffer.</p>
+    <p><strong>Calibration decided:</strong> <code>oneRCents</code> = the stop of <em>one</em> contract = 2 boxes &times; R of the 5min &times; R$1,00. At this week&rsquo;s 22R that is <code>4400</code>. Chosen over the two-contract stop because <code>oneRCents</code> is contract-independent by design; anchored on one contract, <code>rOutcome</code> always reads &ldquo;how many contract-stops did I lose&rdquo; and survives every change of hand and of R.</p>
+    <p><strong>Revised same day: the hand is 1 contract, not 2.</strong> Ygor moved to Pedro&rsquo;s rule, whose spreadsheet gives 1 contract for a R$4k budget. So <code>defaultDailyLossR</code> = <strong>3</strong>, from floor((4000 &divide; 30) &divide; 44) = floor(3,03). Cross-check: 3 losses &times; 1 contract &times; R$44 = R$132 against an allowance of R$133,33.</p>
+    <p><strong>This is where anchoring on one contract paid off.</strong> Halving the hand did <em>not</em> touch <code>oneRCents</code> &mdash; it is still 4400, because one contract&rsquo;s stop did not change. Only <code>defaultDailyLossR</code> moved, 6 to 3. Anchored on the position stop instead (R$88), the same change would have forced a rewrite of <code>oneRCents</code>, invalidated the frozen <code>oneRSnapshotCents</code> on every prior trade, and made no historical <code>rOutcome</code> comparable to a new one. One-line change instead of a migration.</p>
+    <p><strong>The 2x hazard is now dormant, not gone.</strong> At 1 contract both R fields read &minus;1R on a full stop, so any reconciliation check run today passes. The divergence reappears on the first day the hand goes to 2. Latent bug, not absent bug.</p>
+    <p><strong>At 1 contract the lever stops being contracts.</strong> There is no half contract, so the countdown resizing rule has nowhere to go. With the allowance fixed at R$133,33, what a high-R week breaks is the <em>number of losses</em> that fit. Checked against all 134 measured weeks:</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>WIN 5min R</th><th>Losses that fit</th><th>Weeks (of 134)</th><th>Share</th><th>Runway</th></tr></thead>
+        <tbody>
+          <tr><td>up to 22R</td><td class="num">3</td><td class="num">121</td><td class="num">90.3%</td><td class="num">30&ndash;67d</td></tr>
+          <tr><td>23R to 33R</td><td class="num">2</td><td class="num">12</td><td class="num">9.0%</td><td class="num">26&ndash;29d</td></tr>
+          <tr><td>34R to 66R</td><td class="num">1</td><td class="num">1</td><td class="num">0.7%</td><td class="num">20d</td></tr>
+          <tr><td>above 66R</td><td class="num bad">0</td><td class="num">0</td><td class="num">0%</td><td>&mdash;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Nine weeks in ten nothing changes. The 13 high-R weeks cluster in Feb&ndash;Apr 2026, so they arrive as a volatility block rather than scattered, which makes them easy to plan for and easy to be ambushed by. Runway at 1 contract is 20 days even at the series maximum, against 15 days that 2 contracts gave in an <em>average</em> week.</p>
+    <p><strong>The §18.9 rule as published yesterday was broken</strong> &mdash; found while implementing this, and worth keeping on the record even though 1 contract makes the corrected version inert (there is nothing to resize below the floor). It said allowance = remaining buffer &divide; 15, which reapplies the divisor every day to a buffer that already shrank, demanding 15 fresh days of runway daily. Simulated across all five R levels it does the opposite of what I claimed: it halts <em>earlier</em> than a fixed hand and leaves R$1.228 to R$2.980 unspent. At 34R it quits on day 5 holding 74% of the buffer.</p>
     <div class="scroll"><table>
       <thead><tr><th>Construction</th><th>14R</th><th>17R</th><th>22R</th><th>26R</th><th>34R</th><th>Left unspent</th></tr></thead>
       <tbody>
@@ -310,6 +326,7 @@ a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offse
       </tbody>
     </table></div>
     <p>Corrected rule: days remaining counts down from 15, allowance = remaining buffer &divide; days remaining, and the hand never increases inside a cycle. The trailing clause is what separates the last two rows &mdash; without it, days-remaining reaches 1 and the allowance becomes the whole buffer in one session.</p>
+    <p class="ev"><strong>Read the table as history, not reference.</strong> Every day count above is computed on the superseded 15-day divisor. Under Pedro&rsquo;s 30 days the same arithmetic gives 1 contract at 14R, 17R and 22R and zero at 26R and above, which is exactly why the lever moved to the loss count. Do not carry these figures forward if the hand ever rises.</p>
     <p><strong>The trigger is the week&rsquo;s R, not yesterday&rsquo;s loss.</strong> Also corrected: I wrote that one full-stop day drops him to 1 contract. It does not. Losing exactly the allowance holds the ratio constant and the hand stays at 2 indefinitely, which is the point of amortizing. What halves the hand is R rising: 3 contracts at 14R, 2 at 17R and 22R, 1 at 26R and above. His 2-contract decision is right this week and falls out on its own past 25R.</p>
     <p class="ev">Merged as <code>playbook.md</code> §18.11, with §18.9 rewritten and the error recorded in place. Ladder must be indexed on the remaining buffer, not on capital, because the T2 R$4k is a loss limit.</p>
   </div>
@@ -457,7 +474,7 @@ a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offse
           <li><strong>Tags:</strong> the 16 stale rows are not carried over. New taxonomy on the four prefix axes, owned by the seeded admin.</li>
           <li><strong>Renko:</strong> 268 measured rows replace the 22 synthetic ones.</li>
           <li><strong>OCO:</strong> derived per asset per week from <code>size5m</code>, both WIN and WDO, no hardcoded dollar row.</li>
-          <li><strong>Risk:</strong> <code>oneRCents=4400</code> and <code>defaultDailyLossR=6</code> for the current week, ladder indexed on remaining buffer. Weekly and monthly caps left unset pending Ygor&rsquo;s call.</li>
+          <li><strong>Risk:</strong> <code>oneRCents=4400</code> and <code>defaultDailyLossR=3</code> for the current week (1 contract, 3 losses), ladder indexed on remaining buffer. Weekly and monthly caps left unset pending Ygor&rsquo;s call.</li>
           <li><strong>Scenarios:</strong> rebuilt from Hawks periods only; HWK_S07/S08/S09 dropped, HWK_S15 corrected.</li>
         </ul>
       </div>
