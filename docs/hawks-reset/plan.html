@@ -288,44 +288,44 @@ a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offse
   </div>
 
   <div class="item">
-    <h3><span class="chip ready">B3</span> Stop is the 5min always, and risk 8&ndash;10 is accepted</h3>
+    <h3><span class="chip ready">B3</span> Stop is the 5min always, and risk 8 to 10 is accepted</h3>
     <p>No exception for 60min-level entries. The matrix cost is taken as written: a 60min-level entry paying a 5min stop is risk <strong>8</strong> on a virada and <strong>10</strong> on a teste, which are its worst cells, on the setup §5A calls premium. The decision does not resolve that conflict, it picks a side of it.</p>
-    <p><strong>What makes it defensible:</strong> with the stop timeframe fixed, entry risk becomes a function of the level alone and collapses to six values &mdash; 1, 2, 4, 5, 8, 10. That is a single clean analysis axis. The <code>risco:</code> tag turns the argument into a measurement: whether risk 8 and 10 entries actually pay is answerable from the journal after a block of trades, instead of debatable from doctrine.</p>
+    <p><strong>What makes it defensible:</strong> with the stop timeframe fixed, entry risk becomes a function of the level alone and collapses to six values: 1, 2, 4, 5, 8, 10. That is a single clean analysis axis. The <code>risco:</code> tag turns the argument into a measurement: whether risk 8 and 10 entries actually pay is answerable from the journal after a block of trades, instead of debatable from doctrine.</p>
     <p class="ev">Merged into <code>playbook.md</code> §18.1 with the matrix table inline.</p>
   </div>
 
   <div class="item">
-    <h3><span class="chip verified">B4</span> R against a re-anchored buffer &mdash; and the rule itself was wrong</h3>
+    <h3><span class="chip verified">B4</span> R against a re-anchored buffer, and the rule itself was wrong</h3>
     <p>Two things came out of implementing this, and the second one matters more.</p>
     <p><strong>Axion has two R fields with different denominators.</strong> <code>realizedRMultiple</code> divides P&amp;L by the position&rsquo;s own planned risk, and <code>positionSize</code> cancels top and bottom, so a full stop reads <strong>&minus;1R</strong> on 1 contract or on 10. It is blind to sizing by construction. <code>rOutcome</code> divides P&amp;L by <code>oneRCents</code>, a fixed money amount from the capital-ladder tier that never sees the contract count. The circuit breaker uses the second one. Summing the first one to check a daily limit is the 2&times; error this check existed to find.</p>
     <p><strong>Calibration decided:</strong> <code>oneRCents</code> = the stop of <em>one</em> contract = 2 boxes &times; R of the 5min &times; R$1,00. At this week&rsquo;s 22R that is <code>4400</code>. Chosen over the two-contract stop because <code>oneRCents</code> is contract-independent by design; anchored on one contract, <code>rOutcome</code> always reads &ldquo;how many contract-stops did I lose&rdquo; and survives every change of hand and of R.</p>
     <p><strong>Revised same day: the hand is 1 contract, not 2.</strong> Ygor moved to Pedro&rsquo;s rule, whose spreadsheet gives 1 contract for a R$4k budget. So <code>defaultDailyLossR</code> = <strong>3</strong>, from floor((4000 &divide; 30) &divide; 44) = floor(3,03). Cross-check: 3 losses &times; 1 contract &times; R$44 = R$132 against an allowance of R$133,33.</p>
-    <p><strong>This is where anchoring on one contract paid off.</strong> Halving the hand did <em>not</em> touch <code>oneRCents</code> &mdash; it is still 4400, because one contract&rsquo;s stop did not change. Only <code>defaultDailyLossR</code> moved, 6 to 3. Anchored on the position stop instead (R$88), the same change would have forced a rewrite of <code>oneRCents</code>, invalidated the frozen <code>oneRSnapshotCents</code> on every prior trade, and made no historical <code>rOutcome</code> comparable to a new one. One-line change instead of a migration.</p>
+    <p><strong>This is where anchoring on one contract paid off.</strong> Halving the hand did <em>not</em> touch <code>oneRCents</code>. It is still 4400, because one contract&rsquo;s stop did not change. Only <code>defaultDailyLossR</code> moved, 6 to 3. Anchored on the position stop instead (R$88), the same change would have forced a rewrite of <code>oneRCents</code>, invalidated the frozen <code>oneRSnapshotCents</code> on every prior trade, and made no historical <code>rOutcome</code> comparable to a new one. One-line change instead of a migration.</p>
     <p><strong>The 2x hazard is now dormant, not gone.</strong> At 1 contract both R fields read &minus;1R on a full stop, so any reconciliation check run today passes. The divergence reappears on the first day the hand goes to 2. Latent bug, not absent bug.</p>
     <p><strong>At 1 contract the lever stops being contracts.</strong> There is no half contract, so the countdown resizing rule has nowhere to go. With the allowance fixed at R$133,33, what a high-R week breaks is the <em>number of losses</em> that fit. Checked against all 134 measured weeks:</p>
     <div class="scroll">
       <table>
         <thead><tr><th>WIN 5min R</th><th>Losses that fit</th><th>Weeks (of 134)</th><th>Share</th><th>Runway</th></tr></thead>
         <tbody>
-          <tr><td>up to 22R</td><td class="num">3</td><td class="num">121</td><td class="num">90.3%</td><td class="num">30&ndash;67d</td></tr>
-          <tr><td>23R to 33R</td><td class="num">2</td><td class="num">12</td><td class="num">9.0%</td><td class="num">26&ndash;29d</td></tr>
+          <tr><td>up to 22R</td><td class="num">3</td><td class="num">121</td><td class="num">90.3%</td><td class="num">30 to 67d</td></tr>
+          <tr><td>23R to 33R</td><td class="num">2</td><td class="num">12</td><td class="num">9.0%</td><td class="num">26 to 29d</td></tr>
           <tr><td>34R to 66R</td><td class="num">1</td><td class="num">1</td><td class="num">0.7%</td><td class="num">20d</td></tr>
-          <tr><td>above 66R</td><td class="num bad">0</td><td class="num">0</td><td class="num">0%</td><td>&mdash;</td></tr>
+          <tr><td>above 66R</td><td class="num bad">0</td><td class="num">0</td><td class="num">0%</td><td>n/a</td></tr>
         </tbody>
       </table>
     </div>
-    <p>Nine weeks in ten nothing changes. The 13 high-R weeks cluster in Feb&ndash;Apr 2026, so they arrive as a volatility block rather than scattered, which makes them easy to plan for and easy to be ambushed by. Runway at 1 contract is 20 days even at the series maximum, against 15 days that 2 contracts gave in an <em>average</em> week.</p>
-    <p><strong>The §18.9 rule as published yesterday was broken</strong> &mdash; found while implementing this, and worth keeping on the record even though 1 contract makes the corrected version inert (there is nothing to resize below the floor). It said allowance = remaining buffer &divide; 15, which reapplies the divisor every day to a buffer that already shrank, demanding 15 fresh days of runway daily. Simulated across all five R levels it does the opposite of what I claimed: it halts <em>earlier</em> than a fixed hand and leaves R$1.228 to R$2.980 unspent. At 34R it quits on day 5 holding 74% of the buffer.</p>
+    <p>Nine weeks in ten nothing changes. The 13 high-R weeks cluster in Feb to Apr 2026, so they arrive as a volatility block rather than scattered, which makes them easy to plan for and easy to be ambushed by. Runway at 1 contract is 20 days even at the series maximum, against 15 days that 2 contracts gave in an <em>average</em> week.</p>
+    <p><strong>The §18.9 rule as published yesterday was broken</strong>, found while implementing this, and worth keeping on the record even though 1 contract makes the corrected version inert (there is nothing to resize below the floor). It said allowance = remaining buffer &divide; 15, which reapplies the divisor every day to a buffer that already shrank, demanding 15 fresh days of runway daily. Simulated across all five R levels it does the opposite of what I claimed: it halts <em>earlier</em> than a fixed hand and leaves R$1.228 to R$2.980 unspent. At 34R it quits on day 5 holding 74% of the buffer.</p>
     <div class="scroll"><table>
       <thead><tr><th>Construction</th><th>14R</th><th>17R</th><th>22R</th><th>26R</th><th>34R</th><th>Left unspent</th></tr></thead>
       <tbody>
         <tr><td>Fixed 2 contracts</td><td>24d</td><td>20d</td><td>16d</td><td>13d</td><td>10d</td><td>R$0</td></tr>
-        <tr><td>buffer &divide; 15 <em>(published, wrong)</em></td><td>23d</td><td>20d</td><td>15d</td><td>11d</td><td>5d</td><td>R$1.228&ndash;2.980</td></tr>
-        <tr><td>Countdown</td><td>15d</td><td>15d</td><td>15d</td><td>15d</td><td>15d</td><td>R$22&ndash;124</td></tr>
-        <tr><td><strong>Countdown, hand never grows</strong></td><td><strong>16d</strong></td><td><strong>20d</strong></td><td><strong>15d</strong></td><td><strong>25d</strong></td><td><strong>19d</strong></td><td>R$22&ndash;124</td></tr>
+        <tr><td>buffer &divide; 15 <em>(published, wrong)</em></td><td>23d</td><td>20d</td><td>15d</td><td>11d</td><td>5d</td><td>R$1.228 to 2.980</td></tr>
+        <tr><td>Countdown</td><td>15d</td><td>15d</td><td>15d</td><td>15d</td><td>15d</td><td>R$22 to 124</td></tr>
+        <tr><td><strong>Countdown, hand never grows</strong></td><td><strong>16d</strong></td><td><strong>20d</strong></td><td><strong>15d</strong></td><td><strong>25d</strong></td><td><strong>19d</strong></td><td>R$22 to 124</td></tr>
       </tbody>
     </table></div>
-    <p>Corrected rule: days remaining counts down from 15, allowance = remaining buffer &divide; days remaining, and the hand never increases inside a cycle. The trailing clause is what separates the last two rows &mdash; without it, days-remaining reaches 1 and the allowance becomes the whole buffer in one session.</p>
+    <p>Corrected rule: days remaining counts down from 15, allowance = remaining buffer &divide; days remaining, and the hand never increases inside a cycle. The trailing clause is what separates the last two rows. Without it, days-remaining reaches 1 and the allowance becomes the whole buffer in one session.</p>
     <p class="ev"><strong>Read the table as history, not reference.</strong> Every day count above is computed on the superseded 15-day divisor. Under Pedro&rsquo;s 30 days the same arithmetic gives 1 contract at 14R, 17R and 22R and zero at 26R and above, which is exactly why the lever moved to the loss count. Do not carry these figures forward if the hand ever rises.</p>
     <p><strong>The trigger is the week&rsquo;s R, not yesterday&rsquo;s loss.</strong> Also corrected: I wrote that one full-stop day drops him to 1 contract. It does not. Losing exactly the allowance holds the ratio constant and the hand stays at 2 indefinitely, which is the point of amortizing. What halves the hand is R rising: 3 contracts at 14R, 2 at 17R and 22R, 1 at 26R and above. His 2-contract decision is right this week and falls out on its own past 25R.</p>
     <p class="ev">Merged as <code>playbook.md</code> §18.11, with §18.9 rewritten and the error recorded in place. Ladder must be indexed on the remaining buffer, not on capital, because the T2 R$4k is a loss limit.</p>
@@ -385,7 +385,7 @@ a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offse
   <div class="item">
     <h3><span class="chip ready">C5</span> <code>hawks_weekly_oco</code> hardcodes the WDO stop</h3>
     <p>All 22 weeks carry <code>stop=8, target=24, be=8</code> for the dollar, while the measured WDO 5min R runs from 3 to 9. The WIN rows do derive from <code>size5m</code>, so only the dollar side is fixed.</p>
-    <p class="ev"><code>scripts/seed/hawks-renko-oco.ts</code>; measured WDO 5min range 3R&ndash;9R, median 5R across 134 weeks</p>
+    <p class="ev"><code>scripts/seed/hawks-renko-oco.ts</code>; measured WDO 5min range 3R to 9R, median 5R across 134 weeks</p>
       <p class="ev"><strong>Resolution:</strong> derive both assets dynamically from the Renko series instead of hardcoding either. WDO stop comes from its own <code>size5m</code> the same way WIN already does.</p>
   </div>
 
@@ -413,19 +413,21 @@ a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offse
 
   <div class="item">
     <h3><span class="chip ready">C9</span> <code>timeframes</code> was missing the entire triple screen</h3>
-    <p>It seeded two rows, <code>1m</code> and <code>1d</code>. The Hawks method runs on <strong>5min, 15min and 60min</strong> — the 5min being where every entry executes and where the stop is always placed. All three were absent. The gap was visible in the <code>sort_order</code> values it used, 1 and 7, with 2 through 6 unfilled.</p>
+    <p>It seeded two rows, <code>1m</code> and <code>1d</code>. The Hawks method runs on <strong>5min, 15min and 60min</strong>, the 5min being where every entry executes and where the stop is always placed. All three were absent. The gap was visible in the <code>sort_order</code> values it used, 1 and 7, with 2 through 6 unfilled.</p>
     <p class="ev"><strong>Resolution:</strong> five timeframes seeded, <code>1m</code>/<code>5m</code>/<code>15m</code>/<code>60m</code>/<code>1d</code>, with <code>1d</code> kept at sort_order 7 so existing references stay put.</p>
   </div>
 
   <div class="item">
     <h3><span class="chip ready">C10</span> Two consumers would return no brick size for real data</h3>
-    <p><code>brick-size-resolver.ts</code> and <code>enrich-day.ts</code> snapped the trade date to its ISO-week Monday and then required an <em>exact</em> row on that Monday. The measured series breaks that twice: three weeks start on a <strong>Wednesday</strong> because B3 is shut Monday and Tuesday for Carnival (2024-02-14, 2025-03-05, 2026-02-18), and year-end weeks are absent entirely so rows are not always 7 days apart. Both cases silently returned <code>null</code>. The synthetic seed was 22 consecutive Mondays with no gaps, so the bug could never fire.</p>
-    <p class="ev"><strong>Resolution:</strong> both now select the most recent row with <code>effective_date &lt;= entryDate</code>, which is the shape the inspector, engine-lab, materializer and OCO readers already used. Consistent across every consumer now. Two further spots flagged but not changed: <code>weekly-walk.ts</code> shadows a Carnival week (tests only, no production caller) and the "Add this week" modal snaps to Monday on <em>write</em>.</p>
+    <p><code>brick-size-resolver.ts</code> and <code>enrich-day.ts</code> snapped the trade date to its ISO-week Monday and then required an <em>exact</em> row on that Monday. The measured series breaks that twice: three weeks start on a <strong>Wednesday</strong> because B3 is shut Monday and Tuesday for Carnival (2024-02-14, 2025-03-05, 2026-02-18), and further weeks are absent entirely so rows are not always 7 days apart. Both cases silently returned <code>null</code>. The synthetic seed was 22 consecutive Mondays with no gaps, so the bug could never fire.</p>
+    <p class="ev"><strong>Resolution:</strong> both now select the most recent row with <code>effective_date &lt;= entryDate</code>, which is the shape the inspector, engine-lab, materializer and OCO readers already used. Consistent across every consumer now.</p>
+    <p class="ev"><strong>Measured, not assumed:</strong> a query over the seeded series counts <strong>9 distinct Mondays with no exact row</strong>, so the old code returned <code>null</code> on 9 of 134 weeks. Three are Carnival (2024-02-12, 2025-03-03, 2026-02-16), four are year-end (2024-12-23, 2024-12-30, 2025-12-22, 2025-12-29) and two are weeks simply absent from the source (2025-09-01, 2025-12-01). The two double-gap Mondays resolve 14 days back, not 7, which is why a fixed one-week fallback would also have been wrong.</p>
+    <p class="ev">Two further spots flagged but not changed: <code>weekly-walk.ts</code> shadows a Carnival week (tests only, no production caller) and the "Add this week" modal snaps to Monday on <em>write</em>.</p>
   </div>
 
   <div class="item">
     <h3><span class="chip ready">C11</span> The truncate reported success and did nothing</h3>
-    <p>The two drivers disagree on how a raw statement runs, and the disagreement is silent. On <strong>postgres-js</strong>, <code>sql.unsafe(text)</code> executes. On <strong>neon-http</strong> it does <em>not</em> — it returns a descriptor object <code>{ sql: "..." }</code> meant for <code>sql.transaction()</code>, so awaiting it resolves to that object and nothing reaches the database. Neon exposes <em>both</em> <code>.unsafe</code> and <code>.query</code>, so feature-detecting <code>.unsafe</code> first picks the one that no-ops. Cleanup logged "67 tables truncated" having truncated nothing; only the next INSERT's unique violation revealed it.</p>
+    <p>The two drivers disagree on how a raw statement runs, and the disagreement is silent. On <strong>postgres-js</strong>, <code>sql.unsafe(text)</code> executes. On <strong>neon-http</strong> it does <em>not</em>. It returns a descriptor object <code>{ sql: "..." }</code> meant for <code>sql.transaction()</code>, so awaiting it resolves to that object and nothing reaches the database. Neon exposes <em>both</em> <code>.unsafe</code> and <code>.query</code>, so feature-detecting <code>.unsafe</code> first picks the one that no-ops. Cleanup logged "67 tables truncated" having truncated nothing; only the next INSERT's unique violation revealed it.</p>
     <p class="ev"><strong>Resolution:</strong> a <code>rawQuery</code> helper routes on the URL, the same signal <code>createSeedSql</code> already uses to pick the driver, never on feature detection. Cleanup then counts rows and throws if any table is still populated, because a cleanup that lies is worse than one that fails.</p>
   </div>
 
@@ -445,8 +447,8 @@ a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offse
         <tr><td>media</td><td class="num">7</td><td class="num">5</td><td>dobra</td></tr>
         <tr><td>ajuste</td><td class="num">3</td><td class="num">2</td><td>dobra</td></tr>
         <tr><td>vwap</td><td class="num">3</td><td class="num">2</td><td>dobra</td></tr>
-        <tr><td>leilao</td><td class="num">2</td><td class="num">2</td><td>&mdash;</td></tr>
-        <tr><td>virada-de-box</td><td class="num">1</td><td class="num">1</td><td>&mdash;</td></tr>
+        <tr><td>leilao</td><td class="num">2</td><td class="num">2</td><td>n/a</td></tr>
+        <tr><td>virada-de-box</td><td class="num">1</td><td class="num">1</td><td>n/a</td></tr>
         <tr><td><code>SDVB</code></td><td class="num">1</td><td class="num bad">0</td><td>martingale, becomes a mistake tag</td></tr>
         <tr><td><code>1REGIOES</code> / <code>5REGIOES</code></td><td class="num">2</td><td class="num bad">0</td><td>chart config, never was a strategy</td></tr>
       </tbody>
@@ -457,7 +459,7 @@ a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offse
     <h3><span class="chip ready">model</span> Seven families, four tag axes</h3>
     <p><code>strategies</code> holds the seven real families. Everything else becomes a tag dimension: <strong>execution</strong> (teste, virada-de-box, rompimento, leilao), <strong>level</strong> (14 values), <strong>level timeframe</strong> (5 / 15 / 60min), and <strong>risk cell</strong>, which should be derived at entry from level timeframe plus stop timeframe plus execution rather than stored, so the app can flag an 8 or a 10 as it is entered.</p>
     <p>The analytical payoff is the argument. With 47 strategies, &ldquo;is my teste worse than my virada de box?&rdquo; is unanswerable because each code carries two or three trades. With seven families plus an execution tag, that question runs across the whole sample.</p>
-    <p><strong>Locked by B1 and B3.</strong> Axes are name prefixes, no migration: <code>exec:</code>, <code>nivel:</code>, <code>tf:</code>, <code>risco:</code>. Because B3 fixes the stop at 5min for every strategy, <code>risco:</code> is fully determined by the level timeframe and the execution, so it collapses to six values &mdash; <code>risco:1</code>, <code>risco:2</code>, <code>risco:4</code>, <code>risco:5</code>, <code>risco:8</code>, <code>risco:10</code>. Derived at entry, not stored, so the app can flag an 8 or a 10 while it is being typed.</p>
+    <p><strong>Locked by B1 and B3.</strong> Axes are name prefixes, no migration: <code>exec:</code>, <code>nivel:</code>, <code>tf:</code>, <code>risco:</code>. Because B3 fixes the stop at 5min for every strategy, <code>risco:</code> is fully determined by the level timeframe and the execution, so it collapses to six values: <code>risco:1</code>, <code>risco:2</code>, <code>risco:4</code>, <code>risco:5</code>, <code>risco:8</code>, <code>risco:10</code>. Derived at entry, not stored, so the app can flag an 8 or a 10 while it is being typed.</p>
     <p><strong>The cut costs less than it looks.</strong> Pedro calibrates the moving averages against Fibonacci deliberately, and the vault records the consequence: a pullback to the 60min mean lands on roughly the 61.8% retracement. So the <code>media</code> family already trades that region under another name. Dropping 38.2 and 50 removes the shallow levels, not the good one; most of the 7-to-2 collapse in <code>fibonacci</code> is deduplication.</p>
   </div>
 
@@ -476,7 +478,7 @@ a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offse
     <li>
       <div>
         <h3><span class="chip verified">done</span> Settle the schema</h3>
-        <p>Committed <code>59cbfa6</code>: the <code>0028</code> SQL, its snapshot, the journal entry and the <code>schema.ts</code> change. Scoped to those four paths only — the five unrelated dirty files were left alone, including the backfill script and the trades route that consume the new column.</p>
+        <p>Committed <code>59cbfa6</code>: the <code>0028</code> SQL, its snapshot, the journal entry and the <code>schema.ts</code> change. Scoped to those four paths only. The five unrelated dirty files were left alone, including the backfill script and the trades route that consume the new column.</p>
       </div>
     </li>
     <li>
@@ -488,7 +490,7 @@ a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offse
     <li>
       <div>
         <h3><span class="chip verified">done</span> Truncate</h3>
-        <p>All 67 public tables, <code>RESTART IDENTITY CASCADE</code>, one transaction. Result: zero populated tables, ledger intact at 28 rows, and <code>pnpm db:migrate</code> reported "migrations applied" with no error — confirming the <code>drizzle</code> schema survived a <code>public</code> truncate as predicted.</p>
+        <p>All 67 public tables, <code>RESTART IDENTITY CASCADE</code>, one transaction. Result: zero populated tables, ledger intact at 28 rows, and <code>pnpm db:migrate</code> reported "migrations applied" with no error, confirming the <code>drizzle</code> schema survived a <code>public</code> truncate as predicted.</p>
       </div>
     </li>
     <li>
@@ -510,6 +512,7 @@ a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offse
       <div>
         <h3><span class="chip verified">done</span> Verify</h3>
         <p><code>verify.ts</code> now asserts and throws rather than printing for a human to eyeball. Ten row counts against expected values, zero NULL-<code>user_id</code> rows, the six Carnival rows preserved as non-Mondays, and every OCO row recomputed against <code>2 x size_5m</code> and <code>6 x size_5m</code> in SQL rather than trusted. Two regression guards were added for defects that would otherwise creep back silently: any scenario naming EMA9/21/50 or calling 76,4% a retracement, and any condition still defining Cláudia as the MACD cloud.</p>
+        <p>Two more assertions guard <strong>C10</strong>, because the resolver fix had no test at all: the existing <code>brick-size-resolver.test.ts</code> covers only <code>rNumberToPoints</code> arithmetic and never touches <code>resolveBrickSize5mPoints</code>. The verifier now walks every calendar day between the first and last <code>effective_date</code> per asset and asserts none resolves to zero rows (result: 0 unresolved). A second check asserts the series still contains Mondays with no exact row (result: 18, being 9 dates x 2 assets), so that if the data ever loses that shape the first check cannot pass vacuously.</p>
         <p>Final state confirmed by an independent query, not by the seeder's own report: <strong>639 rows across 14 tables</strong>, 134 distinct Renko weeks spanning 2024-01-01 to 2026-08-31, and the current week deriving WIN stop 44 ticks = R$44,00 and WDO 6 ticks = R$30,00.</p>
       </div>
     </li>
@@ -533,6 +536,18 @@ a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offse
       </table>
     </div>
     <p class="ev">series cross-validated against the 43 weeks the vault already held from Pedro&rsquo;s live calls: 34 index values match exactly. Max value anywhere is 436 and max derived target is 204, both inside <code>smallint</code>. OCO derives as stop = 2 &times; R, break-even = 2 &times; R, target = 3 &times; stop, per <code>playbook.md</code> §7 M&eacute;todo 3 and payoff 3</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="idx">G</span> What the running app shows</h2>
+  <p class="lede">The database being right and the app reading it right are different claims. Until this pass only the first had evidence.</p>
+
+  <div class="item">
+    <h3><span class="chip verified">verified</span> The app reads it, and the seed tree now typechecks</h3>
+    <p>A browser pass drove the running app against the reseeded database. The sidebar account switcher lists exactly one account, <strong>Hawks</strong>, with no <code>Personal</code> left. <code>/playbook</code> renders the 7 active families and correctly hides the inactive one, since <code>getStrategies()</code> defaults to <code>includeInactive=false</code>. The new-trade form populates 2 assets, 5 timeframes, 7 strategies and all 32 tags across the four prefixes. The dashboard shows a clean empty state with no NaN, undefined or Infinity in any KPI, and no page produced a data-related console error.</p>
+    <p class="ev"><strong>Two gaps this pass did not close.</strong> <code>/dev/renko-sizes</code> is WIN-only with no asset selector, so the WDO 5min value of 3 is confirmed in the database but has never been rendered anywhere. And <code>/api/dev/autologin</code> returned 500 <code>CredentialsSignin</code> because <code>DEV_AUTOLOGIN_EMAIL</code> still pointed at a user the reseed deleted; repointing it at the seeded admin returns 307 with a live session cookie. Dev tooling only, gated off outside development.</p>
+    <p class="ev"><strong>A verification claim of mine was false.</strong> I reported tsc clean on every file I touched. The root <code>tsconfig.json</code> excludes <code>scripts</code>, so <code>next build</code> typechecked none of the 12 seed files and the claim held only for the 2 under <code>src/</code>. Checking them properly surfaced 32 <code>TS2339</code> errors, all in 9 dead persona seeders that indexed <code>SeededAccounts</code> keys deleted by C7; they were unreferenced by <code>seed.ts</code> and are now removed. Added <code>tsconfig.seed.json</code> and <code>pnpm typecheck:seed</code>, which exits 0, so the gap cannot reopen silently.</p>
   </div>
 </section>
 
