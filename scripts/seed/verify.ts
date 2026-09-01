@@ -142,6 +142,74 @@ export const verify = async (sql: SeedSql): Promise<void> => {
 		problems.push(`${mismatch} OCO rows do not match 2x/6x size_5m`)
 	}
 
+	// Brick-size resolution: the resolver picks "most recent row with
+	// effective_date <= entryDate". Prove that holds for EVERY calendar day
+	// inside the series, not just the ones that happen to be Mondays with a
+	// row. The old resolver snapped the date to its ISO-week Monday and
+	// required an exact hit, which returned null on Carnival weeks and on the
+	// year-end gaps. Both shapes exist in the measured series.
+	const unresolved = (await sql`
+		WITH bounds AS (
+			SELECT asset_id, MIN(effective_date) AS lo, MAX(effective_date) AS hi
+			FROM hawks_renko_sizes
+			GROUP BY asset_id
+		),
+		probe AS (
+			SELECT b.asset_id, d::date AS probe_date
+			FROM bounds b,
+				generate_series(b.lo::timestamp, b.hi::timestamp, interval '1 day') d
+		)
+		SELECT COUNT(*) as n
+		FROM probe p
+		WHERE NOT EXISTS (
+			SELECT 1 FROM hawks_renko_sizes r
+			WHERE r.asset_id = p.asset_id
+				AND r.effective_date <= p.probe_date
+		)
+	`) as { n: number | string }[]
+	const unresolvedDays = Number(unresolved[0]?.n ?? 0)
+	console.log(
+		`   ${unresolvedDays === 0 ? "✅" : "❌"} Every day in range resolves    ${unresolvedDays} unresolved days`
+	)
+	if (unresolvedDays !== 0) {
+		problems.push(
+			`${unresolvedDays} days inside the series range resolve to no brick size`
+		)
+	}
+
+	// Guard against the check above going vacuous. It only proves anything if
+	// the series actually contains Mondays with no exact row, which is the
+	// case the old resolver got wrong. If this ever hits 0 the data changed
+	// shape and the check above stopped testing the regression.
+	const mondayMisses = (await sql`
+		WITH bounds AS (
+			SELECT asset_id, MIN(effective_date) AS lo, MAX(effective_date) AS hi
+			FROM hawks_renko_sizes
+			GROUP BY asset_id
+		),
+		mondays AS (
+			SELECT b.asset_id, d::date AS monday
+			FROM bounds b,
+				generate_series(b.lo::timestamp, b.hi::timestamp, interval '1 day') d
+			WHERE EXTRACT(ISODOW FROM d) = 1
+		)
+		SELECT COUNT(*) as n
+		FROM mondays m
+		WHERE NOT EXISTS (
+			SELECT 1 FROM hawks_renko_sizes r
+			WHERE r.asset_id = m.asset_id AND r.effective_date = m.monday
+		)
+	`) as { n: number | string }[]
+	const missedMondays = Number(mondayMisses[0]?.n ?? 0)
+	console.log(
+		`   ${missedMondays > 0 ? "✅" : "❌"} Mondays with no exact row      ${missedMondays} (the old resolver returned null on each)`
+	)
+	if (missedMondays === 0) {
+		problems.push(
+			"No Monday lacks an exact row, so the resolution check is vacuous"
+		)
+	}
+
 	if (problems.length > 0) {
 		throw new Error(`Verification failed:\n  - ${problems.join("\n  - ")}`)
 	}
