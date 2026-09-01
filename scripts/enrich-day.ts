@@ -26,7 +26,7 @@
 import "dotenv/config"
 import { existsSync, readFileSync } from "fs"
 import { resolve } from "path"
-import { eq, and, between, inArray } from "drizzle-orm"
+import { eq, and, between, inArray, lte, desc } from "drizzle-orm"
 import { drizzle as drizzlePg } from "drizzle-orm/postgres-js"
 import { drizzle as drizzleNeon } from "drizzle-orm/neon-http"
 import postgres from "postgres"
@@ -37,7 +37,6 @@ import { format } from "date-fns"
 import * as schema from "../src/db/schema"
 import { trades, assets, timeframes, hawksRenkoSizes } from "../src/db/schema"
 import { parseCsvContent } from "../src/lib/csv-parser"
-import { weekStart } from "../src/lib/calendar/iso-week"
 import { DEFAULT_HAWKS_CONFIG } from "../src/lib/enrichment/hawks-config"
 import { runDryRun } from "../src/lib/enrichment/run-dry-run"
 import { deriveTradeFieldsFromEnrichment } from "../src/lib/enrichment/derive-trade-fields"
@@ -201,13 +200,17 @@ const resolveBrickSize5mPoints = async (
 	assetId: string,
 	entryDate: Date
 ): Promise<number | null> => {
-	const monday = weekStart(entryDate)
-	const effectiveDate = format(monday, "yyyy-MM-dd")
+	// Most recent calibration on or before the trade date. Exact-match on the
+	// ISO-week Monday used to silently return null for Carnival weeks (stored on
+	// the Wednesday, since B3 is shut Mon/Tue) and for gap weeks. See the note in
+	// src/lib/enrichment/brick-size-resolver.ts.
+	const target = format(entryDate, "yyyy-MM-dd")
 	const row = await db.query.hawksRenkoSizes.findFirst({
 		where: and(
 			eq(hawksRenkoSizes.assetId, assetId),
-			eq(hawksRenkoSizes.effectiveDate, effectiveDate)
+			lte(hawksRenkoSizes.effectiveDate, target)
 		),
+		orderBy: [desc(hawksRenkoSizes.effectiveDate)],
 	})
 	if (!row) {
 		return null
