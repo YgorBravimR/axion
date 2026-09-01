@@ -35,6 +35,7 @@ function createTrade(overrides?: Partial<Trade>): Trade {
 		mae: null,
 		mfeR: null,
 		maeR: null,
+		beOutcome: null,
 		commission: null,
 		fees: null,
 		contractsExecuted: null,
