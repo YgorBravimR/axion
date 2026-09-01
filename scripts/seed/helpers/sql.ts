@@ -52,8 +52,8 @@ export const rawQuery = async (
 		)
 	}
 	const runner = sql as unknown as {
-		query: (q: string) => Promise<unknown>
-		unsafe: (q: string) => Promise<unknown>
+		query: (_q: string) => Promise<unknown>
+		unsafe: (_q: string) => Promise<unknown>
 	}
 	return isNeon ? runner.query(statement) : runner.unsafe(statement)
 }
