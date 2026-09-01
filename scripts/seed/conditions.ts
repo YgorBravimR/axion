@@ -1,10 +1,7 @@
 import type { SeedSql } from "./helpers/sql"
 
 type ConditionCategory =
-	| "indicator"
-	| "price_action"
-	| "market_context"
-	| "custom"
+	"indicator" | "price_action" | "market_context" | "custom"
 
 interface ConditionSpec {
 	name: string
@@ -35,32 +32,75 @@ const HAWKS_CONDITIONS: ConditionSpec[] = [
 		description: "MACD line + histogram slope up on the 60min screen",
 	},
 	{
-		name: "Cláudia (cloud) válida",
+		// C2 FIX (2026-09-01). This used to read "Cláudia (cloud) válida —
+		// MACD cloud structure forming Cláudia". Two errors in one row.
+		//
+		// 1. Cláudia is NOT the MACD cloud. "Cláudia" is how the transcripts
+		//    render the English word "clouds", and the clouds are the Hawks
+		//    Cloud: a Keltner-channel exhaustion envelope plotted OVER PRICE.
+		//    The decisive proof is a preposition — Pedro says price is "acima
+		//    das Cláudias", and price cannot be above a subpanel indicator.
+		// 2. It was framed as a positive condition. Doctrine makes it an
+		//    absolute NEGATIVE filter: touching the band without expansion
+		//    means stay out.
+		name: "Cláudia livre (banda da Hawks Cloud)",
 		category: "indicator",
 		description:
-			"MACD cloud structure forming Cláudia — directional cloud thickening",
+			"Preço NÃO está encostado na banda da Hawks Cloud sem expansão. A Hawks Cloud é o envelope de exaustão em canal de Keltner plotado SOBRE O PREÇO, não a nuvem do MACD. Filtro negativo absoluto: encostou sem romper = fora. Peso 60min > 15min > 5min.",
+	},
+	// Hawks mean periods are per-chart and the previous set only carried
+	// 27/55, which is the 15min-and-above pair. The 5min's OWN pair is 17/34,
+	// and the 5min is where entries execute and where the stop is always
+	// placed (§18.1), so those were the most important two and were missing.
+	// The 27/55 pair also appears projected onto the 5min as the red lines.
+	{
+		name: "Renko fechou do lado certo da média 17 (5min)",
+		category: "indicator",
+		description:
+			"Box do 5min fechou do lado correto da primeira média própria do 5min (17). Este é o gráfico de execução.",
 	},
 	{
-		name: "Renko close > EMA 27",
+		name: "Renko fechou do lado certo da média 34 (5min)",
 		category: "indicator",
-		description: "Renko brick closes on the right side of the 27-period EMA",
+		description:
+			"Box do 5min fechou do lado correto da segunda média própria do 5min (34).",
 	},
 	{
-		name: "Renko close > EMA 55",
+		name: "Renko fechou do lado certo da média 27",
 		category: "indicator",
-		description: "Renko brick closes on the right side of the 55-period EMA",
+		description:
+			"Primeira média do 15min e acima (27). Projetada no 5min aparece como linha vermelha.",
+	},
+	{
+		name: "Renko fechou do lado certo da média 55",
+		category: "indicator",
+		description:
+			"Segunda média do 15min e acima (55). Projetada no 5min aparece como linha vermelha.",
 	},
 	// price_action
 	{
-		name: "Pullback no EMA 27",
-		category: "price_action",
-		description: "Price pulls back to EMA 27 and rejects — entry trigger",
-	},
-	{
-		name: "Pullback no EMA 55",
+		name: "Pullback na média 17 (5min)",
 		category: "price_action",
 		description:
-			"Price pulls back to EMA 55 and rejects — deeper retrace entry",
+			"Preço retornou à primeira média própria do 5min e rejeitou. Código RM1 / VBRM1.",
+	},
+	{
+		name: "Pullback na média 34 (5min)",
+		category: "price_action",
+		description:
+			"Preço retornou à segunda média própria do 5min e rejeitou. Código RM2 / VBRM2.",
+	},
+	{
+		name: "Pullback na média 27",
+		category: "price_action",
+		description:
+			"Preço retornou à primeira média do 15min ou 60min. Risco 4 ou 8 na matriz, porque o stop continua sendo do 5min (§18.1).",
+	},
+	{
+		name: "Pullback na média 55",
+		category: "price_action",
+		description:
+			"Preço retornou à segunda média do 15min ou 60min. Risco 5 ou 10 na matriz, a região mais cara (§18.1).",
 	},
 	{
 		name: "Higher high 60min",
@@ -113,7 +153,7 @@ const HAWKS_CONDITIONS: ConditionSpec[] = [
 		name: "Renko semanal calibrado",
 		category: "custom",
 		description:
-			"Renko brick size matches this week's calibration (Monday Telegram)",
+			"Box do Renko usa a calibragem desta semana. Índice: ATR do período dividido por 10. Dólar: pontos arredondado, sem divisor. Série medida em hawks_renko_sizes.",
 	},
 	{
 		name: "Sem trigger emocional",

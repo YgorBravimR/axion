@@ -224,14 +224,14 @@ a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offse
 <header class="mast">
   <p class="eyebrow">Axion · Plan artifact</p>
   <h1>Axion Hawks Reseed</h1>
-  <p class="objective">Wipe the Axion database to zero and rebuild every seed on the merged Hawks doctrine. All 1,221 existing trades are test or seed data and are cleared for deletion.</p>
-  <p class="stamp">Verified 2026-09-01 · all 12 decisions answered · sizing revised to 1 contract · one approval outstanding (Phase&nbsp;3) · repo <code>bravo/axion</code> + <code>vault</code></p>
+  <p class="objective">Wipe the Axion database to zero and rebuild every seed on the merged Hawks doctrine. Done: backed up, truncated, reseeded, verified. The journal starts empty on purpose.</p>
+  <p class="stamp">Executed 2026-09-01 · database reset and reseeded · 18.840 rows of test data cleared, 639 seeded · every verification assertion passing</p>
 </header>
 
 <div class="tally">
-  <div class="cell is-box"><span class="n">7/7</span><span class="l">Defects resolved</span></div>
+  <div class="cell is-box"><span class="n">11/11</span><span class="l">Defects fixed</span></div>
   <div class="cell is-box"><span class="n">5/5</span><span class="l">Decisions answered</span></div>
-  <div class="cell is-amber"><span class="n">1</span><span class="l">Approval needed</span></div>
+  <div class="cell is-box"><span class="n">639</span><span class="l">Rows seeded</span></div>
   <div class="cell is-slate"><span class="n">21/47</span><span class="l">Codes active</span></div>
   <div class="cell is-box"><span class="n">268</span><span class="l">Renko rows</span></div>
 </div>
@@ -339,7 +339,7 @@ a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offse
 
 <section>
   <h2><span class="idx">C</span> Seed defects</h2>
-  <p class="lede">Found while mapping the existing seeders against the merged doctrine. Every one would have been carried straight into the new database. All seven now have a resolution, answered 2026-09-01.</p>
+  <p class="lede">C1 through C7 were found by auditing the seeders against the merged doctrine. C8 through C11 were found while executing the rebuild, which is the argument for executing rather than only planning: four of the eleven were invisible until real data and a real driver were involved. All eleven are fixed.</p>
 
   <div class="item">
     <h3><span class="chip ready">C1</span> <code>hawks_renko_sizes</code> seed is synthetic</h3>
@@ -405,6 +405,33 @@ a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offse
 </section>
 
 <section>
+  <div class="item">
+    <h3><span class="chip ready">C8</span> <code>tags</code> and <code>strategies</code> wrote the deprecated column</h3>
+    <p>Both tables carry a canonical <code>user_id</code> and an <code>@deprecated account_id</code>. Both seeders wrote only <code>account_id</code>, leaving <code>user_id</code> NULL. So the unique indexes on <code>(user_id, code)</code> and <code>(user_id, name)</code> enforced nothing, and every user-scoped read in the app returned zero rows. Found while writing the replacements, not by the original audit.</p>
+    <p class="ev"><strong>Resolution:</strong> both seeders now write <code>user_id</code>, and <code>verify</code> asserts zero NULL-<code>user_id</code> rows so a regression fails the seed.</p>
+  </div>
+
+  <div class="item">
+    <h3><span class="chip ready">C9</span> <code>timeframes</code> was missing the entire triple screen</h3>
+    <p>It seeded two rows, <code>1m</code> and <code>1d</code>. The Hawks method runs on <strong>5min, 15min and 60min</strong> — the 5min being where every entry executes and where the stop is always placed. All three were absent. The gap was visible in the <code>sort_order</code> values it used, 1 and 7, with 2 through 6 unfilled.</p>
+    <p class="ev"><strong>Resolution:</strong> five timeframes seeded, <code>1m</code>/<code>5m</code>/<code>15m</code>/<code>60m</code>/<code>1d</code>, with <code>1d</code> kept at sort_order 7 so existing references stay put.</p>
+  </div>
+
+  <div class="item">
+    <h3><span class="chip ready">C10</span> Two consumers would return no brick size for real data</h3>
+    <p><code>brick-size-resolver.ts</code> and <code>enrich-day.ts</code> snapped the trade date to its ISO-week Monday and then required an <em>exact</em> row on that Monday. The measured series breaks that twice: three weeks start on a <strong>Wednesday</strong> because B3 is shut Monday and Tuesday for Carnival (2024-02-14, 2025-03-05, 2026-02-18), and year-end weeks are absent entirely so rows are not always 7 days apart. Both cases silently returned <code>null</code>. The synthetic seed was 22 consecutive Mondays with no gaps, so the bug could never fire.</p>
+    <p class="ev"><strong>Resolution:</strong> both now select the most recent row with <code>effective_date &lt;= entryDate</code>, which is the shape the inspector, engine-lab, materializer and OCO readers already used. Consistent across every consumer now. Two further spots flagged but not changed: <code>weekly-walk.ts</code> shadows a Carnival week (tests only, no production caller) and the "Add this week" modal snaps to Monday on <em>write</em>.</p>
+  </div>
+
+  <div class="item">
+    <h3><span class="chip ready">C11</span> The truncate reported success and did nothing</h3>
+    <p>The two drivers disagree on how a raw statement runs, and the disagreement is silent. On <strong>postgres-js</strong>, <code>sql.unsafe(text)</code> executes. On <strong>neon-http</strong> it does <em>not</em> — it returns a descriptor object <code>{ sql: "..." }</code> meant for <code>sql.transaction()</code>, so awaiting it resolves to that object and nothing reaches the database. Neon exposes <em>both</em> <code>.unsafe</code> and <code>.query</code>, so feature-detecting <code>.unsafe</code> first picks the one that no-ops. Cleanup logged "67 tables truncated" having truncated nothing; only the next INSERT's unique violation revealed it.</p>
+    <p class="ev"><strong>Resolution:</strong> a <code>rawQuery</code> helper routes on the URL, the same signal <code>createSeedSql</code> already uses to pick the driver, never on feature detection. Cleanup then counts rows and throws if any table is still populated, because a cleanup that lies is worse than one that fails.</p>
+  </div>
+
+</section>
+
+<section>
   <h2><span class="idx">D</span> Strategy aggregation</h2>
   <p class="lede">The 47 codes in <code>ESTRATEGIAS.pdf</code> are not 47 strategies. The playbook states the prefixes are orthogonal, so the codes are a level-by-execution grid flattened into strings. All 47 map to <strong>7 families</strong>, and the overlay leaves <strong>21 codes active</strong> against 26 inactive.</p>
 
@@ -443,30 +470,30 @@ a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offse
 
 <section>
   <h2><span class="idx">E</span> Sequence</h2>
-  <p class="lede">Each phase blocks the next, so the order carries information. Phases 1, 2 and 4 are non-destructive and ready. Phase 3 is the only one that needs an explicit yes, and nothing after it runs until it has one.</p>
+  <p class="lede">All five phases executed on 2026-09-01, in order. The backup came first and was verified against live row counts before anything destructive ran.</p>
 
   <ol class="phases">
     <li>
       <div>
-        <h3><span class="chip ready">ready</span> Settle the schema</h3>
-        <p>Commit <code>0028</code> with its snapshot, <code>_journal.json</code> and the <code>schema.ts</code> change, plus the other modified files. No database writes. Constraint A1 is why this is first.</p>
+        <h3><span class="chip verified">done</span> Settle the schema</h3>
+        <p>Committed <code>59cbfa6</code>: the <code>0028</code> SQL, its snapshot, the journal entry and the <code>schema.ts</code> change. Scoped to those four paths only — the five unrelated dirty files were left alone, including the backfill script and the trades route that consume the new column.</p>
       </div>
     </li>
     <li>
       <div>
-        <h3><span class="chip ready">ready</span> Snapshot</h3>
-        <p><code>pg_dump</code> to a gzipped file outside the repo. About 18,000 rows, so seconds. Read-only, and it gives back the real fills to reference when the live account is re-seeded.</p>
+        <h3><span class="chip verified">done</span> Snapshot</h3>
+        <p><code>~/backups/axion/axion-2026-09-01-pre-hawks-reset.sql.gz</code>, 459K, 68 tables. Verified beyond "the file exists": gzip integrity checked, then row counts extracted from the dump and diffed against live. All 44 populated public tables matched exactly, 18.840 rows, and the dump also captured the 28-row migrations ledger.</p>
       </div>
     </li>
     <li>
       <div>
-        <h3><span class="chip blocked">needs go</span> Truncate</h3>
-        <p>One statement across all 67 public tables with <code>RESTART IDENTITY CASCADE</code>, so foreign-key cycles resolve themselves. Then <code>pnpm db:migrate</code> to confirm the ledger is intact. Dry run is built and the statement is printed; this is the step that needs an explicit yes.</p>
+        <h3><span class="chip verified">done</span> Truncate</h3>
+        <p>All 67 public tables, <code>RESTART IDENTITY CASCADE</code>, one transaction. Result: zero populated tables, ledger intact at 28 rows, and <code>pnpm db:migrate</code> reported "migrations applied" with no error — confirming the <code>drizzle</code> schema survived a <code>public</code> truncate as predicted.</p>
       </div>
     </li>
     <li>
       <div>
-        <h3><span class="chip ready">ready</span> Rewrite the seeders</h3>
+        <h3><span class="chip verified">done</span> Rewrite the seeders</h3>
         <p>Unblocked: every B and C decision is answered. Reference seeders stay (assets, timeframes, settings, fee rates). Demo personas go. Concrete target:</p>
         <ul>
           <li><strong>Identity:</strong> one admin user, one default account, <code>mode=hawks</code>. Nothing else. No backtest account, no second live account.</li>
@@ -481,8 +508,9 @@ a:focus-visible, li:focus-visible { outline: 2px solid var(--box); outline-offse
     </li>
     <li>
       <div>
-        <h3><span class="chip decision">blocked on E3</span> Verify</h3>
-        <p>Row counts per table against the intended seed, every enum value checked against the schema, and the derived OCO numbers recomputed from the Renko series rather than trusted.</p>
+        <h3><span class="chip verified">done</span> Verify</h3>
+        <p><code>verify.ts</code> now asserts and throws rather than printing for a human to eyeball. Ten row counts against expected values, zero NULL-<code>user_id</code> rows, the six Carnival rows preserved as non-Mondays, and every OCO row recomputed against <code>2 x size_5m</code> and <code>6 x size_5m</code> in SQL rather than trusted. Two regression guards were added for defects that would otherwise creep back silently: any scenario naming EMA9/21/50 or calling 76,4% a retracement, and any condition still defining Cláudia as the MACD cloud.</p>
+        <p>Final state confirmed by an independent query, not by the seeder's own report: <strong>639 rows across 14 tables</strong>, 134 distinct Renko weeks spanning 2024-01-01 to 2026-08-31, and the current week deriving WIN stop 44 ticks = R$44,00 and WDO 6 ticks = R$30,00.</p>
       </div>
     </li>
   </ol>

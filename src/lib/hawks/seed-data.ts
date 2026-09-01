@@ -89,9 +89,13 @@ const HAWKS_SCENARIOS: readonly ScenarioSeed[] = (
 			screenConfirmation: AJUSTE_ONLY,
 		},
 		{
+			// C3 FIX (2026-09-01): was "Pullback EMA9". EMA9 is not a Hawks
+			// period at all — it is the scalper mean, and overlay §18.6 excludes
+			// scalping outright. The 5min carries its OWN pair, 17/34, and the
+			// 5min is the execution chart. Codes RM1 / VBRM1.
 			code: "HWK_S07",
-			namePt: "Pullback EMA9",
-			nameEn: "EMA9 pullback",
+			namePt: "Pullback média 17 (5min)",
+			nameEn: "5min first mean (17) pullback",
 			direction: "either",
 			screenConfirmation: {
 				renko60: true,
@@ -102,9 +106,13 @@ const HAWKS_SCENARIOS: readonly ScenarioSeed[] = (
 			},
 		},
 		{
+			// C3 FIX: was "Pullback EMA21" with no timeframe. 21 is the 1min's
+			// first mean (1min pair is 21/42), so the number existed but the
+			// label was ambiguous and read as a generic EMA. This is now the
+			// 5min's second own mean. Codes RM2 / VBRM2.
 			code: "HWK_S08",
-			namePt: "Pullback EMA21",
-			nameEn: "EMA21 pullback",
+			namePt: "Pullback média 34 (5min)",
+			nameEn: "5min second mean (34) pullback",
 			direction: "either",
 			screenConfirmation: {
 				renko60: true,
@@ -115,9 +123,14 @@ const HAWKS_SCENARIOS: readonly ScenarioSeed[] = (
 			},
 		},
 		{
+			// C3 FIX: was "Pullback EMA50". 50 is not a Hawks period on any
+			// chart. The 15min and above carry 27/55, which also appear
+			// projected onto the 5min as the red lines. Entering here pays
+			// risk 4/5 (15min level) or 8/10 (60min level), because the stop
+			// stays on the 5min (§18.1).
 			code: "HWK_S09",
-			namePt: "Pullback EMA50",
-			nameEn: "EMA50 pullback",
+			namePt: "Pullback médias 27/55 (15/60min)",
+			nameEn: "Higher-timeframe means (27/55) pullback",
 			direction: "either",
 			screenConfirmation: {
 				renko60: true,
@@ -169,9 +182,14 @@ const HAWKS_SCENARIOS: readonly ScenarioSeed[] = (
 			},
 		},
 		{
+			// C4 FIX (2026-09-01): was "Fib 76.4 retração", which conflated the
+			// two opposite ends of the trade. 76,4% is the EXPANSION target,
+			// the zona de satisfação where the 2-box trail arms. Retracement
+			// levels are 38,2 / 50 / 61,8, and overlay §18.10 leaves only
+			// 61,8% in play. Codes RF61 / VBRF61.
 			code: "HWK_S15",
-			namePt: "Fib 76.4 retração",
-			nameEn: "Fib 76.4 retracement",
+			namePt: "Retração Fib 61,8%",
+			nameEn: "Fib 61.8% retracement",
 			direction: "either",
 			screenConfirmation: {
 				renko60: true,
