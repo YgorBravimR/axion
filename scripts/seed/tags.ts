@@ -55,7 +55,6 @@ const NIVEL_LABEL: Record<string, string> = {
 	"media-2": "Segunda média móvel do gráfico de referência",
 	"medias": "Região das médias, sem distinguir qual das duas",
 	"fib-61": "Retração de 61,8% — o único nível de retração no overlay (§18.10)",
-	"vwap": "VWAP",
 	"ajuste": "Preço de ajuste",
 	"lta": "Linha de tendência de alta",
 	"ltb": "Linha de tendência de baixa",
@@ -63,6 +62,31 @@ const NIVEL_LABEL: Record<string, string> = {
 	"leilao-abertura": "Leilão de abertura",
 	"leilao-fechamento": "Pré-leilão de fechamento",
 }
+
+// Some nivel values fan out into several tags, because the doctrine
+// distinguishes sub-levels that Pedro's code set does not. His codes carry one
+// `VWAP`, but playbook.md §5 names three VWAPs with an explicit weight order:
+// "VWAP diária + VWAP semanal + VWAP mensal + linha de ajuste. Peso: mensal >
+// semanal > diária." A trade at the monthly VWAP is not the same trade as one
+// at the daily, so one tag cannot carry both.
+const NIVEL_FANOUT: Record<string, readonly { slug: string; label: string }[]> =
+	{
+		vwap: [
+			{
+				slug: "vwap-mensal",
+				label:
+					"VWAP mensal — o maior peso dos três (§5: mensal > semanal > diária)",
+			},
+			{
+				slug: "vwap-semanal",
+				label: "VWAP semanal — peso intermediário dos três (§5)",
+			},
+			{
+				slug: "vwap-diaria",
+				label: "VWAP diária — o menor peso dos três (§5)",
+			},
+		],
+	}
 
 // Risk cells from the §05-07 matrix, given the stop is always the 5min (B3).
 const RISCO: readonly { n: number; label: string }[] = [
@@ -150,10 +174,22 @@ const buildTags = (): TagSpec[] => {
 		),
 	].sort()
 	for (const n of niveis) {
+		const fanout = NIVEL_FANOUT[n]
+		if (fanout) {
+			for (const f of fanout) {
+				tags.push({
+					name: `nivel:${f.slug}`,
+					type: "setup",
+					color: AXIS_COLOR.nivel,
+					description: f.label,
+				})
+			}
+			continue
+		}
 		const label = NIVEL_LABEL[n]
 		if (!label) {
 			throw new Error(
-				`No label for nivel axis value "${n}" — add it to NIVEL_LABEL`
+				`No label for nivel axis value "${n}" — add it to NIVEL_LABEL or NIVEL_FANOUT`
 			)
 		}
 		tags.push({

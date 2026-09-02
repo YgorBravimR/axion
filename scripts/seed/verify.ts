@@ -19,7 +19,7 @@ const EXPECTED = {
 	timeframes: 5,
 	assets: 2,
 	strategies: 8,
-	tags: 32,
+	tags: 34,
 	hawks_renko_sizes: 268,
 	hawks_weekly_oco: 268,
 	hawks_scenarios: 24,
