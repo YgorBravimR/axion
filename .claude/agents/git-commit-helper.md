@@ -84,6 +84,31 @@ If a protected file is already in the working tree changes:
 
 Run independent inspection commands in parallel where possible.
 
+### Phase 0 — MANDATORY Quality Gate (Claude-only; skip ONLY on `[quality-gate: already-reviewed]`)
+
+**No commit lands here without passing the quality gate.** This agent is the shared choke point every commit flows through, so the gate lives here.
+
+- If the invoking prompt contains the token `[quality-gate: already-reviewed]`, the reviews already ran upstream (via `/finish-it` or `/punt`) → **skip this phase** and go straight to Inspect. This prevents double-review and recursion.
+- Otherwise you MUST run the review gate before staging. **Axion policy: Claude-only reviewers — no Codex, no CodeRabbit.** Read `~/personal/projects/bravo/axion/.claude/commands/finish-it.md` and run its **Phase 1** review team (react-guidelines-enforcer, i18n-translator, code-simplifier, and the Claude Opus reviewer). Do NOT run its Phase 2 — you ARE the committer. Apply obvious fixes; flag judgement calls to the user.
+- **Scale down** for trivial diffs (one-liner / config / doc-only) — a quick self-review is enough; say you scaled it. The gate exists to stop _monsters_ (large, multi-file, logic-bearing diffs), not to tax trivial edits.
+- **Degraded fallback:** if you cannot spawn those agents in this environment, do NOT silently skip — run at least a self-simplify + self-correctness pass over the diff and tell the user which reviewers were skipped. Husky `lint-staged` still runs on top; it is not a substitute for the gate on a large diff.
+
+### Phase 0.5 — MANDATORY Migration Hygiene (only when the diff touches `src/db/migrations/`)
+
+Axion generate flow: **`pnpm db:generate`** (`drizzle-kit generate --config ./drizzle.config.ts`) writes to `src/db/migrations/` (+ `meta/`). **`pnpm db:push` is FORBIDDEN** in Axion (breaks the `__drizzle_migrations` ledger — see `docs/gotchas.md`). Ledger recovery: `pnpm db:reconcile-ledger && pnpm db:migrate`. `src/db/migrations/` and `src/db/schema.ts` are PROTECTED — surface + confirm before staging, but the two rules below are NOT waived by protection.
+
+**Rule 1 — One migration file per PR.** Count new migrations this branch added: `git diff --name-only --diff-filter=A main...HEAD -- 'src/db/migrations/*.sql'`. If more than one:
+
+1. Delete every new `*.sql` this branch added under `src/db/migrations/` and revert the `meta/` journal + snapshot entries they created.
+2. Run `pnpm db:generate` ONCE — Drizzle emits a single migration for the whole schema delta.
+3. Stage the single regenerated `*.sql` + its `meta/` update.
+
+Never squash by hand-editing SQL. If the extra migrations came from local `pnpm db:migrate` runs, warn the user the local ledger is ahead of the squashed file → `pnpm db:reconcile-ledger` before the next migrate.
+
+**Rule 2 — No manual intervention in migrations.** Migration `*.sql` + `meta/` snapshot are GENERATED — only produced by editing `src/db/schema.ts` then running `pnpm db:generate`. Hand-writing/hand-editing migration SQL is forbidden. Detect: a migration `*.sql` changed without a matching `schema.ts` change, or SQL that a fresh `pnpm db:generate` wouldn't emit. When unsure, delete the touched new migration, re-run `pnpm db:generate`, and diff — if it differs from the committed file, the committed one was hand-edited → replace it. Genuinely raw SQL (trigger/extension/backfill) must go through `drizzle-kit generate --custom`, never a hand-appended line in an ordinary generated file — flag these, don't silently rewrite.
+
+After both rules pass, re-run the review gate if regeneration changed the migration, then continue.
+
 ### Phase 1 — Inspect
 
 1. `git status` — see current state.
@@ -147,7 +172,7 @@ After the commit succeeds, report:
 
 ## What This Agent Does NOT Do
 
-- Does **not** run `react-guidelines-enforcer` or `code-simplifier` before committing. Husky `lint-staged` covers the ESLint surface; the custom `axion/*` rules in `eslint-rules/` are part of that. If the user wants a deeper refactor pass, they will invoke it explicitly via the `/simplify` skill or a dedicated agent.
+- Runs the **Phase 0 quality gate** (Claude-only review team) before every commit — UNLESS the caller passes `[quality-gate: already-reviewed]` (i.e. `/finish-it` or `/punt` already ran it). Husky `lint-staged` still runs on top for the ESLint surface but is not a substitute for the gate. The gate is skipped/scaled only for trivial diffs or when explicitly bypassed.
 - Does **not** push to remote. Only `git commit`. Pushing is a separate explicit action the user must request.
 - Does **not** create PRs. Use the `/ship` or `/land-and-deploy` skill, or `gh pr create` invoked by the user.
 - Does **not** add `Co-Authored-By: Claude` or any AI trailer.
