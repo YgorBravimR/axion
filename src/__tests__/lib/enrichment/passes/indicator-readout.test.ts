@@ -29,6 +29,7 @@ const createTrade = (overrides?: Partial<Trade>): Trade => ({
 	mae: null,
 	mfeR: null,
 	maeR: null,
+	beOutcome: null,
 	stopLoss: null,
 	takeProfit: null,
 	plannedRiskAmount: null,

@@ -1,0 +1,10 @@
+{
+	"//": "The root tsconfig EXCLUDES scripts/, so `next build` never typechecks the seed. This config exists so the seed tree can be checked on purpose: `pnpm typecheck:seed`. Scoped to scripts/seed only — the wider scripts/ tree carries pre-existing errors and is not in scope here.",
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"types": ["node"],
+		"noEmit": true
+	},
+	"include": ["scripts/seed.ts", "scripts/seed/**/*.ts"],
+	"exclude": ["node_modules"]
+}

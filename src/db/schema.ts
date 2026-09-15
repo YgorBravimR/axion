@@ -30,6 +30,20 @@ export const tradeOutcomeEnum = pgEnum("trade_outcome", [
 	"loss",
 	"breakeven",
 ])
+// beOutcome — did the breakeven-stop help or hurt on a trade moved to BE?
+// Derived from mfeR vs realizedRMultiple (see backfill-mfe-mae.py). Lets the
+// BE-trigger question (strategy-questions.md be-at-1r-too-tight) answer itself
+// over ≥100 trades without manual analysis.
+//   be_killed_runner — moved to BE, then price ran well past (mfeR high) but booked ~0
+//   be_saved_stop     — moved to BE, price came back; without BE it would have hit the full stop
+//   be_neutral        — moved to BE, marginal give (small MFE past BE)
+//   not_be            — trade never moved to BE (won to target, or stopped before +1R)
+export const beOutcomeEnum = pgEnum("be_outcome", [
+	"be_killed_runner",
+	"be_saved_stop",
+	"be_neutral",
+	"not_be",
+])
 export const tagTypeEnum = pgEnum("tag_type", ["setup", "mistake", "general"])
 export const timeframeTypeEnum = pgEnum("timeframe_type", [
 	"time_based",
@@ -679,6 +693,8 @@ export const trades = pgTable(
 		mae: decimal("mae", { precision: 18, scale: 8 }),
 		mfeR: decimal("mfe_r", { precision: 8, scale: 2 }),
 		maeR: decimal("mae_r", { precision: 8, scale: 2 }),
+		// BE-stop effectiveness (computed by backfill from mfeR vs realized R).
+		beOutcome: beOutcomeEnum("be_outcome"),
 
 		// Fees
 		commission: text("commission"), // cents per contract

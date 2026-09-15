@@ -197,6 +197,13 @@
 			"when": 1782671868761,
 			"tag": "0027_classy_hannibal_king",
 			"breakpoints": true
+		},
+		{
+			"idx": 28,
+			"version": "7",
+			"when": 1784286029059,
+			"tag": "0028_many_black_panther",
+			"breakpoints": true
 		}
 	]
 }
