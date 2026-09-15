@@ -60,6 +60,9 @@ const archUpdateTradeSchema = z.object({
 	mae: numericLike.optional(),
 	mfeR: numericLike.optional(),
 	maeR: numericLike.optional(),
+	beOutcome: z
+		.enum(["be_killed_runner", "be_saved_stop", "be_neutral", "not_be"])
+		.optional(),
 	contractsExecuted: numericLike.optional(),
 	executions: z
 		.object({
@@ -381,6 +384,9 @@ const POST = async (request: NextRequest) => {
 		}
 		if (body.maeR !== undefined) {
 			updateData.maeR = toNumericString(Number(body.maeR))
+		}
+		if (body.beOutcome !== undefined) {
+			updateData.beOutcome = body.beOutcome
 		}
 		if (body.contractsExecuted !== undefined) {
 			updateData.contractsExecuted = toNumericString(

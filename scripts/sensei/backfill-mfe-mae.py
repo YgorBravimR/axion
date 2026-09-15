@@ -213,6 +213,34 @@ def compute_mfe_mae_r(trade: dict, candles: list) -> tuple[float | None, float |
     )
 
 
+def classify_be_outcome(
+    mfe_r: float | None, actual_r: float | None, mae_r: float | None, outcome: str | None
+) -> str:
+    """Did the breakeven-stop help or hurt? Doctrine: BE moves at exactly +1R.
+
+    - not_be           : trade never armed BE (won to target, or never reached +1R → mfeR<1.0, or a real loss).
+    - be_killed_runner : armed BE (mfeR>=1R), booked ~0, but ran well past (mfeR>=1.5R) — BE strangled a winner.
+    - be_neutral       : armed BE, booked ~0, marginal peak (1.0<=mfeR<1.5).
+    - be_saved_stop    : armed BE, booked ~0, and price came back hard (maeR>=1.8R) — BE averted a bigger loss.
+
+    A BE exit == realized R ~ 0 (|actual_r|<=0.15) with mfeR>=1.0 (price cleared the +1R trigger).
+    A win (ran to target) or a real loss (stopped before +1R) => not_be.
+    """
+    if mfe_r is None or actual_r is None:
+        return "not_be"
+    if outcome == "win":
+        return "not_be"
+    is_be_exit = abs(actual_r) <= 0.15 and mfe_r >= 1.0
+    if not is_be_exit:
+        return "not_be"
+    # It armed BE and booked ~zero. Did BE save or kill?
+    if mae_r is not None and mae_r >= 1.8:
+        return "be_saved_stop"
+    if mfe_r >= 1.5:
+        return "be_killed_runner"
+    return "be_neutral"
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--commit", action="store_true", help="POST updates to Axion (otherwise dry-run)")
@@ -255,6 +283,7 @@ def main() -> int:
                 continue
             actual_r = fnum(t.get("realizedRMultiple"))
             sanity = mfe_r >= actual_r if actual_r is not None else True
+            be_outcome = classify_be_outcome(mfe_r, actual_r, mae_r, t.get("outcome"))
             results.append(
                 {
                     "id": t["id"],
@@ -267,6 +296,7 @@ def main() -> int:
                     "rActual": actual_r,
                     "mfeR": mfe_r,
                     "maeR": mae_r,
+                    "beOutcome": be_outcome,
                     "rSize": dbg.get("rSize"),
                     "bars": dbg.get("barsScanned"),
                     "sanityMfeGeActual": sanity,
@@ -280,6 +310,15 @@ def main() -> int:
     print(f"\n=== Summary ===")
     print(f"Computed: {len(results)}")
     print(f"Skipped:  {len(skipped)}")
+
+    # beOutcome tally — the BE-effectiveness signal (strategy-questions be-at-1r-too-tight)
+    from collections import Counter as _C
+    be_tally = _C(r["beOutcome"] for r in results)
+    print(
+        f"beOutcome: killed_runner={be_tally.get('be_killed_runner',0)} "
+        f"saved_stop={be_tally.get('be_saved_stop',0)} "
+        f"neutral={be_tally.get('be_neutral',0)} not_be={be_tally.get('not_be',0)}"
+    )
 
     # Sanity check
     sanity_fails = [r for r in results if not r["sanityMfeGeActual"]]
@@ -304,7 +343,12 @@ def main() -> int:
             try:
                 axion_post(
                     "/api/arch/trades/update",
-                    {"id": r["id"], "mfeR": r["mfeR"], "maeR": r["maeR"]},
+                    {
+                        "id": r["id"],
+                        "mfeR": r["mfeR"],
+                        "maeR": r["maeR"],
+                        "beOutcome": r["beOutcome"],
+                    },
                 )
                 ok += 1
             except Exception as e:
