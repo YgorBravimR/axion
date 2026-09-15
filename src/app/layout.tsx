@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 	icons: {
 		icon: "/axion-favicon-32.png",
 		shortcut: "/axion-favicon-32.png",
-		apple: "/axion-icon-192.png",
+		apple: "/axion-icon-512.png",
 	},
 }
 
