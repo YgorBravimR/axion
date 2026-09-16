@@ -1,5 +1,8 @@
-# Local-only data — never needed at runtime
-data/
+# Local-only data. `data/hawks/user-entries/` is NOT listed on purpose:
+# four server routes read it through `process.cwd()`, so Next traces those
+# 59 files (236K) into the function manifest and the upload fails without them.
+data/hawks/candles/
+data/parquet/
 playwright-report/
 test-results/
 blob-report/
